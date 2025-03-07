@@ -3,12 +3,14 @@ Base Client for the derive dex.
 """
 import json
 import random
-import time
-from datetime import datetime
+from decimal import Decimal
+from time import sleep
 
 import eth_abi
 import requests
-from eth_account.messages import encode_defunct
+from lyra_v2_action_signing.module_data import TradeModuleData
+from lyra_v2_action_signing.signed_action import SignedAction
+from lyra_v2_action_signing.utils import MAX_INT_32, get_action_nonce, sign_rest_auth_header, sign_ws_login, utc_now_ms
 from rich import print
 from web3 import Web3
 from websocket import WebSocketConnectionClosedException, create_connection
@@ -37,6 +39,16 @@ class ApiException(Exception):
 class BaseClient:
     """Client for the derive dex."""
 
+    def _create_signature_headers(self):
+        """
+        Create the signature headers.
+        """
+        return sign_rest_auth_header(
+            web3_client=self.web3_client,
+            smart_contract_wallet=self.wallet,
+            session_key_or_wallet_private_key=self.signer._private_key,
+        )
+
     def __init__(
         self,
         private_key: str = TEST_PRIVATE_KEY,
@@ -61,20 +73,6 @@ class BaseClient:
         else:
             self.subaccount_id = subaccount_id
         print(f"Using subaccount id: {self.subaccount_id}")
-
-    def sign_authentication_header(self):
-        timestamp = str(int(time.time() * 1000))
-        msg = encode_defunct(
-            text=timestamp,
-        )
-        signature = self.web3_client.eth.account.sign_message(
-            msg, private_key=self.signer._private_key
-        ).signature.hex()  # pylint: disable=protected-access
-        return {
-            'wallet': self.wallet,
-            'timestamp': str(timestamp),
-            'signature': signature,
-        }
 
     def connect_ws(self):
         ws = create_connection(self.contracts['WS_ADDRESS'], enable_multithread=True, timeout=60)
@@ -112,9 +110,7 @@ class BaseClient:
             "instrument_type": instrument_type.value,
             "currency": currency.name,
         }
-        response = requests.post(url, json=payload, headers=PUBLIC_HEADERS)
-        results = response.json()["result"]
-        return results
+        return self._send_request(url, json=payload, headers=PUBLIC_HEADERS)
 
     def fetch_subaccounts(self):
         """
@@ -122,10 +118,7 @@ class BaseClient:
         """
         url = f"{self.contracts['BASE_URL']}/private/get_subaccounts"
         payload = {"wallet": self.wallet}
-        headers = self._create_signature_headers()
-        response = requests.post(url, json=payload, headers=headers)
-        results = json.loads(response.content)["result"]
-        return results
+        return self._send_request(url, json=payload)
 
     def fetch_subaccount(self, subaccount_id):
         """
@@ -133,10 +126,7 @@ class BaseClient:
         """
         url = f"{self.contracts['BASE_URL']}/private/get_subaccount"
         payload = {"subaccount_id": subaccount_id}
-        headers = self._create_signature_headers()
-        response = requests.post(url, json=payload, headers=headers)
-        results = response.json()["result"]
-        return results
+        return self._send_request(url, json=payload)
 
     def create_order(
         self,
@@ -153,58 +143,65 @@ class BaseClient:
         """
         if side.name.upper() not in OrderSide.__members__:
             raise Exception(f"Invalid side {side}")
-        order = self._define_order(
-            instrument_name=instrument_name,
-            price=price,
-            amount=amount,
-            side=side,
-        )
+
         _currency = UnderlyingCurrency[instrument_name.split("-")[0]]
         if instrument_name.split("-")[1] == "PERP":
             instruments = self.fetch_instruments(instrument_type=InstrumentType.PERP, currency=_currency)
             instruments = {i['instrument_name']: i for i in instruments}
-            base_asset_sub_id = instruments[instrument_name]['base_asset_sub_id']
-            instrument_type = InstrumentType.PERP
         else:
             instruments = self.fetch_instruments(instrument_type=InstrumentType.OPTION, currency=_currency)
             instruments = {i['instrument_name']: i for i in instruments}
-            base_asset_sub_id = instruments[instrument_name]['base_asset_sub_id']
-            instrument_type = InstrumentType.OPTION
 
-        signed_order = self._sign_order(order, base_asset_sub_id, instrument_type, _currency)
-        response = self.submit_order(signed_order)
-        return response
-
-    def _define_order(
-        self,
-        instrument_name: str,
-        price: float,
-        amount: float,
-        side: OrderSide,
-        time_in_force: TimeInForce = TimeInForce.GTC,
-    ):
-        """
-        Define the order, in preparation for encoding and signing
-        """
-        ts = int(datetime.now().timestamp() * 1000)
-        return {
-            'instrument_name': instrument_name,
-            'subaccount_id': self.subaccount_id,
-            'direction': side.name.lower(),
-            'limit_price': price,
-            'amount': amount,
-            'signature_expiry_sec': int(ts) + 3000,
-            'max_fee': '200.01',
-            'nonce': int(f"{int(ts)}{random.randint(100, 999)}"),
-            'signer': self.signer.address,
-            'order_type': 'limit',
-            'mmp': False,
-            'time_in_force': time_in_force.value,
-            'signature': 'filled_in_below',
+        instrument = instruments[instrument_name]
+        module_data = {
+            "asset_address": instrument['base_asset_address'],
+            "sub_id": int(instrument['base_asset_sub_id']),
+            "limit_price": Decimal(price),
+            "amount": Decimal(amount),
+            "max_fee": Decimal(1000),
+            "recipient_id": int(self.subaccount_id),
+            "is_bid": side == OrderSide.BUY,
         }
 
+        signed_action = self._generate_signed_action(
+            module_address=self.contracts['TRADE_MODULE_ADDRESS'], module_data=module_data
+        )
+
+        order = {
+            "instrument_name": instrument_name,
+            "direction": side.name.lower(),
+            "order_type": order_type.name.lower(),
+            "mmp": False,
+            "time_in_force": time_in_force.value,
+            **signed_action.to_json(),
+        }
+        response = self.submit_order(order)
+        return response
+
+    def _generate_signed_action(
+        self,
+        module_address: str,
+        module_data: dict,
+    ):
+        """
+        Generate the signed action
+        """
+        action = SignedAction(
+            subaccount_id=self.subaccount_id,
+            owner=self.wallet,
+            signer=self.signer.address,
+            signature_expiry_sec=MAX_INT_32,
+            nonce=get_action_nonce(),
+            module_address=module_address,
+            module_data=TradeModuleData(**module_data),
+            DOMAIN_SEPARATOR=self.contracts['DOMAIN_SEPARATOR'],
+            ACTION_TYPEHASH=self.contracts['ACTION_TYPEHASH'],
+        )
+        action.sign(self.signer._private_key)
+        return action
+
     def submit_order(self, order):
-        id = str(int(time.time()))
+        id = str(utc_now_ms())
         self.ws.send(json.dumps({'method': 'private/order', 'params': order, 'id': id}))
         while True:
             message = json.loads(self.ws.recv())
@@ -314,8 +311,12 @@ class BaseClient:
     ):
         login_request = {
             'method': 'public/login',
-            'params': self.sign_authentication_header(),
-            'id': str(int(time.time())),
+            'params': sign_ws_login(
+                web3_client=self.web3_client,
+                smart_contract_wallet=self.wallet,
+                session_key_or_wallet_private_key=self.signer._private_key,
+            ),
+            'id': str(utc_now_ms()),
         }
         try:
             self.ws.send(json.dumps(login_request))
@@ -330,7 +331,7 @@ class BaseClient:
                     break
         except (WebSocketConnectionClosedException, Exception) as error:
             if retries:
-                time.sleep(1)
+                sleep(1)
                 self.login_client(retries=retries - 1)
             raise error
 
@@ -370,7 +371,7 @@ class BaseClient:
         Cancel an order
         """
 
-        id = str(int(time.time()))
+        id = str(utc_now_ms())
         payload = {"order_id": order_id, "subaccount_id": self.subaccount_id, "instrument_name": instrument_name}
         self.ws.send(json.dumps({'method': 'private/cancel', 'params': payload, 'id': id}))
         while True:
@@ -382,7 +383,7 @@ class BaseClient:
         """
         Cancel all orders
         """
-        id = str(int(time.time()))
+        id = str(utc_now_ms())
         payload = {"subaccount_id": self.subaccount_id}
         self.login_client()
         self.ws.send(json.dumps({'method': 'private/cancel_all', 'params': payload, 'id': id}))
@@ -398,7 +399,7 @@ class BaseClient:
     def _check_output_for_rate_limit(self, message):
         if error := message.get('error'):
             if 'Rate limit exceeded' in error['message']:
-                time.sleep((int(error['data'].split(' ')[-2]) / 1000) + 1)
+                sleep((int(error['data'].split(' ')[-2]) / 1000) + 1)
                 print("Rate limit exceeded, sleeping and retrying request")
                 return True
         return False
@@ -409,7 +410,11 @@ class BaseClient:
         """
         url = f"{self.contracts['BASE_URL']}/private/get_positions"
         payload = {"subaccount_id": self.subaccount_id}
-        headers = self._create_signature_headers()
+        headers = sign_rest_auth_header(
+            web3_client=self.web3_client,
+            smart_contract_wallet=self.wallet,
+            session_key_or_wallet_private_key=self.signer._private_key,
+        )
         response = requests.post(url, json=payload, headers=headers)
         results = response.json()["result"]['positions']
         return results
@@ -420,10 +425,8 @@ class BaseClient:
         """
         url = f"{self.contracts['BASE_URL']}/private/get_collaterals"
         payload = {"subaccount_id": self.subaccount_id}
-        headers = self._create_signature_headers()
-        response = requests.post(url, json=payload, headers=headers)
-        results = response.json()["result"]['collaterals']
-        return results.pop()
+        result = self._send_request(url, json=payload)
+        return result['collaterals'].pop()
 
     def fetch_tickers(
         self,
@@ -435,14 +438,14 @@ class BaseClient:
         """
         instruments = self.fetch_instruments(instrument_type=instrument_type, currency=currency)
         instrument_names = [i['instrument_name'] for i in instruments]
-        id_base = str(int(time.time()))
+        id_base = str(utc_now_ms())
         ids_to_instrument_names = {
             f'{id_base}_{enumerate}': instrument_name for enumerate, instrument_name in enumerate(instrument_names)
         }
         for id, instrument_name in ids_to_instrument_names.items():
             payload = {"instrument_name": instrument_name}
             self.ws.send(json.dumps({'method': 'public/get_ticker', 'params': payload, 'id': id}))
-            time.sleep(0.05)  # otherwise we get rate limited...
+            sleep(0.05)  # otherwise we get rate limited...
         results = {}
         while ids_to_instrument_names:
             message = json.loads(self.ws.recv())
@@ -534,7 +537,7 @@ class BaseClient:
         """
         Returns the nonce and signature expiry
         """
-        ts = int(datetime.now().timestamp() * 1000)
+        ts = utc_now_ms()
         nonce = int(f"{int(ts)}{random.randint(100, 999)}")
         expiration = int(ts) + 6000
         return ts, nonce, expiration
@@ -554,10 +557,10 @@ class BaseClient:
         Transfer collateral
         """
 
-        ts = int(datetime.now().timestamp() * 1000)
+        ts = utc_now_ms()
         nonce = int(f"{int(ts)}{random.randint(100, 499)}")
         nonce_2 = int(f"{int(ts)}{random.randint(500, 999)}")
-        expiration = int(datetime.now().timestamp() + 10000)
+        expiration = int(ts) + 6000
 
         url = f"{self.contracts['BASE_URL']}/private/transfer_erc20"
         _, nonce, expiration = self.get_nonce_and_signature_expiry()
@@ -708,28 +711,13 @@ class BaseClient:
         )
         return self.web3_client.keccak(encoded_action_hash)
 
-    def _generate_signed_action(self, action_hash: bytes, nonce: int, expiration: int):
-        """Generate the signed action."""
-        encoded_typed_data_hash = "".join(['0x1901', self.contracts['DOMAIN_SEPARATOR'][2:], action_hash.hex()[2:]])
-        typed_data_hash = self.web3_client.keccak(hexstr=encoded_typed_data_hash)
-        signature = self.signer.signHash(typed_data_hash).signature.hex()
-        return {
-            "nonce": nonce,
-            "signature": signature,
-            "signature_expiry_sec": expiration,
-            "signer": self.signer.address,
-        }
-
     def get_mmp_config(self, subaccount_id: int, currency: UnderlyingCurrency = None):
         """Get the mmp config."""
         url = f"{self.contracts['BASE_URL']}/private/get_mmp_config"
         payload = {"subaccount_id": self.subaccount_id}
         if currency:
             payload['currency'] = currency.name
-        headers = self._create_signature_headers()
-        response = requests.post(url, json=payload, headers=headers)
-        results = response.json()["result"]
-        return results
+        return self._send_request(url, json=payload)
 
     def set_mmp_config(
         self,
@@ -750,18 +738,12 @@ class BaseClient:
             "mmp_amount_limit": mmp_amount_limit,
             "mmp_delta_limit": mmp_delta_limit,
         }
-        headers = self._create_signature_headers()
-        response = requests.post(url, json=payload, headers=headers)
-        results = response.json()["result"]
-        return results
+        return self._send_request(url, json=payload)
 
     def send_rfq(self, rfq):
         """Send an RFQ."""
         url = f"{self.contracts['BASE_URL']}/private/send_rfq"
-        headers = self._create_signature_headers()
-        response = requests.post(url, json=rfq, headers=headers)
-        results = response.json()["result"]
-        return results
+        return self._send_request(url, rfq)
 
     def poll_rfqs(self):
         """
@@ -778,37 +760,16 @@ class BaseClient:
             }
         """
         url = f"{self.contracts['BASE_URL']}/private/poll_rfqs"
-        headers = self._create_signature_headers()
         params = {
             "subaccount_id": self.subaccount_id,
             "status": RfqStatus.OPEN.value,
         }
-        response = requests.post(url, headers=headers, params=params)
-        results = response.json()["result"]
-        return results
+        return self._send_request(url, params=params)
 
     def send_quote(self, quote):
         """Send a quote."""
         url = f"{self.contracts['BASE_URL']}/private/send_quote"
-        headers = self._create_signature_headers()
-        response = requests.post(url, json=quote, headers=headers)
-        results = response.json()["result"]
-        return results
-
-    #   pricedLegs[0].price = direction == 'buy' ? '160' : '180';
-    #   pricedLegs[1].price = direction == 'buy' ? '70' : '50';
-    #   return {
-    #     subaccount_id: subaccount_id_maker,
-    #     rfq_id: rfq_response.rfq_id,
-    #     legs: pricedLegs,
-    #     direction: direction,
-    #     max_fee: '10',
-    #     nonce: Number(`${Date.now()}${Math.round(Math.random() * 999)}`),
-    #     signer: wallet.address,
-    #     signature_expiry_sec: Math.floor(Date.now() / 1000 + 350),
-    #     signature: "filled_in_below"
-    #   };
-    # }
+        return self._send_request(url, quote)
 
     def create_quote_object(
         self,
@@ -829,3 +790,9 @@ class BaseClient:
             "signature_expiry_sec": expiration,
             "signature": "filled_in_below",
         }
+
+    def _send_request(self, url, json=None, params=None, headers=None):
+        headers = self._create_signature_headers() if not headers else headers
+        response = requests.post(url, json=json, headers=headers, params=params)
+        results = response.json()["result"]
+        return results

@@ -212,7 +212,7 @@ def test_can_create_option_order(derive_client, currency, side):
         order_price = ticker['max_price']
     order = derive_client.create_order(
         price=order_price,
-        amount=0.01,
+        amount=0.5,
         instrument_name=symbol,
         side=side,
         order_type=OrderType.LIMIT,
@@ -227,18 +227,18 @@ def test_can_create_option_order(derive_client, currency, side):
             SubaccountType.STANDARD,
             None,
             (
-                "0x247da26f2c790be0f0838efa1403703863af35a74c439665dca40a4491bd8c2f",
-                "0x68031dbf2804c2c5c848de876db4cc334c69267ed7ff49646fbbd9d2aff16f71",
-                "0x9abed503592450a03d53af21e2693d60e08a69506c6a61d219da071c5a1a1de5",
+                "247da26f2c790be0f0838efa1403703863af35a74c439665dca40a4491bd8c2f",
+                "68031dbf2804c2c5c848de876db4cc334c69267ed7ff49646fbbd9d2aff16f71",
+                "c164aa05f49611eb4aa67ab9736ab336c710d5ae9a71e05555e04f13f2bf32fc",
             ),
         ),
         (
             SubaccountType.PORTFOLIO,
             UnderlyingCurrency.ETH,
             (
-                "0xaf75590c7dde08338ed8f52c718140000bdee1476232b1321e694807d739aa74",
-                "0x2c83609b60aec89e15520b340369a8d48257a83c95e18b751ac41b27fd3f7d7c",
-                "0x6ae341bd695b518b7d7ade71bb9a3157cabc15847af7c70d0152a28f9c7dab2e",
+                "af75590c7dde08338ed8f52c718140000bdee1476232b1321e694807d739aa74",
+                "2c83609b60aec89e15520b340369a8d48257a83c95e18b751ac41b27fd3f7d7c",
+                "d0bd37848578e76e7ea8afd96ecf821e194b2f8564729590fd8b6e264b5f0c7b",
             ),
         ),
     ],
