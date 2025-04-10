@@ -50,6 +50,15 @@ class ChainID(IntEnum):
             return super()._missing_(value)
 
 
+class DRPCEndPoints(StrEnum):
+    ETH = "https://eth.drpc.org"
+    OPTIMISM = "https://optimism.drpc.org"
+    BASE = "https://base.drpc.org"
+    MODE = "https://mode.drpc.org"
+    ARBITRUM = "https://arbitrum.drpc.org"
+    BLAST = "https://blast.drpc.org"
+
+
 class Currency(StrEnum):
     @staticmethod
     def _generate_next_value_(name: str, start: int, count: int, last_values: list[str]):
@@ -70,11 +79,6 @@ class Currency(StrEnum):
     sDAI = auto()
     cbBTC = auto()
     eBTC = auto()
-
-
-class ExplorerBaseUrl(StrEnum):
-    ETH = "https://api.etherscan.io/"
-    BASE = "https://api.basescan.org/"
 
 
 class TokenData(BaseModel):
@@ -125,17 +129,6 @@ def fetch_prod_lyra_addresses(url: str = PROD_LYRA_ADDRESSES) -> LyraAddresses:
     cache_path = get_repo_root() / "data" / "prod_lyra_addresses.json"
 
     return LyraAddresses(chains=fetch_json(url=url, cache_path=cache_path))
-
-
-def fetch_abi(chain_id: ChainID, contract_address: str, apikey: str):
-    cache_path = get_repo_root() / "data" / chain_id.name.lower() / f"{contract_address}.json"
-    base_url = ExplorerBaseUrl[chain_id.name]
-    url = f"{base_url}/api?module=contract&action=getabi&address={contract_address}&apikey={apikey}"
-
-    def response_processer(data):
-        return json.loads(data["result"])
-
-    return fetch_json(url, cache_path, post_processer=response_processer)
 
 
 def wait_for_tx_receipt(tx_hash: str, timeout=120, poll_interval=1) -> AttributeDict:
@@ -243,8 +236,8 @@ def prepare_bridge_tx(
     return tx
 
 
-def get_w3_connection(network: str, api_key: str) -> Web3:
-    rpc_url = f"https://lb.drpc.org/ogrpc?network={network}&dkey={api_key}"
+def get_w3_connection(chain_id: ChainID) -> Web3:
+    rpc_url = DRPCEndPoints[chain_id.name]
     w3 = Web3(Web3.HTTPProvider(rpc_url))
     if not w3.is_connected():
         raise ConnectionError(f"Failed to connect to RPC at {rpc_url}")
@@ -335,10 +328,6 @@ def bridge(
 
 
 if __name__ == "__main__":
-    if (basescan_api_key := os.environ.get("BASESCAN_API_KEY")) is None:
-        raise ValueError("BASESCAN_API_KEY not found in env.")
-    if (dprc_api_key := os.environ.get("DRPC_API_KEY")) is None:
-        raise ValueError("DRPC_API_KEY not found in environment variables.")
     if (ethereum_private_key := os.environ.get("ETHEREUM_PRIVATE_KEY")) is None:
         raise ValueError("ETHEREUM_PRIVATE_KEY not found in environment variables.")
     if (smart_contract_wallet_address := os.environ.get("DERIVE_SMART_CONTRACT_WALLET_ADDRESS")) is None:
@@ -346,7 +335,8 @@ if __name__ == "__main__":
 
     chain_id = ChainID.BASE
 
-    w3 = get_w3_connection(network="base", api_key=dprc_api_key)
+    w3 = get_w3_connection(chain_id=chain_id)
+
     account = Account.from_key(ethereum_private_key)
     lyra_addresses = fetch_prod_lyra_addresses()
 
@@ -356,7 +346,8 @@ if __name__ == "__main__":
     vault_address = token_data.Vault
     receiver = smart_contract_wallet_address
 
-    abi = fetch_abi(chain_id=chain_id, contract_address=vault_address, apikey=basescan_api_key)
+    vault_abi_path = get_repo_root() / "data" / "socket_superbridge_vault.json"
+    abi = json.loads(vault_abi_path.read_text())
     bridge_contract = get_contract(w3=w3, address=vault_address, abi=abi)
 
     amount_eth = 0.001
