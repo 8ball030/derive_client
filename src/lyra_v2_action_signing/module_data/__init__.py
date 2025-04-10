@@ -1,5 +1,5 @@
 from .module_data import ModuleData
-from .deposit import DepositModuleData
+from .deposit import DepositModuleData, SubaccountDepositModuleData
 from .withdraw import WithdrawModuleData
 from .trade import TradeModuleData
 from .rfq import RFQExecuteModuleData, RFQQuoteModuleData, RFQQuoteDetails
