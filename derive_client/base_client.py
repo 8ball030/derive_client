@@ -9,11 +9,13 @@ from time import sleep
 import eth_abi
 import requests
 from derive_action_signing.module_data import (
+    DepositModuleData,
     ModuleData,
     RecipientTransferERC20ModuleData,
     SenderTransferERC20ModuleData,
     TradeModuleData,
     TransferERC20Details,
+    WithdrawModuleData,
 )
 from derive_action_signing.signed_action import SignedAction, dataclass
 from derive_action_signing.utils import (
@@ -521,64 +523,6 @@ class BaseClient:
         response = self._send_request(url, json=payload)
         return response
 
-        # _, nonce, expiration = self.get_nonce_and_signature_expiry()
-        # else:
-        #     raise Exception(f"Invalid subaccount type {subaccount_type}")
-        # payload = {
-        #     "amount": f"{amount}",
-        #     "asset_name": collateral_asset.name,
-        #     "margin_type": "SM" if subaccount_type is SubaccountType.STANDARD else "PM",
-        #     'nonce': nonce,
-        #     "signature": "string",
-        #     "signature_expiry_sec": expiration,
-        #     "signer": self.signer.address,
-        #     "wallet": self.wallet,
-        # }
-        # if subaccount_type is SubaccountType.PORTFOLIO:
-        #     payload['currency'] = underlying_currency.name
-        # encoded_deposit_data = self._encode_deposit_data(
-        #     amount=amount,
-        #     contract_key=contract_key,
-        # )
-        # action_hash = self._generate_action_hash(
-        #     subaccount_id=0,  # as we are depositing to a new subaccount.
-        #     nonce=nonce,
-        #     expiration=expiration,
-        #     encoded_deposit_data=encoded_deposit_data,
-        # )
-
-        # typed_data_hash = self._generate_typed_data_hash(
-        #     action_hash=action_hash,
-        # )
-
-        # signature = self.signer.signHash(typed_data_hash).signature.hex()
-        # payload['signature'] = signature
-        # print(f"Payload: {payload}")
-
-        # headers = self._create_signature_headers()
-        # response = requests.post(url, json=payload, headers=headers)
-
-        # if "error" in response.json():
-        #     raise Exception(response.json()["error"])
-        # print(response.text)
-        # if "result" not in response.json():
-        #     raise Exception(f"Unable to create subaccount {response.json()}")
-        # return response.json()["result"]
-
-    def _encode_deposit_data(self, amount: int, contract_key: str):
-        """Encode the deposit data"""
-
-        encoded_data = eth_abi.encode(
-            ['uint256', 'address', 'address'],
-            [
-                int(amount * 1e6),
-                self.contracts["CASH_ASSET"],
-                self.contracts[contract_key],
-            ],
-        )
-        print(f"Encoded data: {encoded_data}")
-        return self.web3_client.keccak(encoded_data)
-
     def get_nonce_and_signature_expiry(self):
         """
         Returns the nonce and signature expiry
@@ -739,3 +683,124 @@ class BaseClient:
             raise ApiException(response.json()["error"])
         results = response.json()["result"]
         return results
+
+    def fetch_all_currencies(self):
+        """
+        Fetch the currency list
+        """
+        url = f"{self.contracts['BASE_URL']}/public/get_all_currencies"
+        return self._send_request(url, json={})
+
+    def fetch_currency(self, asset_name):
+        """
+        Fetch the currency list
+        """
+        url = f"{self.contracts['BASE_URL']}/public/get_currency"
+        payload = {"currency": asset_name}
+        return self._send_request(url, json=payload)
+
+    def transfer_from_funding_to_subaccount(self, amount: int, asset_name: str, subaccount_id: int):
+        """
+        Transfer from funding to subaccount
+        """
+        currency = self.fetch_currency(asset_name)
+        manager_address = currency['managers'][2].get('address')  # Errr why is there 3 managers?
+        underlying_address = currency['protocol_asset_addresses']['spot']
+
+        if not manager_address or not underlying_address:
+            raise Exception(f"Unable to find manager address or underlying address for {asset_name}")
+
+        deposit_module_data = DepositModuleData(
+            amount=str(amount),
+            asset=underlying_address,
+            manager=manager_address,
+            decimals=6,
+        )
+
+        sender_action = SignedAction(
+            subaccount_id=self.subaccount_id,
+            owner=self.wallet,
+            signer=self.signer.address,
+            signature_expiry_sec=MAX_INT_32,
+            nonce=get_action_nonce(),
+            module_address=self.contracts["DEPOSIT_MODULE_ADDRESS"],
+            module_data=deposit_module_data,
+            DOMAIN_SEPARATOR=self.contracts["DOMAIN_SEPARATOR"],
+            ACTION_TYPEHASH=self.contracts["ACTION_TYPEHASH"],
+        )
+        sender_action.sign(self.signer.key)
+        payload = {
+            "amount": str(amount),
+            "asset_name": asset_name,
+            "is_atomic_signing": False,
+            "nonce": sender_action.nonce,
+            "signature": sender_action.signature,
+            "signature_expiry_sec": sender_action.signature_expiry_sec,
+            "signer": sender_action.signer,
+            "subaccount_id": subaccount_id,
+        }
+        url = f"{self.contracts['BASE_URL']}/private/deposit"
+
+        print(f"Payload: {payload}")
+
+        action_hash = sender_action._get_action_hash()
+        typed_data_hash = sender_action._to_typed_data_hash()
+        print(f"Action hash: {action_hash.hex()}")
+        print(f"Typed data hash: {typed_data_hash.hex()}")
+        return self._send_request(
+            url,
+            json=payload,
+        )
+
+    def transfer_from_subaccount_to_funding(self, amount: int, asset_name: str, subaccount_id: int):
+        """
+        Transfer from subaccount to funding
+        """
+        currency = self.fetch_currency(asset_name)
+        manager_address = currency['managers'][1].get('address')  # Errr why is there 3 managers?
+        underlying_address = currency['protocol_asset_addresses']['spot']
+
+        if not manager_address or not underlying_address:
+            raise Exception(f"Unable to find manager address or underlying address for {asset_name}")
+
+        module_data = WithdrawModuleData(
+            amount=str(amount),
+            asset=underlying_address,
+            decimals=6,
+        )
+
+        # todo: implement decimal lookup
+        # todo: use self account info to determine the type of account withdrawing from
+
+        sender_action = SignedAction(
+            subaccount_id=subaccount_id,
+            owner=self.wallet,
+            signer=self.signer.address,
+            signature_expiry_sec=MAX_INT_32,
+            nonce=get_action_nonce(),
+            module_address=self.contracts["WITHDRAWAL_MODULE_ADDRESS"],
+            module_data=module_data,
+            DOMAIN_SEPARATOR=self.contracts["DOMAIN_SEPARATOR"],
+            ACTION_TYPEHASH=self.contracts["ACTION_TYPEHASH"],
+        )
+        sender_action.sign(self.signer.key)
+        payload = {
+            "is_atomic_signing": False,
+            "amount": str(amount),
+            "asset_name": asset_name,
+            "nonce": sender_action.nonce,
+            "signature": sender_action.signature,
+            "signature_expiry_sec": sender_action.signature_expiry_sec,
+            "signer": sender_action.signer,
+            "subaccount_id": subaccount_id,
+        }
+        url = f"{self.contracts['BASE_URL']}/private/withdraw"
+
+        action_hash = sender_action._get_action_hash()
+        typed_data_hash = sender_action._to_typed_data_hash()
+        print(f"Action hash: {action_hash.hex()}")
+        print(f"Typed data hash: {typed_data_hash.hex()}")
+        return self._send_request(
+            url,
+            json=payload,
+        )

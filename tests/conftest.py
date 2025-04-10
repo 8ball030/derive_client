@@ -27,7 +27,7 @@ def freeze_time(derive_client):
 @pytest.fixture
 def derive_client():
     derive_client = DeriveClient(
-        wallet=TEST_WALLET, private_key=TEST_PRIVATE_KEY, env=Environment.TEST, logger=get_logger()
+        private_key=TEST_PRIVATE_KEY, wallet=TEST_WALLET, env=Environment.TEST, logger=get_logger()
     )
     derive_client.subaccount_id = SUBACCOUNT_ID
     yield derive_client
