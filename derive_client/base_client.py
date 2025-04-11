@@ -29,6 +29,11 @@ from rich import print
 from web3 import Web3
 from websocket import WebSocketConnectionClosedException, create_connection
 
+from derive_client.bridge.client import BridgeClient
+from derive_client.bridge.constants import TARGET_SPEED
+from derive_client.bridge.enums import ChainID, Currency
+from derive_client.bridge.models import Address
+from derive_client.bridge.utils import get_prod_lyra_addresses, get_w3_connection
 from derive_client.constants import CONTRACTS, DEFAULT_REFERER, PUBLIC_HEADERS
 from derive_client.enums import (
     CollateralAsset,
@@ -135,6 +140,31 @@ class BaseClient:
         if "error" in result_code:
             raise Exception(result_code["error"])
         return True
+
+    def deposit_to_derive(self, chain_id: ChainID, receiver: Address, currency: Currency, amount: int):
+        """Deposit funds via socket superbridge to Derive chain smart contract funding account.
+
+        Parameters:
+            chain_id (ChainID): The chain you are bridging FROM.
+            receiver (Address): The Derive smart contract wallet address to receive the funds.
+            currency (Currency): The asset being bridged.
+            amount (int): The amount to deposit, in Wei.
+        """
+
+        w3 = get_w3_connection(chain_id=chain_id)
+        lyra_addresses = get_prod_lyra_addresses()
+        token_data = lyra_addresses.chains[chain_id][currency]
+        connector = token_data.connectors[ChainID.LYRA][TARGET_SPEED]
+
+        client = BridgeClient(w3=w3, account=self.signer, chain_id=chain_id)
+        client.load_bridge_contract(token_data.Vault)
+        client.deposit(
+            amount=amount,
+            receiver=receiver,
+            connector=connector,
+            token_data=token_data,
+            private_key=self.signer._private_key,
+        )
 
     def fetch_instruments(
         self,
