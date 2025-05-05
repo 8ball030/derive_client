@@ -6,7 +6,6 @@ import os
 from pathlib import Path
 
 import click
-from dotenv import load_dotenv
 
 from derive_client import DeriveClient
 from derive_client.data_types import CollateralAsset, Environment
@@ -21,35 +20,38 @@ def main(signer_key_path, derive_sc_wallet):
         click.echo(f"Signer key file not found: {signer_key_path}")
         return
 
-    load_dotenv()
-    subaccount_id = os.environ.get("SUBACCOUNT_ID")
-    if not subaccount_id:
-        click.echo("SUBACCOUNT_ID not found in environment variables.")
-        return
-
     client = DeriveClient(
         private_key=key_file.read_text(),
         wallet=derive_sc_wallet,
         env=Environment.PROD,
-        subaccount_id=subaccount_id,
     )
+    subaccount_id = os.environ.get("SUBACCOUNT_ID")
+    if not subaccount_id:
+        click.echo("SUBACCOUNT_ID not found in environment variables.")
+        return
+    client.subaccount_id = subaccount_id
+    subaccounts = client.fetch_subaccounts()
+    for subaccount in subaccounts:
+        print(subaccount)
 
-    if click.confirm("Withdraw USDC from subaccount to funding account?", default=False):
+    if input("Do you want to withdraw USDC from subaccount to funding account? (y/n): ").lower() == 'y':
+        print("Withdrawal cancelled.")
         to_funding_req = client.transfer_from_subaccount_to_funding(
             subaccount_id=client.subaccount_id,
             asset_name=CollateralAsset.USDC.name,
             amount=0.1,
         )
+
         print(f"Transfer from subaccount {client.subaccount_id} to funding account: {to_funding_req}")
-    elif click.confirm("Withdraw USDC from funding account to subaccount?", default=False):
+
+    if input("Do you want to withdraw USDC from funding account to subaccount? (y/n): ").lower() == 'y':
+        print("Withdrawal cancelled.")
         to_subaccount_req = client.transfer_from_funding_to_subaccount(
             subaccount_id=subaccount_id,
             asset_name=CollateralAsset.USDC.name,
             amount=0.1,
         )
         print(f"Transfer from funding account to subaccount {client.subaccount_id}: {to_subaccount_req}")
-    else:
-        print("No transfer action selected.")
 
 
 if __name__ == '__main__':
