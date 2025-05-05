@@ -617,7 +617,7 @@ def cancel_all_orders(ctx):
 @click.option(
     "--side",
     "-s",
-    type=click.Choice(i.value for i in OrderSide),
+    type=click.Choice([i.value for i in OrderSide]),
     required=True,
 )
 @click.option(
@@ -635,19 +635,26 @@ def cancel_all_orders(ctx):
 @click.option(
     "--order-type",
     "-t",
-    type=click.Choice(i.value for i in OrderType),
+    type=click.Choice([i.value for i in OrderType]),
     default="limit",
 )
-def create_order(ctx, instrument_name, side, price, amount, order_type):
+@click.option(
+    "--instrument-type",
+    "-it",
+    type=click.Choice([i.value for i in InstrumentType]),
+    default="PERP",
+)
+def create_order(ctx, instrument_name, side, price, amount, order_type, instrument_type):
     """Create order."""
     print("Creating order")
-    client = ctx.obj["client"]
+    client: DeriveClient = ctx.obj["client"]
     result = client.create_order(
         instrument_name=instrument_name,
         side=OrderSide(side),
         price=price,
         amount=amount,
         order_type=OrderType(order_type),
+        instrument_type=InstrumentType(instrument_type),
     )
     print(result)
 

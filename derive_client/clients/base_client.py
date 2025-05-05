@@ -232,11 +232,17 @@ class BaseClient:
                 raise Exception(f"Invalid instrument type {instrument_type}")
 
         instrument = instruments[instrument_name]
+        amount_step = instrument['amount_step']
+        rounded_amount = Decimal(str(amount)).quantize(Decimal(str(amount_step)))
+
+        price_step = instrument['tick_size']
+        rounded_price = Decimal(str(price)).quantize(Decimal(str(price_step)))
+
         module_data = {
             "asset_address": instrument['base_asset_address'],
             "sub_id": int(instrument['base_asset_sub_id']),
-            "limit_price": Decimal(price),
-            "amount": Decimal(str(amount)),
+            "limit_price": Decimal(str(rounded_price)),
+            "amount": Decimal(str(rounded_amount)),
             "max_fee": Decimal(1000),
             "recipient_id": int(self.subaccount_id),
             "is_bid": side == OrderSide.BUY,
