@@ -2,7 +2,6 @@
 User tests
 """
 
-
 from time import sleep
 
 import pytest

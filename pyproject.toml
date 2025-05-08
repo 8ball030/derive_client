@@ -26,7 +26,7 @@ drv = "derive_client.cli:cli"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.2"
-black = "^23.10.1"
+black = "^24"
 isort = "^5.12.0"
 flake8 = "^6.1.0"
 tbump = "^6.11.0"

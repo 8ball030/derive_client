@@ -1,6 +1,7 @@
 """
 Cli module in order to allow interaction.
 """
+
 import os
 from textwrap import dedent
 

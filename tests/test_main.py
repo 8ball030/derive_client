@@ -1,6 +1,7 @@
 """
 Tests for the main function.
 """
+
 import time
 from itertools import product
 

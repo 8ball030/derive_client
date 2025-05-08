@@ -38,6 +38,23 @@ class RPCEndPoints(Enum):
     DERIVE = LYRA = "https://rpc.lyra.finance"
 
 
+class SessionKeyScope(Enum):
+    ADMIN = "admin"
+    ACCOUNT = "account"
+    READ_ONLY = "read_only"
+
+
+class MainnetCurrency(Enum):
+    BTC = "BTC"
+    ETH = "ETH"
+
+
+class MarginType(Enum):
+    SM = "SM"
+    PM = "PM"
+    PM2 = "PM2"
+
+
 class InstrumentType(Enum):
     """Instrument types."""
 

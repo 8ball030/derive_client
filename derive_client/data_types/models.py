@@ -1,18 +1,33 @@
 """Models used in the bridge module."""
 
-
 from dataclasses import dataclass
 
 from derive_action_signing.module_data import ModuleData
 from derive_action_signing.utils import decimal_to_big_int
 from eth_abi.abi import encode
-from pydantic import BaseModel, ConfigDict
+from eth_utils import is_address, to_checksum_address
+from pydantic import BaseModel, ConfigDict, GetCoreSchemaHandler, GetJsonSchemaHandler
+from pydantic_core import core_schema
 from web3 import Web3
 from web3.datastructures import AttributeDict
 
-from .enums import ChainID, Currency, TxStatus
+from .enums import ChainID, Currency, MainnetCurrency, MarginType, SessionKeyScope, TxStatus
 
-Address = str
+
+class Address(str):
+    @classmethod
+    def __get_pydantic_core_schema__(cls, _source, _handler: GetCoreSchemaHandler) -> core_schema.CoreSchema:
+        return core_schema.no_info_before_validator_function(cls._validate, core_schema.str_schema())
+
+    @classmethod
+    def __get_pydantic_json_schema__(cls, _schema, _handler: GetJsonSchemaHandler) -> dict:
+        return {"type": "string", "format": "ethereum-address"}
+
+    @classmethod
+    def _validate(cls, v: str) -> str:
+        if not is_address(v):
+            raise ValueError(f"Invalid Ethereum address: {v}")
+        return to_checksum_address(v)
 
 
 @dataclass
@@ -67,6 +82,20 @@ class NonMintableTokenData(TokenData):
 class DeriveAddresses(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
     chains: dict[ChainID, dict[Currency, MintableTokenData | NonMintableTokenData]]
+
+
+class SessionKey(BaseModel):
+    public_session_key: Address
+    expiry_sec: int
+    ip_whitelist: list
+    label: str
+    scope: SessionKeyScope
+
+
+class ManagerAddress(BaseModel):
+    address: Address
+    margin_type: MarginType
+    currency: MainnetCurrency | None
 
 
 @dataclass

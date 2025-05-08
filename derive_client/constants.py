@@ -34,6 +34,8 @@ class ContractAddresses(BaseModel, frozen=True):
 class EnvConfig(BaseModel, frozen=True):
     base_url: str
     ws_address: str
+    rpc_endpoint: str
+    block_explorer: str
     ACTION_TYPEHASH: str
     DOMAIN_SEPARATOR: str
     contracts: ContractAddresses
@@ -52,6 +54,8 @@ CONFIGS: dict[Environment, EnvConfig] = {
     Environment.TEST: EnvConfig(
         base_url="https://api-demo.lyra.finance",
         ws_address="wss://api-demo.lyra.finance/ws",
+        rpc_endpoint="https://rpc-prod-testnet-0eakp60405.t.conduit.xyz",
+        block_explorer="https://explorer-prod-testnet-0eakp60405.t.conduit.xyz",
         ACTION_TYPEHASH="0x4d7a9f27c403ff9c0f19bce61d76d82f9aa29f8d6d4b0c5474607d9770d1af17",
         DOMAIN_SEPARATOR="0x9bcf4dc06df5d8bf23af818d5716491b995020f377d3b7b64c29ed14e3dd1105",
         contracts=ContractAddresses(
@@ -76,6 +80,8 @@ CONFIGS: dict[Environment, EnvConfig] = {
     Environment.PROD: EnvConfig(
         base_url="https://api.lyra.finance",
         ws_address="wss://api.lyra.finance/ws",
+        rpc_endpoint="https://rpc.lyra.finance",
+        block_explorer="https://explorer.lyra.finance",
         ACTION_TYPEHASH="0x4d7a9f27c403ff9c0f19bce61d76d82f9aa29f8d6d4b0c5474607d9770d1af17",
         DOMAIN_SEPARATOR="0xd96e5f90797da7ec8dc4e276260c7f3f87fedf68775fbe1ef116e996fc60441b",
         contracts=ContractAddresses(

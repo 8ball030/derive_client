@@ -1,9 +1,11 @@
 """
 Base Client for the derive dex.
 """
+
 import json
 import random
 from decimal import Decimal
+from logging import Logger
 from time import sleep
 
 import eth_abi
@@ -18,6 +20,7 @@ from derive_action_signing.module_data import (
 )
 from derive_action_signing.signed_action import SignedAction
 from derive_action_signing.utils import MAX_INT_32, get_action_nonce, sign_rest_auth_header, sign_ws_login, utc_now_ms
+from pydantic import validate_arguments
 from rich import print
 from web3 import Web3
 from websocket import WebSocketConnectionClosedException, create_connection
@@ -33,10 +36,14 @@ from derive_client.data_types import (
     Currency,
     Environment,
     InstrumentType,
+    MainnetCurrency,
+    ManagerAddress,
+    MarginType,
     OrderSide,
     OrderStatus,
     OrderType,
     RfqStatus,
+    SessionKey,
     SubaccountType,
     TimeInForce,
     TxResult,
@@ -64,15 +71,16 @@ class BaseClient:
             session_key_or_wallet_private_key=self.signer._private_key,
         )
 
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def __init__(
         self,
-        wallet: str,
+        wallet: Address,
         private_key: str,
         env: Environment,
-        logger=None,
-        verbose=False,
-        subaccount_id=None,
-        referral_code=None,
+        logger: Logger | None = None,
+        verbose: bool = False,
+        subaccount_id: int | None = None,
+        referral_code: Address | None = None,
     ):
         self.verbose = verbose
         self.env = env
@@ -80,19 +88,30 @@ class BaseClient:
         self.logger = logger or get_logger()
         self.web3_client = Web3()
         self.signer = self.web3_client.eth.account.from_key(private_key)
-        self.wallet = self.signer.address if not wallet else wallet
-        if subaccount_id is None:
-            subaccount_id = self._get_first_subaccount_id()
-        self.subaccount_id = int(subaccount_id)
+        self.wallet = wallet
+        self._verify_wallet(wallet)
+        self.subaccount_id = self._determine_subaccount_id(subaccount_id)
         self.referral_code = referral_code
 
-    def _get_first_subaccount_id(self) -> int:
-        self.logger.debug("No subaccount_id provided, fetching from API…")
+    def _verify_wallet(self, wallet: Address):
+        w3 = Web3(Web3.HTTPProvider(self.config.rpc_endpoint))
+        if not w3.is_connected():
+            raise ConnectionError(f"Failed to connect to RPC at {self.config.rpc_endpoint}")
+        if not w3.eth.get_code(wallet):
+            msg = f"{wallet} appears to be an EOA (no bytecode). Expected a smart-contract wallet on Derive."
+            raise ValueError(msg)
+        session_keys = self._get_session_keys(wallet)
+        if not any(self.signer.address == s.public_session_key for s in session_keys):
+            msg = f"{self.signer.address} is not among registered session keys for wallet {wallet}."
+            raise ValueError(msg)
+
+    def _determine_subaccount_id(self, subaccount_id: int | None) -> int:
         subaccounts = self.fetch_subaccounts()
-        self.logger.info(f"Subaccounts retrieved: {subaccounts!r}")
         if not (subaccount_ids := subaccounts.get("subaccount_ids", [])):
-            raise ValueError("No subaccounts found. Please create one on Derive first.")
-        subaccount_id = subaccount_ids[0]
+            raise ValueError(f"No subaccounts found for {self.wallet}. Please create one on Derive first.")
+        if subaccount_id is not None and subaccount_id not in subaccount_ids:
+            raise ValueError(f"Provided subaccount {subaccount_id} not among retrieved aubaccounts: {subaccounts!r}")
+        subaccount_id = subaccount_id or subaccount_ids[0]
         self.logger.info(f"Selected subaccount_id: {subaccount_id}")
         return subaccount_id
 
@@ -183,6 +202,15 @@ class BaseClient:
         }
         return self._send_request(url, json=payload, headers=PUBLIC_HEADERS)
 
+    def _get_session_keys(self, wallet: Address) -> list[SessionKey]:
+        url = f"{self.config.base_url}/private/session_keys"
+        payload = {"wallet": wallet}
+        session_keys = self._send_request(url, json=payload)
+        if not (public_session_keys := session_keys.get("public_session_keys")):
+            msg = f"No session keys registered for this wallet: {wallet}"
+            raise ValueError(msg)
+        return list(map(lambda kwargs: SessionKey(**kwargs), public_session_keys))
+
     def fetch_subaccounts(self):
         """
         Returns the subaccounts for a given wallet
@@ -191,7 +219,7 @@ class BaseClient:
         payload = {"wallet": self.wallet}
         return self._send_request(url, json=payload)
 
-    def fetch_subaccount(self, subaccount_id):
+    def fetch_subaccount(self, subaccount_id: int):
         """
         Returns information for a given subaccount
         """
@@ -209,7 +237,7 @@ class BaseClient:
     def create_order(
         self,
         price,
-        amount,
+        amount: int,
         instrument_name: str,
         reduce_only=False,
         instrument_type: InstrumentType = InstrumentType.PERP,
@@ -255,6 +283,7 @@ class BaseClient:
             "referral_code": DEFAULT_REFERER if not self.referral_code else self.referral_code,
             **signed_action.to_json(),
         }
+        # breakpoint()
         response = self.submit_order(order)
         return response
 
@@ -504,7 +533,7 @@ class BaseClient:
 
     def create_subaccount(
         self,
-        amount=0,
+        amount: int = 0,
         subaccount_type: SubaccountType = SubaccountType.STANDARD,
         collateral_asset: CollateralAsset = CollateralAsset.USDC,
         underlying_currency: UnderlyingCurrency = UnderlyingCurrency.ETH,
@@ -629,7 +658,7 @@ class BaseClient:
 
     def set_mmp_config(
         self,
-        subaccount_id,
+        subaccount_id: int,
         currency: UnderlyingCurrency,
         mmp_frozen_time: int,
         mmp_interval: int,
@@ -775,7 +804,7 @@ class BaseClient:
             json=payload,
         )
 
-    def get_manager_for_subaccount(self, subaccount_id, asset_name):
+    def get_manager_for_subaccount(self, subaccount_id: int, asset_name):
         """
         Look up the manager for a subaccount
 
@@ -786,24 +815,25 @@ class BaseClient:
         deposit_currency = UnderlyingCurrency[asset_name]
         currency = self.fetch_currency(asset_name)
         underlying_address = currency['protocol_asset_addresses']['spot']
-        manager_addresses = currency['managers']
+        managers = list(map(lambda kwargs: ManagerAddress(**kwargs), currency['managers']))
+        manager_by_type = {}
+        for manager in managers:
+            manager_by_type.setdefault((manager.margin_type, manager.currency), []).append(manager)
 
-        if len(manager_addresses) == 1:
-            manager_address = manager_addresses[0].get('address')
-        else:
-            to_account = self.fetch_subaccount(subaccount_id)
-            account_type = (
-                SubaccountType.STANDARD if to_account.get("margin_type") == "SM" else SubaccountType.PORTFOLIO
-            )
-            account_currency = UnderlyingCurrency[to_account.get("currency")]
-            index = (
-                0 if account_type is SubaccountType.STANDARD else 1 if account_currency is UnderlyingCurrency.ETH else 2
-            )
-            manager_address = manager_addresses[index].get('address')
+        to_account = self.fetch_subaccount(subaccount_id)
+        account_currency = MainnetCurrency[to_account.get("currency")]
+        margin_type = MarginType[to_account.get("margin_type")]
 
-        if not manager_address or not underlying_address:
+        def get_unique_manager(margin_type, currency):
+            matches = manager_by_type.get((margin_type, currency), [])
+            if len(matches) != 1:
+                raise ValueError(f"Expected exactly one ManagerAddress for {(margin_type, currency)}, found {matches}")
+            return matches[0]
+
+        manager = get_unique_manager(margin_type, account_currency)
+        if not manager.address or not underlying_address:
             raise Exception(f"Unable to find manager address or underlying address for {asset_name}")
-        return manager_address, underlying_address, TOKEN_DECIMALS[deposit_currency]
+        return manager.address, underlying_address, TOKEN_DECIMALS[deposit_currency]
 
     def transfer_from_subaccount_to_funding(self, amount: int, asset_name: str, subaccount_id: int):
         """

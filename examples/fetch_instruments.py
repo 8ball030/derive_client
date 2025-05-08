@@ -1,6 +1,7 @@
 """
 Sample of fetching instruments from the derive client, and printing the result.
 """
+
 from rich import print
 
 from derive_client.data_types import Environment, InstrumentType, UnderlyingCurrency

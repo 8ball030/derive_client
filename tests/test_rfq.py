@@ -2,7 +2,6 @@
 Implement tests for the RFQ class.
 """
 
-
 from dataclasses import asdict, dataclass
 
 import pytest

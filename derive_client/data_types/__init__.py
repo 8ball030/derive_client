@@ -7,6 +7,8 @@ from .enums import (
     Currency,
     Environment,
     InstrumentType,
+    MainnetCurrency,
+    MarginType,
     OrderSide,
     OrderStatus,
     OrderType,
@@ -22,8 +24,10 @@ from .models import (
     CreateSubAccountData,
     CreateSubAccountDetails,
     DeriveAddresses,
+    ManagerAddress,
     MintableTokenData,
     NonMintableTokenData,
+    SessionKey,
     TxResult,
 )
 
@@ -45,9 +49,13 @@ __all__ = [
     "ActionType",
     "RfqStatus",
     "Address",
+    "SessionKey",
     "MintableTokenData",
     "NonMintableTokenData",
     "DeriveAddresses",
     "CreateSubAccountDetails",
     "CreateSubAccountData",
+    "MainnetCurrency",
+    "MarginType",
+    "ManagerAddress",
 ]
