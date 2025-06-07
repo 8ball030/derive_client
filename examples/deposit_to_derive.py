@@ -10,8 +10,8 @@ from dotenv import load_dotenv
 from derive_client.data_types import Address, ChainID, Currency, Environment
 from derive_client.derive import DeriveClient
 
-ChainChoice = click.Choice(c.name for c in ChainID)
-CurrencyChoice = click.Choice(c.name for c in Currency)
+ChainChoice = click.Choice([c.name for c in ChainID])
+CurrencyChoice = click.Choice([c.name for c in Currency])
 
 
 @click.command()
@@ -35,7 +35,7 @@ def main(chain_id, receiver, currency, amount):
         env=Environment.PROD,
     )
 
-    client.deposit_to_derive(chain_id=chain_id, receiver=receiver, currency=currency, amount=amount)
+    client.deposit_to_derive(chain_id=ChainID[chain_id], receiver=receiver, currency=Currency[currency], amount=amount)
 
 
 if __name__ == "__main__":

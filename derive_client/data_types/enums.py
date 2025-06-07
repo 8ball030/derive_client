@@ -97,12 +97,12 @@ class Currency(Enum):
     sDAI = "sDAI"
     cbBTC = "cbBTC"
     eBTC = "eBTC"
+    SNX = "SNX"
     # old style deposits
     WBTC = "WBTC"
     WETH = "WETH"
     USDC = "USDC"
     USDT = "USDT"
-    SNX = "SNX"
     wstETH = "wstETH"
     USDCe = "USDC.e"
 
