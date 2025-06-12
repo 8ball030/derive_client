@@ -3,6 +3,7 @@ Cli module in order to allow interaction.
 """
 
 import os
+from pathlib import Path
 from textwrap import dedent
 
 import pandas as pd
@@ -39,45 +40,39 @@ def set_logger(ctx, level):
     return ctx.logger
 
 
-def set_client(ctx):
+def set_client(ctx, env, subaccount_id, derive_sc_wallet, signer_key_path):
     """Set the client."""
     # we use dotenv to load the env vars from DIRECTORY where the cli tool is executed
     _path = os.getcwd()
     env_path = os.path.join(_path, ".env")
     load_dotenv(dotenv_path=env_path)
     if not hasattr(ctx, "client"):
+
+        if signer_key_path:
+            private_key = Path(signer_key_path).read_text().strip()
+        else:
+            private_key = os.environ.get("ETH_PRIVATE_KEY")
+        if not private_key:
+            raise ValueError("Private key not found. Please provide a valid private key.")
+
         auth = {
-            "private_key": os.environ.get("ETH_PRIVATE_KEY"),
+            "private_key": private_key,
             "logger": ctx.logger,
             "verbose": ctx.logger.level == "DEBUG",
         }
-        chain = os.environ.get("ENVIRONMENT")
-        if chain == Environment.PROD.value:
-            env = Environment.PROD
-        else:
-            env = Environment.TEST
+        env = Environment(env) if isinstance(env, Environment) else Environment[env.upper()]
 
-        subaccount_id = os.environ.get("SUBACCOUNT_ID", None)
-        if subaccount_id:
-            subaccount_id = int(subaccount_id)
-        wallet = os.environ.get("WALLET")
-
-        if not wallet and subaccount_id is None:
+        if not derive_sc_wallet and subaccount_id is None:
             msg = dedent(
                 """
                 Please provide either a wallet or a subaccount_id in the .env file at {env_path}"
                 Wallet is the address of the account to use, subaccount_id is the subaccount to use"
                 Subaccount_id is the subaccount to use"
-
-                Example .env file:
-                    ETH_PRIVATE_KEY=0x1234567890abcdef
-                    ENVIRONMENT=prod
-                    WALLET=0x1234567890abcdef
-                    # SUBACCOUNT_ID=123456
+                You must provide the `DERIVE_SC_WALLET" flag.
                 """
             )
             raise ValueError(msg)
-        ctx.client = DeriveClient(**auth, env=env, subaccount_id=subaccount_id, wallet=wallet)
+        ctx.client = DeriveClient(**auth, env=env, subaccount_id=subaccount_id, wallet=derive_sc_wallet)
 
     if ctx.logger.level == "DEBUG":
         print(f"Client created for environment `{ctx.client.env.value}`")
@@ -92,12 +87,33 @@ def set_client(ctx):
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
     help="Logging level.",
 )
+@click.option(
+    "--env",
+    "-e",
+    type=click.Choice([e.value for e in Environment]),
+    default=Environment.PROD.value,
+    help="Environment to use (test or prod).",
+)
+@click.option(
+    "--subaccount-id",
+    "-s",
+    type=int,
+    default=None,
+    help="Subaccount ID to use. If not provided, the client will use the wallet address.",
+)
+@click.option("--derive-sc-wallet", "-w", type=str, help="Wallet address to use.")
+@click.option(
+    "--signer-key-path",
+    "-k",
+    type=click.Path(exists=True, dir_okay=False, readable=True),
+    help="Path to the file containing the private key for the signer.",
+)
 @click.pass_context
-def cli(ctx, log_level):
+def cli(ctx, log_level, env, subaccount_id, derive_sc_wallet, signer_key_path):
     """Derive v2 client command line interface."""
     ctx.ensure_object(dict)
     ctx.obj["logger"] = set_logger(ctx, log_level)
-    ctx.obj["client"] = set_client(ctx)
+    ctx.obj["client"] = set_client(ctx, env, subaccount_id, derive_sc_wallet, signer_key_path)
 
 
 @cli.group("bridge")

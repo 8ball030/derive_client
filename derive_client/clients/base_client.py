@@ -97,9 +97,9 @@ class BaseClient:
         w3 = Web3(Web3.HTTPProvider(self.config.rpc_endpoint))
         if not w3.is_connected():
             raise ConnectionError(f"Failed to connect to RPC at {self.config.rpc_endpoint}")
-        if not w3.eth.get_code(wallet):
-            msg = f"{wallet} appears to be an EOA (no bytecode). Expected a smart-contract wallet on Derive."
-            raise ValueError(msg)
+        # if not w3.eth.get_code(wallet):
+        #     msg = f"{wallet} appears to be an EOA (no bytecode). Expected a smart-contract wallet on Derive."
+        #     raise ValueError(msg)
         session_keys = self._get_session_keys(wallet)
         if not any(self.signer.address == s.public_session_key for s in session_keys):
             msg = f"{self.signer.address} is not among registered session keys for wallet {wallet}."

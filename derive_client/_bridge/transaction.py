@@ -218,7 +218,7 @@ def prepare_withdraw_wrapper_tx(
     @exp_backoff_retry
     def simulate_tx():
         fee_estimations = estimate_fees(w3, blocks=100, percentiles=[99])
-        max_fee = fee_estimations[0]['maxFeePerGas']
+        max_fee = fee_estimations[0]['maxFeePerGas'] * 1.15
         priority_fee = fee_estimations[0]['maxPriorityFeePerGas']
 
         tx = func.build_transaction(
