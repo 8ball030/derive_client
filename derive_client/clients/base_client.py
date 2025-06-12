@@ -20,13 +20,13 @@ from derive_action_signing.module_data import (
 )
 from derive_action_signing.signed_action import SignedAction
 from derive_action_signing.utils import MAX_INT_32, get_action_nonce, sign_rest_auth_header, sign_ws_login, utc_now_ms
-from pydantic import validate_arguments
+from pydantic import validate_call
 from rich import print
 from web3 import Web3
 from websocket import WebSocketConnectionClosedException, create_connection
 
 from derive_client._bridge import BridgeClient
-from derive_client.constants import CONFIGS, DEFAULT_REFERER, PUBLIC_HEADERS, TARGET_SPEED, TOKEN_DECIMALS
+from derive_client.constants import CONFIGS, DEFAULT_REFERER, PUBLIC_HEADERS, TOKEN_DECIMALS
 from derive_client.data_types import (
     Address,
     ChainID,
@@ -71,7 +71,7 @@ class BaseClient:
             session_key_or_wallet_private_key=self.signer._private_key,
         )
 
-    @validate_arguments(config=dict(arbitrary_types_allowed=True))
+    @validate_call(config=dict(arbitrary_types_allowed=True))
     def __init__(
         self,
         wallet: Address,
@@ -134,7 +134,8 @@ class BaseClient:
             raise Exception(result_code["error"])
         return True
 
-    def deposit_to_derive(self, chain_id: ChainID, currency: Currency, amount: int, receiver: Address) -> TxResult:
+    @validate_call
+    def deposit_to_derive(self, chain_id: ChainID, currency: Currency, amount: float, receiver: Address) -> TxResult:
         """Deposit funds via socket superbridge to Derive chain smart contract funding account.
 
         Parameters:
@@ -146,20 +147,33 @@ class BaseClient:
 
         w3 = get_w3_connection(chain_id=chain_id)
         derive_addresses = get_prod_derive_addresses()
+        amount = int(amount * 10 ** TOKEN_DECIMALS[UnderlyingCurrency[currency.name]])
+        client = BridgeClient(self.env, w3=w3, account=self.signer)
+        if currency == Currency.DRV:
+            return client.deposit_drv(
+                amount=amount,
+                receiver=receiver,
+                chain_id=chain_id,
+            )
+        # Hmmmm this is a bit of a hack, but we need to derive the token data
         token_data = derive_addresses.chains[chain_id][currency]
-        connector = token_data.connectors[ChainID.DERIVE][TARGET_SPEED]
-        amount = int(amount * 10 ** TOKEN_DECIMALS[UnderlyingCurrency(currency.name.lower())])
-        client = BridgeClient(self.env, w3=w3, account=self.signer, chain_id=chain_id)
-        client.load_bridge_contract(token_data.Vault, token_data.isNewBridge)
-        client.load_deposit_helper()
+        if chain_id in [
+            ChainID.ARBITRUM,
+            ChainID.OPTIMISM,
+        ]:
+            if chain_id == ChainID.ARBITRUM:
+                print("Using Arbitrum bridge for deposit")
+            else:
+                print("Using Optimism bridge for deposit")
+
         return client.deposit(
             amount=amount,
             receiver=receiver,
-            connector=connector,
             token_data=token_data,
         )
 
-    def withdraw_from_derive(self, chain_id: ChainID, currency: Currency, amount: int, receiver: Address) -> TxResult:
+    @validate_call
+    def withdraw_from_derive(self, chain_id: ChainID, currency: Currency, amount: float, receiver: Address) -> TxResult:
         """Deposit funds via socket superbridge to Derive chain smart contract funding account.
 
         Parameters:
@@ -171,16 +185,26 @@ class BaseClient:
 
         w3 = get_w3_connection(chain_id=ChainID.DERIVE)
         derive_addresses = get_prod_derive_addresses()
+        amount = int(amount * 10 ** TOKEN_DECIMALS[UnderlyingCurrency[currency.name]])
+        client = BridgeClient(self.env, w3=w3, account=self.signer)
+
+        if currency == Currency.DRV:
+            return client.withdraw_drv(
+                amount=amount,
+                receiver=receiver,
+                wallet=self.wallet,
+                private_key=self.signer._private_key,
+                target_chain=chain_id,
+            )
+
         token_data = derive_addresses.chains[ChainID.DERIVE][currency]
-        amount = int(amount * 10 ** TOKEN_DECIMALS[UnderlyingCurrency(currency.name.lower())])
-        client = BridgeClient(self.env, w3=w3, account=self.signer, chain_id=chain_id)
-        client.load_withdraw_wrapper()
         return client.withdraw_with_wrapper(
             amount=amount,
             receiver=receiver,
             token_data=token_data,
             wallet=self.wallet,
             private_key=self.signer._private_key,
+            target_chain=chain_id,
         )
 
     def fetch_instruments(
@@ -232,7 +256,7 @@ class BaseClient:
         Map the instrument.
         """
         instruments = self.fetch_instruments(instrument_type=instrument_type, currency=currency)
-        return {i['instrument_name']: i for i in instruments}
+        return {i["instrument_name"]: i for i in instruments}
 
     def create_order(
         self,
@@ -254,21 +278,25 @@ class BaseClient:
 
         if not instruments:
             _currency = UnderlyingCurrency[instrument_name.split("-")[0]]
-            if instrument_type in [InstrumentType.PERP, InstrumentType.ERC20, InstrumentType.OPTION]:
+            if instrument_type in [
+                InstrumentType.PERP,
+                InstrumentType.ERC20,
+                InstrumentType.OPTION,
+            ]:
                 instruments = self._internal_map_instrument(instrument_type, _currency)
             else:
                 raise Exception(f"Invalid instrument type {instrument_type}")
 
         instrument = instruments[instrument_name]
-        amount_step = instrument['amount_step']
+        amount_step = instrument["amount_step"]
         rounded_amount = Decimal(str(amount)).quantize(Decimal(str(amount_step)))
 
-        price_step = instrument['tick_size']
+        price_step = instrument["tick_size"]
         rounded_price = Decimal(str(price)).quantize(Decimal(str(price_step)))
 
         module_data = {
-            "asset_address": instrument['base_asset_address'],
-            "sub_id": int(instrument['base_asset_sub_id']),
+            "asset_address": instrument["base_asset_address"],
+            "sub_id": int(instrument["base_asset_sub_id"]),
             "limit_price": Decimal(str(rounded_price)),
             "amount": Decimal(str(rounded_amount)),
             "max_fee": Decimal(1000),
@@ -289,7 +317,7 @@ class BaseClient:
             "referral_code": DEFAULT_REFERER if not self.referral_code else self.referral_code,
             **signed_action.to_json(),
         }
-        # breakpoint()
+
         response = self.submit_order(order)
         return response
 
@@ -319,16 +347,16 @@ class BaseClient:
 
     def submit_order(self, order):
         id = str(utc_now_ms())
-        self.ws.send(json.dumps({'method': 'private/order', 'params': order, 'id': id}))
+        self.ws.send(json.dumps({"method": "private/order", "params": order, "id": id}))
         while True:
             message = json.loads(self.ws.recv())
-            if message['id'] == id:
+            if message["id"] == id:
                 try:
                     if "result" not in message:
                         if self._check_output_for_rate_limit(message):
                             return self.submit_order(order)
-                        raise ApiException(message['error'])
-                    return message['result']['order']
+                        raise ApiException(message["error"])
+                    return message["result"]["order"]
                 except KeyError as error:
                     print(message)
                     raise Exception(f"Unable to submit order {message}") from error
@@ -345,32 +373,32 @@ class BaseClient:
         Convert the quote to encoded data.
         """
         instruments = self.fetch_instruments(instrument_type=InstrumentType.OPTION, currency=underlying_currency)
-        ledgs_to_subids = {i['instrument_name']: i['base_asset_sub_id'] for i in instruments}
-        dir_sign = 1 if quote['direction'] == 'buy' else -1
-        quote['price'] = '10'
+        ledgs_to_subids = {i["instrument_name"]: i["base_asset_sub_id"] for i in instruments}
+        dir_sign = 1 if quote["direction"] == "buy" else -1
+        quote["price"] = "10"
 
         def encode_leg(leg):
             print(quote)
-            sub_id = ledgs_to_subids[leg['instrument_name']]
-            leg_sign = 1 if leg['direction'] == 'buy' else -1
-            signed_amount = self.web3_client.to_wei(leg['amount'], 'ether') * leg_sign * dir_sign
+            sub_id = ledgs_to_subids[leg["instrument_name"]]
+            leg_sign = 1 if leg["direction"] == "buy" else -1
+            signed_amount = self.web3_client.to_wei(leg["amount"], "ether") * leg_sign * dir_sign
             return [
                 self.config.contracts[f"{underlying_currency.name}_OPTION"],
                 sub_id,
-                self.web3_client.to_wei(quote['price'], 'ether'),
+                self.web3_client.to_wei(quote["price"], "ether"),
                 signed_amount,
             ]
 
-        encoded_legs = [encode_leg(leg) for leg in quote['legs']]
-        rfq_data = [self.web3_client.to_wei(quote['max_fee'], 'ether'), encoded_legs]
+        encoded_legs = [encode_leg(leg) for leg in quote["legs"]]
+        rfq_data = [self.web3_client.to_wei(quote["max_fee"], "ether"), encoded_legs]
 
         encoded_data = eth_abi.encode(
             # ['uint256(address,uint256,uint256,int256)[]'],
             [
-                'uint256',
-                'address',
-                'uint256',
-                'int256',
+                "uint256",
+                "address",
+                "uint256",
+                "int256",
             ],
             [rfq_data],
         )
@@ -378,7 +406,7 @@ class BaseClient:
 
     @property
     def ws(self):
-        if not hasattr(self, '_ws'):
+        if not hasattr(self, "_ws"):
             self._ws = self.connect_ws()
         if not self._ws.connected:
             self._ws = self.connect_ws()
@@ -389,24 +417,24 @@ class BaseClient:
         retries=3,
     ):
         login_request = {
-            'method': 'public/login',
-            'params': sign_ws_login(
+            "method": "public/login",
+            "params": sign_ws_login(
                 web3_client=self.web3_client,
                 smart_contract_wallet=self.wallet,
                 session_key_or_wallet_private_key=self.signer._private_key,
             ),
-            'id': str(utc_now_ms()),
+            "id": str(utc_now_ms()),
         }
         try:
             self.ws.send(json.dumps(login_request))
             # we need to wait for the response
             while True:
                 message = json.loads(self.ws.recv())
-                if message['id'] == login_request['id']:
+                if message["id"] == login_request["id"]:
                     if "result" not in message:
                         if self._check_output_for_rate_limit(message):
                             return self.login_client()
-                        raise ApiException(message['error'])
+                        raise ApiException(message["error"])
                     break
         except (WebSocketConnectionClosedException, Exception) as error:
             if retries:
@@ -436,13 +464,21 @@ class BaseClient:
         Fetch the orders for a given instrument name.
         """
         url = f"{self.config.base_url}/private/get_orders"
-        payload = {"instrument_name": instrument_name, "subaccount_id": self.subaccount_id}
-        for key, value in {"label": label, "page": page, "page_size": page_size, "status": status}.items():
+        payload = {
+            "instrument_name": instrument_name,
+            "subaccount_id": self.subaccount_id,
+        }
+        for key, value in {
+            "label": label,
+            "page": page,
+            "page_size": page_size,
+            "status": status,
+        }.items():
             if value:
                 payload[key] = value
         headers = self._create_signature_headers()
         response = requests.post(url, json=payload, headers=headers)
-        results = response.json()["result"]['orders']
+        results = response.json()["result"]["orders"]
         return results
 
     def cancel(self, order_id, instrument_name):
@@ -451,12 +487,16 @@ class BaseClient:
         """
 
         id = str(utc_now_ms())
-        payload = {"order_id": order_id, "subaccount_id": self.subaccount_id, "instrument_name": instrument_name}
-        self.ws.send(json.dumps({'method': 'private/cancel', 'params': payload, 'id': id}))
+        payload = {
+            "order_id": order_id,
+            "subaccount_id": self.subaccount_id,
+            "instrument_name": instrument_name,
+        }
+        self.ws.send(json.dumps({"method": "private/cancel", "params": payload, "id": id}))
         while True:
             message = json.loads(self.ws.recv())
-            if message['id'] == id:
-                return message['result']
+            if message["id"] == id:
+                return message["result"]
 
     def cancel_all(self):
         """
@@ -465,20 +505,20 @@ class BaseClient:
         id = str(utc_now_ms())
         payload = {"subaccount_id": self.subaccount_id}
         self.login_client()
-        self.ws.send(json.dumps({'method': 'private/cancel_all', 'params': payload, 'id': id}))
+        self.ws.send(json.dumps({"method": "private/cancel_all", "params": payload, "id": id}))
         while True:
             message = json.loads(self.ws.recv())
-            if message['id'] == id:
+            if message["id"] == id:
                 if "result" not in message:
                     if self._check_output_for_rate_limit(message):
                         return self.cancel_all()
-                    raise ApiException(message['error'])
-                return message['result']
+                    raise ApiException(message["error"])
+                return message["result"]
 
     def _check_output_for_rate_limit(self, message):
-        if error := message.get('error'):
-            if 'Rate limit exceeded' in error['message']:
-                sleep((int(error['data'].split(' ')[-2]) / 1000))
+        if error := message.get("error"):
+            if "Rate limit exceeded" in error["message"]:
+                sleep((int(error["data"].split(" ")[-2]) / 1000))
                 print("Rate limit exceeded, sleeping and retrying request")
                 return True
         return False
@@ -495,7 +535,7 @@ class BaseClient:
             session_key_or_wallet_private_key=self.signer._private_key,
         )
         response = requests.post(url, json=payload, headers=headers)
-        results = response.json()["result"]['positions']
+        results = response.json()["result"]["positions"]
         return results
 
     def get_collaterals(self):
@@ -505,7 +545,7 @@ class BaseClient:
         url = f"{self.config.base_url}/private/get_collaterals"
         payload = {"subaccount_id": self.subaccount_id}
         result = self._send_request(url, json=payload)
-        return result['collaterals']
+        return result["collaterals"]
 
     def fetch_tickers(
         self,
@@ -516,25 +556,25 @@ class BaseClient:
         Fetch tickers using the ws connection
         """
         instruments = self.fetch_instruments(instrument_type=instrument_type, currency=currency)
-        instrument_names = [i['instrument_name'] for i in instruments]
+        instrument_names = [i["instrument_name"] for i in instruments]
         id_base = str(utc_now_ms())
         ids_to_instrument_names = {
-            f'{id_base}_{enumerate}': instrument_name for enumerate, instrument_name in enumerate(instrument_names)
+            f"{id_base}_{enumerate}": instrument_name for enumerate, instrument_name in enumerate(instrument_names)
         }
         for id, instrument_name in ids_to_instrument_names.items():
             payload = {"instrument_name": instrument_name}
-            self.ws.send(json.dumps({'method': 'public/get_ticker', 'params': payload, 'id': id}))
+            self.ws.send(json.dumps({"method": "public/get_ticker", "params": payload, "id": id}))
             sleep(0.05)  # otherwise we get rate limited...
         results = {}
         while ids_to_instrument_names:
             message = json.loads(self.ws.recv())
-            if message['id'] in ids_to_instrument_names:
+            if message["id"] in ids_to_instrument_names:
                 if "result" not in message:
                     if self._check_output_for_rate_limit(message):
                         return self.fetch_tickers(instrument_type=instrument_type, currency=currency)
-                    raise ApiException(message['error'])
-                results[message['result']['instrument_name']] = message['result']
-                del ids_to_instrument_names[message['id']]
+                    raise ApiException(message["error"])
+                results[message["result"]["instrument_name"]] = message["result"]
+                del ids_to_instrument_names[message["id"]]
         return results
 
     def create_subaccount(
@@ -579,8 +619,8 @@ class BaseClient:
             **signed_action.to_json(),
         }
         if subaccount_type is SubaccountType.PORTFOLIO:
-            payload['currency'] = underlying_currency.name
-        del payload['subaccount_id']
+            payload["currency"] = underlying_currency.name
+        del payload["subaccount_id"]
         response = self._send_request(url, json=payload)
         return response
 
@@ -659,7 +699,7 @@ class BaseClient:
         url = f"{self.config.base_url}/private/get_mmp_config"
         payload = {"subaccount_id": self.subaccount_id}
         if currency:
-            payload['currency'] = currency.name
+            payload["currency"] = currency.name
         return self._send_request(url, json=payload)
 
     def set_mmp_config(
@@ -730,7 +770,7 @@ class BaseClient:
             "rfq_id": rfq_id,
             "legs": legs,
             "direction": direction,
-            "max_fee": '10.0',
+            "max_fee": "10.0",
             "nonce": nonce,
             "signer": self.signer.address,
             "signature_expiry_sec": expiration,
@@ -770,12 +810,13 @@ class BaseClient:
         if not manager_address or not underlying_address:
             raise Exception(f"Unable to find manager address or underlying address for {asset_name}")
 
+        currency = UnderlyingCurrency[asset_name.upper()]
         deposit_module_data = DepositModuleData(
             amount=str(amount),
             asset=underlying_address,
             manager=manager_address,
             decimals=decimals,
-            asset_name=asset_name,
+            asset_name=currency.name,
         )
 
         sender_action = SignedAction(
@@ -792,7 +833,7 @@ class BaseClient:
         sender_action.sign(self.signer.key)
         payload = {
             "amount": str(amount),
-            "asset_name": asset_name,
+            "asset_name": currency.name,
             "is_atomic_signing": False,
             "nonce": sender_action.nonce,
             "signature": sender_action.signature,
@@ -821,10 +862,10 @@ class BaseClient:
         If SM, use the standard manager address
         If PM, use the appropriate manager address based on the currency of the subaccount
         """
-        deposit_currency = UnderlyingCurrency[asset_name]
-        currency = self.fetch_currency(asset_name)
-        underlying_address = currency['protocol_asset_addresses']['spot']
-        managers = list(map(lambda kwargs: ManagerAddress(**kwargs), currency['managers']))
+        deposit_currency = UnderlyingCurrency[asset_name.upper()]
+        currency = self.fetch_currency(asset_name.upper())
+        underlying_address = currency["protocol_asset_addresses"]["spot"]
+        managers = list(map(lambda kwargs: ManagerAddress(**kwargs), currency["managers"]))
         manager_by_type = {}
         for manager in managers:
             manager_by_type.setdefault((manager.margin_type, manager.currency), []).append(manager)
@@ -855,11 +896,12 @@ class BaseClient:
         if not manager_address or not underlying_address:
             raise Exception(f"Unable to find manager address or underlying address for {asset_name}")
 
+        currency = UnderlyingCurrency[asset_name.upper()]
         module_data = WithdrawModuleData(
             amount=str(amount),
             asset=underlying_address,
             decimals=decimals,
-            asset_name=asset_name,
+            asset_name=currency.name,
         )
         sender_action = SignedAction(
             subaccount_id=subaccount_id,
@@ -876,7 +918,7 @@ class BaseClient:
         payload = {
             "is_atomic_signing": False,
             "amount": str(amount),
-            "asset_name": asset_name,
+            "asset_name": currency.name,
             "nonce": sender_action.nonce,
             "signature": sender_action.signature,
             "signature_expiry_sec": sender_action.signature_expiry_sec,
