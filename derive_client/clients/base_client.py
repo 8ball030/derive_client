@@ -155,8 +155,17 @@ class BaseClient:
                 receiver=receiver,
                 chain_id=chain_id,
             )
-
+        # Hmmmm this is a bit of a hack, but we need to derive the token data
         token_data = derive_addresses.chains[chain_id][currency]
+        if chain_id in [
+            ChainID.ARBITRUM,
+            ChainID.OPTIMISM,
+        ]:
+            if chain_id == ChainID.ARBITRUM:
+                print("Using Arbitrum bridge for deposit")
+            else:
+                print("Using Optimism bridge for deposit")
+
         return client.deposit(
             amount=amount,
             receiver=receiver,

@@ -91,7 +91,15 @@ class BridgeClient:
         self.deposit_helper = self._load_deposit_helper()
 
     def _load_deposit_helper(self) -> Contract:
-        address = self.config.contracts.DEPOSIT_WRAPPER
+        address = (
+            self.config.contracts.DEPOSIT_WRAPPER
+            if self.w3.eth.chain_id
+            not in [
+                ChainID.ARBITRUM,
+                ChainID.OPTIMISM,
+            ]
+            else getattr(self.config.contracts, f"{ChainID(self.w3.eth.chain_id).name}_DEPOSIT_WRAPPER")
+        )
         abi = json.loads(DEPOSIT_HELPER_ABI_PATH.read_text())
         return get_contract(w3=self.w3, address=address, abi=abi)
 

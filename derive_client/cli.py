@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from rich import print
 
 from derive_client.analyser import PortfolioAnalyser
+from derive_client.clients.base_client import BaseClient
 from derive_client.data_types import (
     ChainID,
     CollateralAsset,
@@ -151,7 +152,7 @@ def deposit(ctx, chain_id, currency, amount):
     chain_id = ChainID[chain_id]
     currency = Currency[currency]
 
-    client = ctx.obj["client"]
+    client: BaseClient = ctx.obj["client"]
     receiver = client.wallet
 
     tx_result = client.deposit_to_derive(chain_id=chain_id, currency=currency, amount=amount, receiver=receiver)
