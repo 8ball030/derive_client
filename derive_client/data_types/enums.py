@@ -39,15 +39,15 @@ class LayerZeroChainIDv2(IntEnum):
 
 class DeriveTokenAddresses(Enum):
     # https://www.coingecko.com/en/coins/derive
-    ETH: "0xb1d1eae60eea9525032a6dcb4c1ce336a1de71be"  # impl: 0x4909ad99441ea5311b90a94650c394cea4a881b8 (Derive)
-    OPTIMISM: (
+    ETH = "0xb1d1eae60eea9525032a6dcb4c1ce336a1de71be"  # impl: 0x4909ad99441ea5311b90a94650c394cea4a881b8 (Derive)
+    OPTIMISM = (
         "0x33800de7e817a70a694f31476313a7c572bba100"  # impl: 0x1eda1f6e04ae37255067c064ae783349cf10bdc5 (DeriveL2)
     )
-    BASE: "0x9d0e8f5b25384c7310cb8c6ae32c8fbeb645d083"  # impl: 0x01259207a40925b794c8ac320456f7f6c8fe2636 (DeriveL2)
-    ARBITRUM: (
+    BASE = "0x9d0e8f5b25384c7310cb8c6ae32c8fbeb645d083"  # impl: 0x01259207a40925b794c8ac320456f7f6c8fe2636 (DeriveL2)
+    ARBITRUM = (
         "0x77b7787a09818502305c95d68a2571f090abb135"  # impl: 0x5d22b63d83a9be5e054df0e3882592ceffcef097 (DeriveL2)
     )
-    DERIVE: "0x2EE0fd70756EDC663AcC9676658A1497C247693A"  # impl: 0x340B51Cb46DBF63B55deD80a78a40aa75Dd4ceDF (DeriveL2)
+    DERIVE = "0x2EE0fd70756EDC663AcC9676658A1497C247693A"  # impl: 0x340B51Cb46DBF63B55deD80a78a40aa75Dd4ceDF (DeriveL2)
 
 
 class RPCEndPoints(Enum):

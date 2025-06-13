@@ -118,7 +118,7 @@ class BridgeClient:
         Deposit funds by preparing, signing, and sending a bridging transaction.
         """
 
-        spender = Web3.to_checksum_address(DeriveTokenAddresses[chain_id.name])
+        spender = Web3.to_checksum_address(DeriveTokenAddresses[chain_id.name].value)
         if chain_id == ChainID.ETH:
             abi_path = CONTROLLER_ABI_PATH.parent / "Derive.json"
         else:
@@ -137,7 +137,7 @@ class BridgeClient:
             private_key=self.account._private_key,
         )
 
-        receiver_bytes32 = Web3.to_bytes(hexstr=self.account.address).rjust(32, b"\x00")
+        receiver_bytes32 = Web3.to_bytes(hexstr=receiver).rjust(32, b"\x00")
 
         params = (
             LayerZeroChainIDv2.DERIVE.value,  # dstEid
@@ -265,6 +265,10 @@ class BridgeClient:
             print(f"Funding Derive EOA wallet with {DEFAULT_GAS_FUNDING_AMOUNT} ETH")
             self.bridge_mainnet_eth_to_derive(DEFAULT_GAS_FUNDING_AMOUNT)
 
+        if target_chain not in token_data.connectors:
+            raise ValueError(
+                f"Target chain {target_chain} not found in token data connectors. Please check input configuration."
+            )
         connector = token_data.connectors[target_chain][TARGET_SPEED]
 
         # Get the token contract and Light Account contract instances.
