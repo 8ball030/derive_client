@@ -30,7 +30,7 @@ from derive_client.derive import DeriveClient
 from derive_client.utils import get_logger
 
 click.rich_click.USE_RICH_MARKUP = True
-pd.set_option('display.precision', 2)
+pd.set_option("display.precision", 2)
 
 
 def set_logger(ctx, level):
@@ -48,7 +48,6 @@ def set_client(ctx, env, subaccount_id, derive_sc_wallet, signer_key_path):
     env_path = os.path.join(_path, ".env")
     load_dotenv(dotenv_path=env_path)
     if not hasattr(ctx, "client"):
-
         if signer_key_path:
             private_key = Path(signer_key_path).read_text().strip()
         else:
@@ -62,10 +61,12 @@ def set_client(ctx, env, subaccount_id, derive_sc_wallet, signer_key_path):
             "verbose": ctx.logger.level == "DEBUG",
         }
         env = Environment(env) if isinstance(env, Environment) else Environment[env.upper()]
+        if not derive_sc_wallet:
+            derive_sc_wallet = os.environ.get("WALLET")
 
         if not derive_sc_wallet and subaccount_id is None:
             msg = dedent(
-                """
+                f"""
                 Please provide either a wallet or a subaccount_id in the .env file at {env_path}"
                 Wallet is the address of the account to use, subaccount_id is the subaccount to use"
                 Subaccount_id is the subaccount to use"
@@ -138,7 +139,11 @@ def bridge():
     help="The token symbol (e.g. weETH) to bridge.",
 )
 @click.option(
-    "--amount", "-a", type=float, required=True, help="The amount to deposit in ETH (will be converted to Wei)."
+    "--amount",
+    "-a",
+    type=float,
+    required=True,
+    help="The amount to deposit in ETH (will be converted to Wei).",
 )
 @click.pass_context
 def deposit(ctx, chain_id, currency, amount):
@@ -184,7 +189,11 @@ def deposit(ctx, chain_id, currency, amount):
     help="The token symbol (e.g. weETH) to bridge.",
 )
 @click.option(
-    "--amount", "-a", type=float, required=True, help="The amount to deposit in ETH (will be converted to Wei)."
+    "--amount",
+    "-a",
+    type=float,
+    required=True,
+    help="The amount to deposit in ETH (will be converted to Wei).",
 )
 @click.pass_context
 def withdraw(ctx, chain_id, currency, amount):
@@ -319,7 +328,15 @@ def fetch_mmp(ctx, underlying_currency, subaccount_id):
     default=2,
 )
 @click.pass_context
-def set_mmp(ctx, underlying_currency, subaccount_id, frozen_time, interval, amount_limit, delta_limit):
+def set_mmp(
+    ctx,
+    underlying_currency,
+    subaccount_id,
+    frozen_time,
+    interval,
+    amount_limit,
+    delta_limit,
+):
     """Set market making parameters."""
     client = ctx.obj["client"]
     mmp = client.set_mmp_config(
@@ -371,7 +388,8 @@ def fetch_instruments(ctx, instrument_type, currency):
     """Fetch markets."""
     client = ctx.obj["client"]
     markets = client.fetch_instruments(
-        instrument_type=InstrumentType(instrument_type), currency=UnderlyingCurrency(currency)
+        instrument_type=InstrumentType(instrument_type),
+        currency=UnderlyingCurrency(currency),
     )
     print(markets)
 
@@ -563,12 +581,12 @@ def fetch_orders(ctx, instrument_name, label, page, page_size, status, regex):
     print(instrument_names)
     # print the orders
     # perform some analysis
-    df['amount'] = pd.to_numeric(df['amount'])
-    df['filled_amount'] = pd.to_numeric(df['filled_amount'])
-    df['limit_price'] = pd.to_numeric(df['limit_price'])
+    df["amount"] = pd.to_numeric(df["amount"])
+    df["filled_amount"] = pd.to_numeric(df["filled_amount"])
+    df["limit_price"] = pd.to_numeric(df["limit_price"])
 
-    buys = df[df['direction'] == 'buy']
-    sells = df[df['direction'] == 'sell']
+    buys = df[df["direction"] == "buy"]
+    sells = df[df["direction"] == "sell"]
     print("Buys")
     print(buys)
     print("Sells")
@@ -576,20 +594,20 @@ def fetch_orders(ctx, instrument_name, label, page, page_size, status, regex):
 
     print("Average buy cost")
     # we determine by the average price of the buys by the amount
-    df['cost'] = buys['limit_price'] * buys['amount']
-    print(df['cost'].sum())
-    amount = buys['amount'].sum()
+    df["cost"] = buys["limit_price"] * buys["amount"]
+    print(df["cost"].sum())
+    amount = buys["amount"].sum()
     print(amount)
-    buy_total_cost = df['cost'].sum()
+    buy_total_cost = df["cost"].sum()
     print(f"Price per unit: {buy_total_cost / amount}")
     print(buy_total_cost / amount)
     print("Average sell cost")
     # we determine by the average price of the buys by the amount
-    df['cost'] = sells['limit_price'] * sells['amount']
-    print(df['cost'].sum())
-    amount = sells['amount'].sum()
+    df["cost"] = sells["limit_price"] * sells["amount"]
+    print(df["cost"].sum())
+    amount = sells["amount"].sum()
     print(amount)
-    sell_total_cost = df['cost'].sum()
+    sell_total_cost = df["cost"].sum()
     print(f"Price per unit: {sell_total_cost / amount}")
     print(sell_total_cost / amount)
 
