@@ -5,6 +5,7 @@ Bridge client to deposit funds to the Derive smart contract funding account
 from __future__ import annotations
 
 import json
+from typing import NamedTuple
 
 from eth_account import Account
 from web3 import Web3
@@ -118,7 +119,7 @@ class BridgeClient:
         Deposit funds by preparing, signing, and sending a bridging transaction.
         """
 
-        spender = Web3.to_checksum_address(DeriveTokenAddresses[chain_id.name])
+        spender = Web3.to_checksum_address(DeriveTokenAddresses[chain_id.name].value)
         if chain_id == ChainID.ETH:
             abi_path = CONTROLLER_ABI_PATH.parent / "Derive.json"
         else:
@@ -137,25 +138,52 @@ class BridgeClient:
             private_key=self.account._private_key,
         )
 
-        receiver_bytes32 = Web3.to_bytes(hexstr=self.account.address).rjust(32, b"\x00")
+        receiver_bytes32 = Web3.to_bytes(hexstr=receiver).rjust(32, b"\x00")
+
+        amount_ld      = 1000000000000000000000
+        min_amount_ld  = 900000000000000000000
+        extra_options  = b""  # extraOptions
+
 
         params = (
             LayerZeroChainIDv2.DERIVE.value,  # dstEid
             receiver_bytes32,  # receiver
             amount,  # amountLD
-            amount,  # minAmountLD
-            b"",  # extraOptions
+            0,  # minAmountLD
+            extra_options,
+            b"",  # composeMsg
+            b"",  # oftCmd
+        )
+        extra_options  = b"0x00030100110100000000000000000000000000000000"  # extraOptions
+        send_params = (
+            params[0],  # dstEid
+            params[1], # receiver
+            params[2],  # amountLD
+            params[3],  # minAmountLD
+            params[4],  # extraOptions
             b"",  # composeMsg
             b"",  # oftCmd
         )
         fees = token_contract.functions.quoteSend(
-            params,
+            send_params,  # params, feeParams
             False,  # payInLzToken
         ).call()
 
         native_fee, lz_token_fee = fees
         _refundAddress = self.account.address
-        func = token_contract.functions.send(params, fees, _refundAddress)
+
+        # fees = token_contract.functions.quoteOFT(
+        #     send_params,  # params, feeParams
+        #     # False,  # payInLzToken
+        # ).call()
+        # breakpoint()
+
+
+        func = token_contract.functions.send(
+            send_params, 
+            fees,  # lzTokenFee
+            _refundAddress)
+
 
         tx = build_standard_transaction(func=func, account=self.account, w3=self.w3, value=native_fee)
 
@@ -265,6 +293,10 @@ class BridgeClient:
             print(f"Funding Derive EOA wallet with {DEFAULT_GAS_FUNDING_AMOUNT} ETH")
             self.bridge_mainnet_eth_to_derive(DEFAULT_GAS_FUNDING_AMOUNT)
 
+        if target_chain not in token_data.connectors:
+            raise ValueError(
+                f"Target chain {target_chain} not found in token data connectors. Please check input configuration."
+            )
         connector = token_data.connectors[target_chain][TARGET_SPEED]
 
         # Get the token contract and Light Account contract instances.
