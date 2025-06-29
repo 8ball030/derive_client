@@ -1,67 +1,15 @@
-"""
-Utils for the derive package.
-"""
-
-import functools
 import json
-import logging
-import sys
 import time
-from collections import defaultdict
 
+from eth_account import Account
 from hexbytes import HexBytes
-from rich.logging import RichHandler
 from web3 import Web3
 from web3.contract import Contract
 from web3.datastructures import AttributeDict
 
-from derive_client.constants import ABI_DATA_DIR, DATA_DIR
-from derive_client.data_types import ChainID, DeriveAddresses, RPCEndPoints, TxResult, TxStatus
-
-
-def get_logger():
-    """Get the logger."""
-    logger = logging.getLogger(__name__)
-    formatter = logging.Formatter("%(message)s")
-
-    # we check if the logger already has a handler
-    # to avoid adding multiple handlers
-    if logger.hasHandlers():
-        return logger
-    if sys.stdout.isatty():
-        handler = RichHandler(
-            markup=False,
-            rich_tracebacks=True,
-            locals_max_string=None,
-            locals_max_length=None,
-        )
-    else:
-        handler = logging.StreamHandler(sys.stdout)
-
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
-    return logger
-
-
-def get_prod_derive_addresses() -> DeriveAddresses:
-    """Fetch the socket superbridge JSON data."""
-    prod_lyra_addresses = DATA_DIR / "prod_lyra_addresses.json"
-    old_prod_lyra_addresses = DATA_DIR / "prod_lyra-old_addresses.json"
-    chains = defaultdict(dict, {})
-    for chain_id, data in json.loads(prod_lyra_addresses.read_text()).items():
-        chain_data = {}
-        for currency, item in data.items():
-            item['isNewBridge'] = True
-            chain_data[currency] = item
-        chains[chain_id] = chain_data
-
-    for chain_id, data in json.loads(old_prod_lyra_addresses.read_text()).items():
-        current_chain_data = chains[chain_id]
-        for currency, item in data.items():
-            item['isNewBridge'] = False
-            current_chain_data[currency] = item
-    return DeriveAddresses(chains=chains)
+from derive_client.constants import ABI_DATA_DIR, GAS_FEE_BUFFER
+from derive_client.data_types import ChainID, RPCEndPoints, TxResult, TxStatus
+from derive_client.utils.retry import exp_backoff_retry
 
 
 def get_w3_connection(chain_id: ChainID) -> Web3:
@@ -80,6 +28,53 @@ def get_erc20_contract(w3: Web3, token_address: str) -> Contract:
     erc20_abi_path = ABI_DATA_DIR / "erc20.json"
     abi = json.loads(erc20_abi_path.read_text())
     return get_contract(w3=w3, address=token_address, abi=abi)
+
+
+def simulate_tx(w3: Web3, tx: dict, account: Account) -> dict:
+    balance = w3.eth.get_balance(account.address)
+    max_fee_per_gas = tx["maxFeePerGas"]
+    gas_limit = tx["gas"]
+    value = tx.get("value", 0)
+
+    max_gas_cost = gas_limit * max_fee_per_gas
+    total_cost = max_gas_cost + value
+    if not balance >= total_cost:
+        ratio = balance / total_cost * 100
+        raise ValueError(f"Insufficient gas balance, have {balance}, need {total_cost}: ({ratio:.2f})")
+
+    w3.eth.call(tx)
+    return tx
+
+
+@exp_backoff_retry
+def build_standard_transaction(
+    func,
+    account: Account,
+    w3: Web3,
+    value: int = 0,
+    gas_blocks: int = 100,
+    gas_percentile: int = 99,
+) -> dict:
+    """Standardized transaction building with EIP-1559 and gas estimation"""
+
+    nonce = w3.eth.get_transaction_count(account.address)
+    fee_estimations = estimate_fees(w3, blocks=gas_blocks, percentiles=[gas_percentile])
+    max_fee = fee_estimations[0]["maxFeePerGas"]
+    priority_fee = fee_estimations[0]["maxPriorityFeePerGas"]
+
+    tx = func.build_transaction(
+        {
+            "from": account.address,
+            "nonce": nonce,
+            "maxFeePerGas": max_fee,
+            "maxPriorityFeePerGas": priority_fee,
+            "chainId": w3.eth.chain_id,
+            "value": value,
+        }
+    )
+
+    tx["gas"] = w3.eth.estimate_gas(tx)
+    return simulate_tx(w3, tx, account)
 
 
 def wait_for_tx_receipt(w3: Web3, tx_hash: str, timeout=120, poll_interval=1) -> AttributeDict:
@@ -105,8 +100,14 @@ def sign_and_send_tx(w3: Web3, tx: dict, private_key: str) -> HexBytes:
 
 
 def send_and_confirm_tx(
-    w3: Web3, tx: dict, private_key: str, *, action: str  # e.g. "approve()", "deposit()", "withdraw()"
+    w3: Web3,
+    tx: dict,
+    private_key: str,
+    *,
+    action: str,  # e.g. "approve()", "deposit()", "withdraw()"
 ) -> TxResult:
+    """Send and confirm transactions, after simulating."""
+
     tx_result = TxResult(tx_hash="", tx_receipt=None, exception=None)
 
     try:
@@ -138,9 +139,9 @@ def send_and_confirm_tx(
 
 
 def estimate_fees(w3, percentiles: list[int], blocks=20, default_tip=10_000):
-    fee_history = w3.eth.fee_history(blocks, 'pending', percentiles)
-    base_fees = fee_history['baseFeePerGas']
-    rewards = fee_history['reward']
+    fee_history = w3.eth.fee_history(blocks, "pending", percentiles)
+    base_fees = fee_history["baseFeePerGas"]
+    rewards = fee_history["reward"]
 
     # Calculate average priority fees for each percentile
     avg_priority_fees = []
@@ -158,27 +159,7 @@ def estimate_fees(w3, percentiles: list[int], blocks=20, default_tip=10_000):
     # Calculate max fees
     fee_estimations = []
     for priority_fee in avg_priority_fees:
-        max_fee = latest_base_fee + priority_fee
-        fee_estimations.append({'maxFeePerGas': max_fee, 'maxPriorityFeePerGas': priority_fee})
+        max_fee = int((latest_base_fee + priority_fee) * GAS_FEE_BUFFER)
+        fee_estimations.append({"maxFeePerGas": max_fee, "maxPriorityFeePerGas": priority_fee})
 
     return fee_estimations
-
-
-def exp_backoff_retry(func=None, *, attempts=3, initial_delay=1, exceptions=(Exception,)):
-    if func is None:
-        return lambda f: exp_backoff_retry(f, attempts=attempts, initial_delay=initial_delay, exceptions=exceptions)
-
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        delay = initial_delay
-        for attempt in range(attempts):
-            try:
-                return func(*args, **kwargs)
-            except exceptions as e:
-                if attempt == attempts - 1:
-                    raise
-                print(f"Failed execution:\n{e}\nTrying again in {delay} seconds")
-                time.sleep(delay)
-                delay *= 2
-
-    return wrapper

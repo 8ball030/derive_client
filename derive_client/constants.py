@@ -26,6 +26,8 @@ class ContractAddresses(BaseModel, frozen=True):
     L1_CHUG_SPLASH_PROXY: str | None
     WITHDRAW_WRAPPER_V2: str | None
     DEPOSIT_WRAPPER: str | None
+    ARBITRUM_DEPOSIT_WRAPPER: str | None = None
+    OPTIMISM_DEPOSIT_WRAPPER: str | None = None
 
     def __getitem__(self, key):
         return getattr(self, key)
@@ -101,6 +103,8 @@ CONFIGS: dict[Environment, EnvConfig] = {
             L1_CHUG_SPLASH_PROXY="0x61e44dc0dae6888b5a301887732217d5725b0bff",
             WITHDRAW_WRAPPER_V2="0xea8E683D8C46ff05B871822a00461995F93df800",
             DEPOSIT_WRAPPER="0x9628bba16db41ea7fe1fd84f9ce53bc27c63f59b",
+            ARBITRUM_DEPOSIT_WRAPPER="0x076BB6117750e80AD570D98891B68da86C203A88",  # unknown address
+            OPTIMISM_DEPOSIT_WRAPPER="0xC65005131Cfdf06622b99E8E17f72Cf694b586cC",  # unknown address
         ),
     ),
 }
@@ -108,7 +112,8 @@ CONFIGS: dict[Environment, EnvConfig] = {
 
 DEFAULT_REFERER = "0x9135BA0f495244dc0A5F029b25CDE95157Db89AD"
 
-MSG_GAS_LIMIT = 100_000
+GAS_FEE_BUFFER = 1.1  # buffer multiplier to pad maxFeePerGas
+MSG_GAS_LIMIT = 200_000
 DEPOSIT_GAS_LIMIT = 420_000
 PAYLOAD_SIZE = 161
 TARGET_SPEED = "FAST"
@@ -127,6 +132,8 @@ TOKEN_DECIMALS = {
     UnderlyingCurrency.rsETH: 18,
     UnderlyingCurrency.DAI: 18,
     UnderlyingCurrency.USDT: 6,
+    UnderlyingCurrency.OLAS: 18,
+    UnderlyingCurrency.DRV: 18,
 }
 
 NEW_VAULT_ABI_PATH = ABI_DATA_DIR / "socket_superbridge_vault.json"

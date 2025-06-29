@@ -3,6 +3,7 @@ Cli module in order to allow interaction.
 """
 
 import os
+from pathlib import Path
 from textwrap import dedent
 
 import pandas as pd
@@ -11,6 +12,7 @@ from dotenv import load_dotenv
 from rich import print
 
 from derive_client.analyser import PortfolioAnalyser
+from derive_client.clients.base_client import BaseClient
 from derive_client.data_types import (
     ChainID,
     CollateralAsset,
@@ -28,7 +30,7 @@ from derive_client.derive import DeriveClient
 from derive_client.utils import get_logger
 
 click.rich_click.USE_RICH_MARKUP = True
-pd.set_option('display.precision', 2)
+pd.set_option("display.precision", 2)
 
 
 def set_logger(ctx, level):
@@ -39,45 +41,38 @@ def set_logger(ctx, level):
     return ctx.logger
 
 
-def set_client(ctx):
+def set_client(ctx, env, subaccount_id, derive_sc_wallet, signer_key_path):
     """Set the client."""
     # we use dotenv to load the env vars from DIRECTORY where the cli tool is executed
     _path = os.getcwd()
     env_path = os.path.join(_path, ".env")
     load_dotenv(dotenv_path=env_path)
     if not hasattr(ctx, "client"):
+        if signer_key_path:
+            private_key = Path(signer_key_path).read_text().strip()
+        else:
+            private_key = os.environ.get("ETH_PRIVATE_KEY")
+        if not private_key:
+            raise ValueError("Private key not found. Please provide a valid private key.")
+
         auth = {
-            "private_key": os.environ.get("ETH_PRIVATE_KEY"),
+            "private_key": private_key,
             "logger": ctx.logger,
             "verbose": ctx.logger.level == "DEBUG",
         }
-        chain = os.environ.get("ENVIRONMENT")
-        if chain == Environment.PROD.value:
-            env = Environment.PROD
-        else:
-            env = Environment.TEST
+        env = Environment(env) if isinstance(env, Environment) else Environment[env.upper()]
 
-        subaccount_id = os.environ.get("SUBACCOUNT_ID", None)
-        if subaccount_id:
-            subaccount_id = int(subaccount_id)
-        wallet = os.environ.get("WALLET")
-
-        if not wallet and subaccount_id is None:
+        if not derive_sc_wallet and subaccount_id is None:
             msg = dedent(
                 """
                 Please provide either a wallet or a subaccount_id in the .env file at {env_path}"
                 Wallet is the address of the account to use, subaccount_id is the subaccount to use"
                 Subaccount_id is the subaccount to use"
-
-                Example .env file:
-                    ETH_PRIVATE_KEY=0x1234567890abcdef
-                    ENVIRONMENT=prod
-                    WALLET=0x1234567890abcdef
-                    # SUBACCOUNT_ID=123456
+                You must provide the `DERIVE_SC_WALLET" flag.
                 """
             )
             raise ValueError(msg)
-        ctx.client = DeriveClient(**auth, env=env, subaccount_id=subaccount_id, wallet=wallet)
+        ctx.client = DeriveClient(**auth, env=env, subaccount_id=subaccount_id, wallet=derive_sc_wallet)
 
     if ctx.logger.level == "DEBUG":
         print(f"Client created for environment `{ctx.client.env.value}`")
@@ -92,12 +87,33 @@ def set_client(ctx):
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
     help="Logging level.",
 )
+@click.option(
+    "--env",
+    "-e",
+    type=click.Choice([e.value for e in Environment]),
+    default=Environment.PROD.value,
+    help="Environment to use (test or prod).",
+)
+@click.option(
+    "--subaccount-id",
+    "-s",
+    type=int,
+    default=None,
+    help="Subaccount ID to use. If not provided, the client will use the wallet address.",
+)
+@click.option("--derive-sc-wallet", "-w", type=str, help="Wallet address to use.")
+@click.option(
+    "--signer-key-path",
+    "-k",
+    type=click.Path(exists=True, dir_okay=False, readable=True),
+    help="Path to the file containing the private key for the signer.",
+)
 @click.pass_context
-def cli(ctx, log_level):
+def cli(ctx, log_level, env, subaccount_id, derive_sc_wallet, signer_key_path):
     """Derive v2 client command line interface."""
     ctx.ensure_object(dict)
     ctx.obj["logger"] = set_logger(ctx, log_level)
-    ctx.obj["client"] = set_client(ctx)
+    ctx.obj["client"] = set_client(ctx, env, subaccount_id, derive_sc_wallet, signer_key_path)
 
 
 @cli.group("bridge")
@@ -121,7 +137,11 @@ def bridge():
     help="The token symbol (e.g. weETH) to bridge.",
 )
 @click.option(
-    "--amount", "-a", type=float, required=True, help="The amount to deposit in ETH (will be converted to Wei)."
+    "--amount",
+    "-a",
+    type=float,
+    required=True,
+    help="The amount to deposit in ETH (will be converted to Wei).",
 )
 @click.pass_context
 def deposit(ctx, chain_id, currency, amount):
@@ -135,10 +155,9 @@ def deposit(ctx, chain_id, currency, amount):
     chain_id = ChainID[chain_id]
     currency = Currency[currency]
 
-    client = ctx.obj["client"]
-    receiver = client.wallet
+    client: BaseClient = ctx.obj["client"]
 
-    tx_result = client.deposit_to_derive(chain_id=chain_id, currency=currency, amount=amount, receiver=receiver)
+    tx_result = client.deposit_to_derive(chain_id=chain_id, currency=currency, amount=amount)
 
     match tx_result.status:
         case TxStatus.SUCCESS:
@@ -167,7 +186,11 @@ def deposit(ctx, chain_id, currency, amount):
     help="The token symbol (e.g. weETH) to bridge.",
 )
 @click.option(
-    "--amount", "-a", type=float, required=True, help="The amount to deposit in ETH (will be converted to Wei)."
+    "--amount",
+    "-a",
+    type=float,
+    required=True,
+    help="The amount to deposit in ETH (will be converted to Wei).",
 )
 @click.pass_context
 def withdraw(ctx, chain_id, currency, amount):
@@ -182,9 +205,12 @@ def withdraw(ctx, chain_id, currency, amount):
     currency = Currency[currency]
 
     client: DeriveClient = ctx.obj["client"]
-    receiver = client.signer.address
 
-    tx_result = client.withdraw_from_derive(chain_id=chain_id, currency=currency, amount=amount, receiver=receiver)
+    tx_result = client.withdraw_from_derive(
+        chain_id=chain_id,
+        currency=currency,
+        amount=amount,
+    )
 
     match tx_result.status:
         case TxStatus.SUCCESS:
@@ -302,7 +328,15 @@ def fetch_mmp(ctx, underlying_currency, subaccount_id):
     default=2,
 )
 @click.pass_context
-def set_mmp(ctx, underlying_currency, subaccount_id, frozen_time, interval, amount_limit, delta_limit):
+def set_mmp(
+    ctx,
+    underlying_currency,
+    subaccount_id,
+    frozen_time,
+    interval,
+    amount_limit,
+    delta_limit,
+):
     """Set market making parameters."""
     client = ctx.obj["client"]
     mmp = client.set_mmp_config(
@@ -354,7 +388,8 @@ def fetch_instruments(ctx, instrument_type, currency):
     """Fetch markets."""
     client = ctx.obj["client"]
     markets = client.fetch_instruments(
-        instrument_type=InstrumentType(instrument_type), currency=UnderlyingCurrency(currency)
+        instrument_type=InstrumentType(instrument_type),
+        currency=UnderlyingCurrency(currency),
     )
     print(markets)
 
@@ -546,12 +581,12 @@ def fetch_orders(ctx, instrument_name, label, page, page_size, status, regex):
     print(instrument_names)
     # print the orders
     # perform some analysis
-    df['amount'] = pd.to_numeric(df['amount'])
-    df['filled_amount'] = pd.to_numeric(df['filled_amount'])
-    df['limit_price'] = pd.to_numeric(df['limit_price'])
+    df["amount"] = pd.to_numeric(df["amount"])
+    df["filled_amount"] = pd.to_numeric(df["filled_amount"])
+    df["limit_price"] = pd.to_numeric(df["limit_price"])
 
-    buys = df[df['direction'] == 'buy']
-    sells = df[df['direction'] == 'sell']
+    buys = df[df["direction"] == "buy"]
+    sells = df[df["direction"] == "sell"]
     print("Buys")
     print(buys)
     print("Sells")
@@ -559,20 +594,20 @@ def fetch_orders(ctx, instrument_name, label, page, page_size, status, regex):
 
     print("Average buy cost")
     # we determine by the average price of the buys by the amount
-    df['cost'] = buys['limit_price'] * buys['amount']
-    print(df['cost'].sum())
-    amount = buys['amount'].sum()
+    df["cost"] = buys["limit_price"] * buys["amount"]
+    print(df["cost"].sum())
+    amount = buys["amount"].sum()
     print(amount)
-    buy_total_cost = df['cost'].sum()
+    buy_total_cost = df["cost"].sum()
     print(f"Price per unit: {buy_total_cost / amount}")
     print(buy_total_cost / amount)
     print("Average sell cost")
     # we determine by the average price of the buys by the amount
-    df['cost'] = sells['limit_price'] * sells['amount']
-    print(df['cost'].sum())
-    amount = sells['amount'].sum()
+    df["cost"] = sells["limit_price"] * sells["amount"]
+    print(df["cost"].sum())
+    amount = sells["amount"].sum()
     print(amount)
-    sell_total_cost = df['cost'].sum()
+    sell_total_cost = df["cost"].sum()
     print(f"Price per unit: {sell_total_cost / amount}")
     print(sell_total_cost / amount)
 
