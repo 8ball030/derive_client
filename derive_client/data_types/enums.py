@@ -7,7 +7,6 @@ class TxStatus(IntEnum):
     FAILED = 0  # confirmed and status == 0 (on-chain revert)
     SUCCESS = 1  # confirmed and status == 1
     PENDING = 2  # not yet confirmed, no receipt
-    ERROR = 3  # local error, e.g. connection, invalid tx
 
 
 class DeriveTxStatus(Enum):

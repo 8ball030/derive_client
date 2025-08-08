@@ -15,23 +15,6 @@ from web3.datastructures import AttributeDict
 from .enums import BridgeType, ChainID, Currency, DeriveTxStatus, MainnetCurrency, MarginType, SessionKeyScope, TxStatus
 
 
-class PException(Exception):
-
-    @classmethod
-    def __get_pydantic_core_schema__(cls, _source, _handler: GetCoreSchemaHandler):
-        return core_schema.no_info_plain_validator_function(cls._validate)
-
-    @classmethod
-    def __get_pydantic_json_schema__(cls, _schema, _handler: GetJsonSchemaHandler) -> dict:
-        return {"type": "string", "description": "An arbitrary Python Exception; serialized via str()"}
-
-    @classmethod
-    def _validate(cls, v) -> Exception:
-        if not isinstance(v, Exception):
-            raise TypeError(f"Expected Exception, got {v!r}")
-        return v
-
-
 class PAttributeDict(AttributeDict):
 
     @classmethod
@@ -172,14 +155,11 @@ class BridgeContext:
 class TxResult:
     tx_hash: TxHash
     tx_receipt: PAttributeDict | None = None
-    exception: PException | None = None
 
     @property
     def status(self) -> TxStatus:
         if self.tx_receipt is not None:
             return TxStatus(int(self.tx_receipt.status))  # ∈ {0, 1} (EIP-658)
-        if self.exception is not None and not isinstance(self.exception, TimeoutError):
-            return TxStatus.ERROR
         return TxStatus.PENDING
 
 

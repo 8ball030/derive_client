@@ -113,6 +113,7 @@ CONFIGS: dict[Environment, EnvConfig] = {
 DEFAULT_REFERER = "0x9135BA0f495244dc0A5F029b25CDE95157Db89AD"
 
 GAS_FEE_BUFFER = 1.1  # buffer multiplier to pad maxFeePerGas
+GAS_LIMIT_BUFFER = 1.1  # buffer multiplier to pad gas limit
 MSG_GAS_LIMIT = 200_000
 DEPOSIT_GAS_LIMIT = 420_000
 PAYLOAD_SIZE = 161
