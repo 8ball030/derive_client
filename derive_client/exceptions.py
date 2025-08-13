@@ -75,3 +75,28 @@ class DeriveFundingFailed(Exception):
 
 class DrvWithdrawAmountBelowFee(Exception):
     """Raised when the DRV withdrawal amount is less than the fee required to withdraw."""
+
+
+class FinalityTimeout(Exception):
+    """Raised when the transaction was mined but did not reach the required finality within the timeout."""
+
+
+class TxPendingTimeout(Exception):
+    """Raised when the transaction receipt does not materialize and the transaction remains in the mempool."""
+
+
+class TransactionDropped(Exception):
+    """Raised when the transaction the transaction is no longer in the mempool, likely dropped."""
+
+
+class PartialBridgeResult(Exception):
+    """Raised after submission when the bridge pipeline fails"""
+
+    def __init__(self, message: str, *, tx_result: "BridgeTxResult"):
+        super().__init__(message)
+        self.tx_result = tx_result
+
+    @property
+    def cause(self) -> Exception | None:
+        """Provides access to the orignal Exception."""
+        return self.__cause__

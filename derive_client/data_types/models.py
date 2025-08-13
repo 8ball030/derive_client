@@ -1,9 +1,13 @@
 """Models used in the bridge module."""
 
+from typing import Any
+
 from derive_action_signing.module_data import ModuleData
 from derive_action_signing.utils import decimal_to_big_int
 from eth_abi.abi import encode
+from eth_account.datastructures import SignedTransaction
 from eth_utils import is_0x_prefixed, is_address, is_hex, to_checksum_address
+from hexbytes import HexBytes
 from pydantic import BaseModel, ConfigDict, Field, GetCoreSchemaHandler, GetJsonSchemaHandler, HttpUrl
 from pydantic.dataclasses import dataclass
 from pydantic_core import core_schema
@@ -32,10 +36,74 @@ class PAttributeDict(AttributeDict):
         return AttributeDict(v)
 
 
+class PHexBytes(HexBytes):
+    @classmethod
+    def __get_pydantic_core_schema__(cls, _source: Any, _handler: Any) -> core_schema.CoreSchema:
+        # Allow either HexBytes or bytes/hex strings to be parsed into HexBytes
+        return core_schema.no_info_before_validator_function(
+            cls._validate,
+            core_schema.union_schema(
+                [
+                    core_schema.is_instance_schema(HexBytes),
+                    core_schema.bytes_schema(),
+                    core_schema.str_schema(),
+                ]
+            ),
+        )
+
+    @classmethod
+    def __get_pydantic_json_schema__(cls, _schema: core_schema.CoreSchema, _handler: Any) -> dict:
+        return {"type": "string", "format": "hex"}
+
+    @classmethod
+    def _validate(cls, v: Any) -> HexBytes:
+        if isinstance(v, HexBytes):
+            return v
+        if isinstance(v, (bytes, bytearray)):
+            return HexBytes(v)
+        if isinstance(v, str):
+            return HexBytes(v)
+        raise TypeError(f"Expected HexBytes-compatible type, got {type(v).__name__}")
+
+
+class PSignedTransaction(SignedTransaction):
+    @classmethod
+    def __get_pydantic_core_schema__(cls, _source: Any, _handler: Any) -> core_schema.CoreSchema:
+        # Accept existing SignedTransaction or a tuple/dict of its fields
+        return core_schema.no_info_plain_validator_function(cls._validate)
+
+    @classmethod
+    def __get_pydantic_json_schema__(cls, _schema: core_schema.CoreSchema, _handler: Any) -> dict:
+        return {
+            "type": "object",
+            "properties": {
+                "raw_transaction": {"type": "string", "format": "hex"},
+                "hash": {"type": "string", "format": "hex"},
+                "r": {"type": "integer"},
+                "s": {"type": "integer"},
+                "v": {"type": "integer"},
+            },
+        }
+
+    @classmethod
+    def _validate(cls, v: Any) -> SignedTransaction:
+        if isinstance(v, SignedTransaction):
+            return v
+        if isinstance(v, dict):
+            return SignedTransaction(
+                raw_transaction=PHexBytes(v["raw_transaction"]),
+                hash=PHexBytes(v["hash"]),
+                r=int(v["r"]),
+                s=int(v["s"]),
+                v=int(v["v"]),
+            )
+        raise TypeError(f"Expected SignedTransaction or dict, got {type(v).__name__}")
+
+
 class Address(str):
     @classmethod
     def __get_pydantic_core_schema__(cls, _source, _handler: GetCoreSchemaHandler) -> core_schema.CoreSchema:
-        return core_schema.no_info_before_validator_function(cls._validate, core_schema.str_schema())
+        return core_schema.no_info_before_validator_function(cls._validate, core_schema.any_schema())
 
     @classmethod
     def __get_pydantic_json_schema__(cls, _schema, _handler: GetJsonSchemaHandler) -> dict:
@@ -58,9 +126,11 @@ class TxHash(str):
         return {"type": "string", "format": "ethereum-tx-hash"}
 
     @classmethod
-    def _validate(cls, v: str) -> str:
+    def _validate(cls, v: str | HexBytes) -> str:
+        if isinstance(v, HexBytes):
+            v = v.to_0x_hex()
         if not isinstance(v, str):
-            raise TypeError("Expected a string for TxHash")
+            raise TypeError("Expected a string or HexBytes for TxHash")
         if not is_0x_prefixed(v) or not is_hex(v) or len(v) != 66:
             raise ValueError(f"Invalid Ethereum transaction hash: {v}")
         return v
@@ -151,6 +221,44 @@ class BridgeContext:
         return ChainID(self.target_w3.eth.chain_id)
 
 
+@dataclass
+class BridgeTxDetails:
+    contract: Address
+    method: str
+    kwargs: dict[str, Any]
+    tx: dict[str, Any]
+    signed_tx: PSignedTransaction
+
+    @property
+    def tx_hash(self) -> str:
+        """Pre-computed transaction hash."""
+        return self.signed_tx.hash.to_0x_hex
+
+    @property
+    def nonce(self) -> str:
+        """Transaction nonce."""
+        return self.tx["nonce"]
+
+
+@dataclass
+class PreparedBridgeTx:
+    currency: Currency
+    bridge: BridgeType
+    source_chain: ChainID
+    target_chain: ChainID
+    tx_details: BridgeTxDetails
+
+    @property
+    def tx_hash(self) -> str:
+        """Pre-computed transaction hash."""
+        return self.tx_details.tx_hash
+
+    @property
+    def nonce(self) -> str:
+        """Transaction nonce."""
+        return self.tx_details.nonce
+
+
 @dataclass(config=ConfigDict(validate_assignment=True))
 class TxResult:
     tx_hash: TxHash
@@ -170,7 +278,8 @@ class BridgeTxResult:
     source_chain: ChainID
     target_chain: ChainID
     source_tx: TxResult
-    target_from_block: int
+    tx_details: BridgeTxDetails
+    target_from_block: int | None = None
     event_id: str | None = None
     target_tx: TxResult | None = None
 

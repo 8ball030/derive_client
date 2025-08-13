@@ -6,7 +6,7 @@ from web3.contract import Contract
 
 from derive_client.data_types import Address, TxStatus
 from derive_client.exceptions import InsufficientTokenBalance
-from derive_client.utils import build_standard_transaction, send_and_confirm_tx
+from derive_client.utils import build_standard_transaction, send_tx, sign_tx, wait_for_tx_finality
 
 
 def ensure_token_balance(token_contract: Contract, owner: Address, amount: int):
@@ -51,6 +51,8 @@ def _increase_token_allowance(
 ) -> None:
     func = erc20_contract.functions.approve(spender, amount)
     tx = build_standard_transaction(func=func, account=from_account, w3=w3)
-    tx_result = send_and_confirm_tx(w3=w3, tx=tx, private_key=private_key, action="approve()", logger=logger)
-    if tx_result.status != TxStatus.SUCCESS:
+    signed_tx = sign_tx(w3=w3, tx=tx, private_key=private_key)
+    tx_hash = send_tx(w3=w3, signed_tx=signed_tx)
+    tx_receipt = wait_for_tx_finality(w3=w3, tx_hash=tx_hash, logger=logger)
+    if tx_receipt.status != TxStatus.SUCCESS:
         raise RuntimeError("approve() failed")

@@ -4,30 +4,27 @@ Bridge client to deposit funds to the Derive smart contract funding account
 
 from __future__ import annotations
 
-import copy
 import functools
 import json
-from contextlib import suppress
 from logging import Logger
-from typing import Literal
 
 from eth_account import Account
 from web3 import Web3
 from web3.contract import Contract
+from web3.contract.contract import ContractFunction
 from web3.datastructures import AttributeDict
+from web3.types import HexBytes, LogReceipt, TxReceipt
 
 from derive_client._bridge.transaction import ensure_token_allowance, ensure_token_balance
 from derive_client.constants import (
     CONFIGS,
     CONTROLLER_ABI_PATH,
     CONTROLLER_V0_ABI_PATH,
-    DEFAULT_GAS_FUNDING_AMOUNT,
     DEPOSIT_HELPER_ABI_PATH,
     DEPOSIT_HOOK_ABI_PATH,
     DERIVE_ABI_PATH,
     DERIVE_L2_ABI_PATH,
     ERC20_ABI_PATH,
-    L1_STANDARD_BRIDGE_ABI_PATH,
     LIGHT_ACCOUNT_ABI_PATH,
     LYRA_OFT_WITHDRAW_WRAPPER_ABI_PATH,
     LYRA_OFT_WITHDRAW_WRAPPER_ADDRESS,
@@ -42,28 +39,27 @@ from derive_client.constants import (
 from derive_client.data_types import (
     Address,
     BridgeContext,
+    BridgeTxDetails,
     BridgeTxResult,
     BridgeType,
     ChainID,
     Currency,
     DeriveTokenAddresses,
+    Direction,
     Environment,
     LayerZeroChainIDv2,
     MintableTokenData,
     NonMintableTokenData,
+    PreparedBridgeTx,
     SocketAddress,
     TxResult,
-    TxStatus,
 )
 from derive_client.exceptions import (
-    AlreadyFinalizedError,
     BridgeEventParseError,
     BridgePrimarySignerRequiredError,
     BridgeRouteError,
-    DeriveFundingFailed,
     DrvWithdrawAmountBelowFee,
-    EthGasFundingPending,
-    InsufficientNativeBalance,
+    PartialBridgeResult,
 )
 from derive_client.utils import (
     build_standard_transaction,
@@ -71,9 +67,10 @@ from derive_client.utils import (
     get_prod_derive_addresses,
     get_w3_connection,
     make_filter_params,
-    send_and_confirm_tx,
+    send_tx,
+    sign_tx,
     wait_for_event,
-    wait_for_tx_receipt,
+    wait_for_tx_finality,
 )
 
 
@@ -123,8 +120,6 @@ class BridgeClient:
         self.derive_w3 = get_w3_connection(chain_id=ChainID.DERIVE, logger=logger)
         self.remote_w3 = get_w3_connection(chain_id=chain_id, logger=logger)
         self.account = account
-        self.withdraw_wrapper = self._load_withdraw_wrapper()
-        self.deposit_helper = self._load_deposit_helper()
         self.derive_addresses = get_prod_derive_addresses()
         self.light_account = _load_light_account(w3=self.derive_w3, wallet=wallet)
         self.logger = logger
@@ -152,36 +147,39 @@ class BridgeClient:
         return self.light_account.functions.owner().call()
 
     @property
-    def private_key(self):
+    def private_key(self) -> str:
         """Private key of the owner (EOA) of the smart contract funding account."""
         return self.account._private_key
 
-    def _load_deposit_helper(self) -> Contract:
-        address = (
-            self.config.contracts.DEPOSIT_WRAPPER
-            if self.remote_chain_id
-            not in [
-                ChainID.ARBITRUM,
-                ChainID.OPTIMISM,
-            ]
-            else getattr(
-                self.config.contracts,
-                f"{self.remote_chain_id.name}_DEPOSIT_WRAPPER",
-            )
-        )
+    @functools.cached_property
+    def deposit_helper(self) -> Contract:
+
+        match self.remote_chain_id:
+            case ChainID.ARBITRUM:
+                address = self.config.contracts.ARBITRUM_DEPOSIT_WRAPPER
+            case ChainID.OPTIMISM:
+                address = self.config.contracts.OPTIMISM_DEPOSIT_WRAPPER
+            case _:
+                address = self.config.contracts.DEPOSIT_WRAPPER
+
         abi = json.loads(DEPOSIT_HELPER_ABI_PATH.read_text())
         return get_contract(w3=self.remote_w3, address=address, abi=abi)
 
-    def _load_withdraw_wrapper(self) -> Contract:
+    @functools.cached_property
+    def withdraw_wrapper(self) -> Contract:
         address = self.config.contracts.WITHDRAW_WRAPPER_V2
         abi = json.loads(WITHDRAW_WRAPPER_V2_ABI_PATH.read_text())
         return get_contract(w3=self.derive_w3, address=address, abi=abi)
 
     @functools.lru_cache
     def _make_bridge_context(
-        self, direction: Literal["deposit", "withdraw"], bridge_type: BridgeType, currency: Currency
+        self,
+        direction: Direction,
+        bridge_type: BridgeType,
+        currency: Currency,
     ) -> BridgeContext:
-        is_deposit = direction == "deposit"
+
+        is_deposit = direction == Direction.DEPOSIT
         src_w3, tgt_w3 = (self.remote_w3, self.derive_w3) if is_deposit else (self.derive_w3, self.remote_w3)
         src_chain, tgt_chain = (
             (self.remote_chain_id, ChainID.DERIVE) if is_deposit else (ChainID.DERIVE, self.remote_chain_id)
@@ -219,14 +217,27 @@ class BridgeClient:
 
         raise BridgeRouteError(f"Unsupported bridge_type={bridge_type} for currency={currency}.")
 
+    def _get_context(self, state: PreparedBridgeTx | BridgeTxResult) -> BridgeContext:
+
+        direction = Direction.WITHDRAW if state.source_chain == ChainID.DERIVE else Direction.DEPOSIT
+        context = self._make_bridge_context(
+            direction=direction,
+            bridge_type=state.bridge,
+            currency=state.currency,
+        )
+
+        return context
+
     def _resolve_socket_route(
         self,
-        direction: Literal["deposit", "withdraw"],
+        direction: Direction,
         currency: Currency,
     ) -> tuple[MintableTokenData | NonMintableTokenData, Address]:
-        is_deposit = direction == "deposit"
+
         src_chain, tgt_chain = (
-            (self.remote_chain_id, ChainID.DERIVE) if is_deposit else (ChainID.DERIVE, self.remote_chain_id)
+            (self.remote_chain_id, ChainID.DERIVE)
+            if direction == Direction.DEPOSIT
+            else (ChainID.DERIVE, self.remote_chain_id)
         )
 
         if (src_token_data := self.derive_addresses.chains[src_chain].get(currency)) is None:
@@ -245,15 +256,77 @@ class BridgeClient:
 
         return src_token_data, src_token_data.connectors[tgt_chain][TARGET_SPEED]
 
-    def deposit(self, amount: int, currency: Currency) -> BridgeTxResult:
-        """
-        Deposit funds by preparing, signing, and sending a bridging transaction.
-        """
+    def _prepare_tx(
+        self,
+        func: ContractFunction,
+        value: int,
+        currency: Currency,
+        context: BridgeContext,
+    ) -> PreparedBridgeTx:
 
-        # record on target chain when we start polling
-        token_data, _connector = self._resolve_socket_route("deposit", currency=currency)
-        context = self._make_bridge_context("deposit", bridge_type=BridgeType.SOCKET, currency=currency)
-        target_from_block = context.target_w3.eth.block_number
+        tx = build_standard_transaction(func=func, account=self.account, w3=context.source_w3, value=value)
+        signed_tx = sign_tx(w3=context.source_w3, tx=tx, private_key=self.private_key)
+
+        tx_details = BridgeTxDetails(
+            contract=func.address,
+            method=func.fn_name,
+            kwargs=func.kwargs,
+            tx=tx,
+            signed_tx=signed_tx,
+        )
+
+        bridge = BridgeType.LAYERZERO if currency == Currency.DRV else BridgeType.SOCKET
+        prepared_tx = PreparedBridgeTx(
+            currency=currency,
+            bridge=bridge,
+            source_chain=context.source_chain,
+            target_chain=context.target_chain,
+            tx_details=tx_details,
+        )
+
+        return prepared_tx
+
+    def prepare_deposit(self, amount: int, currency: Currency) -> PreparedBridgeTx:
+
+        if currency == Currency.DRV:
+            prepared_tx = self._prepare_layerzero_deposit(amount=amount, currency=currency)
+        else:
+            prepared_tx = self._prepare_socket_deposit(amount=amount, currency=currency)
+
+        return prepared_tx
+
+    def prepare_withdrawal(self, amount: int, currency: Currency) -> PreparedBridgeTx:
+
+        if currency == Currency.DRV:
+            prepared_tx = self._prepare_layerzero_withdrawal(amount=amount, currency=currency)
+        else:
+            prepared_tx = self._prepare_socket_withdrawal(amount=amount, currency=currency)
+
+        return prepared_tx
+
+    def submit_bridge_tx(self, prepared_tx: PreparedBridgeTx) -> BridgeTxResult:
+
+        tx_result = self.send_bridge_tx(prepared_tx=prepared_tx)
+
+        return tx_result
+
+    def poll_bridge_progress(self, tx_result: BridgeTxResult) -> BridgeTxResult:
+
+        try:
+            tx_result.source_tx.tx_receipt = self.confirm_source_tx(tx_result=tx_result)
+            tx_result.target_tx = TxResult(tx_hash=self.wait_for_target_event(tx_result=tx_result))
+            tx_result.target_tx.tx_receipt = self.confirm_target_tx(tx_result=tx_result)
+        except Exception as e:
+            raise PartialBridgeResult("Bridge pipeline failed", tx_result=tx_result) from e
+
+        return tx_result
+
+    def _prepare_socket_deposit(self, amount: int, currency: Currency) -> PreparedBridgeTx:
+
+        direction = Direction.DEPOSIT
+        bridge_type = BridgeType.SOCKET
+        token_data, _connector = self._resolve_socket_route(direction, currency=currency)
+        context = self._make_bridge_context(direction, bridge_type=bridge_type, currency=currency)
 
         spender = token_data.Vault if token_data.isNewBridge else self.deposit_helper.address
         ensure_token_balance(context.source_token, self.owner, amount)
@@ -268,37 +341,22 @@ class BridgeClient:
         )
 
         if token_data.isNewBridge:
-            tx = self._prepare_new_style_deposit(token_data, amount)
+            func, fees = self._prepare_new_style_deposit(token_data, amount)
         else:
-            tx = self._prepare_old_style_deposit(token_data, amount)
+            func, fees = self._prepare_old_style_deposit(token_data, amount)
 
-        source_tx = send_and_confirm_tx(
-            w3=context.source_w3, tx=tx, private_key=self.private_key, action="bridge()", logger=self.logger
-        )
-        tx_result = BridgeTxResult(
-            currency=currency,
-            bridge=BridgeType.SOCKET,
-            source_chain=context.source_chain,
-            target_chain=context.target_chain,
-            source_tx=source_tx,
-            target_from_block=target_from_block,
-        )
+        prepared_tx = self._prepare_tx(func=func, value=fees + 1, currency=currency, context=context)
 
-        return tx_result
+        return prepared_tx
 
-    def withdraw_with_wrapper(self, amount: int, currency: Currency) -> BridgeTxResult:
-        """
-        Checks if sufficent gas is available in derive, if not funds the wallet.
-        Prepares, signs, and sends a withdrawal transaction using the withdraw wrapper.
-        """
+    def _prepare_socket_withdrawal(self, amount: int, currency: Currency) -> PreparedBridgeTx:
 
-        # record on target chain when we start polling
-        token_data, connector = self._resolve_socket_route("withdraw", currency=currency)
-        context = self._make_bridge_context("withdraw", bridge_type=BridgeType.SOCKET, currency=currency)
-        target_from_block = context.target_w3.eth.block_number
+        direction = Direction.WITHDRAW
+        bridge_type = BridgeType.SOCKET
+        token_data, connector = self._resolve_socket_route(direction, currency=currency)
+        context = self._make_bridge_context(direction, bridge_type=bridge_type, currency=currency)
 
         ensure_token_balance(context.source_token, self.wallet, amount)
-
         self._check_bridge_funds(token_data, connector, amount)
 
         kwargs = {
@@ -319,40 +377,15 @@ class BridgeClient:
             dest=[context.source_token.address, self.withdraw_wrapper.address],
             func=[approve_data, bridge_data],
         )
+        prepared_tx = self._prepare_tx(func=func, value=0, currency=currency, context=context)
 
-        try:
-            tx = build_standard_transaction(func=func, account=self.account, w3=context.source_w3, value=0)
-        except InsufficientNativeBalance:
-            self._ensure_derive_eth_balance(tx)
-            self.logger.info("Balance top-up triggered; funds are pending. Cannot proceed with tx now.")
-            raise EthGasFundingPending("Awaiting ETH deposit for gas.")
+        return prepared_tx
 
-        source_tx = send_and_confirm_tx(
-            w3=context.source_w3,
-            tx=tx,
-            private_key=self.private_key,
-            action="executeBatch()",
-            logger=self.logger,
-        )
-        tx_result = BridgeTxResult(
-            currency=currency,
-            bridge=BridgeType.SOCKET,
-            source_chain=context.source_chain,
-            target_chain=context.target_chain,
-            source_tx=source_tx,
-            target_from_block=target_from_block,
-        )
+    def _prepare_layerzero_deposit(self, amount: int, currency: Currency) -> PreparedBridgeTx:
 
-        return tx_result
-
-    def deposit_drv(self, amount: int, currency: Currency) -> BridgeTxResult:
-        """
-        Deposit funds by preparing, signing, and sending a bridging transaction.
-        """
-
-        # record on target chain when we start polling
-        context = self._make_bridge_context("deposit", bridge_type=BridgeType.LAYERZERO, currency=currency)
-        target_from_block = context.target_w3.eth.block_number
+        direction = Direction.DEPOSIT
+        bridge_type = BridgeType.LAYERZERO
+        context = self._make_bridge_context(direction, bridge_type=bridge_type, currency=currency)
 
         # check allowance, if needed approve
         ensure_token_balance(context.source_token, self.owner, amount)
@@ -386,31 +419,15 @@ class BridgeClient:
         refund_address = self.owner
 
         func = context.source_token.functions.send(send_params, fees, refund_address)
-        tx = build_standard_transaction(func=func, account=self.account, w3=context.source_w3, value=native_fee)
+        prepared_tx = self._prepare_tx(func=func, value=native_fee, currency=currency, context=context)
 
-        source_tx = send_and_confirm_tx(
-            w3=context.source_w3,
-            tx=tx,
-            private_key=self.private_key,
-            action="executeBatch()",
-            logger=self.logger,
-        )
-        tx_result = BridgeTxResult(
-            currency=currency,
-            bridge=BridgeType.LAYERZERO,
-            source_chain=context.source_chain,
-            target_chain=context.target_chain,
-            source_tx=source_tx,
-            target_from_block=target_from_block,
-        )
+        return prepared_tx
 
-        return tx_result
+    def _prepare_layerzero_withdrawal(self, amount: int, currency: Currency) -> PreparedBridgeTx:
 
-    def withdraw_drv(self, amount: int, currency: Currency) -> BridgeTxResult:
-
-        # record on target chain when we start polling
-        context = self._make_bridge_context("withdraw", bridge_type=BridgeType.LAYERZERO, currency=currency)
-        target_from_block = context.target_w3.eth.block_number
+        direction = Direction.WITHDRAW
+        bridge_type = BridgeType.LAYERZERO
+        context = self._make_bridge_context(direction, bridge_type=bridge_type, currency=currency)
 
         abi = json.loads(LYRA_OFT_WITHDRAW_WRAPPER_ABI_PATH.read_text())
         withdraw_wrapper = get_contract(context.source_w3, LYRA_OFT_WITHDRAW_WRAPPER_ADDRESS, abi=abi)
@@ -436,33 +453,76 @@ class BridgeClient:
             dest=[context.source_token.address, withdraw_wrapper.address],
             func=[approve_data, bridge_data],
         )
+        prepared_tx = self._prepare_tx(func=func, value=0, currency=currency, context=context)
 
-        try:
-            tx = build_standard_transaction(func=func, account=self.account, w3=context.source_w3, value=0)
-        except InsufficientNativeBalance:
-            self._ensure_derive_eth_balance(tx)
-            self.logger.info("Balance top-up triggered; funds are pending. Cannot proceed with tx now.")
-            raise EthGasFundingPending("Awaiting ETH deposit for gas.")
+        return prepared_tx
 
-        source_tx = send_and_confirm_tx(
-            w3=context.source_w3,
-            tx=tx,
-            private_key=self.private_key,
-            action="executeBatch()",
-            logger=self.logger,
-        )
+    def send_bridge_tx(self, prepared_tx: PreparedBridgeTx) -> BridgeTxResult:
+
+        context = self._get_context(prepared_tx)
+
+        # record on target chain where we should start polling
+        target_from_block = context.target_w3.eth.block_number
+
+        signed_tx = prepared_tx.tx_details.signed_tx
+        tx_hash = send_tx(w3=context.source_w3, signed_tx=signed_tx)
+        source_tx = TxResult(tx_hash=tx_hash)
+
         tx_result = BridgeTxResult(
-            currency=currency,
-            bridge=BridgeType.LAYERZERO,
+            currency=prepared_tx.currency,
+            bridge=prepared_tx.bridge,
             source_chain=context.source_chain,
             target_chain=context.target_chain,
             source_tx=source_tx,
             target_from_block=target_from_block,
+            tx_details=prepared_tx.tx_details,
         )
 
         return tx_result
 
-    def fetch_lz_event_log(self, tx_result: BridgeTxResult, context: BridgeContext):
+    def confirm_source_tx(self, tx_result: BridgeTxResult) -> TxReceipt:
+
+        context = self._get_context(tx_result)
+        msg = "⏳ Checking source chain [%s] tx receipt for %s"
+        self.logger.info(msg, tx_result.source_chain.name, tx_result.source_tx.tx_hash)
+        tx_receipt = wait_for_tx_finality(
+            w3=context.source_w3,
+            tx_hash=tx_result.source_tx.tx_hash,
+            logger=self.logger,
+        )
+
+        return tx_receipt
+
+    def wait_for_target_event(self, tx_result: BridgeTxResult) -> HexBytes:
+
+        bridge_event_fetchers = {
+            BridgeType.SOCKET: self._fetch_socket_event_log,
+            BridgeType.LAYERZERO: self._fetch_lz_event_log,
+        }
+        if (fetch_event := bridge_event_fetchers.get(tx_result.bridge)) is None:
+            raise BridgeRouteError(f"Invalid bridge_type: {tx_result.bridge}")
+
+        context = self._get_context(tx_result)
+        event_log = fetch_event(tx_result, context)
+        tx_hash = event_log["transactionHash"]
+        self.logger.info(f"Target event tx_hash found: {tx_hash.to_0x_hex()}")
+
+        return tx_hash
+
+    def confirm_target_tx(self, tx_result: BridgeTxResult) -> TxReceipt:
+
+        context = self._get_context(tx_result)
+        msg = "⏳ Checking target chain [%s] tx receipt for %s"
+        self.logger.info(msg, tx_result.target_chain.name, tx_result.target_tx.tx_hash)
+        tx_receipt = wait_for_tx_finality(
+            w3=context.target_w3,
+            tx_hash=tx_result.target_tx.tx_hash,
+            logger=self.logger,
+        )
+
+        return tx_receipt
+
+    def _fetch_lz_event_log(self, tx_result: BridgeTxResult, context: BridgeContext) -> LogReceipt:
 
         try:
             source_event = context.source_event.process_log(tx_result.source_tx.tx_receipt.logs[-1])
@@ -482,9 +542,10 @@ class BridgeClient:
         self.logger.info(
             f"🔍 Listening for OFTReceived on [{tx_result.target_chain.name}] at {context.target_event.address}"
         )
+
         return wait_for_event(context.target_w3, filter_params, logger=self.logger)
 
-    def fetch_socket_event_log(self, tx_result: BridgeTxResult, context: BridgeContext):
+    def _fetch_socket_event_log(self, tx_result: BridgeTxResult, context: BridgeContext) -> LogReceipt:
 
         try:
             source_event = context.source_event.process_log(tx_result.source_tx.tx_receipt.logs[-2])
@@ -505,90 +566,11 @@ class BridgeClient:
         self.logger.info(
             f"🔍 Listening for ExecutionSuccess on [{tx_result.target_chain.name}] at {context.target_event.address}"
         )
+
         return wait_for_event(context.target_w3, filter_params, condition=matching_message_id, logger=self.logger)
 
-    def poll_bridge_progress(self, tx_result: BridgeTxResult) -> BridgeTxResult:
+    def _prepare_new_style_deposit(self, token_data: NonMintableTokenData, amount: int) -> tuple[ContractFunction, int]:
 
-        if tx_result.status is not TxStatus.PENDING:
-            raise AlreadyFinalizedError(f"Bridge already in final state: {tx_result.status.name}")
-
-        # Do not mutate the input in-place
-        tx_result = copy.deepcopy(tx_result)
-
-        bridge_event_fetchers = {
-            BridgeType.SOCKET: self.fetch_socket_event_log,
-            BridgeType.LAYERZERO: self.fetch_lz_event_log,
-        }
-        if (fetch_event := bridge_event_fetchers.get(tx_result.bridge)) is None:
-            raise BridgeRouteError(f"Invalid bridge_type: {tx_result.bridge}")
-
-        direction = "withdraw" if tx_result.source_chain == ChainID.DERIVE else "deposit"
-        context = self._make_bridge_context(
-            direction=direction,
-            bridge_type=tx_result.bridge,
-            currency=tx_result.currency,
-        )
-
-        # Timeout means partial update; subsequent steps depend on prior success, so we stop here
-        with suppress(TimeoutError):
-            # 1. TimeoutError as exception during source_tx.tx_receipt
-            if not tx_result.source_tx.tx_receipt:
-                msg = "⏳ Checking source chain [%s] tx receipt for %s"
-                self.logger.info(msg, tx_result.source_chain.name, tx_result.source_tx.tx_hash)
-                tx_result.source_tx.tx_receipt = wait_for_tx_receipt(
-                    w3=context.source_w3, tx_hash=tx_result.source_tx.tx_hash
-                )
-
-            # 2. target_tx is None (i.e. TimeoutError when waiting for event log on target chain)
-            if not tx_result.target_tx:
-                event_log = fetch_event(tx_result, context)
-                tx_result.target_tx = TxResult(event_log["transactionHash"].to_0x_hex())
-
-            # 3. TimeoutError waiting for target_tx.tx_receipt
-            if not tx_result.target_tx.tx_receipt:
-                msg = "⏳ Checking target chain [%s] tx receipt for %s"
-                self.logger.info(msg, tx_result.target_chain.name, tx_result.target_tx.tx_hash)
-                tx_result.target_tx.tx_receipt = wait_for_tx_receipt(
-                    w3=context.target_w3, tx_hash=tx_result.target_tx.tx_hash
-                )
-
-        return tx_result
-
-    def _ensure_derive_eth_balance(self, tx: dict[str, str]):
-        """Ensure that the Derive EOA wallet has sufficient ETH balance for gas."""
-        self.logger.info(f"Funding Derive EOA wallet with {DEFAULT_GAS_FUNDING_AMOUNT} ETH")
-
-        w3 = get_w3_connection(ChainID.ETH, logger=self.logger)
-
-        address = self.config.contracts.L1_CHUG_SPLASH_PROXY
-        bridge_abi = json.loads(L1_STANDARD_BRIDGE_ABI_PATH.read_text())
-        proxy_contract = get_contract(w3=w3, address=address, abi=bridge_abi)
-
-        func = proxy_contract.functions.bridgeETH(
-            MSG_GAS_LIMIT,  # _minGasLimit, e.g. Optimism
-            b"",  # _extraData
-        )
-
-        tx = build_standard_transaction(func=func, account=self.account, w3=w3, value=DEFAULT_GAS_FUNDING_AMOUNT)
-        try:
-            tx_result = send_and_confirm_tx(
-                w3=w3, tx=tx, private_key=self.private_key, action="bridgeETH()", logger=self.logger
-            )
-        except InsufficientNativeBalance:
-            self.logger.warning("Insufficient native balance for bridging ETH to Derive.")
-            raise
-
-        match tx_result.status:
-            case TxStatus.SUCCESS:
-                self.logger.info(f"Funding ttransactionx mined successfully: {tx_result}")
-            case TxStatus.PENDING:
-                self.logger.warning(f"Funding transaction is still pending: {tx_result}")
-            case TxStatus.FAILED:
-                msg = f"Funding transaction failed: {tx_result}"
-                self.logger.error(msg)
-                raise DeriveFundingFailed(msg)
-
-    def _prepare_new_style_deposit(self, token_data: NonMintableTokenData, amount: int) -> dict:
         vault_contract = _load_vault_contract(w3=self.remote_w3, token_data=token_data)
         connector = token_data.connectors[ChainID.DERIVE][TARGET_SPEED]
         fees = _get_min_fees(bridge_contract=vault_contract, connector=connector, token_data=token_data)
@@ -600,9 +582,11 @@ class BridgeClient:
             extraData_=b"",
             options_=b"",
         )
-        return build_standard_transaction(func=func, account=self.account, w3=self.remote_w3, value=fees + 1)
 
-    def _prepare_old_style_deposit(self, token_data: NonMintableTokenData, amount: int) -> dict:
+        return func, fees
+
+    def _prepare_old_style_deposit(self, token_data: NonMintableTokenData, amount: int) -> tuple[ContractFunction, int]:
+
         vault_contract = _load_vault_contract(w3=self.remote_w3, token_data=token_data)
         connector = token_data.connectors[ChainID.DERIVE][TARGET_SPEED]
         fees = _get_min_fees(bridge_contract=vault_contract, connector=connector, token_data=token_data)
@@ -614,9 +598,11 @@ class BridgeClient:
             gasLimit=MSG_GAS_LIMIT,
             connector=connector,
         )
-        return build_standard_transaction(func=func, account=self.account, w3=self.remote_w3, value=fees + 1)
 
-    def _check_bridge_funds(self, token_data, connector: Address, amount: int):
+        return func, fees
+
+    def _check_bridge_funds(self, token_data, connector: Address, amount: int) -> None:
+
         controller = _load_controller_contract(w3=self.derive_w3, token_data=token_data)
         if token_data.isNewBridge:
             deposit_hook = controller.functions.hook__().call()

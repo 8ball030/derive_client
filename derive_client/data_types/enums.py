@@ -25,6 +25,11 @@ class BridgeType(Enum):
     LAYERZERO = "layerzero"
 
 
+class Direction(Enum):
+    DEPOSIT = "deposit"
+    WITHDRAW = "withdraw"
+
+
 class ChainID(IntEnum):
     ETH = 1
     OPTIMISM = 10

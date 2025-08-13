@@ -9,6 +9,7 @@ from .enums import (
     DeriveJSONRPCErrorCode,
     DeriveTokenAddresses,
     DeriveTxStatus,
+    Direction,
     Environment,
     EthereumJSONRPCErrorCode,
     InstrumentType,
@@ -28,6 +29,7 @@ from .enums import (
 from .models import (
     Address,
     BridgeContext,
+    BridgeTxDetails,
     BridgeTxResult,
     CreateSubAccountData,
     CreateSubAccountDetails,
@@ -37,6 +39,7 @@ from .models import (
     ManagerAddress,
     MintableTokenData,
     NonMintableTokenData,
+    PreparedBridgeTx,
     RPCEndpoints,
     SessionKey,
     TxResult,
@@ -46,6 +49,7 @@ from .models import (
 __all__ = [
     "TxStatus",
     "DeriveTxStatus",
+    "Direction",
     "BridgeType",
     "BridgeContext",
     "BridgeTxResult",
@@ -82,4 +86,6 @@ __all__ = [
     "DeriveTxResult",
     "SocketAddress",
     "RPCEndpoints",
+    "BridgeTxDetails",
+    "PreparedBridgeTx",
 ]

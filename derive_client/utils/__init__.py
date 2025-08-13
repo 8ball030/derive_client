@@ -15,10 +15,10 @@ from .w3 import (
     load_rpc_endpoints,
     make_filter_params,
     make_rotating_provider_middleware,
-    send_and_confirm_tx,
-    sign_and_send_tx,
+    send_tx,
+    sign_tx,
     wait_for_event,
-    wait_for_tx_receipt,
+    wait_for_tx_finality,
 )
 
 __all__ = [
@@ -34,9 +34,9 @@ __all__ = [
     "get_contract",
     "get_erc20_contract",
     "load_rpc_endpoints",
-    "wait_for_tx_receipt",
-    "sign_and_send_tx",
-    "send_and_confirm_tx",
+    "wait_for_tx_finality",
+    "sign_tx",
+    "send_tx",
     "download_prod_address_abis",
     "build_standard_transaction",
     "iter_events",
