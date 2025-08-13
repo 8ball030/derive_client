@@ -4,6 +4,7 @@ from .abi import download_prod_address_abis
 from .logger import get_logger
 from .prod_addresses import get_prod_derive_addresses
 from .retry import exp_backoff_retry, get_retry_session, wait_until
+from .unwrap import unwrap_or_raise
 from .w3 import (
     build_standard_transaction,
     estimate_fees,
@@ -40,4 +41,5 @@ __all__ = [
     "build_standard_transaction",
     "iter_events",
     "wait_for_event",
+    "unwrap_or_raise",
 ]

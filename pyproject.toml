@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{ include = "derive_client" }]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<=3.12"
+python = ">=3.10,<=3.12"
 requests = "^2"
 web3 = { version = ">=6,<8" }
 websocket-client = ">=0.32.0,<1"
@@ -19,6 +19,7 @@ eth-account = ">=0.13"
 derive-action-signing = "^0.0.12"
 pydantic = "^2.11.3"
 aiolimiter = "^1.2.1"
+returns = "^0.26.0"
 
 [tool.poetry.scripts]
 drv = "derive_client.cli:cli"

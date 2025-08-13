@@ -7,6 +7,7 @@ from __future__ import annotations
 import copy
 import functools
 import json
+from contextlib import suppress
 from logging import Logger
 from typing import Literal
 
@@ -15,12 +16,7 @@ from web3 import Web3
 from web3.contract import Contract
 from web3.datastructures import AttributeDict
 
-from derive_client._bridge.transaction import (
-    _check_gas_balance,
-    ensure_allowance,
-    ensure_balance,
-    prepare_mainnet_to_derive_gas_tx,
-)
+from derive_client._bridge.transaction import ensure_token_allowance, ensure_token_balance
 from derive_client.constants import (
     CONFIGS,
     CONTROLLER_ABI_PATH,
@@ -59,7 +55,16 @@ from derive_client.data_types import (
     TxResult,
     TxStatus,
 )
-from derive_client.exceptions import AlreadyFinalizedError, BridgeEventParseError, BridgeRouteError, InsufficientGas
+from derive_client.exceptions import (
+    AlreadyFinalizedError,
+    BridgeEventParseError,
+    BridgePrimarySignerRequiredError,
+    BridgeRouteError,
+    DeriveFundingFailed,
+    DrvWithdrawAmountBelowFee,
+    EthGasFundingPending,
+    InsufficientNativeBalance,
+)
 from derive_client.utils import (
     build_standard_transaction,
     get_contract,
@@ -70,7 +75,6 @@ from derive_client.utils import (
     wait_for_event,
     wait_for_tx_receipt,
 )
-from derive_client.utils.w3 import simulate_tx
 
 
 def _load_vault_contract(w3: Web3, token_data: NonMintableTokenData) -> Contract:
@@ -125,7 +129,7 @@ class BridgeClient:
         self.light_account = _load_light_account(w3=self.derive_w3, wallet=wallet)
         self.logger = logger
         if self.owner != self.account.address:
-            raise ValueError(
+            raise BridgePrimarySignerRequiredError(
                 "Bridging disabled for secondary session-key signers: old-style assets "
                 "(USDC, USDT) on Derive cannot specify a custom receiver. Using a "
                 "secondary signer routes funds to the session key's contract instead of "
@@ -213,7 +217,7 @@ class BridgeClient:
             src_event, tgt_event = src_socket.events.MessageOutbound(), tgt_socket.events.ExecutionSuccess()
             return BridgeContext(src_w3, tgt_w3, token_contract, src_event, tgt_event)
 
-        raise ValueError(f"Unsupported bridge_type={bridge_type} for currency={currency}.")
+        raise BridgeRouteError(f"Unsupported bridge_type={bridge_type} for currency={currency}.")
 
     def _resolve_socket_route(
         self,
@@ -236,7 +240,7 @@ class BridgeClient:
             msg = f"Target chain {tgt_chain.name} not found in {src_chain.name} connectors."
             raise BridgeRouteError(msg)
         if src_chain not in tgt_token_data.connectors:
-            msg = f"Target chain {src_chain.name} not found in {tgt_chain.name} connectors."
+            msg = f"Source chain {src_chain.name} not found in {tgt_chain.name} connectors."
             raise BridgeRouteError(msg)
 
         return src_token_data, src_token_data.connectors[tgt_chain][TARGET_SPEED]
@@ -252,9 +256,8 @@ class BridgeClient:
         target_from_block = context.target_w3.eth.block_number
 
         spender = token_data.Vault if token_data.isNewBridge else self.deposit_helper.address
-        _check_gas_balance(context.source_w3, self.owner)
-        ensure_balance(context.source_token, self.owner, amount)
-        ensure_allowance(
+        ensure_token_balance(context.source_token, self.owner, amount)
+        ensure_token_allowance(
             w3=context.source_w3,
             token_contract=context.source_token,
             owner=self.owner,
@@ -294,7 +297,7 @@ class BridgeClient:
         context = self._make_bridge_context("withdraw", bridge_type=BridgeType.SOCKET, currency=currency)
         target_from_block = context.target_w3.eth.block_number
 
-        ensure_balance(context.source_token, self.wallet, amount)
+        ensure_token_balance(context.source_token, self.wallet, amount)
 
         self._check_bridge_funds(token_data, connector, amount)
 
@@ -317,13 +320,13 @@ class BridgeClient:
             func=[approve_data, bridge_data],
         )
 
-        tx = build_standard_transaction(func=func, account=self.account, w3=context.source_w3, value=0)
-        self._ensure_derive_eth_balance(tx)
-        simulate_tx(
-            w3=context.source_w3,
-            tx=tx,
-            account=self.account,
-        )
+        try:
+            tx = build_standard_transaction(func=func, account=self.account, w3=context.source_w3, value=0)
+        except InsufficientNativeBalance:
+            self._ensure_derive_eth_balance(tx)
+            self.logger.info("Balance top-up triggered; funds are pending. Cannot proceed with tx now.")
+            raise EthGasFundingPending("Awaiting ETH deposit for gas.")
+
         source_tx = send_and_confirm_tx(
             w3=context.source_w3,
             tx=tx,
@@ -352,9 +355,8 @@ class BridgeClient:
         target_from_block = context.target_w3.eth.block_number
 
         # check allowance, if needed approve
-        _check_gas_balance(context.source_w3, self.owner)
-        ensure_balance(context.source_token, self.owner, amount)
-        ensure_allowance(
+        ensure_token_balance(context.source_token, self.owner, amount)
+        ensure_token_allowance(
             w3=context.source_w3,
             token_contract=context.source_token,
             owner=self.owner,
@@ -413,12 +415,12 @@ class BridgeClient:
         abi = json.loads(LYRA_OFT_WITHDRAW_WRAPPER_ABI_PATH.read_text())
         withdraw_wrapper = get_contract(context.source_w3, LYRA_OFT_WITHDRAW_WRAPPER_ADDRESS, abi=abi)
 
-        ensure_balance(context.source_token, self.wallet, amount)
+        ensure_token_balance(context.source_token, self.wallet, amount)
 
         destEID = LayerZeroChainIDv2[context.target_chain.name]
         fee = withdraw_wrapper.functions.getFeeInToken(context.source_token.address, amount, destEID).call()
         if amount < fee:
-            raise ValueError(f"Withdraw amount < fee: {amount} < {fee} ({(fee / amount * 100):.2f}%)")
+            raise DrvWithdrawAmountBelowFee(f"Withdraw amount < fee: {amount} < {fee} ({(fee / amount * 100):.2f}%)")
 
         kwargs = {
             "token": context.source_token.address,
@@ -435,13 +437,12 @@ class BridgeClient:
             func=[approve_data, bridge_data],
         )
 
-        tx = build_standard_transaction(func=func, account=self.account, w3=context.source_w3, value=0)
-        self._ensure_derive_eth_balance(tx)
-        simulate_tx(
-            w3=context.source_w3,
-            tx=tx,
-            account=self.account,
-        )
+        try:
+            tx = build_standard_transaction(func=func, account=self.account, w3=context.source_w3, value=0)
+        except InsufficientNativeBalance:
+            self._ensure_derive_eth_balance(tx)
+            self.logger.info("Balance top-up triggered; funds are pending. Cannot proceed with tx now.")
+            raise EthGasFundingPending("Awaiting ETH deposit for gas.")
 
         source_tx = send_and_confirm_tx(
             w3=context.source_w3,
@@ -507,6 +508,7 @@ class BridgeClient:
         return wait_for_event(context.target_w3, filter_params, condition=matching_message_id, logger=self.logger)
 
     def poll_bridge_progress(self, tx_result: BridgeTxResult) -> BridgeTxResult:
+
         if tx_result.status is not TxStatus.PENDING:
             raise AlreadyFinalizedError(f"Bridge already in final state: {tx_result.status.name}")
 
@@ -518,7 +520,7 @@ class BridgeClient:
             BridgeType.LAYERZERO: self.fetch_lz_event_log,
         }
         if (fetch_event := bridge_event_fetchers.get(tx_result.bridge)) is None:
-            raise ValueError(f"Invalid bridge_type: {tx_result.bridge}")
+            raise BridgeRouteError(f"Invalid bridge_type: {tx_result.bridge}")
 
         direction = "withdraw" if tx_result.source_chain == ChainID.DERIVE else "deposit"
         context = self._make_bridge_context(
@@ -527,56 +529,34 @@ class BridgeClient:
             currency=tx_result.currency,
         )
 
-        # 1. TimeoutError as exception during source_tx.tx_receipt
-        if not tx_result.source_tx.tx_receipt:
-            self.logger.info(
-                f"⏳ Checking source chain [{tx_result.source_chain.name}] tx receipt for {tx_result.source_tx.tx_hash}"
-            )
-            tx_result.source_tx.exception = None
-            try:
+        # Timeout means partial update; subsequent steps depend on prior success, so we stop here
+        with suppress(TimeoutError):
+            # 1. TimeoutError as exception during source_tx.tx_receipt
+            if not tx_result.source_tx.tx_receipt:
+                msg = "⏳ Checking source chain [%s] tx receipt for %s"
+                self.logger.info(msg, tx_result.source_chain.name, tx_result.source_tx.tx_hash)
                 tx_result.source_tx.tx_receipt = wait_for_tx_receipt(
                     w3=context.source_w3, tx_hash=tx_result.source_tx.tx_hash
                 )
-            except TimeoutError as e:
-                tx_result.source_tx.exception = e
-                return tx_result
 
-        # 2. target_tx is None (i.e. TimeoutError when waiting for event log on target chain)
-        if not tx_result.target_tx:
-            try:
+            # 2. target_tx is None (i.e. TimeoutError when waiting for event log on target chain)
+            if not tx_result.target_tx:
                 event_log = fetch_event(tx_result, context)
                 tx_result.target_tx = TxResult(event_log["transactionHash"].to_0x_hex())
-            except TimeoutError:
-                return tx_result
 
-        # 3. Timeout waiting for target_tx.tx_receipt
-        if not tx_result.target_tx.tx_receipt:
-            self.logger.info(
-                f"⏳ Checking target chain [{tx_result.target_chain.name}] tx receipt for {tx_result.target_tx.tx_hash}"
-            )
-            tx_result.target_tx.exception = None
-            try:
+            # 3. TimeoutError waiting for target_tx.tx_receipt
+            if not tx_result.target_tx.tx_receipt:
+                msg = "⏳ Checking target chain [%s] tx receipt for %s"
+                self.logger.info(msg, tx_result.target_chain.name, tx_result.target_tx.tx_hash)
                 tx_result.target_tx.tx_receipt = wait_for_tx_receipt(
                     w3=context.target_w3, tx_hash=tx_result.target_tx.tx_hash
                 )
-            except TimeoutError as e:
-                tx_result.target_tx.exception = e
 
         return tx_result
 
     def _ensure_derive_eth_balance(self, tx: dict[str, str]):
         """Ensure that the Derive EOA wallet has sufficient ETH balance for gas."""
-        balance_of_owner = self.derive_w3.eth.get_balance(self.owner)
-        required_gas = tx['maxFeePerGas'] * tx['gas']
-        if balance_of_owner < required_gas + DEFAULT_GAS_FUNDING_AMOUNT:
-            self.logger.info(f"Funding Derive EOA wallet with {DEFAULT_GAS_FUNDING_AMOUNT} ETH")
-            self.bridge_mainnet_eth_to_derive(DEFAULT_GAS_FUNDING_AMOUNT)
-
-    def bridge_mainnet_eth_to_derive(self, amount: int) -> TxResult:
-        """
-        Prepares, signs, and sends a transaction to bridge ETH from mainnet to Derive.
-        This is the "socket superbridge" method; not required when using the withdraw wrapper.
-        """
+        self.logger.info(f"Funding Derive EOA wallet with {DEFAULT_GAS_FUNDING_AMOUNT} ETH")
 
         w3 = get_w3_connection(ChainID.ETH, logger=self.logger)
 
@@ -584,23 +564,29 @@ class BridgeClient:
         bridge_abi = json.loads(L1_STANDARD_BRIDGE_ABI_PATH.read_text())
         proxy_contract = get_contract(w3=w3, address=address, abi=bridge_abi)
 
-        tx = prepare_mainnet_to_derive_gas_tx(w3=w3, account=self.account, amount=amount, proxy_contract=proxy_contract)
-        tx['gas'] = w3.eth.estimate_gas(tx)
-        tx = simulate_tx(
-            w3=w3,
-            tx=tx,
-            account=self.account,
+        func = proxy_contract.functions.bridgeETH(
+            MSG_GAS_LIMIT,  # _minGasLimit, e.g. Optimism
+            b"",  # _extraData
         )
-        require_gas = tx['maxFeePerGas'] * tx['gas']
-        current_balance = w3.eth.get_balance(self.account.address)
-        if not current_balance >= (amount + require_gas) * 1.1:
-            raise InsufficientGas(
-                f"Insufficient ETH balance for bridging amount {amount} + gas {require_gas}. Balance: {current_balance}"
+
+        tx = build_standard_transaction(func=func, account=self.account, w3=w3, value=DEFAULT_GAS_FUNDING_AMOUNT)
+        try:
+            tx_result = send_and_confirm_tx(
+                w3=w3, tx=tx, private_key=self.private_key, action="bridgeETH()", logger=self.logger
             )
-        tx_result = send_and_confirm_tx(
-            w3=w3, tx=tx, private_key=self.private_key, action="bridgeETH()", logger=self.logger
-        )
-        return tx_result
+        except InsufficientNativeBalance:
+            self.logger.warning("Insufficient native balance for bridging ETH to Derive.")
+            raise
+
+        match tx_result.status:
+            case TxStatus.SUCCESS:
+                self.logger.info(f"Funding ttransactionx mined successfully: {tx_result}")
+            case TxStatus.PENDING:
+                self.logger.warning(f"Funding transaction is still pending: {tx_result}")
+            case TxStatus.FAILED:
+                msg = f"Funding transaction failed: {tx_result}"
+                self.logger.error(msg)
+                raise DeriveFundingFailed(msg)
 
     def _prepare_new_style_deposit(self, token_data: NonMintableTokenData, amount: int) -> dict:
         vault_contract = _load_vault_contract(w3=self.remote_w3, token_data=token_data)
