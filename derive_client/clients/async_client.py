@@ -3,6 +3,7 @@ Async client for Derive
 """
 
 import asyncio
+import functools
 import json
 import time
 from datetime import datetime
@@ -11,8 +12,21 @@ from decimal import Decimal
 import aiohttp
 from derive_action_signing.utils import sign_ws_login, utc_now_ms
 
+from derive_client._bridge import BridgeClient
 from derive_client.constants import DEFAULT_REFERER, TEST_PRIVATE_KEY
-from derive_client.data_types import Environment, InstrumentType, OrderSide, OrderType, TimeInForce, UnderlyingCurrency
+from derive_client.data_types import (
+    BridgeTxResult,
+    ChainID,
+    Currency,
+    Environment,
+    InstrumentType,
+    OrderSide,
+    OrderType,
+    PreparedBridgeTx,
+    TimeInForce,
+    UnderlyingCurrency,
+)
+from derive_client.utils import unwrap_or_raise
 
 from .base_client import DeriveJSONRPCException
 from .ws_client import WsClient
@@ -49,7 +63,137 @@ class AsyncClient(WsClient):
 
         self.message_queues = {}
         self.connecting = False
-        # we make sure to get the event loop
+
+    @functools.cached_property
+    def bridge(self) -> BridgeClient:
+        return BridgeClient(env=self.env, account=self.signer, wallet=self.wallet, logger=self.logger)
+
+    async def prepare_deposit_to_derive(
+        self,
+        amount: float,
+        currency: Currency,
+        chain_id: ChainID,
+    ) -> PreparedBridgeTx:
+        """
+        Prepare a deposit transaction to bridge tokens to Derive.
+
+        This creates a signed transaction ready for submission but does not execute it.
+        Review the returned PreparedBridgeTx before calling submit_bridge_tx().
+
+        Args:
+            amount: Amount in token units (e.g., 1.5 USDC, 0.1 ETH)
+            currency: Token to bridge
+            chain_id: Source chain to bridge from
+
+        Returns:
+            PreparedBridgeTx: Contains transaction details including:
+                - tx_hash: Pre-computed transaction hash
+                - nonce: Transaction nonce for replacement/cancellation
+                - tx_details: Contract address, method, gas estimates, signed transaction
+                - currency, source_chain, target_chain: Bridge context
+
+        Use the returned object to:
+            - Verify contract addresses and gas costs before submission
+            - Submit with submit_bridge_tx() on approval
+        """
+
+        result = await self.bridge.prepare_deposit(token_amount=amount, currency=currency, chain_id=chain_id)
+        return unwrap_or_raise(result)
+
+    async def prepare_withdrawal_from_derive(
+        self,
+        amount: float,
+        currency: Currency,
+        chain_id: ChainID,
+    ) -> PreparedBridgeTx:
+        """
+        Prepare a withdrawal transaction to bridge tokens from Derive.
+
+        This creates a signed transaction ready for submission but does not execute it.
+        Review the returned PreparedBridgeTx before calling submit_bridge_tx().
+
+        Args:
+            amount: Amount in token units (e.g., 1.5 USDC, 0.1 ETH)
+            currency: Token to bridge
+            chain_id: Target chain to bridge to
+
+        Returns:
+            PreparedBridgeTx: Contains transaction details including:
+                - tx_hash: Pre-computed transaction hash
+                - nonce: Transaction nonce for replacement/cancellation
+                - tx_details: Contract address, method, gas estimates, signed transaction
+                - currency, source_chain, target_chain: Bridge context
+
+        Use the returned object to:
+            - Verify contract addresses and gas costs before submission
+            - Submit with submit_bridge_tx() when ready
+        """
+
+        result = await self.bridge.prepare_withdrawal(token_amount=amount, currency=currency, chain_id=chain_id)
+        return unwrap_or_raise(result)
+
+    async def submit_bridge_tx(self, prepared_tx: PreparedBridgeTx) -> BridgeTxResult:
+        """
+        Submit a prepared bridge transaction to the blockchain.
+
+        This broadcasts the signed transaction and returns tracking information.
+        The transaction is submitted but not yet confirmed - use poll_bridge_progress()
+        to monitor completion.
+
+        Args:
+            prepared_tx: Transaction prepared by prepare_deposit_to_derive()
+                         or prepare_withdrawal_from_derive()
+
+        Returns:
+            BridgeTxResult: Initial tracking object containing:
+                - source_tx: Transaction hash on source chain (unconfirmed)
+                - target_from_block: Block number to start polling target chain events
+                - tx_details: Copy of original transaction details
+                - currency, bridge, source_chain, target_chain: Bridge context
+
+        Next steps:
+            - Call poll_bridge_progress() to wait for cross-chain completion
+        """
+
+        result = await self.bridge.submit_bridge_tx(prepared_tx=prepared_tx)
+        return unwrap_or_raise(result)
+
+    async def poll_bridge_progress(self, tx_result: BridgeTxResult) -> BridgeTxResult:
+        """
+        Poll for bridge transaction completion across both chains.
+
+        This monitors the full cross-chain bridge pipeline:
+        1. Source chain finality
+        2. Target chain event detection
+        3. Target chain finality
+
+        Args:
+            tx_result: Result from submit_bridge_tx() or previous poll attempt
+
+        Returns:
+            BridgeTxResult: Updated with completed bridge information:
+                - source_tx.tx_receipt: Source chain transaction receipt (confirmed)
+                - target_tx.tx_hash: Target chain transaction hash
+                - target_tx.tx_receipt: Target chain transaction receipt (confirmed)
+
+        Raises:
+            PartialBridgeResult: Pipeline failed at some step. The exception contains
+                the partially updated tx_result for inspection and retry. Common scenarios:
+                - FinalityTimeout: Not enough confirmations, wait longer
+                - TxPendingTimeout: Transaction stuck, consider resubmission
+                - TransactionDropped: Transaction lost, likely needs resubmission
+
+        Recovery strategies:
+            - On PartialBridgeResult: inspect the tx_result in the exception
+            - For FinalityTimeout: call poll_bridge_progress() again with the partial result
+            - For TransactionDropped: prepare new tx with same nonce to replace
+            - For TxPendingTimeout: prepare new tx with higher gas using same nonce.
+            - In case of a nonce collision: verify whether previous transaction got included
+                                            or whether the nonce was reused in another tx.
+        """
+
+        result = await self.bridge.poll_bridge_progress(tx_result=tx_result)
+        return unwrap_or_raise(result)
 
     def get_subscription_id(self, instrument_name: str, group: str = "1", depth: str = "100"):
         return f"orderbook.{instrument_name}.{group}.{depth}"

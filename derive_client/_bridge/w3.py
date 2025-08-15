@@ -148,6 +148,10 @@ def get_w3_connection(
     return w3
 
 
+def get_w3_connections(logger) -> dict[ChainID, AsyncWeb3]:
+    return {chain_id: get_w3_connection(chain_id, logger=logger) for chain_id in ChainID}
+
+
 def get_contract(w3: AsyncWeb3, address: str, abi: list) -> AsyncContract:
     return w3.eth.contract(address=AsyncWeb3.to_checksum_address(address), abi=abi)
 

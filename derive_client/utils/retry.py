@@ -90,7 +90,7 @@ def get_retry_session(
     return session
 
 
-async def wait_until(
+def wait_until(
     func: Callable[P, T],
     condition: Callable[[T], bool],
     timeout: float = 60.0,
@@ -116,7 +116,7 @@ async def wait_until(
         if time.time() - start_time > timeout:
             msg = f"Timed out after {timeout}s waiting for condition on {func.__name__} {timeout_message}"
             raise TimeoutError(msg)
-        await asyncio.sleep(poll_interval)
+        time.sleep(poll_interval)
 
 
 def is_retryable(e: RequestException) -> bool:
