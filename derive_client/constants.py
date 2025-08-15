@@ -82,7 +82,7 @@ CONFIGS: dict[Environment, EnvConfig] = {
     Environment.PROD: EnvConfig(
         base_url="https://api.lyra.finance",
         ws_address="wss://api.lyra.finance/ws",
-        rpc_endpoint="https://rpc.lyra.finance",
+        rpc_endpoint="https://957.rpc.thirdweb.com/",
         block_explorer="https://explorer.lyra.finance",
         ACTION_TYPEHASH="0x4d7a9f27c403ff9c0f19bce61d76d82f9aa29f8d6d4b0c5474607d9770d1af17",
         DOMAIN_SEPARATOR="0xd96e5f90797da7ec8dc4e276260c7f3f87fedf68775fbe1ef116e996fc60441b",

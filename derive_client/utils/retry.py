@@ -1,3 +1,4 @@
+import asyncio
 import functools
 import time
 from http import HTTPStatus
@@ -35,15 +36,15 @@ def exp_backoff_retry(
         return lambda f: exp_backoff_retry(f, attempts=attempts, initial_delay=initial_delay, exceptions=exceptions)
 
     @functools.wraps(func)
-    def wrapper(*args, **kwargs):
+    async def wrapper(*args, **kwargs):
         delay = initial_delay
         for attempt in range(attempts):
             try:
-                return func(*args, **kwargs)
+                return await func(*args, **kwargs)
             except exceptions as e:
                 if attempt == attempts - 1:
                     raise e
-                time.sleep(delay)
+                await asyncio.sleep(delay)
                 delay *= 2
 
     return wrapper
@@ -89,7 +90,7 @@ def get_retry_session(
     return session
 
 
-def wait_until(
+async def wait_until(
     func: Callable[P, T],
     condition: Callable[[T], bool],
     timeout: float = 60.0,
@@ -115,7 +116,7 @@ def wait_until(
         if time.time() - start_time > timeout:
             msg = f"Timed out after {timeout}s waiting for condition on {func.__name__} {timeout_message}"
             raise TimeoutError(msg)
-        time.sleep(poll_interval)
+        await asyncio.sleep(poll_interval)
 
 
 def is_retryable(e: RequestException) -> bool:

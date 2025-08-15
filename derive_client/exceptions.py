@@ -1,6 +1,11 @@
 """Custom Exception classes."""
 
-from typing import Any
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from derive_client.data_types import BridgeTxResult
 
 
 class ApiException(Exception):
