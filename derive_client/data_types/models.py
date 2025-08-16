@@ -8,7 +8,7 @@ from eth_abi.abi import encode
 from eth_account.datastructures import SignedTransaction
 from eth_utils import is_0x_prefixed, is_address, is_hex, to_checksum_address
 from hexbytes import HexBytes
-from pydantic import BaseModel, ConfigDict, Field, GetCoreSchemaHandler, GetJsonSchemaHandler, HttpUrl
+from pydantic import BaseModel, RootModel, ConfigDict, Field, GetCoreSchemaHandler, GetJsonSchemaHandler, HttpUrl
 from pydantic.dataclasses import dataclass
 from pydantic_core import core_schema
 from web3 import AsyncWeb3, Web3
@@ -16,7 +16,17 @@ from web3.contract import AsyncContract
 from web3.contract.async_contract import AsyncContractEvent
 from web3.datastructures import AttributeDict
 
-from .enums import BridgeType, ChainID, Currency, DeriveTxStatus, MainnetCurrency, MarginType, SessionKeyScope, TxStatus
+from .enums import (
+    BridgeType,
+    ChainID,
+    Currency,
+    DeriveTxStatus,
+    MainnetCurrency,
+    MarginType,
+    SessionKeyScope,
+    TxStatus,
+    GasPriority,
+)
 
 
 class PAttributeDict(AttributeDict):
@@ -134,6 +144,24 @@ class TxHash(str):
         if not is_0x_prefixed(v) or not is_hex(v) or len(v) != 66:
             raise ValueError(f"Invalid Ethereum transaction hash: {v}")
         return v
+
+
+class Wei(int):
+    @classmethod
+    def __get_pydantic_core_schema__(cls, _source, _handler: GetCoreSchemaHandler) -> core_schema.CoreSchema:
+        return core_schema.no_info_before_validator_function(cls._validate, core_schema.int_schema())
+
+    @classmethod
+    def __get_pydantic_json_schema__(cls, _schema, _handler: GetJsonSchemaHandler) -> dict:
+        return {"type": ["string", "integer"], "title": "Wei"}
+
+    @classmethod
+    def _validate(cls, v: str | int) -> int:
+        if isinstance(v, int):
+            return v
+        if isinstance(v, str) and is_hex(v):
+            return int(v, 16)
+        raise TypeError(f"Invalid type for Wei: {type(v)}")
 
 
 @dataclass
@@ -320,3 +348,28 @@ class RPCEndpoints(BaseModel, frozen=True):
         if not (urls := getattr(self, chain.name, [])):
             raise ValueError(f"No RPC URLs configured for {chain.name}")
         return urls
+
+
+class FeeHistory(BaseModel):
+    base_fee_per_gas: list[Wei] = Field(alias="baseFeePerGas")
+    gas_used_ratio: list[float] = Field(alias="gasUsedRatio")
+    base_fee_per_blob_gas: list[Wei] = Field(alias="baseFeePerBlobGas")
+    blob_gas_used_ratio: list[float] = Field(alias="blobGasUsedRatio")
+    oldest_block: int = Field(alias="oldestBlock")
+    reward: list[list[Wei]]
+
+
+@dataclass
+class FeeEstimate:
+    max_fee_per_gas: int
+    max_priority_fee_per_gas: int
+
+
+class FeeEstimates(RootModel):
+    root: dict[GasPriority, FeeEstimate]
+
+    def __getitem__(self, key: GasPriority):
+        return self.root[key]
+
+    def items(self):
+        return self.root.items()

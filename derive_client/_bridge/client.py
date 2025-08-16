@@ -269,7 +269,8 @@ class BridgeClient:
         context: BridgeContext,
     ) -> PreparedBridgeTx:
 
-        tx = await build_standard_transaction(func=func, account=self.account, w3=context.source_w3, value=value)
+        w3 = context.source_w3
+        tx = await build_standard_transaction(func=func, account=self.account, w3=w3, value=value, logger=self.logger)
         signed_tx = sign_tx(w3=context.source_w3, tx=tx, private_key=self.private_key)
 
         tx_details = BridgeTxDetails(

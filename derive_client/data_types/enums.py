@@ -57,6 +57,12 @@ class LayerZeroChainIDv2(IntEnum):
     DERIVE = 30311
 
 
+class GasPriority(IntEnum):
+    SLOW = 25
+    MEDIUM = 50
+    FAST = 75
+
+
 class SocketAddress(Enum):
     ETH = "0x943ac2775928318653e91d350574436a1b9b16f9"
     ARBITRUM = "0x37cc674582049b579571e2ffd890a4d99355f6ba"

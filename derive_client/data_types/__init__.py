@@ -25,6 +25,7 @@ from .enums import (
     TimeInForce,
     TxStatus,
     UnderlyingCurrency,
+    GasPriority,
 )
 from .models import (
     Address,
@@ -44,6 +45,9 @@ from .models import (
     SessionKey,
     TxResult,
     WithdrawResult,
+    FeeHistory,
+    FeeEstimate,
+    FeeEstimates,
 )
 
 __all__ = [
@@ -70,6 +74,10 @@ __all__ = [
     "SubaccountType",
     "CollateralAsset",
     "ActionType",
+    "GasPriority",
+    "FeeHistory",
+    "FeeEstimate",
+    "FeeEstimates",
     "RfqStatus",
     "Address",
     "SessionKey",
