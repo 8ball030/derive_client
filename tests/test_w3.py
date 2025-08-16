@@ -14,7 +14,6 @@ from derive_client.data_types import ChainID, EthereumJSONRPCErrorCode
 from derive_client.utils import get_logger, load_rpc_endpoints
 from derive_client.utils.w3 import make_rotating_provider_middleware
 
-
 RPC_ENDPOINTS = list(load_rpc_endpoints(DEFAULT_RPC_ENDPOINTS).model_dump().items())
 
 REQUIRED_METHODS = {

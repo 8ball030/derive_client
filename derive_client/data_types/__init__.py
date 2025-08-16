@@ -12,6 +12,7 @@ from .enums import (
     Direction,
     Environment,
     EthereumJSONRPCErrorCode,
+    GasPriority,
     InstrumentType,
     LayerZeroChainIDv2,
     MainnetCurrency,
@@ -36,6 +37,9 @@ from .models import (
     DepositResult,
     DeriveAddresses,
     DeriveTxResult,
+    FeeEstimate,
+    FeeEstimates,
+    FeeHistory,
     ManagerAddress,
     MintableTokenData,
     NonMintableTokenData,
@@ -43,6 +47,7 @@ from .models import (
     RPCEndpoints,
     SessionKey,
     TxResult,
+    Wei,
     WithdrawResult,
 )
 
@@ -70,6 +75,10 @@ __all__ = [
     "SubaccountType",
     "CollateralAsset",
     "ActionType",
+    "GasPriority",
+    "FeeHistory",
+    "FeeEstimate",
+    "FeeEstimates",
     "RfqStatus",
     "Address",
     "SessionKey",
@@ -88,4 +97,5 @@ __all__ = [
     "RPCEndpoints",
     "BridgeTxDetails",
     "PreparedBridgeTx",
+    "Wei",
 ]
