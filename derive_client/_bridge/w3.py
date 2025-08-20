@@ -6,15 +6,22 @@ import time
 from logging import Logger
 from typing import Any, Callable, Generator, Literal
 
+from eth_abi import encode
 from eth_account import Account
 from eth_account.datastructures import SignedTransaction
 from requests import RequestException
 from web3 import AsyncHTTPProvider, AsyncWeb3
 from web3.contract import Contract
-from web3.contract.async_contract import AsyncContract, AsyncContractEvent
+from web3.contract.async_contract import AsyncContract, AsyncContractEvent, AsyncContractFunction
 from web3.datastructures import AttributeDict
 
-from derive_client.constants import ABI_DATA_DIR, ASSUMED_BRIDGE_GAS_LIMIT, DEFAULT_RPC_ENDPOINTS, GAS_FEE_BUFFER
+from derive_client.constants import (
+    ABI_DATA_DIR,
+    ASSUMED_BRIDGE_GAS_LIMIT,
+    DEFAULT_RPC_ENDPOINTS,
+    GAS_FEE_BUFFER,
+    MIN_PRIORITY_FEE,
+)
 from derive_client.data_types import (
     Address,
     ChainID,
@@ -27,6 +34,7 @@ from derive_client.data_types import (
     Wei,
 )
 from derive_client.exceptions import (
+    BridgeEventTimeout,
     FinalityTimeout,
     InsufficientNativeBalance,
     InsufficientTokenBalance,
@@ -174,11 +182,13 @@ def get_erc20_contract(w3: AsyncWeb3, token_address: str) -> AsyncContract:
     return get_contract(w3=w3, address=token_address, abi=abi)
 
 
-async def ensure_token_balance(token_contract: Contract, owner: Address, amount: int):
+async def ensure_token_balance(token_contract: Contract, owner: Address, amount: int, fee_in_token: int = 0):
     balance = await token_contract.functions.balanceOf(owner).call()
+    required = amount + fee_in_token
     if amount > balance:
         raise InsufficientTokenBalance(
-            f"Not enough tokens to withdraw: {amount} < {balance} ({(balance / amount * 100):.2f}%)"
+            f"Not enough tokens for withdraw: required={required} (amount={amount} + fee={fee_in_token}), "
+            f"balance={balance} ({(balance / required * 100):.2f}% of required)"
         )
 
 
@@ -238,7 +248,11 @@ async def estimate_fees(w3, blocks: int = 20) -> FeeEstimates:
     estimates = {}
     for percentile in percentiles:
         rewards = percentile_rewards[percentile]
-        estimated_priority_fee = int(statistics.median(rewards))
+        non_zero_rewards = list(filter(lambda x: x, rewards))
+        if non_zero_rewards:
+            estimated_priority_fee = int(statistics.median(non_zero_rewards))
+        else:
+            estimated_priority_fee = MIN_PRIORITY_FEE
 
         buffered_base_fee = int(latest_base_fee * GAS_FEE_BUFFER)
         estimated_max_fee = buffered_base_fee + estimated_priority_fee
@@ -248,7 +262,10 @@ async def estimate_fees(w3, blocks: int = 20) -> FeeEstimates:
 
 
 async def preflight_native_balance_check(
-    w3: AsyncWeb3, fee_estimate: FeeEstimate, account: Account, value: Wei
+    w3: AsyncWeb3,
+    fee_estimate: FeeEstimate,
+    account: Account,
+    value: Wei,
 ) -> None:
     balance = await w3.eth.get_balance(account.address)
     max_fee_per_gas = fee_estimate.max_fee_per_gas
@@ -257,10 +274,16 @@ async def preflight_native_balance_check(
     total_cost = max_gas_cost + value
 
     if not balance >= total_cost:
+        chain_id = ChainID(await w3.eth.chain_id)
         ratio = balance / total_cost * 100
         raise InsufficientNativeBalance(
-            f"Insufficient funds: balance={balance}, required={total_cost} {ratio:.2f}% available "
-            f"(includes value={value} and assumed gas limit={ASSUMED_BRIDGE_GAS_LIMIT} at {max_fee_per_gas} wei/gas)"
+            f"Insufficient funds on {chain_id.name} ({chain_id}): "
+            f"balance={balance}, required={total_cost} {ratio:.2f}% available "
+            f"(includes value={value} and assumed gas limit={ASSUMED_BRIDGE_GAS_LIMIT} at {max_fee_per_gas} wei/gas)",
+            balance=balance,
+            chain_id=chain_id,
+            assumed_gas_limit=ASSUMED_BRIDGE_GAS_LIMIT,
+            fee_estimate=fee_estimate,
         )
 
 
@@ -458,7 +481,7 @@ async def iter_events(
         await asyncio.sleep(poll_interval)
 
 
-async def wait_for_event(
+async def wait_for_bridge_event(
     w3: AsyncWeb3,
     filter_params: dict,
     *,
@@ -468,9 +491,12 @@ async def wait_for_event(
     timeout: float = 300.0,
     logger: Logger,
 ) -> AttributeDict:
-    """Return the first log from iter_events, or raise TimeoutError after `timeout` seconds."""
+    """Wait for the first matching bridge-related log on the target chain or raise BridgeEventTimeout."""
 
-    return await anext(iter_events(**locals()))
+    try:
+        return await anext(iter_events(**locals()))
+    except TimeoutError as e:
+        raise BridgeEventTimeout("Timed out waiting for target chain bridge event") from e
 
 
 def make_filter_params(
@@ -501,3 +527,12 @@ def make_filter_params(
         raise ValueError(f"Unexpected address filter: {address!r}")
 
     return filter_params
+
+
+def encode_abi(func: AsyncContractFunction) -> bytes:
+    """Get the ABI-encoded data (including 4-byte selector)."""
+
+    types = [arg["internalType"] for arg in func.abi["inputs"]]
+    selector = bytes.fromhex(func.selector.removeprefix("0x"))
+
+    return selector + encode(types, func.arguments)

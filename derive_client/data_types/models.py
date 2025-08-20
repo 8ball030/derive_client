@@ -16,6 +16,8 @@ from web3.contract import AsyncContract
 from web3.contract.async_contract import AsyncContractEvent
 from web3.datastructures import AttributeDict
 
+from derive_client.exceptions import TxReceiptMissing
+
 from .enums import (
     BridgeType,
     ChainID,
@@ -259,20 +261,51 @@ class BridgeTxDetails:
     @property
     def tx_hash(self) -> str:
         """Pre-computed transaction hash."""
-        return self.signed_tx.hash.to_0x_hex
+        return self.signed_tx.hash.to_0x_hex()
 
     @property
-    def nonce(self) -> str:
+    def nonce(self) -> int:
         """Transaction nonce."""
         return self.tx["nonce"]
+
+    @property
+    def gas(self) -> int:
+        """Gas limit"""
+        return self.tx["gas"]
+
+    @property
+    def max_fee_per_gas(self) -> Wei:
+        return self.tx["maxFeePerGas"]
 
 
 @dataclass
 class PreparedBridgeTx:
+    amount: int
+    value: int
     currency: Currency
     source_chain: ChainID
     target_chain: ChainID
+    bridge_type: BridgeType
     tx_details: BridgeTxDetails
+
+    fee_value: int
+    fee_in_token: int
+
+    def __post_init_post_parse__(self) -> None:
+
+        # rule 1: don't allow both amount (erc20) and value (native) to be non-zero
+        if self.amount and self.value:
+            raise ValueError(
+                f"Both amount ({self.amount}) and value ({self.value}) are non-zero; "
+                "use `prepare_erc20_tx` or `prepare_eth_tx` instead."
+            )
+
+        # rule 2: don't allow both fee types to be non-zero simultaneously
+        if self.fee_value and self.fee_in_token:
+            raise ValueError(
+                f"Both fee_value ({self.fee_value}) and fee_in_token ({self.fee_in_token}) are non-zero; "
+                "fees must be expressed in only one currency."
+            )
 
     @property
     def tx_hash(self) -> str:
@@ -280,9 +313,21 @@ class PreparedBridgeTx:
         return self.tx_details.tx_hash
 
     @property
-    def nonce(self) -> str:
+    def nonce(self) -> int:
         """Transaction nonce."""
         return self.tx_details.nonce
+
+    @property
+    def gas(self) -> int:
+        return self.tx_details.gas
+
+    @property
+    def max_fee_per_gas(self) -> Wei:
+        return self.tx_details.max_fee_per_gas
+
+    @property
+    def max_total_fee(self) -> Wei:
+        return self.gas * self.max_fee_per_gas
 
 
 @dataclass(config=ConfigDict(validate_assignment=True))
@@ -299,12 +344,8 @@ class TxResult:
 
 @dataclass(config=ConfigDict(validate_assignment=True))
 class BridgeTxResult:
-    currency: Currency
-    bridge: BridgeType
-    source_chain: ChainID
-    target_chain: ChainID
+    prepared_tx: PreparedBridgeTx
     source_tx: TxResult
-    tx_details: BridgeTxDetails
     target_from_block: int
     event_id: str | None = None
     target_tx: TxResult | None = None
@@ -314,6 +355,38 @@ class BridgeTxResult:
         if self.source_tx.status is not TxStatus.SUCCESS:
             return self.source_tx.status
         return self.target_tx.status if self.target_tx is not None else TxStatus.PENDING
+
+    @property
+    def currency(self) -> Currency:
+        return self.prepared_tx.currency
+
+    @property
+    def source_chain(self) -> ChainID:
+        return self.prepared_tx.source_chain
+
+    @property
+    def target_chain(self) -> ChainID:
+        return self.prepared_tx.target_chain
+
+    @property
+    def bridge_type(self) -> BridgeType:
+        return self.prepared_tx.bridge_type
+
+    @property
+    def gas_used(self) -> int:
+        if not self.source_tx.tx_receipt:
+            raise TxReceiptMissing("Source tx receipt not available")
+        return self.source_tx.tx_receipt["gasUsed"]
+
+    @property
+    def effective_gas_price(self) -> Wei:
+        if not self.source_tx.tx_receipt:
+            raise TxReceiptMissing("Source tx receipt not available")
+        return self.source_tx.tx_receipt["effectiveGasPrice"]
+
+    @property
+    def total_fee(self) -> Wei:
+        return self.gas_used * self.effective_gas_price
 
 
 class DepositResult(BaseModel):
@@ -353,8 +426,8 @@ class RPCEndpoints(BaseModel, frozen=True):
 class FeeHistory(BaseModel):
     base_fee_per_gas: list[Wei] = Field(alias="baseFeePerGas")
     gas_used_ratio: list[float] = Field(alias="gasUsedRatio")
-    base_fee_per_blob_gas: list[Wei] = Field(alias="baseFeePerBlobGas")
-    blob_gas_used_ratio: list[float] = Field(alias="blobGasUsedRatio")
+    base_fee_per_blob_gas: list[Wei] | None = Field(default=None, alias="baseFeePerBlobGas")
+    blob_gas_used_ratio: list[float] | None = Field(default=None, alias="blobGasUsedRatio")
     oldest_block: int = Field(alias="oldestBlock")
     reward: list[list[Wei]]
 

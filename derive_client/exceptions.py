@@ -5,7 +5,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from derive_client.data_types import BridgeTxResult
+    from web3.types import LogReceipt
+
+    from derive_client.data_types import BridgeTxResult, ChainID, FeeEstimate, Wei
 
 
 class ApiException(Exception):
@@ -38,16 +40,8 @@ class DeriveJSONRPCException(ApiException):
         return f"{base}  [data={self.data!r}]" if self.data is not None else base
 
 
-class TxSubmissionError(Exception):
-    """Raised when a transaction could not be signed or submitted."""
-
-
 class BridgeEventParseError(Exception):
     """Raised when an expected cross-chain bridge event could not be parsed."""
-
-
-class AlreadyFinalizedError(Exception):
-    """Raised when attempting to poll a BridgeTxResult who'se status is not TxStatus.PENDING."""
 
 
 class BridgeRouteError(Exception):
@@ -61,6 +55,21 @@ class NoAvailableRPC(Exception):
 class InsufficientNativeBalance(Exception):
     """Raised when the native currency balance is insufficient for gas and/or value transfer."""
 
+    def __init__(
+        self,
+        message: str,
+        *,
+        chain_id: ChainID,
+        balance: Wei,
+        assumed_gas_limit: Wei,
+        fee_estimate: FeeEstimate,
+    ):
+        super().__init__(message)
+        self.chain_id = chain_id
+        self.balance = balance
+        self.assumed_gas_limit = assumed_gas_limit
+        self.fee_estimate = fee_estimate
+
 
 class InsufficientTokenBalance(Exception):
     """Raised when the token balance is insufficient for the requested operation."""
@@ -70,16 +79,8 @@ class BridgePrimarySignerRequiredError(Exception):
     """Raised when bridging is attempted with a secondary session-key signer."""
 
 
-class EthGasFundingPending(Exception):
-    """Raised after we detect lack of ETH on Derive to pay for gas."""
-
-
-class DeriveFundingFailed(Exception):
-    """Raised when funding the Derive wallet with gas fails."""
-
-
-class DrvWithdrawAmountBelowFee(Exception):
-    """Raised when the DRV withdrawal amount is less than the fee required to withdraw."""
+class TxReceiptMissing(Exception):
+    """Raised when a transaction receipt is required but not available."""
 
 
 class FinalityTimeout(Exception):
@@ -94,10 +95,14 @@ class TransactionDropped(Exception):
     """Raised when the transaction the transaction is no longer in the mempool, likely dropped."""
 
 
+class BridgeEventTimeout(Exception):
+    """Raised when no matching bridge event was seen before deadline."""
+
+
 class PartialBridgeResult(Exception):
     """Raised after submission when the bridge pipeline fails"""
 
-    def __init__(self, message: str, *, tx_result: "BridgeTxResult"):
+    def __init__(self, message: str, *, tx_result: BridgeTxResult):
         super().__init__(message)
         self.tx_result = tx_result
 
@@ -105,3 +110,11 @@ class PartialBridgeResult(Exception):
     def cause(self) -> Exception | None:
         """Provides access to the orignal Exception."""
         return self.__cause__
+
+
+class StandardBridgeRelayFailed(Exception):
+    """Raised when the L2 messenger emits FailedRelayedMessage."""
+
+    def __init__(self, message: str, *, event_log: LogReceipt):
+        super().__init__(message)
+        self.event_log = event_log

@@ -2,7 +2,6 @@
 Base Client for the derive dex.
 """
 
-import asyncio
 import json
 import random
 from decimal import Decimal
@@ -21,20 +20,16 @@ from derive_action_signing.module_data import (
 )
 from derive_action_signing.signed_action import SignedAction
 from derive_action_signing.utils import MAX_INT_32, get_action_nonce, sign_rest_auth_header, utc_now_ms
+from hexbytes import HexBytes
 from pydantic import validate_call
-from returns.result import Result, safe
 from web3 import Web3
 
-from derive_client._bridge import BridgeClient
 from derive_client.constants import CONFIGS, DEFAULT_REFERER, PUBLIC_HEADERS, TOKEN_DECIMALS
 from derive_client.data_types import (
     Address,
-    BridgeTxResult,
-    ChainID,
     CollateralAsset,
     CreateSubAccountData,
     CreateSubAccountDetails,
-    Currency,
     DepositResult,
     DeriveTxResult,
     DeriveTxStatus,
@@ -55,7 +50,7 @@ from derive_client.data_types import (
 )
 from derive_client.endpoints import RestAPI
 from derive_client.exceptions import DeriveJSONRPCException
-from derive_client.utils import get_logger, unwrap_or_raise, wait_until
+from derive_client.utils import get_logger, wait_until
 
 
 def _is_final_tx(res: DeriveTxResult) -> bool:
@@ -64,8 +59,6 @@ def _is_final_tx(res: DeriveTxResult) -> bool:
 
 class BaseClient:
     """Client for the Derive dex."""
-
-    referral_code: str = None
 
     def _create_signature_headers(self):
         """
@@ -81,12 +74,11 @@ class BaseClient:
     def __init__(
         self,
         wallet: Address,
-        private_key: str,
+        private_key: str | HexBytes,
         env: Environment,
         logger: Logger | LoggerAdapter | None = None,
         verbose: bool = False,
         subaccount_id: int | None = None,
-        referral_code: Address | None = None,
     ):
         self.verbose = verbose
         self.env = env
@@ -97,7 +89,14 @@ class BaseClient:
         self.wallet = wallet
         self._verify_wallet(wallet)
         self.subaccount_id = self._determine_subaccount_id(subaccount_id)
-        self.referral_code = referral_code
+
+    @property
+    def account(self):
+        return self.signer
+
+    @property
+    def private_key(self) -> HexBytes:
+        return self.account._private_key
 
     @property
     def endpoints(self) -> RestAPI:
@@ -122,7 +121,7 @@ class BaseClient:
         if subaccount_id is not None and subaccount_id not in subaccount_ids:
             raise ValueError(f"Provided subaccount {subaccount_id} not among retrieved aubaccounts: {subaccounts!r}")
         subaccount_id = subaccount_id or subaccount_ids[0]
-        self.logger.info(f"Selected subaccount_id: {subaccount_id}")
+        self.logger.debug(f"Selected subaccount_id: {subaccount_id}")
         return subaccount_id
 
     def create_account(self, wallet):
@@ -139,155 +138,6 @@ class BaseClient:
         if "error" in result_code:
             raise Exception(result_code["error"])
         return True
-
-    @safe
-    @validate_call
-    def deposit_to_derive_result(
-        self,
-        chain_id: ChainID,
-        currency: Currency,
-        amount: float,
-    ) -> Result[BridgeTxResult, Exception]:
-        """
-        Submit a deposit into the Derive chain funding contract and return its initial BridgeTxResult
-        without waiting for completion.
-
-        Parameters:
-            chain_id (ChainID): The chain you are bridging FROM.
-            currency (Currency): The asset being bridged.
-            amount (float): amount to deposit, in human units (will be scaled to Wei).
-        Returns:
-            Result[BridgeTxResult, Exception]: A Result object containing either the BridgeTxResult on success,
-            or an Exception on failure.
-        """
-
-        client = BridgeClient(self.env, account=self.signer, wallet=self.wallet, logger=self.logger)
-
-        async def _run():
-            future = (
-                client.prepare_deposit(token_amount=amount, currency=currency, chain_id=chain_id)
-                .bind(client.submit_bridge_tx)
-                .bind(client.poll_bridge_progress)
-            )
-            return await future.awaitable()
-
-        return unwrap_or_raise(asyncio.run(_run()))
-
-    def deposit_to_derive(
-        self,
-        chain_id: ChainID,
-        currency: Currency,
-        amount: float,
-    ) -> BridgeTxResult:
-        """
-        Submit a deposit into the Derive chain funding contract and return its initial BridgeTxResult
-        without waiting for completion.
-
-        Parameters:
-            chain_id (ChainID): The chain you are bridging FROM.
-            currency (Currency): The asset being bridged.
-            amount (float): amount to deposit, in human units (will be scaled to Wei).
-        Raises:
-            Exception: If the deposit fails.
-        Returns:
-            BridgeTxResult: The result of the deposit operation.
-        """
-
-        result = self.deposit_to_derive_result(chain_id=chain_id, currency=currency, amount=amount)
-        return unwrap_or_raise(result)
-
-    @safe
-    @validate_call
-    def withdraw_from_derive_result(
-        self,
-        chain_id: ChainID,
-        currency: Currency,
-        amount: float,
-    ) -> Result[BridgeTxResult, Exception]:
-        """
-        Submit a withdrawal from the Derive chain funding contract and return its initial BridgeTxResult
-        without waiting for completion.
-
-        Parameters:
-            chain_id (ChainID): The chain you are bridging TO.
-            currency (Currency): The asset being bridged.
-            amount (float): amount to withdraw, in human units (will be scaled to Wei).
-        Returns:
-            Result[BridgeTxResult, Exception]: A Result object containing either the BridgeTxResult on success,
-            or an Exception on failure.
-        """
-
-        client = BridgeClient(self.env, account=self.signer, wallet=self.wallet, logger=self.logger)
-
-        async def _run():
-            future = (
-                client.prepare_withdrawal(token_amount=amount, currency=currency, chain_id=chain_id)
-                .bind(client.submit_bridge_tx)
-                .bind(client.poll_bridge_progress)
-            )
-            return await future.awaitable()
-
-        return unwrap_or_raise(asyncio.run(_run()))
-
-    def withdraw_from_derive(
-        self,
-        chain_id: ChainID,
-        currency: Currency,
-        amount: float,
-    ) -> BridgeTxResult:
-        """
-        Submit a withdrawal from the Derive chain funding contract and return its initial BridgeTxResult
-        without waiting for completion.
-
-        Parameters:
-            chain_id (ChainID): The chain you are bridging TO.
-            currency (Currency): The asset being bridged.
-            amount (float): amount to withdraw, in human units (will be scaled to Wei).
-        Raises:
-            Exception: If the withdrawal fails.
-        Returns:
-            BridgeTxResult: The result of the withdrawal operation.
-        """
-
-        result = self.withdraw_from_derive_result(chain_id=chain_id, currency=currency, amount=amount)
-        return unwrap_or_raise(result)
-
-    @safe
-    @validate_call
-    def poll_bridge_progress_result(self, tx_result: BridgeTxResult) -> Result[BridgeTxResult, Exception]:
-        """
-        Given a pending BridgeTxResult, return a new BridgeTxResult with updated status.
-        Raises AlreadyFinalizedError if tx_result is not in PENDING status.
-
-        Parameters:
-            tx_result (BridgeTxResult): the result to refresh.
-        Returns:
-            Result[BridgeTxResult, Exception]: A Result object containing either the BridgeTxResult on success,
-            or an Exception on failure.
-        """
-
-        client = BridgeClient(account=self.signer, wallet=self.wallet, logger=self.logger)
-
-        async def _run():
-            return await client.poll_bridge_progress(tx_result=tx_result)
-
-        return asyncio.run(_run())
-
-    def poll_bridge_progress(self, tx_result: BridgeTxResult) -> BridgeTxResult:
-        """
-        Given a pending BridgeTxResult, return a new BridgeTxResult with updated status.
-        Raises AlreadyFinalizedError if tx_result is not in PENDING status.
-
-        Parameters:
-            tx_result (BridgeTxResult): the result to refresh.
-        Raises:
-            Exception: If the polling fails.
-        Returns:
-            BridgeTxResult: The result of the polling operation.
-        """
-
-        result = self.poll_bridge_progress_result(tx_result=tx_result)
-        return unwrap_or_raise(result)
 
     def fetch_instruments(
         self,
@@ -396,7 +246,7 @@ class BaseClient:
             "order_type": order_type.name.lower(),
             "mmp": False,
             "time_in_force": time_in_force.value,
-            "referral_code": DEFAULT_REFERER if not self.referral_code else self.referral_code,
+            "referral_code": DEFAULT_REFERER,
             **signed_action.to_json(),
         }
 

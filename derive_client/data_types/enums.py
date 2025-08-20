@@ -23,6 +23,7 @@ class DeriveTxStatus(Enum):
 class BridgeType(Enum):
     SOCKET = "socket"
     LAYERZERO = "layerzero"
+    STANDARD = "standard"
 
 
 class Direction(Enum):
@@ -128,6 +129,8 @@ class UnderlyingCurrency(Enum):
 
 class Currency(Enum):
     """Depositable currencies"""
+
+    ETH = "ETH"
 
     weETH = "weETH"
     rswETH = "rswETH"

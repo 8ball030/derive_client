@@ -13,8 +13,10 @@ import aiohttp
 from derive_action_signing.utils import sign_ws_login, utc_now_ms
 
 from derive_client._bridge import BridgeClient
+from derive_client._bridge.standard_bridge import StandardBridge
 from derive_client.constants import DEFAULT_REFERER, TEST_PRIVATE_KEY
 from derive_client.data_types import (
+    Address,
     BridgeTxResult,
     ChainID,
     Currency,
@@ -28,11 +30,10 @@ from derive_client.data_types import (
 )
 from derive_client.utils import unwrap_or_raise
 
-from .base_client import DeriveJSONRPCException
-from .ws_client import WsClient
+from .base_client import BaseClient, DeriveJSONRPCException
 
 
-class AsyncClient(WsClient):
+class AsyncClient(BaseClient):
     """
     We use the async client to make async requests to the derive API
     We us the ws client to make async requests to the derive ws API
@@ -58,19 +59,65 @@ class AsyncClient(WsClient):
             logger=logger,
             verbose=verbose,
             subaccount_id=subaccount_id,
-            referral_code=None,
         )
 
         self.message_queues = {}
         self.connecting = False
 
     @functools.cached_property
-    def bridge(self) -> BridgeClient:
+    def _bridge(self) -> BridgeClient:
         return BridgeClient(env=self.env, account=self.signer, wallet=self.wallet, logger=self.logger)
+
+    @functools.cached_property
+    def _standard_bridge(self) -> StandardBridge:
+        return StandardBridge(self.account, self.logger)
+
+    async def prepare_standard_tx(
+        self,
+        human_amount: float,
+        currency: Currency,
+        to: Address,
+        source_chain: ChainID,
+        target_chain: ChainID,
+    ) -> PreparedBridgeTx:
+        """
+        Prepare a transaction to bridge tokens to using Standard Bridge.
+
+        This creates a signed transaction ready for submission but does not execute it.
+        Review the returned PreparedBridgeTx before calling submit_bridge_tx().
+
+        Args:
+            human_amount: Amount in token units (e.g., 1.5 USDC, 0.1 ETH)
+            currency: Currency enum value describing the token to bridge
+            to: Destination address on the target chain
+            source_chain: ChainID for the source chain
+            target_chain: ChainID for the target chain
+
+        Returns:
+            PreparedBridgeTx: Contains transaction details including:
+                - tx_hash: Pre-computed transaction hash
+                - nonce: Transaction nonce for replacement/cancellation
+                - tx_details: Contract address, method, gas estimates, signed transaction
+                - currency, amount, source_chain, target_chain, bridge_type: Bridge context
+
+        Use the returned object to:
+            - Verify contract addresses and gas costs before submission
+            - Submit with submit_bridge_tx() on approval
+        """
+
+        result = await self._standard_bridge.prepare_tx(
+            human_amount=human_amount,
+            currency=currency,
+            to=to,
+            source_chain=source_chain,
+            target_chain=target_chain,
+        )
+
+        return unwrap_or_raise(result)
 
     async def prepare_deposit_to_derive(
         self,
-        amount: float,
+        human_amount: float,
         currency: Currency,
         chain_id: ChainID,
     ) -> PreparedBridgeTx:
@@ -81,7 +128,7 @@ class AsyncClient(WsClient):
         Review the returned PreparedBridgeTx before calling submit_bridge_tx().
 
         Args:
-            amount: Amount in token units (e.g., 1.5 USDC, 0.1 ETH)
+            human_amount: Amount in token units (e.g., 1.5 USDC, 0.1 ETH)
             currency: Token to bridge
             chain_id: Source chain to bridge from
 
@@ -90,19 +137,25 @@ class AsyncClient(WsClient):
                 - tx_hash: Pre-computed transaction hash
                 - nonce: Transaction nonce for replacement/cancellation
                 - tx_details: Contract address, method, gas estimates, signed transaction
-                - currency, source_chain, target_chain: Bridge context
+                - currency, amount, source_chain, target_chain, bridge_type: Bridge context
 
         Use the returned object to:
             - Verify contract addresses and gas costs before submission
             - Submit with submit_bridge_tx() on approval
         """
 
-        result = await self.bridge.prepare_deposit(token_amount=amount, currency=currency, chain_id=chain_id)
+        if currency is Currency.ETH:
+            raise NotImplementedError(
+                "ETH deposits to the funding wallet (Light Account) are not implemented. "
+                "For gas funding of the owner (EOA) use `prepare_standard_tx`."
+            )
+
+        result = await self._bridge.prepare_deposit(human_amount=human_amount, currency=currency, chain_id=chain_id)
         return unwrap_or_raise(result)
 
     async def prepare_withdrawal_from_derive(
         self,
-        amount: float,
+        human_amount: float,
         currency: Currency,
         chain_id: ChainID,
     ) -> PreparedBridgeTx:
@@ -113,7 +166,7 @@ class AsyncClient(WsClient):
         Review the returned PreparedBridgeTx before calling submit_bridge_tx().
 
         Args:
-            amount: Amount in token units (e.g., 1.5 USDC, 0.1 ETH)
+            human_amount: Amount in token units (e.g., 1.5 USDC, 0.1 ETH)
             currency: Token to bridge
             chain_id: Target chain to bridge to
 
@@ -122,14 +175,14 @@ class AsyncClient(WsClient):
                 - tx_hash: Pre-computed transaction hash
                 - nonce: Transaction nonce for replacement/cancellation
                 - tx_details: Contract address, method, gas estimates, signed transaction
-                - currency, source_chain, target_chain: Bridge context
+                - currency, amount, source_chain, target_chain, bridge_type: Bridge context
 
         Use the returned object to:
             - Verify contract addresses and gas costs before submission
             - Submit with submit_bridge_tx() when ready
         """
 
-        result = await self.bridge.prepare_withdrawal(token_amount=amount, currency=currency, chain_id=chain_id)
+        result = await self._bridge.prepare_withdrawal(human_amount=human_amount, currency=currency, chain_id=chain_id)
         return unwrap_or_raise(result)
 
     async def submit_bridge_tx(self, prepared_tx: PreparedBridgeTx) -> BridgeTxResult:
@@ -155,7 +208,11 @@ class AsyncClient(WsClient):
             - Call poll_bridge_progress() to wait for cross-chain completion
         """
 
-        result = await self.bridge.submit_bridge_tx(prepared_tx=prepared_tx)
+        if prepared_tx.currency == Currency.ETH:
+            result = await self._standard_bridge.submit_bridge_tx(prepared_tx=prepared_tx)
+        else:
+            result = await self._bridge.submit_bridge_tx(prepared_tx=prepared_tx)
+
         return unwrap_or_raise(result)
 
     async def poll_bridge_progress(self, tx_result: BridgeTxResult) -> BridgeTxResult:
@@ -192,7 +249,11 @@ class AsyncClient(WsClient):
                                             or whether the nonce was reused in another tx.
         """
 
-        result = await self.bridge.poll_bridge_progress(tx_result=tx_result)
+        if tx_result.currency == Currency.ETH:
+            result = await self._standard_bridge.poll_bridge_progress(tx_result=tx_result)
+        else:
+            result = await self._bridge.poll_bridge_progress(tx_result=tx_result)
+
         return unwrap_or_raise(result)
 
     def get_subscription_id(self, instrument_name: str, group: str = "1", depth: str = "100"):
@@ -439,7 +500,7 @@ class AsyncClient(WsClient):
             "order_type": order_type.name.lower(),
             "mmp": False,
             "time_in_force": time_in_force.value,
-            "referral_code": DEFAULT_REFERER if not self.referral_code else self.referral_code,
+            "referral_code": DEFAULT_REFERER,
             **signed_action.to_json(),
         }
         try:

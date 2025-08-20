@@ -6,7 +6,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from derive_client.data_types import Environment, UnderlyingCurrency
+from derive_client.data_types import Currency, Environment, UnderlyingCurrency
 
 
 class ContractAddresses(BaseModel, frozen=True):
@@ -23,11 +23,6 @@ class ContractAddresses(BaseModel, frozen=True):
     DEPOSIT_MODULE: str
     WITHDRAWAL_MODULE: str
     TRANSFER_MODULE: str
-    L1_CHUG_SPLASH_PROXY: str | None
-    WITHDRAW_WRAPPER_V2: str | None
-    DEPOSIT_WRAPPER: str | None
-    ARBITRUM_DEPOSIT_WRAPPER: str | None = None
-    OPTIMISM_DEPOSIT_WRAPPER: str | None = None
 
     def __getitem__(self, key):
         return getattr(self, key)
@@ -74,9 +69,6 @@ CONFIGS: dict[Environment, EnvConfig] = {
             DEPOSIT_MODULE="0x43223Db33AdA0575D2E100829543f8B04A37a1ec",
             WITHDRAWAL_MODULE="0xe850641C5207dc5E9423fB15f89ae6031A05fd92",
             TRANSFER_MODULE="0x0CFC1a4a90741aB242cAfaCD798b409E12e68926",
-            L1_CHUG_SPLASH_PROXY=None,
-            WITHDRAW_WRAPPER_V2=None,
-            DEPOSIT_WRAPPER=None,
         ),
     ),
     Environment.PROD: EnvConfig(
@@ -100,11 +92,6 @@ CONFIGS: dict[Environment, EnvConfig] = {
             DEPOSIT_MODULE="0x9B3FE5E5a3bcEa5df4E08c41Ce89C4e3Ff01Ace3",
             WITHDRAWAL_MODULE="0x9d0E8f5b25384C7310CB8C6aE32C8fbeb645d083",
             TRANSFER_MODULE="0x01259207A40925b794C8ac320456F7F6c8FE2636",
-            L1_CHUG_SPLASH_PROXY="0x61e44dc0dae6888b5a301887732217d5725b0bff",
-            WITHDRAW_WRAPPER_V2="0xea8E683D8C46ff05B871822a00461995F93df800",
-            DEPOSIT_WRAPPER="0x9628bba16db41ea7fe1fd84f9ce53bc27c63f59b",
-            ARBITRUM_DEPOSIT_WRAPPER="0x076BB6117750e80AD570D98891B68da86C203A88",  # unknown address
-            OPTIMISM_DEPOSIT_WRAPPER="0xC65005131Cfdf06622b99E8E17f72Cf694b586cC",  # unknown address
         ),
     ),
 }
@@ -116,6 +103,7 @@ GAS_FEE_BUFFER = 1.1  # buffer multiplier to pad maxFeePerGas
 GAS_LIMIT_BUFFER = 1.1  # buffer multiplier to pad gas limit
 MSG_GAS_LIMIT = 200_000
 ASSUMED_BRIDGE_GAS_LIMIT = 1_000_000
+MIN_PRIORITY_FEE = 10_000
 PAYLOAD_SIZE = 161
 TARGET_SPEED = "FAST"
 
@@ -137,6 +125,35 @@ TOKEN_DECIMALS = {
     UnderlyingCurrency.DRV: 18,
 }
 
+CURRENCY_DECIMALS = {
+    Currency.ETH: 18,
+    Currency.weETH: 18,
+    Currency.rswETH: 18,
+    Currency.rsETH: 18,
+    Currency.USDe: 18,
+    Currency.deUSD: 18,
+    Currency.PYUSD: 6,
+    Currency.sUSDe: 18,
+    Currency.SolvBTC: 18,
+    Currency.SolvBTCBBN: 18,
+    Currency.LBTC: 8,
+    Currency.OP: 18,
+    Currency.DAI: 18,
+    Currency.sDAI: 18,
+    Currency.cbBTC: 8,
+    Currency.eBTC: 8,
+    Currency.AAVE: 18,
+    Currency.OLAS: 18,
+    Currency.DRV: 18,
+    Currency.WBTC: 8,
+    Currency.WETH: 18,
+    Currency.USDC: 6,
+    Currency.USDT: 6,
+    Currency.wstETH: 18,
+    Currency.USDCe: 6,
+    Currency.SNX: 18,
+}
+
 DEFAULT_RPC_ENDPOINTS = DATA_DIR / "rpc_endpoints.yaml"
 
 NEW_VAULT_ABI_PATH = ABI_DATA_DIR / "socket_superbridge_vault.json"
@@ -148,11 +165,26 @@ DEPOSIT_HOOK_ABI_PATH = ABI_DATA_DIR / "deposit_hook.json"
 LIGHT_ACCOUNT_ABI_PATH = ABI_DATA_DIR / "light_account.json"
 L1_CHUG_SPLASH_PROXY_ABI_PATH = ABI_DATA_DIR / "l1_chug_splash_proxy.json"
 L1_STANDARD_BRIDGE_ABI_PATH = ABI_DATA_DIR / "l1_standard_bridge.json"
+L1_CROSS_DOMAIN_MESSENGER_ABI_PATH = ABI_DATA_DIR / "l1_cross_domain_messenger.json"
+L2_STANDARD_BRIDGE_ABI_PATH = ABI_DATA_DIR / "l2_standard_bridge.json"
+L2_CROSS_DOMAIN_MESSENGER_ABI_PATH = ABI_DATA_DIR / "l2_cross_domain_messenger.json"
 WITHDRAW_WRAPPER_V2_ABI_PATH = ABI_DATA_DIR / "withdraw_wrapper_v2.json"
 DERIVE_ABI_PATH = ABI_DATA_DIR / "Derive.json"
 DERIVE_L2_ABI_PATH = ABI_DATA_DIR / "DeriveL2.json"
 LYRA_OFT_WITHDRAW_WRAPPER_ABI_PATH = ABI_DATA_DIR / "LyraOFTWithdrawWrapper.json"
 ERC20_ABI_PATH = ABI_DATA_DIR / "erc20.json"
 SOCKET_ABI_PATH = ABI_DATA_DIR / "Socket.json"
+CONNECTOR_PLUG = ABI_DATA_DIR / "ConnectorPlug.json"
 
+
+# Contracts used in bridging module
 LYRA_OFT_WITHDRAW_WRAPPER_ADDRESS = "0x9400cc156dad38a716047a67c897973A29A06710"
+L1_CHUG_SPLASH_PROXY = "0x61e44dc0dae6888b5a301887732217d5725b0bff"
+RESOLVED_DELEGATE_PROXY = "0x5456f02c08e9A018E42C39b351328E5AA864174A"
+L2_STANDARD_BRIDGE_PROXY = "0x4200000000000000000000000000000000000010"
+L2_CROSS_DOMAIN_MESSENGER_PROXY = "0x4200000000000000000000000000000000000007"
+WITHDRAW_WRAPPER_V2 = "0xea8E683D8C46ff05B871822a00461995F93df800"
+ETH_DEPOSIT_WRAPPER = "0x46e75B6983126896227a5717f2484efb04A0c151"
+BASE_DEPOSIT_WRAPPER = "0x9628bba16db41ea7fe1fd84f9ce53bc27c63f59b"
+ARBITRUM_DEPOSIT_WRAPPER = "0x076BB6117750e80AD570D98891B68da86C203A88"
+OPTIMISM_DEPOSIT_WRAPPER = "0xC65005131Cfdf06622b99E8E17f72Cf694b586cC"
