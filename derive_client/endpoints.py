@@ -39,6 +39,8 @@ class PrivateEndpoints:
     get_collaterals = Endpoint("private", "get_collaterals")
     create_subaccount = Endpoint("private", "create_subaccount")
     transfer_erc20 = Endpoint("private", "transfer_erc20")
+    transfer_position = Endpoint("private", "transfer_position")
+    transfer_positions = Endpoint("private", "transfer_positions")
     get_mmp_config = Endpoint("private", "get_mmp_config")
     set_mmp_config = Endpoint("private", "set_mmp_config")
     send_rfq = Endpoint("private", "send_rfq")
