@@ -21,12 +21,11 @@ class Leg:
 @dataclass
 class Rfq:
     subaccount_id: str
-    leg_1: Leg
-    leg_2: Leg
+    legs: list[Leg]
 
     def to_dict(self):
         return {
-            "legs": sorted([asdict(self.leg_1), asdict(self.leg_2)], key=lambda x: x['instrument_name']),
+            "legs": sorted([asdict(leg) for leg in self.legs], key=lambda x: x['instrument_name']),
             "subaccount_id": self.subaccount_id,
         }
 
@@ -49,7 +48,7 @@ def test_derive_client_create_rfq(
 
     leg_1 = Leg(instrument_name=leg_1_name, amount='1', direction=OrderSide.BUY.value)
     leg_2 = Leg(instrument_name=leg_2_name, amount='1', direction=OrderSide.SELL.value)
-    rfq = Rfq(leg_1=leg_1, leg_2=leg_2, subaccount_id=subaccount_id)
+    rfq = Rfq(legs=[leg_1, leg_2], subaccount_id=subaccount_id)
     result = derive_client.send_rfq(rfq.to_dict())
     assert result['rfq_id']
     assert result['status'] == 'open'
