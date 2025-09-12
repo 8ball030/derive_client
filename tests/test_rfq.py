@@ -27,9 +27,7 @@ class Rfq(BaseModel):
         return data
 
 
-def test_create_rfq(
-    derive_client: DeriveClient,
-):
+def test_create_rfq(derive_client: DeriveClient):
 
     subaccount_id = derive_client.subaccount_id
 
@@ -59,9 +57,7 @@ def test_poll_rfqs(derive_client: DeriveClient):
     assert filtered_rfqs, f"RFQ with id {rfq_id} not found"
 
 
-def test_create_quote(
-    derive_client: DeriveClient,
-):
+def test_create_quote(derive_client: DeriveClient):
 
     rfq = test_create_rfq(derive_client)
 

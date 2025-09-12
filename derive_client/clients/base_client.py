@@ -16,6 +16,8 @@ from derive_action_signing.module_data import (
     MakerTransferPositionModuleData,
     MakerTransferPositionsModuleData,
     RecipientTransferERC20ModuleData,
+    RFQQuoteDetails,
+    RFQQuoteModuleData,
     SenderTransferERC20ModuleData,
     TakerTransferPositionModuleData,
     TakerTransferPositionsModuleData,
@@ -616,7 +618,7 @@ class BaseClient:
         url = self.endpoints.private.send_quote
         return self._send_request(url, quote)
 
-    def create_quote_object(
+    def create_quote(
         self,
         rfq_id,
         legs,
@@ -624,17 +626,46 @@ class BaseClient:
     ):
         """Create a quote object."""
         _, nonce, expiration = self.get_nonce_and_signature_expiry()
-        return {
-            "subaccount_id": self.subaccount_id,
+
+        rfq_legs: list[RFQQuoteDetails] = []
+        for leg in legs:
+            ticker = self.fetch_ticker(instrument_name=leg["instrument_name"])
+            rfq_quote_details = RFQQuoteDetails(
+                instrument_name=ticker["instrument_name"],
+                direction=leg["direction"],
+                asset_address=ticker["base_asset_address"],
+                sub_id=int(ticker["base_asset_sub_id"]),
+                price=leg["price"],
+                amount=Decimal(leg["amount"]),
+            )
+            rfq_legs.append(rfq_quote_details)
+
+        action = SignedAction(
+            subaccount_id=self.subaccount_id,
+            owner=self.wallet,
+            signer=self.signer.address,
+            signature_expiry_sec=MAX_INT_32,
+            nonce=nonce,
+            module_address=self.config.contracts.RFQ_MODULE,
+            module_data=RFQQuoteModuleData(
+                global_direction=direction,
+                max_fee=Decimal("123"),
+                legs=rfq_legs,
+            ),
+            DOMAIN_SEPARATOR=self.config.DOMAIN_SEPARATOR,
+            ACTION_TYPEHASH=self.config.ACTION_TYPEHASH,
+        )
+
+        action.sign(self.signer.key)
+
+        payload = {
+            **action.to_json(),
+            "label": "",
+            "mmp": False,
             "rfq_id": rfq_id,
-            "legs": legs,
-            "direction": direction,
-            "max_fee": "10.0",
-            "nonce": nonce,
-            "signer": self.signer.address,
-            "signature_expiry_sec": expiration,
-            "signature": "filled_in_below",
         }
+
+        return self.send_quote(quote=payload)
 
     def _send_request(self, url, json=None, params=None, headers=None):
         headers = self._create_signature_headers() if not headers else headers
