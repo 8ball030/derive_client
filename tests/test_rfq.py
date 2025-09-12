@@ -95,3 +95,18 @@ def test_poll_quotes(derive_client: DeriveClient):
     quotes = derive_client.poll_quotes(rfq_id=rfq_id, quote_id=quote_id)
     quotes = quotes.get('quotes', [])
     assert quotes, f"No quote matching RFQ id {rfq_id} and Quote id {quote_id} found"
+    return quotes
+
+
+def test_execute_quote(derive_client: DeriveClient):
+
+    quotes = test_poll_quotes(derive_client)
+    first_quote = quotes[0]
+    assert first_quote["status"] == "open"
+
+    executed_quote = derive_client.execute_quote(first_quote)
+
+    assert not executed_quote["subaccount_id"] == first_quote["subaccount_id"]
+    assert executed_quote["legs"] == first_quote["legs"]
+    assert executed_quote["status"] == "filled"
+    assert executed_quote["rfq_id"] == first_quote["rfq_id"]
