@@ -667,6 +667,14 @@ class BaseClient:
 
         return self.send_quote(quote=payload)
 
+    def poll_quotes(self, **kwargs):
+        url = self.endpoints.private.poll_quotes
+        payload = {
+            "subaccount_id": self.subaccount_id,
+            **kwargs,
+        }
+        return self._send_request(url, json=payload)
+
     def _send_request(self, url, json=None, params=None, headers=None):
         headers = self._create_signature_headers() if not headers else headers
         response = requests.post(url, json=json, headers=headers, params=params)
