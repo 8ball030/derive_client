@@ -2,40 +2,34 @@
 Implement tests for the RFQ class.
 """
 
-from dataclasses import asdict, dataclass
-
-import pytest
+from pydantic import BaseModel
 
 from derive_client.data_types import OrderSide
 from derive_client.data_types.enums import Currency, InstrumentType
 from derive_client.derive import DeriveClient
 
 
-@dataclass
-class Leg:
+class Leg(BaseModel):
     instrument_name: str
-    amount: str
+    amount: float
     direction: str
+    price: float | None = None
 
 
-@dataclass
-class Rfq:
-    subaccount_id: str
+class Rfq(BaseModel):
+    subaccount_id: int
     legs: list[Leg]
 
-    def to_dict(self):
-        return {
-            "legs": sorted([asdict(leg) for leg in self.legs], key=lambda x: x['instrument_name']),
-            "subaccount_id": self.subaccount_id,
-        }
+    def model_dump(self, *args, **kwargs):
+        kwargs.setdefault("exclude_none", True)
+        data = super().model_dump(*args, **kwargs)
+        data["legs"].sort(key=lambda x: x.get("instrument_name"))
+        return data
 
 
-def test_derive_client_create_rfq(
+def test_create_rfq(
     derive_client: DeriveClient,
 ):
-    """
-    Test the DeriveClient class.
-    """
 
     subaccount_id = derive_client.subaccount_id
 
@@ -46,20 +40,18 @@ def test_derive_client_create_rfq(
     leg_1_name = active_markets[0]['instrument_name']
     leg_2_name = active_markets[1]['instrument_name']
 
-    leg_1 = Leg(instrument_name=leg_1_name, amount='1', direction=OrderSide.BUY.value)
-    leg_2 = Leg(instrument_name=leg_2_name, amount='1', direction=OrderSide.SELL.value)
+    leg_1 = Leg(instrument_name=leg_1_name, amount=1, direction=OrderSide.BUY.value)
+    leg_2 = Leg(instrument_name=leg_2_name, amount=1, direction=OrderSide.SELL.value)
     rfq = Rfq(legs=[leg_1, leg_2], subaccount_id=subaccount_id)
-    result = derive_client.send_rfq(rfq.to_dict())
+    result = derive_client.send_rfq(rfq.model_dump())
     assert result['rfq_id']
     assert result['status'] == 'open'
     return result
 
 
 def test_poll_rfqs(derive_client: DeriveClient):
-    """
-    Test the DeriveClient class.
-    """
-    rfq_id = test_derive_client_create_rfq(derive_client).get('rfq_id')
+
+    rfq_id = test_create_rfq(derive_client).get('rfq_id')
     quotes = derive_client.poll_rfqs()
     rfqs = quotes.get('rfqs', [])
     assert rfqs, "RFQs should not be empty"
@@ -67,21 +59,31 @@ def test_poll_rfqs(derive_client: DeriveClient):
     assert filtered_rfqs, f"RFQ with id {rfq_id} not found"
 
 
-@pytest.mark.skip(reason="Skipping quote creation test")
-def test_derive_client_create_quote(
+def test_create_quote(
     derive_client: DeriveClient,
 ):
-    """
-    Test the DeriveClient class.
-    """
 
-    rfq = test_derive_client_create_rfq(derive_client)
+    rfq = test_create_rfq(derive_client)
 
-    # we now create the quote
-    quote = derive_client.create_quote_object(
+    price = 42
+    direction = "sell"
+    derive_client.subaccount_id = derive_client.subaccount_ids[1]
+
+    legs = []
+    for leg in rfq['legs']:
+        leg = Leg(**leg)
+        leg.price = price
+        legs.append(leg)
+
+    quote = derive_client.create_quote(
         rfq_id=rfq['rfq_id'],
-        legs=rfq['legs'],
-        direction='sell',
+        legs=[leg.model_dump() for leg in legs],
+        direction=direction,
     )
-    # we now sign it
-    assert derive_client._sign_quote(quote)
+    assert quote["status"] == "open"
+    assert quote["direction"] == direction
+    assert rfq["creation_timestamp"] < quote["creation_timestamp"]
+    assert len(rfq["legs"]) == len(quote["legs"])
+    for rfq_leg, quote_leg in zip(rfq["legs"], quote["legs"]):
+        assert rfq_leg != quote_leg
+        assert Leg(**rfq_leg, price=price) == Leg(**quote_leg)
