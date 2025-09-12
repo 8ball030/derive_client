@@ -16,6 +16,7 @@ from derive_action_signing.module_data import (
     MakerTransferPositionModuleData,
     MakerTransferPositionsModuleData,
     RecipientTransferERC20ModuleData,
+    RFQExecuteModuleData,
     RFQQuoteDetails,
     RFQQuoteModuleData,
     SenderTransferERC20ModuleData,
@@ -673,6 +674,54 @@ class BaseClient:
             "subaccount_id": self.subaccount_id,
             **kwargs,
         }
+        return self._send_request(url, json=payload)
+
+    def execute_quote(self, quote):
+
+        _, nonce, expiration = self.get_nonce_and_signature_expiry()
+
+        quote_legs: list[RFQQuoteDetails] = []
+        for leg in quote["legs"]:
+            ticker = self.fetch_ticker(instrument_name=leg["instrument_name"])
+            rfq_quote_details = RFQQuoteDetails(
+                instrument_name=ticker["instrument_name"],
+                direction=leg["direction"],
+                asset_address=ticker["base_asset_address"],
+                sub_id=int(ticker["base_asset_sub_id"]),
+                price=Decimal(leg["price"]),
+                amount=Decimal(leg["amount"]),
+            )
+            quote_legs.append(rfq_quote_details)
+
+        direction = "buy" if quote["direction"] == "sell" else "sell"
+        module_data = RFQExecuteModuleData(
+            global_direction=direction,
+            max_fee=Decimal("123"),
+            legs=quote_legs,
+        )
+
+        action = SignedAction(
+            subaccount_id=self.subaccount_id,
+            owner=self.wallet,
+            signer=self.signer.address,
+            signature_expiry_sec=MAX_INT_32,
+            nonce=nonce,
+            module_address=self.config.contracts.RFQ_MODULE,
+            module_data=module_data,
+            DOMAIN_SEPARATOR=self.config.DOMAIN_SEPARATOR,
+            ACTION_TYPEHASH=self.config.ACTION_TYPEHASH,
+        )
+
+        action.sign(self.signer.key)
+
+        payload = {
+            **action.to_json(),
+            "label": "",
+            "rfq_id": quote["rfq_id"],
+            "quote_id": quote["quote_id"],
+        }
+
+        url = self.endpoints.private.execute_quote
         return self._send_request(url, json=payload)
 
     def _send_request(self, url, json=None, params=None, headers=None):
