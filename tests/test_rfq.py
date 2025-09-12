@@ -83,3 +83,15 @@ def test_create_quote(derive_client: DeriveClient):
     for rfq_leg, quote_leg in zip(rfq["legs"], quote["legs"]):
         assert rfq_leg != quote_leg
         assert Leg(**rfq_leg, price=price) == Leg(**quote_leg)
+    return quote
+
+
+def test_poll_quotes(derive_client: DeriveClient):
+
+    quote = test_create_quote(derive_client)
+    derive_client.subaccount_id = derive_client.subaccount_ids[0]  # do the nasty
+    rfq_id = quote["rfq_id"]
+    quote_id = quote["quote_id"]
+    quotes = derive_client.poll_quotes(rfq_id=rfq_id, quote_id=quote_id)
+    quotes = quotes.get('quotes', [])
+    assert quotes, f"No quote matching RFQ id {rfq_id} and Quote id {quote_id} found"
