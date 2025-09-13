@@ -650,7 +650,7 @@ class BaseClient:
             module_address=self.config.contracts.RFQ_MODULE,
             module_data=RFQQuoteModuleData(
                 global_direction=direction,
-                max_fee=Decimal("123"),
+                max_fee=Decimal("0"),
                 legs=rfq_legs,
             ),
             DOMAIN_SEPARATOR=self.config.DOMAIN_SEPARATOR,
@@ -696,7 +696,7 @@ class BaseClient:
         direction = "buy" if quote["direction"] == "sell" else "sell"
         module_data = RFQExecuteModuleData(
             global_direction=direction,
-            max_fee=Decimal("123"),
+            max_fee=Decimal("0"),
             legs=quote_legs,
         )
 
