@@ -5,7 +5,7 @@
 from enum import Enum
 from decimal import Decimal
 
-from derive_client.data_types import Leg
+from derive_client.data_types import Leg, InstrumentType, OrderSide
 
 
 SECONDS_PER_YEAR = 60 * 60 * 24 * 365
@@ -61,7 +61,22 @@ def _is_box_spread(legs: list[Leg], tickers: dict) -> bool:
 
 
 def _classify_leg(leg: Leg, ticker: dict):
-    raise NotImplementedError()
+    instrument_type = InstrumentType(ticker["instrument_type"])
+    option_type = ticker.get("option_details", {}).get("option_type", {})
+
+    match instrument_type, leg.direction, option_type:
+        case InstrumentType.PERP, _, _:
+            return LegGroup.PERPS
+        case InstrumentType.OPTION, OrderSide.BUY, "C":
+            return LegGroup.LONG_CALLS
+        case InstrumentType.OPTION, OrderSide.SELL, "C":
+            return LegGroup.SHORT_CALLS
+        case InstrumentType.OPTION, OrderSide.BUY, "P":
+            return LegGroup.LONG_PUTS
+        case InstrumentType.OPTION, OrderSide.SELL, "P":
+            return LegGroup.SHORT_PUTS
+        case _:
+            raise NotImplementedError()
 
 
 def rfq_max_fee(client, legs: list[Leg], is_taker: bool = True) -> float:
