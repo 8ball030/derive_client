@@ -5,15 +5,8 @@ Implement tests for the RFQ class.
 from pydantic import BaseModel
 
 from derive_client.data_types import OrderSide
-from derive_client.data_types.enums import Currency, InstrumentType
+from derive_client.data_types.enums import Currency, InstrumentType, Leg
 from derive_client.derive import DeriveClient
-
-
-class Leg(BaseModel):
-    instrument_name: str
-    amount: float
-    direction: str
-    price: float | None = None
 
 
 class Rfq(BaseModel):
