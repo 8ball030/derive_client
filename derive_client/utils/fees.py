@@ -27,7 +27,37 @@ def _is_box_spread(legs: list[Leg], tickers: dict) -> bool:
     4. one long call and short put at one strike price, 
        and one short call and a long put at another strike price
     """
-    raise NotImplementedError()
+
+    if not len(legs) == 4:
+        return False
+
+    options_details = [tickers[leg.instrument_name].get("options_details") for leg in legs]
+    if not all(options_details):
+        return False
+
+    expiries = set()
+    strikes = dict()
+    for leg, details in zip(legs, options_details):
+        expiries.add(details["expiry"])
+        strike = details["strike"]
+        option_type = details["option_type"]
+        strikes.setdefault(strike, dict()).setdefault(option_type, set()).add(leg.direction)
+
+    if not len(set(expiries)) == 1:
+        return False
+
+    if not len(strikes) == 2:
+        return False
+
+    # check we have both calls and puts at each price
+    if not (set(positions) == {"C", "P"} for positions in strikes.values()):
+        return False
+
+    # calls must be opposite, puts must be opposite
+    strike1_positions, strike2_positions = strikes.values()
+    call1, put1 = strike1_positions["C"], strike1_positions["P"]
+    call2, put2 = strike2_positions["C"], strike2_positions["P"]
+    return call1 != call2 and put1 != put2
 
 
 def _classify_leg(leg: Leg, ticker: dict):
