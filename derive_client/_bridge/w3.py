@@ -68,7 +68,6 @@ def make_rotating_provider_middleware(
 
     async def middleware_factory(make_request: Callable[[str, Any], Any], w3: AsyncWeb3) -> Callable[[str, Any], Any]:
         async def rotating_backoff(method: str, params: Any) -> Any:
-
             now = time.monotonic()
 
             while True:
@@ -146,7 +145,6 @@ def get_w3_connection(
     rpc_endpoints: RPCEndpoints | None = None,
     logger: Logger | None = None,
 ) -> AsyncWeb3:
-
     rpc_endpoints = rpc_endpoints or load_rpc_endpoints(DEFAULT_RPC_ENDPOINTS)
     providers = [AsyncHTTPProvider(str(url)) for url in rpc_endpoints[chain_id]]
 

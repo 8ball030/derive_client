@@ -76,9 +76,7 @@ def _load_l2_cross_domain_messenger_proxy(w3: AsyncWeb3) -> AsyncContract:
 
 
 class StandardBridge:
-
     def __init__(self, account: Account, logger: Logger):
-
         self.account = account
         self.logger = logger
         self.w3s = get_w3_connections(logger=logger)
@@ -95,7 +93,6 @@ class StandardBridge:
         source_chain: ChainID,
         target_chain: ChainID,
     ) -> IOResult[PreparedBridgeTx, Exception]:
-
         currency = Currency.ETH
 
         if source_chain is not ChainID.ETH or target_chain is not ChainID.DERIVE or to != self.account.address:
@@ -118,14 +115,12 @@ class StandardBridge:
 
     @future_safe
     async def submit_bridge_tx(self, prepared_tx: PreparedBridgeTx) -> IOResult[BridgeTxResult, Exception]:
-
         tx_result = await self._send_bridge_tx(prepared_tx=prepared_tx)
 
         return tx_result
 
     @future_safe
     async def poll_bridge_progress(self, tx_result: BridgeTxResult) -> IOResult[BridgeTxResult, Exception]:
-
         try:
             tx_result.source_tx.tx_receipt = await self._confirm_source_tx(tx_result=tx_result)
             tx_result.target_tx = TxResult(tx_hash=await self._wait_for_target_event(tx_result=tx_result))
@@ -142,7 +137,6 @@ class StandardBridge:
         source_chain: ChainID,
         target_chain: ChainID,
     ) -> PreparedBridgeTx:
-
         w3 = self.w3s[source_chain]
 
         proxy_contract = self.l1_contract
@@ -156,7 +150,9 @@ class StandardBridge:
 
         tx_gas_cost = tx["gas"] * tx["maxFeePerGas"]
         if value < tx_gas_cost:
-            msg = f"⚠️ Bridge tx value {value} is smaller than gas cost {tx_gas_cost} (~{tx_gas_cost/value:.2f}x value)"
+            msg = (
+                f"⚠️ Bridge tx value {value} is smaller than gas cost {tx_gas_cost} (~{tx_gas_cost / value:.2f}x value)"
+            )
             self.logger.warning(msg)
 
         signed_tx = sign_tx(w3=w3, tx=tx, private_key=self.private_key)
@@ -184,7 +180,6 @@ class StandardBridge:
         return prepared_tx
 
     async def _send_bridge_tx(self, prepared_tx: PreparedBridgeTx) -> BridgeTxResult:
-
         source_w3 = self.w3s[prepared_tx.source_chain]
         target_w3 = self.w3s[prepared_tx.target_chain]
 
@@ -204,7 +199,6 @@ class StandardBridge:
         return tx_result
 
     async def _confirm_source_tx(self, tx_result: BridgeTxResult) -> TxReceipt:
-
         msg = "⏳ Checking source chain [%s] tx receipt for %s"
         self.logger.info(msg, tx_result.source_chain.name, tx_result.source_tx.tx_hash)
 
@@ -218,7 +212,6 @@ class StandardBridge:
         return tx_receipt
 
     async def _wait_for_target_event(self, tx_result: BridgeTxResult) -> HexBytes:
-
         event_log = await self._fetch_standard_event_log(tx_result)
         tx_hash = event_log["transactionHash"]
         self.logger.info(f"Target event tx_hash found: {tx_hash.to_0x_hex()}")
@@ -226,7 +219,6 @@ class StandardBridge:
         return tx_hash
 
     async def _confirm_target_tx(self, tx_result: BridgeTxResult) -> TxReceipt:
-
         msg = "⏳ Checking target chain [%s] tx receipt for %s"
         self.logger.info(msg, tx_result.target_chain.name, tx_result.target_tx.tx_hash)
 
@@ -240,7 +232,6 @@ class StandardBridge:
         return tx_receipt
 
     async def _fetch_standard_event_log(self, tx_result: BridgeTxResult) -> LogReceipt:
-
         source_event = self.l1_messenger_proxy.events.SentMessage()
 
         target_w3 = self.w3s[tx_result.target_chain]

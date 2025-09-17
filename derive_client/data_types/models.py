@@ -46,7 +46,6 @@ from .enums import (
 
 
 class PAttributeDict(AttributeDict):
-
     @classmethod
     def __get_pydantic_core_schema__(cls, _source, _handler: GetCoreSchemaHandler) -> core_schema.CoreSchema:
         return core_schema.no_info_plain_validator_function(lambda v, **kwargs: cls._validate(v))
@@ -306,7 +305,6 @@ class PreparedBridgeTx:
     fee_in_token: int
 
     def __post_init_post_parse__(self) -> None:
-
         # rule 1: don't allow both amount (erc20) and value (native) to be non-zero
         if self.amount and self.value:
             raise ValueError(
