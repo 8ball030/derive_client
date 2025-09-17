@@ -667,6 +667,46 @@ class BaseClient:
 
         return self.send_quote(quote=payload)
 
+    def cancel_rfq(self, rfq_id: str):
+        """Cancel an RFQ."""
+        url = self.endpoints.private.cancel_rfq
+        payload = {
+            "subaccount_id": self.subaccount_id,
+            "rfq_id": rfq_id,
+        }
+        return self._send_request(url, json=payload)
+
+    def cancel_batch_rfqs(self, rfq_id: str = None, label: str = None, nonce: int = None):
+        """Cancel RFQs in batch."""
+        url = self.endpoints.private.cancel_batch_rfqs
+        payload = {
+            "subaccount_id": self.subaccount_id,
+        }
+        if rfq_id:
+            payload["rfq_id"] = rfq_id
+        if label:
+            payload["label"] = label
+        if nonce:
+            payload["nonce"] = nonce
+        return self._send_request(url, json=payload)
+
+    def poll_quotes(self, 
+                    rfq_id: str = None,
+                    quote_id: str = None,
+                    status: RfqStatus = None):
+
+        url = self.endpoints.private.poll_quotes
+        payload = {
+            "subaccount_id": self.subaccount_id,
+        }
+        if rfq_id:
+            payload["rfq_id"] = rfq_id
+        if quote_id:
+            payload["quote_id"] = quote_id
+        if status:
+            payload["status"] = status.value
+        return self._send_request(url, json=payload)
+
     def _send_request(self, url, json=None, params=None, headers=None):
         headers = self._create_signature_headers() if not headers else headers
         response = requests.post(url, json=json, headers=headers, params=params)

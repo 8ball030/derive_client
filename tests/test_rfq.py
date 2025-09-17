@@ -47,6 +47,18 @@ def test_create_rfq(derive_client: DeriveClient):
     return result
 
 
+def test_cancel_rfq(derive_client: DeriveClient):
+    rfq = test_create_rfq(derive_client)
+    result = derive_client.cancel_rfq(rfq_id=rfq['rfq_id'])
+    assert result == 'ok'
+
+
+def test_cancel_all_rfqs(derive_client: DeriveClient):
+    result = derive_client.cancel_batch_rfqs()
+    cancelled_ids = result.get('cancelled_ids', [])
+    assert isinstance(cancelled_ids, list)
+
+
 def test_poll_rfqs(derive_client: DeriveClient):
 
     rfq_id = test_create_rfq(derive_client).get('rfq_id')
@@ -83,3 +95,12 @@ def test_create_quote(derive_client: DeriveClient):
     for rfq_leg, quote_leg in zip(rfq["legs"], quote["legs"]):
         assert rfq_leg != quote_leg
         assert Leg(**rfq_leg, price=price) == Leg(**quote_leg)
+    return rfq
+
+def test_poll_quotes(derive_client: DeriveClient):
+
+    rfq = test_create_quote(derive_client)
+    derive_client.subaccount_id = derive_client.subaccount_ids[0]
+    quotes = derive_client.poll_quotes(rfq_id=rfq['rfq_id'])
+    polled_rfqs = quotes.get('quotes', [])
+    assert polled_rfqs, "Polled RFQs should not be empty"
