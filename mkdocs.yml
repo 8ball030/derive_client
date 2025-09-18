@@ -1,18 +1,31 @@
-site_name: auto_dev
-site_url: https://8ball030.github.io/auto_dev
-repo_url: https://github.com/8ball030/auto_dev
-repo_name: 8ball030/auto_dev
-#strict: true
+site_name: Derive Client
+site_description:
+docs_dir: docs
+# site_url: ...
+repo_url: https://github.com/8ball030/derive_client
+
 nav:
   - Home: index.md
-  # - Usage: usage.md
-  - Reference:
-    - "constants": api/constants.md
-  #   - "utils": utils.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Account Model: getting-started/account-model.md
+      - Authentication: getting-started/authentication.md
+      - Clients: getting-started/clients.md
+      - Bridging & Funding: getting-started/bridging.md
+      - Quick Start: getting-started/quickstart.md
+  # - Examples:
+  #   - Funding: examples/funding.md
+  #   - Trading: examples/trading.md
+  #   - Websockets: examples/websockets.md
+  # - API Reference:
+  #   - HTTP Client: reference/http_client.md
+  #   - Async Client: reference/async_client.md
+  #   - Websocket Client: reference/ws_client.md
+
 theme:
   name: material
   language: en
-  #logo: assets/logo.png
+  # logo: assets/logo.png
   palette:
     scheme: slate
     primary: indigo
@@ -21,52 +34,63 @@ theme:
     - navigation.indexes
     - navigation.instant
     - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
+    - navigation.footer
+    - search.highlight
+    - search.share
+    - search.suggest
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+
 markdown_extensions:
-  - pymdownx.emoji:
-      emoji_index: !!python/name:materialx.emoji.twemoji
-      emoji_generator: !!python/name:materialx.emoji.to_svg
-  - pymdownx.critic
-  - pymdownx.caret
+  - admonition
+  - attr_list
+  - meta
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.keys
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tasklist
+  - pymdownx.magiclink
   - pymdownx.mark
   - pymdownx.tilde
-  - pymdownx.tabbed
-  - attr_list
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.betterem
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
   - pymdownx.arithmatex:
       generic: true
   - pymdownx.highlight:
       linenums: false
-  - pymdownx.superfences
-  - pymdownx.inlinehilite
-  - pymdownx.details
-  - admonition
   - toc:
       baselevel: 2
+      toc_depth: 3
       permalink: true
-      slugify: !!python/name:pymdownx.slugs.uslugify
-  - meta
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+          percent_encode: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
 plugins:
   - include-markdown
+  - mermaid2
   - search:
       lang: en
-  - mkdocstrings
+
 extra:
   social:
-    - icon: fontawesome/brands/twitter
-      # replace with your own tweet link below
-      link: https://github.com/waynerv/cookiecutter-pypackage
-      name: Tweet
-    - icon: fontawesome/brands/facebook
-      # replace with your own facebook link below
-      link: https://github.com/waynerv/cookiecutter-pypackage
-      name: Facebook
     - icon: fontawesome/brands/github
-      link: https://github.com/8ball030/auto_dev
+      link: https://github.com/8ball030/derive_client
       name: Github
     - icon: material/email
       link: "mailto:8ball030@gmail.com"
-  # to enable disqus, uncomment the following and put your disqus id below
-  # disqus: disqus_id
-# uncomment the following and put your google tracking id below to enable GA
-#google_analytics:
-  #- UA-xxx
-  #- auto
