@@ -62,7 +62,7 @@ from derive_client.data_types import (
 )
 from derive_client.endpoints import RestAPI
 from derive_client.exceptions import DeriveJSONRPCException
-from derive_client.utils import get_logger, wait_until, rfq_max_fee
+from derive_client.utils import get_logger, rfq_max_fee, wait_until
 
 
 def _is_final_tx(res: DeriveTxResult) -> bool:

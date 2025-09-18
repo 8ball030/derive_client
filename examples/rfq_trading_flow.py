@@ -9,7 +9,8 @@ This example shows:
 """
 
 from rich import print
-from derive_client.data_types import Environment, OrderSide, InstrumentType, Currency
+
+from derive_client.data_types import Currency, Environment, InstrumentType, OrderSide
 from derive_client.derive import DeriveClient
 from tests.conftest import TEST_PRIVATE_KEY, TEST_WALLET
 
