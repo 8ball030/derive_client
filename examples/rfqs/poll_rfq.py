@@ -45,7 +45,5 @@ def main():
                 processed_rfqs.remove(rfq)
 
 
-
-
 if __name__ == "__main__":
     main()

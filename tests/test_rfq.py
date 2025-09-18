@@ -28,7 +28,6 @@ class Rfq(BaseModel):
 
 
 def test_create_rfq(derive_client: DeriveClient):
-
     subaccount_id = derive_client.subaccount_id
 
     markets = derive_client.fetch_instruments(instrument_type=InstrumentType.OPTION, currency=Currency.ETH)
@@ -60,7 +59,6 @@ def test_cancel_all_rfqs(derive_client: DeriveClient):
 
 
 def test_poll_rfqs(derive_client: DeriveClient):
-
     rfq_id = test_create_rfq(derive_client).get('rfq_id')
     quotes = derive_client.poll_rfqs()
     rfqs = quotes.get('rfqs', [])
@@ -70,7 +68,6 @@ def test_poll_rfqs(derive_client: DeriveClient):
 
 
 def test_create_quote(derive_client: DeriveClient):
-
     rfq = test_create_rfq(derive_client)
 
     price = 42
@@ -97,8 +94,8 @@ def test_create_quote(derive_client: DeriveClient):
         assert Leg(**rfq_leg, price=price) == Leg(**quote_leg)
     return rfq
 
-def test_poll_quotes(derive_client: DeriveClient):
 
+def test_poll_quotes(derive_client: DeriveClient):
     rfq = test_create_quote(derive_client)
     derive_client.subaccount_id = derive_client.subaccount_ids[0]
     quotes = derive_client.poll_quotes(rfq_id=rfq['rfq_id'])

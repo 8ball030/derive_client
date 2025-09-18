@@ -690,11 +690,7 @@ class BaseClient:
             payload["nonce"] = nonce
         return self._send_request(url, json=payload)
 
-    def poll_quotes(self, 
-                    rfq_id: str = None,
-                    quote_id: str = None,
-                    status: RfqStatus = None):
-
+    def poll_quotes(self, rfq_id: str = None, quote_id: str = None, status: RfqStatus = None):
         url = self.endpoints.private.poll_quotes
         payload = {
             "subaccount_id": self.subaccount_id,
