@@ -44,11 +44,11 @@ tests:
 	poetry run pytest tests -vv --reruns 3 --reruns-delay 3
 
 fmt:
-	poetry run black tests derive_client examples
-	poetry run isort tests derive_client examples
+	poetry run ruff format tests derive_client examples
+	poetry run ruff check tests derive_client examples --fix
 
 lint:
-	poetry run flake8 tests derive_client examples
+	poetry run ruff check tests derive_client examples
 
 all: fmt lint tests
 
