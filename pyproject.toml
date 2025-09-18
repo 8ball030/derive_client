@@ -20,6 +20,7 @@ derive-action-signing = "^0.0.13"
 pydantic = "^2.11.3"
 aiolimiter = "^1.2.1"
 returns = "^0.26.0"
+eth-typing = "<5"
 
 [tool.poetry.scripts]
 drv = "derive_client.cli:cli"
