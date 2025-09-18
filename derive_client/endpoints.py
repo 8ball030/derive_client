@@ -47,6 +47,8 @@ class PrivateEndpoints:
     send_rfq = Endpoint("private", "send_rfq")
     poll_rfqs = Endpoint("private", "poll_rfqs")
     send_quote = Endpoint("private", "send_quote")
+    poll_quotes = Endpoint("private", "poll_quotes")
+    execute_quote = Endpoint("private", "execute_quote")
     deposit = Endpoint("private", "deposit")
     withdraw = Endpoint("private", "withdraw")
     order = Endpoint("private", "order")
