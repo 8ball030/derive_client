@@ -9,11 +9,20 @@ from dataclasses import dataclass
 from decimal import Decimal
 from enum import StrEnum
 
+import msgspec
 from derive_action_signing.utils import sign_ws_login, utc_now_ms
 from websockets import State
 from websockets.sync.client import ClientConnection, connect
 
 from derive_client.constants import DEFAULT_REFERER
+from derive_client.data.generated.models import (
+    Direction,
+    OrderResponseSchema,
+    PrivateGetOrdersResultSchema,
+    PrivateOrderParamsSchema,
+    PublicGetTickerResultSchema,
+    TradeResponseSchema,
+)
 from derive_client.data_types import InstrumentType, UnderlyingCurrency
 from derive_client.data_types.enums import OrderSide, OrderType, TimeInForce
 from derive_client.exceptions import DeriveJSONRPCException
@@ -131,106 +140,6 @@ class Position:
 
 
 @dataclass
-class Order:
-    """
-    {'id': 'b7252ea0-74f3-4c9e-8132-ea48e9e9676d', 'result': {'order': {'subaccount_id': 137626, 'order_id': '0c246553-c517-4f22-82c3-5950880aebe7',
-      'instrument_name': 'ETH-PERP', 'direction': 'buy', 'label': '', 'quote_id': None, 'amount': '0.1', 'average_price': '0', 'cancel_reason': '',
-        'creation_timestamp': 1759238104969, 'filled_amount': '0', 'is_transfer': False, 'last_update_timestamp': 1759238104969, 'limit_price': '4153.53',
-        'max_fee': '1000', 'mmp': False, 'nonce': 17592381048800, 'order_fee': '0', 'order_status': 'open', 'order_type': 'limit', 'replaced_order_id': None,
-        'signature': '041eb5946515e84130e1e7c94f539f865b85b7c7eb8516b44559b7811d25807121ef44b041cd6677f340863ff120e64bc6f3f24ff9f7194b232f03d451c1d3371c',
-          'signature_expiry_sec': 2147483647, 'signer': '0x86042886b1063625D0B3DDCC9e4cBcf912B79e16', 'time_in_force': 'gtc', 'trigger_type': None,
-            'trigger_price': None, 'trigger_price_type': None, 'trigger_reject_message': None}, 'trades': []}}
-    """
-
-    order_id: str | None = None
-    subaccount_id: int | None = None
-    instrument_name: str | None = None
-    direction: OrderSide | None = None
-    label: str | None = None
-    quote_id: str | None = None
-    amount: float | None = None
-    average_price: float | None = None
-    cancel_reason: str | None = None
-    creation_timestamp: int | None = None
-    filled_amount: float | None = None
-    is_transfer: bool | None = None
-    last_update_timestamp: int | None = None
-    limit_price: float | None = None
-    max_fee: float | None = None
-    mmp: bool | None = None
-    nonce: int | None = None
-    order_fee: float | None = None
-    order_status: str | None = None
-    order_type: str | None = None
-    replaced_order_id: str | None = None
-    signature: str | None = None
-    signature_expiry_sec: int | None = None
-    signer: str | None = None
-    time_in_force: str | None = None
-    trigger_type: str | None = None
-    trigger_price: float | None = None
-    trigger_price_type: str | None = None
-    trigger_reject_message: str | None = None
-    referral_code: str | None = None
-
-    @classmethod
-    def from_json(cls, data):
-        return cls(
-            order_id=data.get("order_id"),
-            subaccount_id=data.get("subaccount_id"),
-            instrument_name=data.get("instrument_name"),
-            direction=OrderSide(data.get("direction")),
-            label=data.get("label"),
-            quote_id=data.get("quote_id"),
-            amount=float(data.get("amount", 0)) if data.get("amount") is not None else None,
-            average_price=float(data.get("average_price", 0)) if data.get("average_price") is not None else None,
-            cancel_reason=data.get("cancel_reason"),
-            creation_timestamp=int(data.get("creation_timestamp", 0))
-            if data.get("creation_timestamp") is not None
-            else None,
-            filled_amount=float(data.get("filled_amount", 0)) if data.get("filled_amount") is not None else None,
-            is_transfer=data.get("is_transfer"),
-            last_update_timestamp=int(data.get("last_update_timestamp", 0))
-            if data.get("last_update_timestamp") is not None
-            else None,
-            limit_price=float(data.get("limit_price", 0)) if data.get("limit_price") is not None else None,
-            max_fee=float(data.get("max_fee", 0)) if data.get("max_fee") is not None else None,
-            mmp=data.get("mmp"),
-            nonce=int(data.get("nonce", 0)) if data.get("nonce") is not None else None,
-            order_fee=float(data.get("order_fee", 0)) if data.get("order_fee") is not None else None,
-            order_status=data.get("order_status"),
-            order_type=data.get("order_type"),
-            replaced_order_id=data.get("replaced_order_id"),
-            signature=data.get("signature"),
-            signature_expiry_sec=int(data.get("signature_expiry_sec", 0))
-            if data.get("signature_expiry_sec") is not None
-            else None,
-            signer=data.get("signer"),
-            time_in_force=data.get("time_in_force"),
-            trigger_type=data.get("trigger_type"),
-            trigger_price=float(data.get("trigger_price", 0)) if data.get("trigger_price") is not None else None,
-            trigger_price_type=data.get("trigger_price_type"),
-            trigger_reject_message=data.get("trigger_reject_message"),
-        )
-
-
-@dataclass
-class Trade(Order):
-    pass
-
-
-@dataclass
-class Trades:
-    trades: list[dict]
-
-    @classmethod
-    def from_json(cls, data):
-        return cls(
-            trades=[Trade.from_json(trade) for trade in data],
-        )
-
-
-@dataclass
 class Positions:
     positions: list[Position]
     subaccount_id: str
@@ -240,17 +149,6 @@ class Positions:
         return cls(
             positions=[Position.from_json(pos) for pos in data],
             subaccount_id=data["subaccount_id"],
-        )
-
-
-@dataclass
-class Orders:
-    orders: list[Order]
-
-    @classmethod
-    def from_json(cls, data):
-        return cls(
-            orders=[Order.from_json(order) for order in data],
         )
 
 
@@ -266,9 +164,11 @@ class Group(StrEnum):
     GROUP_10 = "10"
     GROUP_100 = "100"
 
+
 class Interval(StrEnum):
     ONE_HUNDRED_MS = "100"
     ONE_SECOND = "1000"
+
 
 class WsClient(BaseClient):
     """Websocket client class."""
@@ -335,7 +235,7 @@ class WsClient(BaseClient):
         order_type: OrderType = OrderType.LIMIT,
         time_in_force: TimeInForce = TimeInForce.GTC,
         instruments=None,  # temporary hack to allow async fetching of instruments
-    ) -> Order:
+    ) -> OrderResponseSchema:
         """
         Create the order.
         """
@@ -368,7 +268,7 @@ class WsClient(BaseClient):
             "amount": Decimal(str(rounded_amount)),
             "max_fee": Decimal(1000),
             "recipient_id": int(self.subaccount_id),
-            "is_bid": side == OrderSide.BUY,
+            "is_bid": side == Direction.buy,
         }
 
         signed_action = self._generate_signed_action(
@@ -387,7 +287,7 @@ class WsClient(BaseClient):
         _id = str(uuid.uuid4())
         self.ws.send(json.dumps({"method": "private/order", "params": order, "id": _id}))
         self.requests_in_flight[_id] = self._parse_order_message
-        return Order(**order)
+        return PrivateOrderParamsSchema(**order)
 
     def subscribe_orderbook(self, instrument_name, group: Group = Group.GROUP_1, depth: Depth = Depth.DEPTH_1):
         """
@@ -425,8 +325,7 @@ class WsClient(BaseClient):
         """
         Parse a ticker message.
         """
-        return Ticker.from_json(json_message["params"]["data"])
-
+        return PublicGetTickerResultSchema(**json_message["params"]["data"])
 
     def _parse_orderbook_message(self, json_message):
         """
@@ -438,7 +337,7 @@ class WsClient(BaseClient):
         """
         Parse a trades message.
         """
-        return Trades.from_json(json_message["params"]["data"])
+        return TradeResponseSchema.from_json(json_message["params"]["data"])
 
     def _parse_order_message(self, json_message):
         """
@@ -448,20 +347,23 @@ class WsClient(BaseClient):
         if result is None:
             raise Exception(f"Invalid order message {json_message}")
         if "order" not in result:
-            return Order.from_json(json_message["result"])
-        return Order.from_json(json_message["result"]["order"])
+            return msgspec.convert(json_message["result"], OrderResponseSchema)
+        return msgspec.convert(json_message["result"]["order"], OrderResponseSchema)
 
     def _parse_orders_stream(self, json_message):
         """
         Parse an orders message.
         """
-        return Orders.from_json(json_message["params"]["data"])
+        return msgspec.convert(
+            {"subaccount_id": self.subaccount_id, "orders": json_message['params']['data']},
+            PrivateGetOrdersResultSchema,
+        )
 
     def _parse_orders_message(self, json_message):
         """
         Parse an orders message.
         """
-        return Orders.from_json(json_message["result"]["orders"])
+        return msgspec.convert(json_message['result'], PrivateGetOrdersResultSchema)
 
     def get_positions(self):
         """
@@ -527,7 +429,7 @@ class WsClient(BaseClient):
         if error and error.get("code") in [11006, -32603]:
             return
         result = json_message.get("result", None)
-        return Order.from_json(result)
+        return OrderResponseSchema(**result)
 
     def cancel_all(self):
         """
