@@ -10,7 +10,8 @@ from decimal import Decimal
 from enum import StrEnum
 
 from derive_action_signing.utils import sign_ws_login, utc_now_ms
-from websocket import WebSocket, WebSocketConnectionClosedException, create_connection
+from websockets import State
+from websockets.sync.client import connect, ClientConnection
 
 from derive_client.constants import DEFAULT_REFERER
 from derive_client.data_types import InstrumentType, UnderlyingCurrency
@@ -269,7 +270,7 @@ class Group(StrEnum):
 class WsClient(BaseClient):
     """Websocket client class."""
 
-    _ws: WebSocket | None = None
+    _ws: ClientConnection| None = None
     subsriptions: dict = {}
     requests_in_flight: dict = {}
 
@@ -278,13 +279,13 @@ class WsClient(BaseClient):
         self.login_client()
 
     def connect_ws(self):
-        return create_connection(self.config.ws_address, enable_multithread=True, timeout=60)
+        return connect(self.config.ws_address, )
 
     @property
     def ws(self):
         if self._ws is None:
             self._ws = self.connect_ws()
-        if not self._ws.connected:
+        if self._ws.state is not State.OPEN:
             self._ws = self.connect_ws()
         return self._ws
 
@@ -312,7 +313,7 @@ class WsClient(BaseClient):
                             return self.login_client()
                         raise DeriveJSONRPCException(**message["error"])
                     break
-        except (WebSocketConnectionClosedException, Exception) as error:
+        except (Exception) as error:
             if retries:
                 time.sleep(1)
                 self.login_client(retries=retries - 1)
