@@ -74,15 +74,18 @@ Each bridge operation follows a safe 3-step pattern:
 Bridge ETH to your EOA for gas fees (needed for withdrawals later):
 
 ```python
+from derive_client.data_types import ChainID, Currency
+
 # Bridge ETH for gas - ensures you can always withdraw funds
-prepared_tx = client.bridge.prepare_deposit(
+prepared_tx = client.prepare_standard_tx(
     human_amount=0.01,
-    currency="ETH",
-    source_chain="ETH",
-    target_chain="DERIVE",  # Goes to your EOA
+    currency=Currency.ETH,
+    to: ...,                      # The LightAccount owner
+    source_chain=ChainID.BASE,
+    target_chain=ChainID.DERIVE,  # Goes to LightAccount owner (EOA)
 )
-tx_result = client.bridge.submit_deposit(prepared_tx=prepared_tx)
-tx_result = client.bridge.poll_progress(tx_result=tx_result)
+tx_result = client.submit_bridge_tx(prepared_tx=prepared_tx)
+tx_result = client.poll_bridge_progress(tx_result=tx_result)
 ```
 
 #### Step 2: Bridge Trading Assets
@@ -91,14 +94,16 @@ Bridge tokens to your LightAccount for trading:
 
 ```python
 # Bridge trading capital to LightAccount
-prepared_tx = client.bridge.prepare_deposit(
+from derive_client.data_types import ChainID, Currency
+
+prepared_tx = client.prepare_deposit_to_derive(
     human_amount=100.0,
-    currency="USDC",
-    source_chain="BASE",
-    target_chain="DERIVE",  # Goes to LightAccount
+    currency=Currency.USDC,
+    source_chain=ChainID.BASE,
+    target_chain=ChainID.DERIVE,  # Goes to LightAccount
 )
-tx_result = client.bridge.submit_deposit(prepared_tx=prepared_tx)
-tx_result = client.bridge.poll_progress(tx_result=tx_result)
+tx_result = client.submit_bridge_tx(prepared_tx=prepared_tx)
+tx_result = client.poll_bridge_progress(tx_result=tx_result)
 ```
 
 #### Step 3: Transfer to Subaccount
@@ -106,10 +111,12 @@ tx_result = client.bridge.poll_progress(tx_result=tx_result)
 Move funds from LightAccount to your trading subaccount:
 
 ```python
+from derive_client.data_types import Currency
+
 # Transfer to subaccount for trading
 tx_result = client.transfer_to_subaccount(
     amount=100.0,
-    token="USDC",
+    token=Currency.USDC,
     subaccount_id=subaccount_id,
 )
 ```
@@ -119,22 +126,24 @@ tx_result = client.transfer_to_subaccount(
 When you want to move funds back to external chains:
 
 ```python
+from derive_client.data_types import ChainID, Currency
+
 # Withdraw from subaccount to LightAccount first
 tx_result = client.transfer_from_subaccount(
     amount=100.0,
-    token="USDC",
+    token=Currency.USDC,
     subaccount_id=subaccount_id,
 )
 
 # Then bridge back to external chain
-prepared_tx = client.bridge.prepare_withdrawal(
+prepared_tx = client.prepare_withdrawal_from_derive(
     human_amount=100.0,
-    currency="USDC",
-    source_chain="DERIVE",
-    target_chain="BASE",
+    currency=Currency.USDC,
+    source_chain=ChainID.DERIVE,
+    target_chain=ChainID.BASE,
 )
-tx_result = client.bridge.submit_withdrawal(prepared_tx=prepared_tx)
-tx_result = client.bridge.poll_progress(tx_result=tx_result)
+tx_result = client.submit_bridge_tx(prepared_tx=prepared_tx)
+tx_result = client.poll_bridge_progress(tx_result=tx_result)
 ```
 
 ---
