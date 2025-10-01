@@ -266,6 +266,9 @@ class Group(StrEnum):
     GROUP_10 = "10"
     GROUP_100 = "100"
 
+class Interval(StrEnum):
+    ONE_HUNDRED_MS = "100"
+    ONE_SECOND = "1000"
 
 class WsClient(BaseClient):
     """Websocket client class."""
@@ -409,6 +412,21 @@ class WsClient(BaseClient):
         msg = f"{self.subaccount_id}.orders"
         self.ws.send(json.dumps({"method": "subscribe", "params": {"channels": [msg]}, "id": str(utc_now_ms())}))
         self.subsriptions[msg] = self._parse_orders_stream
+
+    def subscribe_ticker(self, instrument_name, interval: Interval = Interval.ONE_HUNDRED_MS):
+        """
+        Subscribe to a ticker feed.
+        """
+        msg = f"ticker.{instrument_name}.{interval}"
+        self.ws.send(json.dumps({"method": "subscribe", "params": {"channels": [msg]}, "id": str(utc_now_ms())}))
+        self.subsriptions[msg] = self._parse_ticker_stream
+
+    def _parse_ticker_stream(self, json_message):
+        """
+        Parse a ticker message.
+        """
+        return Ticker.from_json(json_message["params"]["data"])
+
 
     def _parse_orderbook_message(self, json_message):
         """

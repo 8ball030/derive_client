@@ -2,10 +2,12 @@
 Simple trading class for the websocket client.
 """
 
+import os
+
+from dotenv import load_dotenv
 from derive_client.clients.ws_client import Order, Orderbook, Orders, Position, Positions, Trades, WsClient
 from derive_client.data_types import Environment
 from derive_client.data_types.enums import OrderSide, OrderType
-from tests.conftest import OWNER_TEST_WALLET, TEST_PRIVATE_KEY
 
 MARKET_1 = "ETH-PERP"
 MAX_POSTION_SIZE = 0.5
@@ -92,6 +94,7 @@ class WebsocketQuoter:
         self.ws_client.get_orders()
         self.ws_client.get_positions()
         # subscribe to updates
+        self.ws_client.subscribe_tickers()
         self.ws_client.subscribe_orderbook(MARKET_1)
         self.ws_client.subscribe_trades()
         self.ws_client.subscribe_orders()
@@ -112,13 +115,25 @@ class WebsocketQuoter:
             else:
                 print(f"Received unhandled message: {parsed_message}")
 
+def create_client_from_env() -> WsClient:
+    """
+    Load in the client from environment variables.
+    """
+    load_dotenv()
+    private_key = os.environ["ETH_PRIVATE_KEY"]
+    wallet = os.environ["DERIVE_WALLET"]
+    env = os.environ["DERIVE_ENV"]
+    subaccount_id = os.environ.get("SUBACCOUNT_ID",)
+    return WsClient(
+        private_key=private_key,
+        wallet=wallet,
+        env=Environment(env),
+        subaccount_id=subaccount_id,
+
+    )
 
 if __name__ == "__main__":
-    ws_client = WsClient(
-        private_key=TEST_PRIVATE_KEY,
-        wallet=OWNER_TEST_WALLET,
-        env=Environment.TEST,
-    )
+    ws_client = create_client_from_env()
     quoter = WebsocketQuoter(ws_client)
     try:
         quoter.run_loop()
