@@ -68,12 +68,14 @@ def generate_models(input_path: Path, output_path: Path):
         input_file_type=InputFileType.OpenAPI,
         output=output_path,
         output_model_type=DataModelType.DataclassesDataclass,
-        target_python_version=PythonVersion.PY_310,
+        target_python_version=PythonVersion.PY_311,
         reuse_model=True,
         use_subclass_enum=True,
         strict_nullable=True,
         use_double_quotes=True,
         field_constraints=True,
+        disable_timestamp=True,
+        custom_file_header="# ruff: noqa: E741"
     )
     print(f"Models generated at: {output_path}")
 
@@ -81,16 +83,6 @@ def generate_models(input_path: Path, output_path: Path):
 if __name__ == "__main__":
     base_url = "https://docs.derive.xyz"
     repo_root = Path(__file__).parent.parent
-
-    openapi_specs_path = repo_root / "derive_client" / "data" / "openapi"
-    openapi_specs_path.mkdir(exist_ok=True)
-
-    files = download_openapi_specs(base_url=base_url, dest_dir=openapi_specs_path)
-
-    input_path = next((p for p in files if "latest" in p.stem.lower()), None)
-    if input_path is None:
-        available = ", ".join(p.name for p in files)
-        raise RuntimeError(f"No 'latest' spec found among downloaded files: {available}")
-
-    output_path = repo_root / "derive_client" / "_clients" / "models.py"
+    input_path = Path("openapi-spec.json")
+    output_path = repo_root / "derive_client" / "data" / "generated" / "models.py"
     generate_models(input_path=input_path, output_path=output_path)

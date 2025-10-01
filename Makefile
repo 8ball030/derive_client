@@ -39,6 +39,9 @@ clean-test:
 	find . -name 'log.txt' -exec rm -fr {} +
 	find . -name 'log.*.txt' -exec rm -fr {} +
 
+codegen:
+	poetry run python scripts/generate-models.py
+
 .PHONY: tests
 tests:
 	poetry run pytest tests -vv --reruns 3 --reruns-delay 3
