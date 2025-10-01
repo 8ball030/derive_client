@@ -24,7 +24,7 @@ At the moment, registration is done via the [Derive web app](https://derive.xyz)
 You can generate a private key using the helper script:
 
 ```shell
-./scripts/generate-key.py
+python ./scripts/create_new_pk.py
 ```
 
 Or use an existing key
