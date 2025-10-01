@@ -67,7 +67,7 @@ def generate_models(input_path: Path, output_path: Path):
         input_=input_path,
         input_file_type=InputFileType.OpenAPI,
         output=output_path,
-        output_model_type=DataModelType.PydanticV2BaseModel,
+        output_model_type=DataModelType.DataclassesDataclass,
         target_python_version=PythonVersion.PY_310,
         reuse_model=True,
         use_subclass_enum=True,
