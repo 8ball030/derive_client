@@ -62,7 +62,7 @@ from derive_client.data_types import (
 )
 from derive_client.endpoints import RestAPI
 from derive_client.exceptions import DeriveJSONRPCException
-from derive_client.utils import get_logger, wait_until
+from derive_client.utils import get_logger, rfq_max_fee, wait_until
 
 
 def _is_final_tx(res: DeriveTxResult) -> bool:
@@ -587,9 +587,13 @@ class BaseClient:
         rfq_id,
         legs,
         direction,
+        max_fee=None,
     ):
         """Create a quote object."""
         _, nonce, expiration = self.get_nonce_and_signature_expiry()
+
+        if max_fee is None:
+            max_fee = rfq_max_fee(client=self, legs=legs, is_taker=True)
 
         rfq_legs: list[RFQQuoteDetails] = []
         for leg in legs:
@@ -599,7 +603,7 @@ class BaseClient:
                 direction=leg["direction"],
                 asset_address=ticker["base_asset_address"],
                 sub_id=int(ticker["base_asset_sub_id"]),
-                price=leg["price"],
+                price=Decimal(leg["price"]),
                 amount=Decimal(leg["amount"]),
             )
             rfq_legs.append(rfq_quote_details)
@@ -613,7 +617,7 @@ class BaseClient:
             module_address=self.config.contracts.RFQ_MODULE,
             module_data=RFQQuoteModuleData(
                 global_direction=direction,
-                max_fee=Decimal("123"),
+                max_fee=Decimal(max_fee),
                 legs=rfq_legs,
             ),
             DOMAIN_SEPARATOR=self.config.DOMAIN_SEPARATOR,
@@ -630,6 +634,14 @@ class BaseClient:
         }
 
         return self.send_quote(quote=payload)
+
+    def poll_quotes(self, **kwargs):
+        url = self.endpoints.private.poll_quotes
+        payload = {
+            "subaccount_id": self.subaccount_id,
+            **kwargs,
+        }
+        return self._send_request(url, json=payload)
 
     def execute_quote(self, request: RFQExecuteModuleData, quote: dict[str, Any], rfq_id: str, quote_id: str):
         """Execute a quote."""
@@ -699,6 +711,7 @@ class BaseClient:
             payload["quote_id"] = quote_id
         if status:
             payload["status"] = status.value
+
         return self._send_request(url, json=payload)
 
     def _send_request(self, url, json=None, params=None, headers=None):

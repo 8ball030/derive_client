@@ -8,15 +8,8 @@ from typing import Literal
 from pydantic import BaseModel
 
 from derive_client.data_types import OrderSide
-from derive_client.data_types.enums import Currency, InstrumentType
+from derive_client.data_types.enums import Currency, InstrumentType, Leg
 from derive_client.derive import DeriveClient
-
-
-class Leg(BaseModel):
-    instrument_name: str
-    amount: float
-    direction: str
-    price: Decimal | None = None
 
 
 class Rfq(BaseModel):
@@ -95,13 +88,31 @@ def test_create_quote(derive_client: DeriveClient):
     assert len(rfq["legs"]) == len(quote["legs"])
     for rfq_leg, quote_leg in zip(rfq["legs"], quote["legs"]):
         assert rfq_leg != quote_leg
-        assert Leg(**rfq_leg, price=quote_leg['price']) == Leg(**quote_leg)
-    return rfq
+        assert Leg(**rfq_leg, price=price) == Leg(**quote_leg)
+    return quote
 
 
 def test_poll_quotes(derive_client: DeriveClient):
-    rfq = test_create_quote(derive_client)
-    derive_client.subaccount_id = derive_client.subaccount_ids[0]
-    quotes = derive_client.poll_quotes(rfq_id=rfq['rfq_id'])
-    polled_rfqs = quotes.get('quotes', [])
-    assert polled_rfqs, "Polled RFQs should not be empty"
+
+    quote = test_create_quote(derive_client)
+    derive_client.subaccount_id = derive_client.subaccount_ids[0]  # do the nasty
+    rfq_id = quote["rfq_id"]
+    quote_id = quote["quote_id"]
+    quotes = derive_client.poll_quotes(rfq_id=rfq_id, quote_id=quote_id)
+    quotes = quotes.get('quotes', [])
+    assert quotes, f"No quote matching RFQ id {rfq_id} and Quote id {quote_id} found"
+    return quotes
+
+
+def test_execute_quote(derive_client: DeriveClient):
+
+    quotes = test_poll_quotes(derive_client)
+    first_quote = quotes[0]
+    assert first_quote["status"] == "open"
+
+    executed_quote = derive_client.execute_quote(first_quote)
+
+    assert not executed_quote["subaccount_id"] == first_quote["subaccount_id"]
+    assert executed_quote["legs"] == first_quote["legs"]
+    assert executed_quote["status"] == "filled"
+    assert executed_quote["rfq_id"] == first_quote["rfq_id"]
