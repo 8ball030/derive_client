@@ -62,7 +62,6 @@ def download_openapi_specs(openapi_specs_path: str, base_url: str, dest_dir: Pat
     return saved_files
 
 
-
 def generate_models(input_path: Path, output_path: Path):
     print(f"Generating models from {input_path.name} -> {output_path}")
     generate(
@@ -78,7 +77,6 @@ def generate_models(input_path: Path, output_path: Path):
         field_constraints=True,
         disable_timestamp=True,
         custom_file_header=CUSTOM_HEADER,
-        aliases=aliases,
     )
     print(f"Models generated at: {output_path}")
 
