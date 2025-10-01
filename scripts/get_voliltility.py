@@ -12,10 +12,8 @@ import py_vollib.black_scholes.greeks.numerical
 import py_vollib.black_scholes_merton
 import requests
 from pydantic import BaseModel
-from scipy.stats import norm
 
 from derive_client.data_types.enums import OptionType
-
 
 def black_scholes_call(S, K, T, r, sigma):
     """
@@ -25,7 +23,7 @@ def black_scholes_call(S, K, T, r, sigma):
     r: Risk-free interest rate (annual)
     sigma: Volatility of the underlying stock (standard deviation)
     """
-    d1 = (math.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * math.sqrt(T))
+    d1 = (math.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * math.sqrt(T))
     d2 = d1 - sigma * math.sqrt(T)
 
     call_price = S * norm.cdf(d1) - K * math.exp(-r * T) * norm.cdf(d2)
@@ -48,7 +46,6 @@ def get_volatility(
             "resolution": resolution,
         },
     )
-    breakpoint()
     return result.json().get("result", {}).get("data", [])[-1][-1]
 
 
@@ -58,14 +55,12 @@ class BlackScholesData(BaseModel):
     gamma: float
     theta: float
 
-
 class OptionDetails(BaseModel):
     index: str
     expiry: int
     strike: float
     option_type: OptionType
     settlement_price: float | None = None
-
 
 def get_black_scholes_data(
     side: OptionType,
@@ -118,9 +113,9 @@ if __name__ == "__main__":
         "expiry": 1758700800,
         "strike": "4200",
         "option_type": "C",
-        "settlement_price": None,
-    }
-
+        "settlement_price": None
+      }
+    
     current_price = 4196
     pos_size = -3
     option = OptionDetails(**option_details)

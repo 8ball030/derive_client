@@ -643,29 +643,18 @@ class BaseClient:
         }
         return self._send_request(url, json=payload)
 
-    def execute_quote(self, quote):
-
+    def execute_quote(self, request: RFQExecuteModuleData, quote: dict[str, Any], rfq_id: str, quote_id: str):
+        """Execute a quote."""
         _, nonce, expiration = self.get_nonce_and_signature_expiry()
 
-        quote_legs: list[RFQQuoteDetails] = []
-        for leg in quote["legs"]:
-            ticker = self.fetch_ticker(instrument_name=leg["instrument_name"])
-            rfq_quote_details = RFQQuoteDetails(
-                instrument_name=ticker["instrument_name"],
-                direction=leg["direction"],
-                asset_address=ticker["base_asset_address"],
-                sub_id=int(ticker["base_asset_sub_id"]),
-                price=Decimal(leg["price"]),
-                amount=Decimal(leg["amount"]),
-            )
-            quote_legs.append(rfq_quote_details)
-
-        direction = "buy" if quote["direction"] == "sell" else "sell"
-        module_data = RFQExecuteModuleData(
-            global_direction=direction,
-            max_fee=Decimal("0"),
-            legs=quote_legs,
-        )
+        for leg, quote in zip(
+            request.legs,
+            quote.get(
+                'legs',
+            ),
+        ):
+            leg.price = Decimal(quote["price"])
+            leg.direction = quote["direction"]
 
         action = SignedAction(
             subaccount_id=self.subaccount_id,
