@@ -68,9 +68,9 @@ Or use an existing key
 You will need the following information to use the client:
 
 ```bash
-export DERIVE_SESSION_KEY=0x742d...   # Required: session key private key
-export DERIVE_LIGHTACCOUNT=0x8f5B...  # Required: LightAccount address
-export DERIVE_SUBACCOUNT=123456       # Recommended: subaccount ID (explicit)
+export DERIVE_SESSION_PRIVATE_KEY=0x742d...  # Required: EOA private key registered as a session key
+export DERIVE_WALLET=0x8f5B...               # Required: LightAccount (smart contract wallet) address
+export DERIVE_SUBACCOUNT=123456              # Recommended: Subaccount ID (explicit)
 ```
 
 ---

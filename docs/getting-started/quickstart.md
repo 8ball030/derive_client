@@ -7,8 +7,8 @@ This guide will help you get started with the **Derive Python Client** using a m
 > - Installation ([installation.md](installation.md))
 > - Account registration ([authentication.md](authentication.md))  
 >   You should already have:
-> - `DERIVE_SESSION_KEY`
-> - `DERIVE_LIGHTACCOUNT`
+> - `DERIVE_SESSION_PRIVATE_KEY`
+> - `DERIVE_WALLET`
 > - `DERIVE_SUBACCOUNT`
 
 ## 1. Set Up Environment Variables
@@ -16,8 +16,8 @@ This guide will help you get started with the **Derive Python Client** using a m
 You can manage your credentials via a `.env` file to keep them out of your code:
 
 ```shell
-SESSION_KEY_PRIVATE_KEY=
-DERIVE_LIGHTACCOUNT=
+DERIVE_SESSION_PRIVATE_KEY=
+DERIVE_WALLET=
 DERIVE_SUBACCOUNT=
 ```
 
@@ -29,8 +29,8 @@ import os
 
 load_dotenv()
 
-session_key = os.environ["SESSION_KEY_PRIVATE_KEY"]
-light_account = os.environ["DERIVE_LIGHTACCOUNT"]
+private_key = os.environ["DERIVE_SESSION_PRIVATE_KEY"]
+wallet = os.environ["DERIVE_WALLET"]
 subaccount_id = os.environ.get("DERIVE_SUBACCOUNT")
 ```
 
@@ -40,8 +40,8 @@ subaccount_id = os.environ.get("DERIVE_SUBACCOUNT")
 from derive_client import DeriveClient
 
 client = DeriveClient(
-    private_key=session_key,
-    wallet=light_account,
+    private_key=private_key,
+    wallet=wallet,
     subaccount_id=subaccount_id
 )
 ```
