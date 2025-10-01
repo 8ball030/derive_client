@@ -54,3 +54,19 @@ class PortfolioAnalyser:
         if columns:
             df = df[[c for c in columns if c not in DELTA_COLUMNS] + DELTA_COLUMNS]
         print(df)
+
+    def calculate_greeks_of_option(
+        self,
+        underlying_price: float,
+        strike_price: float,
+        interest_rate: float,
+        days_to_expiration: int,
+        volatility: float,
+    ) -> dict:
+        """
+        Calculate the greeks of each option position using the Black-Scholes model.
+        # BS([underlyingPrice, strikePrice, interestRate, daysToExpiration], volatility=x, callPrice=y, putPrice=z)
+
+        # eg:
+        # c = mibian.BS([1.4565, 1.45, 1, 30], volatility=20)
+        """
