@@ -50,7 +50,7 @@ build-backend = "poetry.core.masonry.api"
 line-length = 120
 target-version = "py313"
 respect-gitignore = true
-extend-exclude = [
+exclude = [
   ".eggs",
   ".git",
   ".hg",
@@ -62,20 +62,21 @@ extend-exclude = [
   "build",
   "dist",
   "docs/conf.py",
+  "derive_client/_clients/models.py",
 ]
 
 [tool.ruff.lint]
 select = [
-  "E",   # pycodestyle errors
-  "W",   # pycodestyle warnings
-  "F",   # pyflakes
-  "I",   # isort
-#  "B",   # flake8-bugbear
-#  "UP",  # pyupgrade
-#  "C4",  # flake8-comprehensions
-#  "SIM", # flake8-simplify
-#  "PT",  # flake8-pytest-style (if you use pytest)
-#  "RUF", # Ruff-specific rules
+  "E", # pycodestyle errors
+  "W", # pycodestyle warnings
+  "F", # pyflakes
+  "I", # isort
+  #  "B",   # flake8-bugbear
+  #  "UP",  # pyupgrade
+  #  "C4",  # flake8-comprehensions
+  #  "SIM", # flake8-simplify
+  #  "PT",  # flake8-pytest-style (if you use pytest)
+  #  "RUF", # Ruff-specific rules
 ]
 ignore = ["E501"]
 
@@ -88,4 +89,3 @@ line-ending = "auto"
 quote-style = "preserve"
 indent-style = "space"
 skip-magic-trailing-comma = false
-
