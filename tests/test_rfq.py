@@ -2,6 +2,7 @@
 Implement tests for the RFQ class.
 """
 
+from decimal import Decimal
 from typing import Literal
 
 from pydantic import BaseModel
@@ -15,7 +16,7 @@ class Leg(BaseModel):
     instrument_name: str
     amount: float
     direction: str
-    price: float | None = None
+    price: Decimal | None = None
 
 
 class Rfq(BaseModel):
@@ -73,13 +74,13 @@ def test_poll_rfqs(derive_client: DeriveClient):
 def test_create_quote(derive_client: DeriveClient):
     rfq = test_create_rfq(derive_client)
 
-    price = 42
     direction = "sell"
     derive_client.subaccount_id = derive_client.subaccount_ids[1]
 
     legs = []
     for leg in rfq['legs']:
         leg = Leg(**leg)
+        price = Decimal(derive_client.fetch_ticker(leg.instrument_name)['mark_price'])
         leg.price = price
         legs.append(leg)
 
@@ -94,7 +95,7 @@ def test_create_quote(derive_client: DeriveClient):
     assert len(rfq["legs"]) == len(quote["legs"])
     for rfq_leg, quote_leg in zip(rfq["legs"], quote["legs"]):
         assert rfq_leg != quote_leg
-        assert Leg(**rfq_leg, price=price) == Leg(**quote_leg)
+        assert Leg(**rfq_leg, price=quote_leg['price']) == Leg(**quote_leg)
     return rfq
 
 
