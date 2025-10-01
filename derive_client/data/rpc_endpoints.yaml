@@ -22,7 +22,6 @@ BASE:
   - https://base.llamarpc.com
   - https://mainnet.base.org
   - https://base-rpc.publicnode.com
-  - https://0xrpc.io/base
   - https://base.therpc.io
   - https://base-pokt.nodies.app
   # - https://base.api.onfinality.io/public
