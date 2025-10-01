@@ -247,10 +247,7 @@ async def estimate_fees(w3, blocks: int = 20) -> FeeEstimates:
     for percentile in percentiles:
         rewards = percentile_rewards[percentile]
         non_zero_rewards = list(filter(lambda x: x, rewards))
-        if non_zero_rewards:
-            estimated_priority_fee = int(statistics.median(non_zero_rewards))
-        else:
-            estimated_priority_fee = MIN_PRIORITY_FEE
+        estimated_priority_fee = int(statistics.median(non_zero_rewards)) if non_zero_rewards else MIN_PRIORITY_FEE
 
         buffered_base_fee = int(latest_base_fee * GAS_FEE_BUFFER)
         estimated_max_fee = buffered_base_fee + estimated_priority_fee

@@ -2,6 +2,8 @@
 Implement tests for the RFQ class.
 """
 
+from typing import Literal
+
 from pydantic import BaseModel
 
 from derive_client.data_types import OrderSide
@@ -19,6 +21,7 @@ class Leg(BaseModel):
 class Rfq(BaseModel):
     subaccount_id: int
     legs: list[Leg]
+    global_direction: Literal["buy", "sell"] | None = None
 
     def model_dump(self, *args, **kwargs):
         kwargs.setdefault("exclude_none", True)

@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{ include = "derive_client" }]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<=3.12"
+python = ">=3.11,<=3.13"
 requests = "^2"
 web3 = { version = ">=6,<8" }
 websocket-client = ">=0.32.0,<1"
@@ -21,6 +21,7 @@ pydantic = "^2.11.3"
 aiolimiter = "^1.2.1"
 returns = "^0.26.0"
 eth-typing = "<5"
+py-vollib = "^1.0.1"
 
 [tool.poetry.scripts]
 drv = "derive_client.cli:cli"
@@ -39,6 +40,7 @@ mkdocs-material = "^8.4.0"
 mkdocs-material-extensions = "^1.0.3"
 mkdocs-autorefs = "^0.4.1"
 ruff = "^0.13.0"
+ccxt = "^4.5.5"
 
 [build-system]
 requires = ["poetry-core"]
@@ -69,10 +71,10 @@ select = [
   "W",   # pycodestyle warnings
   "F",   # pyflakes
   "I",   # isort
+  "SIM", # flake8-simplify
 #  "B",   # flake8-bugbear
 #  "UP",  # pyupgrade
 #  "C4",  # flake8-comprehensions
-#  "SIM", # flake8-simplify
 #  "PT",  # flake8-pytest-style (if you use pytest)
 #  "RUF", # Ruff-specific rules
 ]

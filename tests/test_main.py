@@ -257,10 +257,7 @@ def test_can_create_option_order(derive_client, currency, side):
         currency=currency,
     )
     symbol, ticker = [f for f in tickers.items() if f[1]['is_active']][-1]
-    if side == OrderSide.BUY:
-        order_price = ticker['min_price']
-    else:
-        order_price = ticker['max_price']
+    order_price = ticker['min_price'] if side == OrderSide.BUY else ticker['max_price']
     order = derive_client.create_order(
         amount=0.5,
         side=side,
