@@ -123,6 +123,4 @@ def is_retryable(e: RequestException) -> bool:
     status = getattr(e.response, "status_code", None)
     if status in RETRY_STATUS_CODES:
         return True
-    if isinstance(e, RETRY_EXCEPTIONS):
-        return True
-    return False
+    return bool(isinstance(e, RETRY_EXCEPTIONS))
