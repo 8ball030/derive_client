@@ -29,7 +29,6 @@ REQUIRED_METHODS = {
 
 
 class TrackingHTTPProvider(HTTPProvider):
-
     def __init__(self, endpoint_uri: str, used: set):
         super().__init__(endpoint_uri)
         self.used = used
@@ -45,7 +44,6 @@ class TrackingHTTPProvider(HTTPProvider):
 @pytest.mark.flaky(reruns=3, reruns_delay=1)
 @pytest.mark.parametrize("chain, rpc_endpoints", RPC_ENDPOINTS)
 def test_rpc_endpoints_reachability_and_chain_id(chain, rpc_endpoints):
-
     success = {}
     failed = {}
     rate_limited = set()
@@ -84,12 +82,12 @@ def test_rpc_endpoints_reachability_and_chain_id(chain, rpc_endpoints):
     max_unresponsive = len(rpc_endpoints) // 3
     if len(rate_limited) > max_unresponsive:
         msg = "\n".join(f"  {url}" for url in rate_limited)
-        pytest.fail(f"[{chain}] Too many unresponsive endpoints " f"({len(rate_limited)}/{len(rpc_endpoints)}):\n{msg}")
+        pytest.fail(f"[{chain}] Too many unresponsive endpoints ({len(rate_limited)}/{len(rpc_endpoints)}):\n{msg}")
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.parametrize("chain, rpc_endpoints", RPC_ENDPOINTS)
 def test_rpc_methods_supported(chain, rpc_endpoints):
-
     missing = {}
     exceptions = {}
     for url in rpc_endpoints:

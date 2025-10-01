@@ -30,7 +30,6 @@ def is_filled(order: dict) -> bool:
 
 
 def get_all_positions(derive_client: HttpClient) -> dict[str, list[dict]]:
-
     _subaccount_id = derive_client.subaccount_id
 
     def is_zero(position):
@@ -46,7 +45,6 @@ def get_all_positions(derive_client: HttpClient) -> dict[str, list[dict]]:
 
 
 def close_all_positions(derive_client):
-
     _subaccount_id = derive_client.subaccount_id
     all_positions = get_all_positions(derive_client)
     for subaccount_id, positions in all_positions.items():

@@ -1,6 +1,6 @@
 """Enums used in the derive_client module."""
 
-from enum import Enum, IntEnum
+from enum import Enum, IntEnum, StrEnum
 
 
 class TxStatus(IntEnum):
@@ -243,6 +243,9 @@ class RfqStatus(Enum):
     """RFQ statuses."""
 
     OPEN = "open"
+    FILLED = "filled"
+    CANCELLED = "cancelled"
+    EXPIRED = "expired"
 
 
 class EthereumJSONRPCErrorCode(IntEnum):
@@ -379,3 +382,8 @@ class DeriveJSONRPCErrorCode(IntEnum):
     INVALID_SWELL_SEASON = 18006
     VAULT_NOT_FOUND = 18007
     MAKER_PROGRAM_NOT_FOUND_19000 = 19000
+
+
+class OptionType(StrEnum):
+    CALL = "C"
+    PUT = "P"

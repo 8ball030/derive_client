@@ -2,6 +2,8 @@
 Implement tests for the RFQ class.
 """
 
+from typing import Literal
+
 from pydantic import BaseModel
 
 from derive_client.data_types import OrderSide
@@ -12,6 +14,7 @@ from derive_client.derive import DeriveClient
 class Rfq(BaseModel):
     subaccount_id: int
     legs: list[Leg]
+    global_direction: Literal["buy", "sell"] | None = None
 
     def model_dump(self, *args, **kwargs):
         kwargs.setdefault("exclude_none", True)
@@ -21,7 +24,6 @@ class Rfq(BaseModel):
 
 
 def test_create_rfq(derive_client: DeriveClient):
-
     subaccount_id = derive_client.subaccount_id
 
     markets = derive_client.fetch_instruments(instrument_type=InstrumentType.OPTION, currency=Currency.ETH)
@@ -40,8 +42,19 @@ def test_create_rfq(derive_client: DeriveClient):
     return result
 
 
-def test_poll_rfqs(derive_client: DeriveClient):
+def test_cancel_rfq(derive_client: DeriveClient):
+    rfq = test_create_rfq(derive_client)
+    result = derive_client.cancel_rfq(rfq_id=rfq['rfq_id'])
+    assert result == 'ok'
 
+
+def test_cancel_all_rfqs(derive_client: DeriveClient):
+    result = derive_client.cancel_batch_rfqs()
+    cancelled_ids = result.get('cancelled_ids', [])
+    assert isinstance(cancelled_ids, list)
+
+
+def test_poll_rfqs(derive_client: DeriveClient):
     rfq_id = test_create_rfq(derive_client).get('rfq_id')
     quotes = derive_client.poll_rfqs()
     rfqs = quotes.get('rfqs', [])
@@ -51,7 +64,6 @@ def test_poll_rfqs(derive_client: DeriveClient):
 
 
 def test_create_quote(derive_client: DeriveClient):
-
     rfq = test_create_rfq(derive_client)
 
     price = 42

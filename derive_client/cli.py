@@ -48,7 +48,6 @@ def fmt_sig_up_to(x: float, sig: int = 4) -> str:
 
 
 def rich_prepared_tx(prepared_tx: PreparedBridgeTx):
-
     table = Table(title="Prepared Bridge Transaction", show_header=False, box=None)
     if prepared_tx.amount > 0:
         human_amount = from_base_units(amount=prepared_tx.amount, currency=prepared_tx.currency)

@@ -39,16 +39,19 @@ clean-test:
 	find . -name 'log.txt' -exec rm -fr {} +
 	find . -name 'log.*.txt' -exec rm -fr {} +
 
+codegen:
+	poetry run python scripts/generate-models.py
+
 .PHONY: tests
 tests:
 	poetry run pytest tests -vv --reruns 3 --reruns-delay 3
 
 fmt:
-	poetry run black tests derive_client examples
-	poetry run isort tests derive_client examples
+	poetry run ruff format tests derive_client examples scripts
+	poetry run ruff check tests derive_client examples scripts --fix
 
 lint:
-	poetry run flake8 tests derive_client examples
+	poetry run ruff check tests derive_client examples scripts
 
 all: fmt lint tests
 

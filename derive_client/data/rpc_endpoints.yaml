@@ -18,14 +18,13 @@ OPTIMISM:
   - https://optimism.api.onfinality.io/public
 
 BASE:
-  # - https://base.drpc.org
+  - https://base.drpc.org
   - https://base.llamarpc.com
   - https://mainnet.base.org
   - https://base-rpc.publicnode.com
-  - https://0xrpc.io/base
   - https://base.therpc.io
   - https://base-pokt.nodies.app
-  - https://base.api.onfinality.io/public
+  # - https://base.api.onfinality.io/public
 
 ARBITRUM:
   - https://arbitrum.drpc.org
@@ -40,17 +39,3 @@ ARBITRUM:
 DERIVE:
   - https://rpc.derive.xyz/
   - https://957.rpc.thirdweb.com/
-
-MODE:
-  - https://mainnet.mode.network/
-  - https://mode.drpc.org
-  - https://mode.gateway.tenderly.co/
-  - https://mode.rpc.thirdweb.com/
-
-BLAST:
-  - https://blast.drpc.org
-  - https://blast.therpc.io
-  - https://rpc.blast.io/
-  - https://blast-rpc.publicnode.com/
-  - https://blast.gateway.tenderly.co/
-  - https://blast-public.nodies.app
