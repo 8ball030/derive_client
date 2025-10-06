@@ -8,7 +8,6 @@ import time
 from decimal import Decimal
 from logging import Logger, LoggerAdapter
 from time import sleep
-from typing import Any
 
 import requests
 from derive_action_signing.module_data import (
@@ -34,6 +33,7 @@ from pydantic import validate_call
 from web3 import Web3
 
 from derive_client.constants import CONFIGS, DEFAULT_REFERER, PUBLIC_HEADERS, TOKEN_DECIMALS
+from derive_client.data.generated.models import PrivateExecuteQuoteResultSchema
 from derive_client.data_types import (
     Address,
     CollateralAsset,
@@ -62,7 +62,7 @@ from derive_client.data_types import (
 )
 from derive_client.endpoints import RestAPI
 from derive_client.exceptions import DeriveJSONRPCException
-from derive_client.utils import get_logger, rfq_max_fee, wait_until
+from derive_client.utils import get_logger, wait_until
 
 
 def _is_final_tx(res: DeriveTxResult) -> bool:
@@ -587,13 +587,9 @@ class BaseClient:
         rfq_id,
         legs,
         direction,
-        max_fee=None,
     ):
         """Create a quote object."""
         _, nonce, expiration = self.get_nonce_and_signature_expiry()
-
-        if max_fee is None:
-            max_fee = rfq_max_fee(client=self, legs=legs, is_taker=True)
 
         rfq_legs: list[RFQQuoteDetails] = []
         for leg in legs:
@@ -617,7 +613,7 @@ class BaseClient:
             module_address=self.config.contracts.RFQ_MODULE,
             module_data=RFQQuoteModuleData(
                 global_direction=direction,
-                max_fee=Decimal(max_fee),
+                max_fee=Decimal(100),
                 legs=rfq_legs,
             ),
             DOMAIN_SEPARATOR=self.config.DOMAIN_SEPARATOR,
@@ -635,26 +631,27 @@ class BaseClient:
 
         return self.send_quote(quote=payload)
 
-    def poll_quotes(self, **kwargs):
-        url = self.endpoints.private.poll_quotes
-        payload = {
-            "subaccount_id": self.subaccount_id,
-            **kwargs,
-        }
-        return self._send_request(url, json=payload)
-
-    def execute_quote(self, request: RFQExecuteModuleData, quote: dict[str, Any], rfq_id: str, quote_id: str):
+    def execute_quote(
+        self,
+        quote: PrivateExecuteQuoteResultSchema,
+    ):
         """Execute a quote."""
         _, nonce, expiration = self.get_nonce_and_signature_expiry()
 
-        for leg, quote in zip(
-            request.legs,
-            quote.get(
-                'legs',
-            ),
-        ):
-            leg.price = Decimal(quote["price"])
-            leg.direction = quote["direction"]
+        legs = []
+        for leg in quote.legs:
+            ticker = self.fetch_ticker(instrument_name=leg.instrument_name)
+            legs.append(
+                RFQQuoteDetails(
+                    instrument_name=ticker["instrument_name"],
+                    direction=leg.direction,
+                    asset_address=ticker["base_asset_address"],
+                    sub_id=int(ticker["base_asset_sub_id"]),
+                    price=Decimal(leg.price),
+                    amount=Decimal(leg.amount),
+                )
+            )
+        module_data = RFQExecuteModuleData(global_direction=quote.global_direction, legs=legs, max_fee=quote.max_fee)
 
         action = SignedAction(
             subaccount_id=self.subaccount_id,
@@ -663,7 +660,7 @@ class BaseClient:
             signature_expiry_sec=MAX_INT_32,
             nonce=nonce,
             module_address=self.config.contracts.RFQ_MODULE,
-            module_data=request,
+            module_data=module_data,
             DOMAIN_SEPARATOR=self.config.DOMAIN_SEPARATOR,
             ACTION_TYPEHASH=self.config.ACTION_TYPEHASH,
         )
@@ -671,8 +668,8 @@ class BaseClient:
         payload = {
             **action.to_json(),
             "label": "",
-            "rfq_id": rfq_id,
-            "quote_id": quote_id,
+            "rfq_id": quote.rfq_id,
+            "quote_id": quote.quote_id,
         }
         url = self.endpoints.private.execute_quote
         return self._send_request(url, json=payload)

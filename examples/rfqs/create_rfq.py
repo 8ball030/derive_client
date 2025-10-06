@@ -180,7 +180,7 @@ def create(side: str, amount: float, instrument: str, instrument_type: Instrumen
 
     # use display a spinner for a few seconds
     sleep_time = 270
-    spinner = click.progressbar(length=sleep_time, label="Waiting before accepting the best quote")
+    click.progressbar(length=sleep_time, label="Waiting before accepting the best quote")
 
     def is_quote_arbable(client: DeriveClient, quote: dict) -> bool:
         """
@@ -211,15 +211,10 @@ def create(side: str, amount: float, instrument: str, instrument_type: Instrumen
         # we consider a quote arbable if the total quote price is less than 99% of the total mark price
         return total_quote_price > total_mark_price if side.lower() == 'sell' else total_quote_price < total_mark_price
 
-    for _ in range(sleep_time):
-        sleep(1)
-        spinner.update(1)
-        is_arbable = is_quote_arbable(client, ordered_quotes[0])
-        if is_arbable:
-            break
-    print(f"Is the best quote arbable? {'Yes' if is_arbable else 'No'}")
-    if is_arbable:
-        # if accept := input("Do you want to accept this quote? (y/n): ") == 'y':
+    if accept := input("Do you want to accept this quote? (y/n): ") == 'y':
+        if not accept:
+            print("Quote not accepted, exiting")
+            return
         accepted_quote = client.execute_quote(
             request=request,
             quote=ordered_quotes[0],
@@ -230,27 +225,9 @@ def create(side: str, amount: float, instrument: str, instrument_type: Instrumen
         is_filled = False
         is_finalised = False
 
-        # we also take the market of the leg to hedge our position
-        ticker = client.fetch_ticker(selected_market['instrument_name'])
-        price = float(ticker['best_ask_price']) if side.lower() == 'sell' else float(ticker['best_bid_price'])
-        print(
-            f"Hedging position by placing a market order for {amount} {selected_market['instrument_name']} at price {price} side {'SELL' if side.lower() == 'buy' else 'BUY'}"
-        )
-        print(side)
-        order = client.create_order(
-            instrument_name=selected_market['instrument_name'],
-            amount=amount,
-            side=OrderSide.SELL if side.lower() == 'buy' else OrderSide.BUY,
-            instrument_type=InstrumentType.OPTION,
-            price=price,
-        )
-        print("Placed hedge order:", order)
-
         while not is_filled:
             polled_quote = client.poll_quotes(quote_id=accepted_quote['quote_id'])
             for quote in polled_quote.get('quotes', []):
-                if is_filled:
-                    break
                 print(
                     f"Quote ID: {quote['quote_id']} Status: {quote['status']}, Price: {sum(float(leg['price']) * float(leg['amount']) for leg in quote['legs'])}"
                 )
@@ -266,8 +243,6 @@ def create(side: str, amount: float, instrument: str, instrument_type: Instrumen
         while not is_finalised:
             polled_quote = client.poll_quotes(quote_id=accepted_quote['quote_id'])
             for quote in polled_quote.get('quotes', []):
-                if is_finalised:
-                    break
                 tx_hash, tx_status = quote.get('tx_hash'), quote.get('tx_status')
                 print(
                     f"Quote ID: {quote['quote_id']} Status: {quote['status']}, Tx Hash: {tx_hash}, Tx Status: {tx_status}"
@@ -280,18 +255,12 @@ def create(side: str, amount: float, instrument: str, instrument_type: Instrumen
             sleep(SLEEP_TIME)
         print("Quote finalised.")
 
-        txn_hash = accepted_quote.get('tx_hash')
         if quote['tx_status'] in success_status:
             print("Quote executed successfully with status:", quote['tx_status'])
         elif quote['tx_status'] in failed_status:
             print("Quote execution failed with status:", quote['tx_status'])
             sys.exit(1)
             return
-        # 'tx_status': 'reverted', 'tx_hash': '0xcfa89b200cb144dc29d76ba3a0c56e3af04bcc04085495b701d002d958ea869b'
-        if txn_hash:
-            print("Waiting for transaction to be mined:", txn_hash)
-            receipt = client.w3.eth.wait_for_transaction_receipt(txn_hash, timeout=600)
-            print("Transaction mined:", receipt)
 
     else:
         print("Quote not accepted, exiting")

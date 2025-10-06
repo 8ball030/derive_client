@@ -8,20 +8,37 @@ from typing import Literal
 from pydantic import BaseModel
 
 from derive_client.data_types import OrderSide
-from derive_client.data_types.enums import Currency, InstrumentType, Leg
+from derive_client.data_types.enums import Currency, InstrumentType
 from derive_client.derive import DeriveClient
+
+
+class Leg(BaseModel):
+    instrument_name: str
+    amount: Decimal
+    direction: Literal["buy", "sell"]
+    price: Decimal | None = None
+    sub_id: str | None = None
+    asset_address: str | None = None
 
 
 class Rfq(BaseModel):
     subaccount_id: int
     legs: list[Leg]
     global_direction: Literal["buy", "sell"] | None = None
+    max_fee: Decimal | None = None
+    quote_id: str | None = None
+    rfq_id: str | None = None
 
     def model_dump(self, *args, **kwargs):
         kwargs.setdefault("exclude_none", True)
         data = super().model_dump(*args, **kwargs)
         data["legs"].sort(key=lambda x: x.get("instrument_name"))
         return data
+
+    def from_dict(data: dict) -> "Rfq":
+        data = data.copy()
+        data["legs"] = [Leg(**leg) for leg in data.get("legs", [])]
+        return Rfq(**data)
 
 
 def test_create_rfq(derive_client: DeriveClient):
@@ -84,16 +101,17 @@ def test_create_quote(derive_client: DeriveClient):
     )
     assert quote["status"] == "open"
     assert quote["direction"] == direction
+    assert quote['fee']
+    assert quote['max_fee']
     assert rfq["creation_timestamp"] < quote["creation_timestamp"]
     assert len(rfq["legs"]) == len(quote["legs"])
     for rfq_leg, quote_leg in zip(rfq["legs"], quote["legs"]):
         assert rfq_leg != quote_leg
-        assert Leg(**rfq_leg, price=price) == Leg(**quote_leg)
+        assert Leg(**rfq_leg, price=quote_leg['price']) == Leg(**quote_leg)
     return quote
 
 
 def test_poll_quotes(derive_client: DeriveClient):
-
     quote = test_create_quote(derive_client)
     derive_client.subaccount_id = derive_client.subaccount_ids[0]  # do the nasty
     rfq_id = quote["rfq_id"]
@@ -105,14 +123,13 @@ def test_poll_quotes(derive_client: DeriveClient):
 
 
 def test_execute_quote(derive_client: DeriveClient):
+    quote = test_create_quote(derive_client)
+    assert quote["status"] == "open"
 
-    quotes = test_poll_quotes(derive_client)
-    first_quote = quotes[0]
-    assert first_quote["status"] == "open"
+    quote = Rfq.from_dict(quote)
+    executed_quote = derive_client.execute_quote(quote=quote)
 
-    executed_quote = derive_client.execute_quote(first_quote)
-
-    assert not executed_quote["subaccount_id"] == first_quote["subaccount_id"]
-    assert executed_quote["legs"] == first_quote["legs"]
+    assert executed_quote["subaccount_id"] != quote["subaccount_id"]
+    assert executed_quote["legs"] == quote["legs"]
     assert executed_quote["status"] == "filled"
-    assert executed_quote["rfq_id"] == first_quote["rfq_id"]
+    assert executed_quote["rfq_id"] == quote["rfq_id"]

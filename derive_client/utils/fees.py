@@ -27,7 +27,7 @@ def _is_box_spread(legs: list[Leg], tickers: dict) -> bool:
        and one short call and a long put at another strike price
     """
 
-    if not len(legs) == 4:
+    if len(legs) != 4:
         return False
 
     options_details = [tickers[leg.instrument_name].get("options_details") for leg in legs]
@@ -42,10 +42,10 @@ def _is_box_spread(legs: list[Leg], tickers: dict) -> bool:
         option_type = details["option_type"]
         strikes.setdefault(strike, dict()).setdefault(option_type, set()).add(leg.direction)
 
-    if not len(set(expiries)) == 1:
+    if len(set(expiries)) != 1:
         return False
 
-    if not len(strikes) == 2:
+    if len(strikes) != 2:
         return False
 
     # check we have both calls and puts at each price
@@ -92,7 +92,6 @@ def rfq_max_fee(client, legs: list[Leg], is_taker: bool = True) -> float:
         tickers[instrument_name] = ticker
 
     if _is_box_spread(legs, tickers):
-
         first_ticker = tickers[legs[0]["instrument_name"]]
         timestamp = int(first_ticker["timestamp"])
         expiry = int(first_ticker["option_details"]["expiry"])
@@ -106,19 +105,19 @@ def rfq_max_fee(client, legs: list[Leg], is_taker: bool = True) -> float:
         if is_taker:
             total_fee += max(t["base_fee"] for t in tickers.values())
 
-        amounts = [Decimal(leg["amount"]) for leg in legs]
+        [Decimal(leg["amount"]) for leg in legs]
         return total_fee
 
     # Normal multi-leg handling
     for leg in legs:
         ticker = tickers[leg.instrument_name]
-        group = _classify_leg(leg, ticker)
+        _classify_leg(leg, ticker)
 
         base_fee = float(ticker["base_fee"])
-        maker_fee_rate = float(ticker["maker_fee_rate"])
+        float(ticker["maker_fee_rate"])
         taker_fee_rate = float(ticker["taker_fee_rate"])
         index_price = float(ticker["index_price"])
-        mark_price = float(ticker["mark_price"])
-        max_fee = str(base_fee + index_price * taker_fee_rate)
+        float(ticker["mark_price"])
+        str(base_fee + index_price * taker_fee_rate)
 
     return

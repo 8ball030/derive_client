@@ -27,7 +27,7 @@ BUY_OFFSET = 0.99
 SELL_OFFSET = 1.01
 
 
-class WebsocketQuoter:
+class WebsocketQuoterStrategy:
     def __init__(self, ws_client: WsClient):
         self.ws_client = ws_client
         self.current_positions: Positions | None = None
@@ -178,7 +178,7 @@ def create_client_from_env() -> WsClient:
 
 if __name__ == "__main__":
     ws_client = create_client_from_env()
-    quoter = WebsocketQuoter(ws_client)
+    quoter = WebsocketQuoterStrategy(ws_client)
     try:
         quoter.run_loop()
     except KeyboardInterrupt:

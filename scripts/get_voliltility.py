@@ -5,7 +5,6 @@ Get the volatility of a BTC.
 # curl -X GET "https://test.deribit.com/api/v2/public/get_volatility_index_data?currency=BTC&end_timestamp=1599376800000&resolution=60&start_timestamp=1599373800000" \
 # -H "Content-Type: application/json"
 
-import math
 from datetime import datetime as date
 
 import py_vollib.black_scholes.greeks.numerical
@@ -14,20 +13,6 @@ import requests
 from pydantic import BaseModel
 
 from derive_client.data_types.enums import OptionType
-
-def black_scholes_call(S, K, T, r, sigma):
-    """
-    S: Current stock price
-    K: Strike price
-    T: Time to maturity (in years)
-    r: Risk-free interest rate (annual)
-    sigma: Volatility of the underlying stock (standard deviation)
-    """
-    d1 = (math.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * math.sqrt(T))
-    d2 = d1 - sigma * math.sqrt(T)
-
-    call_price = S * norm.cdf(d1) - K * math.exp(-r * T) * norm.cdf(d2)
-    return call_price
 
 
 def get_volatility(
@@ -55,12 +40,14 @@ class BlackScholesData(BaseModel):
     gamma: float
     theta: float
 
+
 class OptionDetails(BaseModel):
     index: str
     expiry: int
     strike: float
     option_type: OptionType
     settlement_price: float | None = None
+
 
 def get_black_scholes_data(
     side: OptionType,
@@ -110,12 +97,12 @@ if __name__ == "__main__":
 
     option_details = {
         "index": "ETH-USD",
-        "expiry": 1758700800,
+        "expiry": int(date.utcnow().timestamp()) + 30 * 24 * 3600,  # 30 days from now
         "strike": "4200",
         "option_type": "C",
-        "settlement_price": None
-      }
-    
+        "settlement_price": None,
+    }
+
     current_price = 4196
     pos_size = -3
     option = OptionDetails(**option_details)
