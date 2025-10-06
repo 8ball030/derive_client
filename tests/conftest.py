@@ -47,6 +47,25 @@ def derive_client():
 
 
 @pytest.fixture
+def derive_client_2():
+    quoter_client = DeriveClient(
+        wallet=OWNER_TEST_WALLET, private_key=TEST_PRIVATE_KEY, env=Environment.TEST, logger=get_logger()
+    )
+    yield quoter_client
+    while True:
+        try:
+            quoter_client.cancel_all()
+            quoter_client.cancel_batch_rfqs()
+            break
+        except DeriveJSONRPCException as e:
+            if "Retry after" in e.data:
+                wait_ms = int(e.data.split(" ")[2])
+                time.sleep(wait_ms / 1000)
+                continue
+            raise e
+
+
+@pytest.fixture
 async def derive_async_client():
     derive_client = AsyncClient(
         wallet=TEST_WALLET, private_key=TEST_PRIVATE_KEY, env=Environment.TEST, logger=get_logger()

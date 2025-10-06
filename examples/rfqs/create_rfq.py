@@ -178,48 +178,20 @@ def create(side: str, amount: float, instrument: str, instrument_type: Instrumen
     # print(json.dumps(ordered_quotes[0], indent=2))
     print("Best price is:", pricer(ordered_quotes[0]))
 
+    best_quote = ordered_quotes[0]
     # use display a spinner for a few seconds
-    sleep_time = 270
-    click.progressbar(length=sleep_time, label="Waiting before accepting the best quote")
-
-    def is_quote_arbable(client: DeriveClient, quote: dict) -> bool:
-        """
-        Check if a quote is arbable by checking the underlying index price and the mark price of the legs.
-        """
-        leg_profits = []
-        total_mark_price = 0.0
-        for leg in quote['legs']:
-            ticker = client.fetch_ticker(leg['instrument_name'])
-            leg_price = float(leg['price'])
-            leg_amount = float(leg['amount'])
-            leg_quote_cost = leg_price * leg_amount
-            if leg['direction'] == 'sell':
-                price = float(ticker['best_ask_price'])
-                cost = price * leg_amount
-                total_mark_price += cost
-            elif leg['direction'] == 'buy':
-                price = float(ticker['best_bid_price'])
-                cost = price * leg_amount
-                total_mark_price += cost
-
-            leg_profit = cost - leg_quote_cost
-            leg_profits.append(leg_profit)
-        if not total_mark_price:
-            return False
-        total_quote_price = sum(float(leg['price']) * float(leg['amount']) for leg in quote['legs'])
-        print(f"Total mark price: {total_mark_price}, total quote price: {total_quote_price}")
-        # we consider a quote arbable if the total quote price is less than 99% of the total mark price
-        return total_quote_price > total_mark_price if side.lower() == 'sell' else total_quote_price < total_mark_price
-
     if accept := input("Do you want to accept this quote? (y/n): ") == 'y':
         if not accept:
             print("Quote not accepted, exiting")
             return
+
+        for leg, quote in zip(request.legs, best_quote['legs']):
+            leg.price = Decimal(str(quote['price']))
+
         accepted_quote = client.execute_quote(
-            request=request,
-            quote=ordered_quotes[0],
-            rfq_id=rfq['rfq_id'],
-            quote_id=ordered_quotes[0]['quote_id'],
+            quote=request,
+            quote_id=best_quote['quote_id'],
+            rfq_id=best_quote['rfq_id'],
         )
         print("Accepted quote:", json.dumps(accepted_quote['quote_id'], indent=2))
         is_filled = False

@@ -5,6 +5,7 @@ Implement tests for the RFQ class.
 from decimal import Decimal
 from typing import Literal
 
+from derive_action_signing.module_data import RFQExecuteModuleData, RFQQuoteDetails
 from pydantic import BaseModel
 
 from derive_client.data_types import OrderSide
@@ -57,12 +58,12 @@ def test_create_rfq(derive_client: DeriveClient):
     result = derive_client.send_rfq(rfq.model_dump())
     assert result['rfq_id']
     assert result['status'] == 'open'
-    return result
+    return rfq, result
 
 
 def test_cancel_rfq(derive_client: DeriveClient):
-    rfq = test_create_rfq(derive_client)
-    result = derive_client.cancel_rfq(rfq_id=rfq['rfq_id'])
+    _, request_result = test_create_rfq(derive_client)
+    result = derive_client.cancel_rfq(rfq_id=request_result['rfq_id'])
     assert result == 'ok'
 
 
@@ -73,7 +74,8 @@ def test_cancel_all_rfqs(derive_client: DeriveClient):
 
 
 def test_poll_rfqs(derive_client: DeriveClient):
-    rfq_id = test_create_rfq(derive_client).get('rfq_id')
+    _, rfq_result = test_create_rfq(derive_client)
+    rfq_id = rfq_result['rfq_id']
     quotes = derive_client.poll_rfqs()
     rfqs = quotes.get('rfqs', [])
     assert rfqs, "RFQs should not be empty"
@@ -81,21 +83,21 @@ def test_poll_rfqs(derive_client: DeriveClient):
     assert filtered_rfqs, f"RFQ with id {rfq_id} not found"
 
 
-def test_create_quote(derive_client: DeriveClient):
-    rfq = test_create_rfq(derive_client)
+def test_create_quote(derive_client: DeriveClient, derive_client_2: DeriveClient):
+    rfq, rfq_result = test_create_rfq(derive_client_2)
 
     direction = "sell"
     derive_client.subaccount_id = derive_client.subaccount_ids[1]
 
     legs = []
-    for leg in rfq['legs']:
+    for leg in rfq_result['legs']:
         leg = Leg(**leg)
         price = Decimal(derive_client.fetch_ticker(leg.instrument_name)['mark_price'])
         leg.price = price
         legs.append(leg)
 
     quote = derive_client.create_quote(
-        rfq_id=rfq['rfq_id'],
+        rfq_id=rfq_result['rfq_id'],
         legs=[leg.model_dump() for leg in legs],
         direction=direction,
     )
@@ -103,31 +105,55 @@ def test_create_quote(derive_client: DeriveClient):
     assert quote["direction"] == direction
     assert quote['fee']
     assert quote['max_fee']
-    assert rfq["creation_timestamp"] < quote["creation_timestamp"]
-    assert len(rfq["legs"]) == len(quote["legs"])
-    for rfq_leg, quote_leg in zip(rfq["legs"], quote["legs"]):
+    assert rfq_result["creation_timestamp"] < quote["creation_timestamp"]
+    assert len(rfq_result["legs"]) == len(quote["legs"])
+    for rfq_leg, quote_leg in zip(rfq_result["legs"], quote["legs"]):
         assert rfq_leg != quote_leg
         assert Leg(**rfq_leg, price=quote_leg['price']) == Leg(**quote_leg)
-    return quote
+    return quote, rfq
 
 
-def test_poll_quotes(derive_client: DeriveClient):
-    quote = test_create_quote(derive_client)
-    derive_client.subaccount_id = derive_client.subaccount_ids[0]  # do the nasty
+def test_poll_quotes(derive_client: DeriveClient, derive_client_2: DeriveClient):
+    quote, _ = test_create_quote(derive_client, derive_client_2)
     rfq_id = quote["rfq_id"]
     quote_id = quote["quote_id"]
-    quotes = derive_client.poll_quotes(rfq_id=rfq_id, quote_id=quote_id)
+    quotes = derive_client_2.poll_quotes(rfq_id=rfq_id, quote_id=quote_id)
     quotes = quotes.get('quotes', [])
     assert quotes, f"No quote matching RFQ id {rfq_id} and Quote id {quote_id} found"
     return quotes
 
 
-def test_execute_quote(derive_client: DeriveClient):
-    quote = test_create_quote(derive_client)
+def test_execute_quote(derive_client: DeriveClient, derive_client_2: DeriveClient):
+    quote, rfq = test_create_quote(derive_client, derive_client_2)
     assert quote["status"] == "open"
 
-    quote = Rfq.from_dict(quote)
-    executed_quote = derive_client.execute_quote(quote=quote)
+    for leg, quote_leg in zip(rfq.legs, quote["legs"]):
+        leg.price = Decimal(quote_leg['price'])
+
+    markets = {
+        m['instrument_name']: m
+        for m in derive_client.fetch_instruments(instrument_type=InstrumentType.OPTION, currency=Currency.ETH)
+    }
+
+    executed_quote = derive_client_2.execute_quote(
+        quote=RFQExecuteModuleData(
+            global_direction="buy",
+            legs=[
+                RFQQuoteDetails(
+                    instrument_name=leg.instrument_name,
+                    amount=leg.amount,
+                    direction=leg.direction,
+                    price=leg.price,
+                    asset_address=markets[leg.instrument_name]['base_asset_address'],
+                    sub_id=int(markets[leg.instrument_name]['base_asset_sub_id']),
+                )
+                for leg in rfq.legs
+            ],
+            max_fee=Decimal(quote["max_fee"]),
+        ),
+        quote_id=quote["quote_id"],
+        rfq_id=quote["rfq_id"],
+    )
 
     assert executed_quote["subaccount_id"] != quote["subaccount_id"]
     assert executed_quote["legs"] == quote["legs"]

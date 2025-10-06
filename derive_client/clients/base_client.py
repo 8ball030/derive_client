@@ -15,7 +15,6 @@ from derive_action_signing.module_data import (
     MakerTransferPositionModuleData,
     MakerTransferPositionsModuleData,
     RecipientTransferERC20ModuleData,
-    RFQExecuteModuleData,
     RFQQuoteDetails,
     RFQQuoteModuleData,
     SenderTransferERC20ModuleData,
@@ -33,7 +32,6 @@ from pydantic import validate_call
 from web3 import Web3
 
 from derive_client.constants import CONFIGS, DEFAULT_REFERER, PUBLIC_HEADERS, TOKEN_DECIMALS
-from derive_client.data.generated.models import PrivateExecuteQuoteResultSchema
 from derive_client.data_types import (
     Address,
     CollateralAsset,
@@ -633,25 +631,12 @@ class BaseClient:
 
     def execute_quote(
         self,
-        quote: PrivateExecuteQuoteResultSchema,
+        quote: RFQQuoteDetails,
+        rfq_id: str = None,
+        quote_id: str = None,
     ):
         """Execute a quote."""
         _, nonce, expiration = self.get_nonce_and_signature_expiry()
-
-        legs = []
-        for leg in quote.legs:
-            ticker = self.fetch_ticker(instrument_name=leg.instrument_name)
-            legs.append(
-                RFQQuoteDetails(
-                    instrument_name=ticker["instrument_name"],
-                    direction=leg.direction,
-                    asset_address=ticker["base_asset_address"],
-                    sub_id=int(ticker["base_asset_sub_id"]),
-                    price=Decimal(leg.price),
-                    amount=Decimal(leg.amount),
-                )
-            )
-        module_data = RFQExecuteModuleData(global_direction=quote.global_direction, legs=legs, max_fee=quote.max_fee)
 
         action = SignedAction(
             subaccount_id=self.subaccount_id,
@@ -660,7 +645,7 @@ class BaseClient:
             signature_expiry_sec=MAX_INT_32,
             nonce=nonce,
             module_address=self.config.contracts.RFQ_MODULE,
-            module_data=module_data,
+            module_data=quote,
             DOMAIN_SEPARATOR=self.config.DOMAIN_SEPARATOR,
             ACTION_TYPEHASH=self.config.ACTION_TYPEHASH,
         )
@@ -668,8 +653,8 @@ class BaseClient:
         payload = {
             **action.to_json(),
             "label": "",
-            "rfq_id": quote.rfq_id,
-            "quote_id": quote.quote_id,
+            "rfq_id": rfq_id,
+            "quote_id": quote_id,
         }
         url = self.endpoints.private.execute_quote
         return self._send_request(url, json=payload)
