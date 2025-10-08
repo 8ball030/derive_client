@@ -7,6 +7,8 @@ from derive_client.data.generated.models import (
     InstrumentPublicResponseSchema,
     InstrumentType,
     PublicGetAllCurrenciesParamsSchema,
+    PublicGetAllInstrumentsParamsSchema,
+    PublicGetAllInstrumentsResultSchema,
     PublicGetCurrencyParamsSchema,
     PublicGetCurrencyResultSchema,
     PublicGetInstrumentParamsSchema,
@@ -14,8 +16,6 @@ from derive_client.data.generated.models import (
     PublicGetInstrumentsParamsSchema,
     PublicGetTickerParamsSchema,
     PublicGetTickerResultSchema,
-    PublicGetAllInstrumentsParamsSchema,
-    PublicGetAllInstrumentsResultSchema,
 )
 
 

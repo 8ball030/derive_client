@@ -2,16 +2,23 @@ import pytest
 
 from derive_client._clients.rest.http.client import HTTPClient
 from derive_client.data.generated.models import (
+    CurrencyDetailedResponseSchema,
+    InstrumentPublicResponseSchema,
+    InstrumentType,
+    PrivateGetAccountResultSchema,
     PrivateGetOrdersParamsSchema,
     PrivateGetOrdersResponseSchema,
+    PrivateGetSubaccountResultSchema,
     PrivateGetSubaccountsParamsSchema,
     PrivateGetSubaccountsResponseSchema,
+    PrivateGetSubaccountsResultSchema,
+    PrivateSessionKeysResultSchema,
+    PublicGetAllInstrumentsResultSchema,
+    PublicGetCurrencyResultSchema,
+    PublicGetInstrumentResultSchema,
     PublicGetTickerParamsSchema,
     PublicGetTickerResponseSchema,
-    PrivateSessionKeysResultSchema,
-    PrivateGetSubaccountResultSchema,
-    PrivateGetSubaccountsResultSchema,
-    PrivateGetAccountResultSchema,
+    PublicGetTickerResultSchema,
 )
 from derive_client.data_types import Environment
 
@@ -70,3 +77,69 @@ def test_account_get_subaccounts(client):
 def test_account_get(client):
     account = client.account.get()
     assert isinstance(account, PrivateGetAccountResultSchema)
+
+
+def test_markets_get_currency(client):
+    currency = "ETH"
+    currency = client.markets.get_currency(currency=currency)
+    assert isinstance(currency, PublicGetCurrencyResultSchema)
+
+
+def test_markets_get_all_currencies(client):
+    currencies = client.markets.get_all_currencies()
+    assert isinstance(currencies, list)
+    assert all(isinstance(item, CurrencyDetailedResponseSchema) for item in currencies)
+
+
+def test_markets_get_instrument(client):
+    instrument_name = "ETH-PERP"
+    instrument = client.markets.get_instrument(instrument_name=instrument_name)
+    assert isinstance(instrument, PublicGetInstrumentResultSchema)
+
+
+def test_markets_get_instruments(client):
+    currency = "ETH"
+    expired = False
+    instrument_type = InstrumentType.option
+    instruments = client.markets.get_instruments(
+        currency=currency,
+        expired=expired,
+        instrument_type=instrument_type,
+    )
+    assert isinstance(instruments, list)
+    assert all(isinstance(item, InstrumentPublicResponseSchema) for item in instruments)
+
+
+def test_markets_get_all_instruments(client):
+    expired = False
+    instrument_type = InstrumentType.perp
+    currency = None
+    page = 1
+    page_size = 100
+    all_instruments = client.markets.get_all_instruments(
+        expired=expired,
+        instrument_type=instrument_type,
+        currency=currency,
+        page=page,
+        page_size=page_size,
+    )
+    assert isinstance(all_instruments, PublicGetAllInstrumentsResultSchema)
+
+
+def test_markets_get_ticker(client):
+    instrument_name = "ETH-PERP"
+    ticker = client.markets.get_ticker(instrument_name=instrument_name)
+    assert isinstance(ticker, PublicGetTickerResultSchema)
+
+
+def test_markets_get_tickers(client):
+    currency = "ETH"
+    expired = False
+    instrument_type = InstrumentType.perp
+    tickers = client.markets.get_tickers(
+        currency=currency,
+        expired=expired,
+        instrument_type=instrument_type,
+    )
+    assert isinstance(tickers, list)
+    assert all(isinstance(item, PublicGetTickerResultSchema) for item in tickers)
