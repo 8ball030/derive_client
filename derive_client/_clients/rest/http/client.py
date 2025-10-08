@@ -4,6 +4,7 @@ from web3 import Web3
 
 from derive_client._clients.rest.http.account import AccountOperations
 from derive_client._clients.rest.http.api import PrivateAPI, PublicAPI
+from derive_client._clients.rest.http.markets import MarketOperations
 from derive_client._clients.rest.http.session import HTTPSession
 from derive_client._clients.utils import AuthContext
 from derive_client.constants import CONFIGS
@@ -31,6 +32,7 @@ class HTTPClient:
         self.private = PrivateAPI(session=self._session, config=config, auth=auth)
 
         self.account = AccountOperations(self)
+        self.markets = MarketOperations(self)
 
     @property
     def wallet(self) -> Address:
