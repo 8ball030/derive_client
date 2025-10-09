@@ -1,10 +1,9 @@
 """Auto-generated API classes from OpenAPI spec"""
 
-import msgspec
 
 from derive_client._clients.rest.async_http.session import AsyncHTTPSession
 from derive_client._clients.rest.endpoints import PrivateEndpoints, PublicEndpoints
-from derive_client._clients.utils import AuthContext, try_cast_response
+from derive_client._clients.utils import AuthContext, encode_json_exclude_none, try_cast_response
 from derive_client.constants import PUBLIC_HEADERS, EnvConfig
 from derive_client.data.generated.models import (
     PrivateCancelAllParamsSchema,
@@ -211,7 +210,7 @@ class AsyncPublicAPI:
         self._endpoints = PublicEndpoints(config.base_url)
 
     @property
-    def headers(self):
+    def headers(self) -> dict:
         return PUBLIC_HEADERS
 
     async def build_register_session_key_tx(
@@ -223,7 +222,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.build_register_session_key_tx
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicBuildRegisterSessionKeyTxResponseSchema)
         return response
@@ -244,7 +243,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.register_session_key
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicRegisterSessionKeyResponseSchema)
         return response
@@ -259,7 +258,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.deregister_session_key
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicDeregisterSessionKeyResponseSchema)
         return response
@@ -273,7 +272,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.login
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicLoginResponseSchema)
         return response
@@ -287,7 +286,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.statistics
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicStatisticsResponseSchema)
         return response
@@ -303,7 +302,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.get_all_currencies
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetAllCurrenciesResponseSchema)
         return response
@@ -318,7 +317,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.get_currency
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetCurrencyResponseSchema)
         return response
@@ -332,7 +331,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.get_instrument
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetInstrumentResponseSchema)
         return response
@@ -346,7 +345,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.get_all_instruments
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetAllInstrumentsResponseSchema)
         return response
@@ -360,7 +359,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.get_instruments
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetInstrumentsResponseSchema)
         return response
@@ -375,7 +374,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.get_ticker
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetTickerResponseSchema)
         return response
@@ -389,7 +388,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.get_latest_signed_feeds
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetLatestSignedFeedsResponseSchema)
         return response
@@ -403,7 +402,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.get_option_settlement_prices
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetOptionSettlementPricesResponseSchema)
         return response
@@ -419,7 +418,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.get_spot_feed_history
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetSpotFeedHistoryResponseSchema)
         return response
@@ -435,7 +434,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.get_spot_feed_history_candles
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetSpotFeedHistoryCandlesResponseSchema)
         return response
@@ -456,7 +455,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.get_funding_rate_history
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetFundingRateHistoryResponseSchema)
         return response
@@ -470,7 +469,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.get_trade_history
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetTradeHistoryResponseSchema)
         return response
@@ -484,7 +483,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.get_option_settlement_history
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetOptionSettlementHistoryResponseSchema)
         return response
@@ -507,7 +506,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.get_liquidation_history
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetLiquidationHistoryResponseSchema)
         return response
@@ -521,7 +520,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.get_interest_rate_history
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetInterestRateHistoryResponseSchema)
         return response
@@ -535,7 +534,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.get_transaction
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetTransactionResponseSchema)
         return response
@@ -552,7 +551,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.get_margin
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetMarginResponseSchema)
         return response
@@ -566,7 +565,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.margin_watch
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicMarginWatchResponseSchema)
         return response
@@ -584,7 +583,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.get_vault_share
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetVaultShareResponseSchema)
         return response
@@ -600,7 +599,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.get_vault_statistics
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetVaultStatisticsResponseSchema)
         return response
@@ -617,7 +616,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.get_vault_balances
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetVaultBalancesResponseSchema)
         return response
@@ -634,7 +633,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.create_subaccount_debug
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicCreateSubaccountDebugResponseSchema)
         return response
@@ -651,7 +650,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.deposit_debug
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicDepositDebugResponseSchema)
         return response
@@ -668,7 +667,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.withdraw_debug
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicWithdrawDebugResponseSchema)
         return response
@@ -684,7 +683,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.send_quote_debug
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicSendQuoteDebugResponseSchema)
         return response
@@ -700,7 +699,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.execute_quote_debug
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicExecuteQuoteDebugResponseSchema)
         return response
@@ -710,7 +709,7 @@ class AsyncPublicAPI:
         params: PublicGetTimeParamsSchema,
     ) -> PublicGetTimeResponseSchema:
         url = self._endpoints.get_time
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetTimeResponseSchema)
         return response
@@ -720,7 +719,7 @@ class AsyncPublicAPI:
         params: PublicGetLiveIncidentsParamsSchema,
     ) -> PublicGetLiveIncidentsResponseSchema:
         url = self._endpoints.get_live_incidents
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetLiveIncidentsResponseSchema)
         return response
@@ -734,7 +733,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.get_maker_programs
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetMakerProgramsResponseSchema)
         return response
@@ -748,7 +747,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.get_maker_program_scores
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetMakerProgramScoresResponseSchema)
         return response
@@ -762,7 +761,7 @@ class AsyncPublicAPI:
         """
 
         url = self._endpoints.get_referral_performance
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetReferralPerformanceResponseSchema)
         return response
@@ -778,8 +777,8 @@ class AsyncPrivateAPI:
         self._endpoints = PrivateEndpoints(config.base_url)
 
     @property
-    def headers(self):
-        return self._auth.signed_headers
+    def headers(self) -> dict:
+        return {**PUBLIC_HEADERS, **self._auth.signed_headers}
 
     async def get_account(
         self,
@@ -792,7 +791,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.get_account
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateGetAccountResponseSchema)
         return response
@@ -812,7 +811,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.create_subaccount
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateCreateSubaccountResponseSchema)
         return response
@@ -828,7 +827,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.get_subaccount
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateGetSubaccountResponseSchema)
         return response
@@ -844,7 +843,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.get_subaccounts
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateGetSubaccountsResponseSchema)
         return response
@@ -860,7 +859,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.get_all_portfolios
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateGetAllPortfoliosResponseSchema)
         return response
@@ -876,7 +875,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.change_subaccount_label
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateChangeSubaccountLabelResponseSchema)
         return response
@@ -892,7 +891,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.get_notifications
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateGetNotificationsResponseSchema)
         return response
@@ -908,7 +907,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.update_notifications
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateUpdateNotificationsResponseSchema)
         return response
@@ -927,7 +926,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.deposit
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateDepositResponseSchema)
         return response
@@ -946,7 +945,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.withdraw
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateWithdrawResponseSchema)
         return response
@@ -965,7 +964,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.transfer_erc20
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateTransferErc20ResponseSchema)
         return response
@@ -996,7 +995,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.transfer_position
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateTransferPositionResponseSchema)
         return response
@@ -1027,7 +1026,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.transfer_positions
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateTransferPositionsResponseSchema)
         return response
@@ -1043,7 +1042,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.order
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateOrderResponseSchema)
         return response
@@ -1065,7 +1064,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.replace
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateReplaceResponseSchema)
         return response
@@ -1081,7 +1080,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.order_debug
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateOrderDebugResponseSchema)
         return response
@@ -1097,7 +1096,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.get_order
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateGetOrderResponseSchema)
         return response
@@ -1113,7 +1112,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.get_orders
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateGetOrdersResponseSchema)
         return response
@@ -1129,7 +1128,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.get_open_orders
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateGetOpenOrdersResponseSchema)
         return response
@@ -1147,7 +1146,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.cancel
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateCancelResponseSchema)
         return response
@@ -1164,7 +1163,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.cancel_by_label
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateCancelByLabelResponseSchema)
         return response
@@ -1181,7 +1180,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.cancel_by_nonce
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateCancelByNonceResponseSchema)
         return response
@@ -1197,7 +1196,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.cancel_by_instrument
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateCancelByInstrumentResponseSchema)
         return response
@@ -1213,7 +1212,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.cancel_all
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateCancelAllResponseSchema)
         return response
@@ -1229,7 +1228,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.cancel_trigger_order
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateCancelTriggerOrderResponseSchema)
         return response
@@ -1245,7 +1244,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.get_order_history
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateGetOrderHistoryResponseSchema)
         return response
@@ -1261,7 +1260,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.get_trade_history
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateGetTradeHistoryResponseSchema)
         return response
@@ -1277,7 +1276,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.get_deposit_history
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateGetDepositHistoryResponseSchema)
         return response
@@ -1293,7 +1292,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.get_withdrawal_history
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateGetWithdrawalHistoryResponseSchema)
         return response
@@ -1309,7 +1308,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.send_rfq
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateSendRfqResponseSchema)
         return response
@@ -1325,7 +1324,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.cancel_rfq
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateCancelRfqResponseSchema)
         return response
@@ -1346,7 +1345,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.cancel_batch_rfqs
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateCancelBatchRfqsResponseSchema)
         return response
@@ -1363,7 +1362,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.get_rfqs
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateGetRfqsResponseSchema)
         return response
@@ -1380,7 +1379,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.poll_rfqs
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivatePollRfqsResponseSchema)
         return response
@@ -1398,7 +1397,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.send_quote
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateSendQuoteResponseSchema)
         return response
@@ -1414,7 +1413,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.cancel_quote
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateCancelQuoteResponseSchema)
         return response
@@ -1434,7 +1433,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.cancel_batch_quotes
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateCancelBatchQuotesResponseSchema)
         return response
@@ -1452,7 +1451,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.get_quotes
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateGetQuotesResponseSchema)
         return response
@@ -1471,7 +1470,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.poll_quotes
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivatePollQuotesResponseSchema)
         return response
@@ -1487,7 +1486,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.execute_quote
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateExecuteQuoteResponseSchema)
         return response
@@ -1509,7 +1508,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.rfq_get_best_quote
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateRfqGetBestQuoteResponseSchema)
         return response
@@ -1528,7 +1527,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.get_margin
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateGetMarginResponseSchema)
         return response
@@ -1544,7 +1543,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.get_collaterals
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateGetCollateralsResponseSchema)
         return response
@@ -1560,7 +1559,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.get_positions
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateGetPositionsResponseSchema)
         return response
@@ -1576,7 +1575,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.get_option_settlement_history
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateGetOptionSettlementHistoryResponseSchema)
         return response
@@ -1592,7 +1591,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.get_subaccount_value_history
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateGetSubaccountValueHistoryResponseSchema)
         return response
@@ -1608,7 +1607,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.expired_and_cancelled_history
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateExpiredAndCancelledHistoryResponseSchema)
         return response
@@ -1626,7 +1625,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.get_funding_history
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateGetFundingHistoryResponseSchema)
         return response
@@ -1642,7 +1641,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.get_interest_history
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateGetInterestHistoryResponseSchema)
         return response
@@ -1661,7 +1660,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.get_erc20_transfer_history
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateGetErc20TransferHistoryResponseSchema)
         return response
@@ -1675,7 +1674,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.get_liquidation_history
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateGetLiquidationHistoryResponseSchema)
         return response
@@ -1700,7 +1699,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.liquidate
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateLiquidateResponseSchema)
         return response
@@ -1717,7 +1716,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.get_liquidator_history
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateGetLiquidatorHistoryResponseSchema)
         return response
@@ -1731,7 +1730,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.session_keys
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateSessionKeysResponseSchema)
         return response
@@ -1751,7 +1750,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.edit_session_key
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateEditSessionKeyResponseSchema)
         return response
@@ -1769,7 +1768,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.register_scoped_session_key
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateRegisterScopedSessionKeyResponseSchema)
         return response
@@ -1785,7 +1784,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.get_mmp_config
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateGetMmpConfigResponseSchema)
         return response
@@ -1801,7 +1800,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.set_mmp_config
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateSetMmpConfigResponseSchema)
         return response
@@ -1818,7 +1817,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.reset_mmp
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateResetMmpResponseSchema)
         return response
@@ -1834,7 +1833,7 @@ class AsyncPrivateAPI:
         """
 
         url = self._endpoints.set_cancel_on_disconnect
-        data = msgspec.json.encode(params)
+        data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateSetCancelOnDisconnectResponseSchema)
         return response

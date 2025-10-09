@@ -45,7 +45,7 @@ def try_cast_response(response: bytes, response_schema: type[msgspec.Struct]) ->
     except msgspec.ValidationError:
         message = json.loads(response)
         rpc_error = RPCErrorFormatSchema(**message["error"])
-        raise DeriveJSONRPCError(message_id=message["id"], rpc_error=rpc_error)
+        raise DeriveJSONRPCError(message_id=message.get("id", ""), rpc_error=rpc_error)
     raise ValueError(f"Failed to decode response data: {response}")
 
 
@@ -84,3 +84,15 @@ RATE_LIMIT: dict[RateLimitProfile, RateLimitConfig] = {
         burst_reset_seconds=5,
     ),
 }
+
+
+def encode_json_exclude_none(obj: msgspec.Struct) -> bytes:
+    """
+    Encode msgspec Struct omitting None values.
+
+    The Derive API requires optional fields to be omitted entirely
+    rather than sent as null.
+    """
+    data = msgspec.structs.asdict(obj)
+    filtered = {k: v for k, v in data.items() if v is not None}
+    return msgspec.json.encode(filtered)
