@@ -47,11 +47,11 @@ tests:
 	poetry run pytest tests -vv --reruns 3 --reruns-delay 3
 
 fmt:
-	poetry run ruff format tests derive_client examples
-	poetry run ruff check tests derive_client examples --fix
+	poetry run ruff format tests derive_client examples scripts
+	poetry run ruff check tests derive_client examples scripts --fix
 
 lint:
-	poetry run ruff check tests derive_client examples
+	poetry run ruff check tests derive_client examples scripts
 
 all: fmt lint tests
 

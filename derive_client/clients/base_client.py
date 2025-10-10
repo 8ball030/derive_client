@@ -9,7 +9,6 @@ from decimal import Decimal
 from logging import Logger, LoggerAdapter
 from time import sleep
 
-import eth_abi
 import requests
 from derive_action_signing.module_data import (
     DepositModuleData,
@@ -197,9 +196,9 @@ class BaseClient:
 
     def create_order(
         self,
-        price,
         amount: int,
         instrument_name: str,
+        price: float = None,
         reduce_only=False,
         instrument_type: InstrumentType = InstrumentType.PERP,
         side: OrderSide = OrderSide.BUY,
@@ -228,13 +227,14 @@ class BaseClient:
         amount_step = instrument["amount_step"]
         rounded_amount = Decimal(str(amount)).quantize(Decimal(str(amount_step)))
 
-        price_step = instrument["tick_size"]
-        rounded_price = Decimal(str(price)).quantize(Decimal(str(price_step)))
+        if price is not None:
+            price_step = instrument["tick_size"]
+            rounded_price = Decimal(str(price)).quantize(Decimal(str(price_step)))
 
         module_data = {
             "asset_address": instrument["base_asset_address"],
             "sub_id": int(instrument["base_asset_sub_id"]),
-            "limit_price": Decimal(str(rounded_price)),
+            "limit_price": Decimal(str(rounded_price)) if price is not None else Decimal(0),
             "amount": Decimal(str(rounded_amount)),
             "max_fee": Decimal(1000),
             "recipient_id": int(self.subaccount_id),
@@ -242,7 +242,8 @@ class BaseClient:
         }
 
         signed_action = self._generate_signed_action(
-            module_address=self.config.contracts.TRADE_MODULE, module_data=module_data
+            module_address=self.config.contracts.TRADE_MODULE,
+            module_data=module_data,
         )
 
         order = {
@@ -285,49 +286,6 @@ class BaseClient:
     def submit_order(self, order):
         url = self.endpoints.private.order
         return self._send_request(url, json=order)["order"]
-
-    def _sign_quote(self, quote):
-        """
-        Sign the quote
-        """
-        rfq_module_data = self._encode_quote_data(quote)
-        return self._sign_quote_data(quote, rfq_module_data)
-
-    def _encode_quote_data(self, quote, underlying_currency: UnderlyingCurrency = UnderlyingCurrency.ETH):
-        """
-        Convert the quote to encoded data.
-        """
-        instruments = self.fetch_instruments(instrument_type=InstrumentType.OPTION, currency=underlying_currency)
-        ledgs_to_subids = {i["instrument_name"]: i["base_asset_sub_id"] for i in instruments}
-        dir_sign = 1 if quote["direction"] == "buy" else -1
-        quote["price"] = "10"
-
-        def encode_leg(leg):
-            sub_id = ledgs_to_subids[leg["instrument_name"]]
-            leg_sign = 1 if leg["direction"] == "buy" else -1
-            signed_amount = self.web3_client.to_wei(leg["amount"], "ether") * leg_sign * dir_sign
-            return [
-                self.config.contracts[f"{underlying_currency.name}_OPTION"],
-                sub_id,
-                self.web3_client.to_wei(quote["price"], "ether"),
-                signed_amount,
-            ]
-
-        self.logger.info(f"Quote: {quote}")
-        encoded_legs = [encode_leg(leg) for leg in quote["legs"]]
-        rfq_data = [self.web3_client.to_wei(quote["max_fee"], "ether"), encoded_legs]
-
-        encoded_data = eth_abi.encode(
-            # ['uint256(address,uint256,uint256,int256)[]'],
-            [
-                "uint256",
-                "address",
-                "uint256",
-                "int256",
-            ],
-            [rfq_data],
-        )
-        return self.web3_client.keccak(encoded_data)
 
     def fetch_ticker(self, instrument_name):
         """
@@ -407,11 +365,10 @@ class BaseClient:
         return self._send_request(url, json=payload)
 
     def _check_output_for_rate_limit(self, message):
-        if error := message.get("error"):
-            if "Rate limit exceeded" in error["message"]:
-                sleep((int(error["data"].split(" ")[-2]) / 1000))
-                self.logger.info("Rate limit exceeded, sleeping and retrying request")
-                return True
+        if (error := message.get("error")) and "Rate limit exceeded" in error["message"]:
+            sleep((int(error["data"].split(" ")[-2]) / 1000))
+            self.logger.info("Rate limit exceeded, sleeping and retrying request")
+            return True
         return False
 
     def get_positions(self):
@@ -587,9 +544,13 @@ class BaseClient:
     def send_rfq(self, rfq):
         """Send an RFQ."""
         url = self.endpoints.private.send_rfq
-        return self._send_request(url, rfq)
+        payload = {
+            **rfq,
+            "subaccount_id": self.subaccount_id,
+        }
+        return self._send_request(url, payload)
 
-    def poll_rfqs(self):
+    def poll_rfqs(self, rfq_status: RfqStatus | None = None):
         """
         Poll RFQs.
             type RfqResponse = {
@@ -606,8 +567,9 @@ class BaseClient:
         url = self.endpoints.private.poll_rfqs
         params = {
             "subaccount_id": self.subaccount_id,
-            "status": RfqStatus.OPEN.value,
         }
+        if rfq_status:
+            params["status"] = rfq_status.value
         return self._send_request(
             url,
             json=params,
@@ -635,7 +597,7 @@ class BaseClient:
                 direction=leg["direction"],
                 asset_address=ticker["base_asset_address"],
                 sub_id=int(ticker["base_asset_sub_id"]),
-                price=leg["price"],
+                price=Decimal(leg["price"]),
                 amount=Decimal(leg["amount"]),
             )
             rfq_legs.append(rfq_quote_details)
@@ -649,7 +611,7 @@ class BaseClient:
             module_address=self.config.contracts.RFQ_MODULE,
             module_data=RFQQuoteModuleData(
                 global_direction=direction,
-                max_fee=Decimal("123"),
+                max_fee=Decimal(100),
                 legs=rfq_legs,
             ),
             DOMAIN_SEPARATOR=self.config.DOMAIN_SEPARATOR,
@@ -666,6 +628,36 @@ class BaseClient:
         }
 
         return self.send_quote(quote=payload)
+
+    def execute_quote(
+        self,
+        quote: RFQQuoteDetails,
+        rfq_id: str = None,
+        quote_id: str = None,
+    ):
+        """Execute a quote."""
+        _, nonce, expiration = self.get_nonce_and_signature_expiry()
+
+        action = SignedAction(
+            subaccount_id=self.subaccount_id,
+            owner=self.wallet,
+            signer=self.signer.address,
+            signature_expiry_sec=MAX_INT_32,
+            nonce=nonce,
+            module_address=self.config.contracts.RFQ_MODULE,
+            module_data=quote,
+            DOMAIN_SEPARATOR=self.config.DOMAIN_SEPARATOR,
+            ACTION_TYPEHASH=self.config.ACTION_TYPEHASH,
+        )
+        action.sign(self.signer.key)
+        payload = {
+            **action.to_json(),
+            "label": "",
+            "rfq_id": rfq_id,
+            "quote_id": quote_id,
+        }
+        url = self.endpoints.private.execute_quote
+        return self._send_request(url, json=payload)
 
     def cancel_rfq(self, rfq_id: str):
         """Cancel an RFQ."""
@@ -701,10 +693,11 @@ class BaseClient:
             payload["quote_id"] = quote_id
         if status:
             payload["status"] = status.value
+
         return self._send_request(url, json=payload)
 
     def _send_request(self, url, json=None, params=None, headers=None):
-        headers = self._create_signature_headers() if not headers else headers
+        headers = headers if headers else self._create_signature_headers()
         response = requests.post(url, json=json, headers=headers, params=params)
         response.raise_for_status()
         json_data = response.json()

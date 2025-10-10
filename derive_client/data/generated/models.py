@@ -1,38 +1,35 @@
 # ruff: noqa: E741
-
 from __future__ import annotations
 
-from dataclasses import dataclass
 from decimal import Decimal
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
+from msgspec import Struct
 
-@dataclass
-class PublicGetVaultStatisticsParamsSchema:
+
+class PublicGetVaultStatisticsParamsSchema(Struct):
     pass
 
 
-@dataclass
-class VaultStatisticsResponseSchema:
+class VaultStatisticsResponseSchema(Struct):
     base_value: Decimal
     block_number: int
     block_timestamp: int
-    subaccount_value_at_last_trade: Optional[Decimal]
     total_supply: Decimal
-    underlying_value: Optional[Decimal]
     usd_tvl: Decimal
     usd_value: Decimal
     vault_name: str
+    subaccount_value_at_last_trade: Optional[Decimal] = None
+    underlying_value: Optional[Decimal] = None
 
 
 class Direction(str, Enum):
-    buy = "buy"
-    sell = "sell"
+    buy = 'buy'
+    sell = 'sell'
 
 
-@dataclass
-class LegPricedSchema:
+class LegPricedSchema(Struct):
     amount: Decimal
     direction: Direction
     instrument_name: str
@@ -40,41 +37,40 @@ class LegPricedSchema:
 
 
 class CancelReason(str, Enum):
-    field_ = ""
-    user_request = "user_request"
-    insufficient_margin = "insufficient_margin"
-    signed_max_fee_too_low = "signed_max_fee_too_low"
-    mmp_trigger = "mmp_trigger"
-    cancel_on_disconnect = "cancel_on_disconnect"
-    session_key_deregistered = "session_key_deregistered"
-    subaccount_withdrawn = "subaccount_withdrawn"
-    rfq_no_longer_open = "rfq_no_longer_open"
-    compliance = "compliance"
+    field_ = ''
+    user_request = 'user_request'
+    insufficient_margin = 'insufficient_margin'
+    signed_max_fee_too_low = 'signed_max_fee_too_low'
+    mmp_trigger = 'mmp_trigger'
+    cancel_on_disconnect = 'cancel_on_disconnect'
+    session_key_deregistered = 'session_key_deregistered'
+    subaccount_withdrawn = 'subaccount_withdrawn'
+    rfq_no_longer_open = 'rfq_no_longer_open'
+    compliance = 'compliance'
 
 
 class LiquidityRole(str, Enum):
-    maker = "maker"
-    taker = "taker"
+    maker = 'maker'
+    taker = 'taker'
 
 
 class Status(str, Enum):
-    open = "open"
-    filled = "filled"
-    cancelled = "cancelled"
-    expired = "expired"
+    open = 'open'
+    filled = 'filled'
+    cancelled = 'cancelled'
+    expired = 'expired'
 
 
 class TxStatus(str, Enum):
-    requested = "requested"
-    pending = "pending"
-    settled = "settled"
-    reverted = "reverted"
-    ignored = "ignored"
-    timed_out = "timed_out"
+    requested = 'requested'
+    pending = 'pending'
+    settled = 'settled'
+    reverted = 'reverted'
+    ignored = 'ignored'
+    timed_out = 'timed_out'
 
 
-@dataclass
-class QuoteResultSchema:
+class QuoteResultSchema(Struct):
     cancel_reason: CancelReason
     creation_timestamp: int
     direction: Direction
@@ -96,40 +92,35 @@ class QuoteResultSchema:
     signer: str
     status: Status
     subaccount_id: int
-    tx_hash: Optional[str]
-    tx_status: Optional[TxStatus]
+    tx_hash: Optional[str] = None
+    tx_status: Optional[TxStatus] = None
 
 
-@dataclass
-class PrivateResetMmpParamsSchema:
+class PrivateResetMmpParamsSchema(Struct):
     subaccount_id: int
     currency: Optional[str] = None
 
 
 class Result(str, Enum):
-    ok = "ok"
+    ok = 'ok'
 
 
-@dataclass
-class PrivateResetMmpResponseSchema:
+class PrivateResetMmpResponseSchema(Struct):
     id: Union[str, int]
     result: Result
 
 
-@dataclass
-class PublicGetOptionSettlementPricesParamsSchema:
+class PublicGetOptionSettlementPricesParamsSchema(Struct):
     currency: str
 
 
-@dataclass
-class ExpiryResponseSchema:
+class ExpiryResponseSchema(Struct):
     expiry_date: str
-    price: Optional[Decimal]
     utc_expiry_sec: int
+    price: Optional[Decimal] = None
 
 
-@dataclass
-class TradeModuleParamsSchema:
+class TradeModuleParamsSchema(Struct):
     amount: Decimal
     direction: Direction
     instrument_name: str
@@ -143,52 +134,51 @@ class TradeModuleParamsSchema:
 
 
 class CancelReason1(str, Enum):
-    field_ = ""
-    user_request = "user_request"
-    mmp_trigger = "mmp_trigger"
-    insufficient_margin = "insufficient_margin"
-    signed_max_fee_too_low = "signed_max_fee_too_low"
-    cancel_on_disconnect = "cancel_on_disconnect"
-    ioc_or_market_partial_fill = "ioc_or_market_partial_fill"
-    session_key_deregistered = "session_key_deregistered"
-    subaccount_withdrawn = "subaccount_withdrawn"
-    compliance = "compliance"
-    trigger_failed = "trigger_failed"
-    validation_failed = "validation_failed"
+    field_ = ''
+    user_request = 'user_request'
+    mmp_trigger = 'mmp_trigger'
+    insufficient_margin = 'insufficient_margin'
+    signed_max_fee_too_low = 'signed_max_fee_too_low'
+    cancel_on_disconnect = 'cancel_on_disconnect'
+    ioc_or_market_partial_fill = 'ioc_or_market_partial_fill'
+    session_key_deregistered = 'session_key_deregistered'
+    subaccount_withdrawn = 'subaccount_withdrawn'
+    compliance = 'compliance'
+    trigger_failed = 'trigger_failed'
+    validation_failed = 'validation_failed'
 
 
 class OrderStatus(str, Enum):
-    open = "open"
-    filled = "filled"
-    cancelled = "cancelled"
-    expired = "expired"
-    untriggered = "untriggered"
+    open = 'open'
+    filled = 'filled'
+    cancelled = 'cancelled'
+    expired = 'expired'
+    untriggered = 'untriggered'
 
 
 class OrderType(str, Enum):
-    limit = "limit"
-    market = "market"
+    limit = 'limit'
+    market = 'market'
 
 
 class TimeInForce(str, Enum):
-    gtc = "gtc"
-    post_only = "post_only"
-    fok = "fok"
-    ioc = "ioc"
+    gtc = 'gtc'
+    post_only = 'post_only'
+    fok = 'fok'
+    ioc = 'ioc'
 
 
 class TriggerPriceType(str, Enum):
-    mark = "mark"
-    index = "index"
+    mark = 'mark'
+    index = 'index'
 
 
 class TriggerType(str, Enum):
-    stoploss = "stoploss"
-    takeprofit = "takeprofit"
+    stoploss = 'stoploss'
+    takeprofit = 'takeprofit'
 
 
-@dataclass
-class OrderResponseSchema:
+class OrderResponseSchema(Struct):
     amount: Decimal
     average_price: Decimal
     cancel_reason: CancelReason1
@@ -207,12 +197,12 @@ class OrderResponseSchema:
     order_id: str
     order_status: OrderStatus
     order_type: OrderType
-    quote_id: Optional[str]
     signature: str
     signature_expiry_sec: int
     signer: str
     subaccount_id: int
     time_in_force: TimeInForce
+    quote_id: Optional[str] = None
     replaced_order_id: Optional[str] = None
     trigger_price: Optional[Decimal] = None
     trigger_price_type: Optional[TriggerPriceType] = None
@@ -220,8 +210,7 @@ class OrderResponseSchema:
     trigger_type: Optional[TriggerType] = None
 
 
-@dataclass
-class TradeResponseSchema:
+class TradeResponseSchema(Struct):
     direction: Direction
     expected_rebate: Decimal
     index_price: Decimal
@@ -231,7 +220,6 @@ class TradeResponseSchema:
     liquidity_role: LiquidityRole
     mark_price: Decimal
     order_id: str
-    quote_id: Optional[str]
     realized_pnl: Decimal
     realized_pnl_excl_fees: Decimal
     subaccount_id: int
@@ -241,12 +229,12 @@ class TradeResponseSchema:
     trade_id: str
     trade_price: Decimal
     transaction_id: str
-    tx_hash: Optional[str]
     tx_status: TxStatus
+    quote_id: Optional[str] = None
+    tx_hash: Optional[str] = None
 
 
-@dataclass
-class PublicDepositDebugParamsSchema:
+class PublicDepositDebugParamsSchema(Struct):
     amount: Decimal
     asset_name: str
     nonce: int
@@ -256,129 +244,115 @@ class PublicDepositDebugParamsSchema:
     is_atomic_signing: bool = False
 
 
-@dataclass
-class PublicDepositDebugResultSchema:
+class PublicDepositDebugResultSchema(Struct):
     action_hash: str
     encoded_data: str
     encoded_data_hashed: str
     typed_data_hash: str
 
 
-@dataclass
-class PrivateGetOpenOrdersParamsSchema:
+class PrivateGetOpenOrdersParamsSchema(Struct):
     subaccount_id: int
 
 
-@dataclass
-class PrivateGetOpenOrdersResultSchema:
+class PrivateGetOpenOrdersResultSchema(Struct):
     orders: List[OrderResponseSchema]
     subaccount_id: int
 
 
-@dataclass
-class SignatureDetailsSchema:
+class SignatureDetailsSchema(Struct):
     nonce: int
     signature: str
     signature_expiry_sec: int
     signer: str
 
 
-@dataclass
-class TransferDetailsSchema:
+class TransferDetailsSchema(Struct):
     address: str
     amount: Decimal
     sub_id: int
 
 
-@dataclass
-class PrivateTransferErc20ResultSchema:
+class PrivateTransferErc20ResultSchema(Struct):
     status: str
     transaction_id: str
 
 
 class Scope(str, Enum):
-    admin = "admin"
-    account = "account"
-    read_only = "read_only"
+    admin = 'admin'
+    account = 'account'
+    read_only = 'read_only'
 
 
-@dataclass
-class PrivateRegisterScopedSessionKeyParamsSchema:
+class PrivateRegisterScopedSessionKeyParamsSchema(Struct):
     expiry_sec: int
     public_session_key: str
     wallet: str
     ip_whitelist: Optional[List[str]] = None
     label: Optional[str] = None
-    scope: Scope = Scope.read_only
+    scope: Scope = 'read_only'
     signed_raw_tx: Optional[str] = None
 
 
-@dataclass
-class PrivateRegisterScopedSessionKeyResultSchema:
+class PrivateRegisterScopedSessionKeyResultSchema(Struct):
     expiry_sec: int
-    ip_whitelist: Optional[List[str]]
-    label: Optional[str]
     public_session_key: str
     scope: Scope
-    transaction_id: Optional[str]
+    ip_whitelist: Optional[List[str]] = None
+    label: Optional[str] = None
+    transaction_id: Optional[str] = None
 
 
-@dataclass
 class PublicGetCurrencyParamsSchema(PublicGetOptionSettlementPricesParamsSchema):
     pass
 
 
 class InstrumentType(str, Enum):
-    erc20 = "erc20"
-    option = "option"
-    perp = "perp"
+    erc20 = 'erc20'
+    option = 'option'
+    perp = 'perp'
 
 
 class MarketType(str, Enum):
-    ALL = "ALL"
-    SRM_BASE_ONLY = "SRM_BASE_ONLY"
-    SRM_OPTION_ONLY = "SRM_OPTION_ONLY"
-    SRM_PERP_ONLY = "SRM_PERP_ONLY"
-    CASH = "CASH"
+    ALL = 'ALL'
+    SRM_BASE_ONLY = 'SRM_BASE_ONLY'
+    SRM_OPTION_ONLY = 'SRM_OPTION_ONLY'
+    SRM_PERP_ONLY = 'SRM_PERP_ONLY'
+    CASH = 'CASH'
 
 
-@dataclass
-class OpenInterestStatsSchema:
+class OpenInterestStatsSchema(Struct):
     current_open_interest: Decimal
     interest_cap: Decimal
     manager_currency: Optional[str] = None
 
 
 class MarginType(str, Enum):
-    PM = "PM"
-    SM = "SM"
-    PM2 = "PM2"
+    PM = 'PM'
+    SM = 'SM'
+    PM2 = 'PM2'
 
 
-@dataclass
-class ManagerContractResponseSchema:
+class ManagerContractResponseSchema(Struct):
     address: str
     margin_type: MarginType
     currency: Optional[str] = None
 
 
-@dataclass
-class PM2CollateralDiscountsSchema:
+class PM2CollateralDiscountsSchema(Struct):
     im_discount: Decimal
     manager_currency: str
     mm_discount: Decimal
 
 
-@dataclass
-class ProtocolAssetAddressesSchema:
+class ProtocolAssetAddressesSchema(Struct):
     option: Optional[str] = None
     perp: Optional[str] = None
     spot: Optional[str] = None
     underlying_erc20: Optional[str] = None
 
 
-@dataclass
-class PrivateLiquidateParamsSchema:
+class PrivateLiquidateParamsSchema(Struct):
     cash_transfer: Decimal
     last_seen_trade_id: int
     liquidated_subaccount_id: int
@@ -391,35 +365,30 @@ class PrivateLiquidateParamsSchema:
     subaccount_id: int
 
 
-@dataclass
-class PrivateLiquidateResultSchema:
+class PrivateLiquidateResultSchema(Struct):
     estimated_bid_price: Decimal
     estimated_discount_pnl: Decimal
     estimated_percent_bid: Decimal
     transaction_id: str
 
 
-@dataclass
-class PrivateGetSubaccountValueHistoryParamsSchema:
+class PrivateGetSubaccountValueHistoryParamsSchema(Struct):
     end_timestamp: int
     period: int
     start_timestamp: int
     subaccount_id: int
 
 
-@dataclass
-class SubAccountValueHistoryResponseSchema:
+class SubAccountValueHistoryResponseSchema(Struct):
     subaccount_value: Decimal
     timestamp: int
 
 
-@dataclass
 class PublicGetMakerProgramsParamsSchema(PublicGetVaultStatisticsParamsSchema):
     pass
 
 
-@dataclass
-class ProgramResponseSchema:
+class ProgramResponseSchema(Struct):
     asset_types: List[str]
     currencies: List[str]
     end_timestamp: int
@@ -429,8 +398,7 @@ class ProgramResponseSchema:
     start_timestamp: int
 
 
-@dataclass
-class PrivateOrderDebugParamsSchema:
+class PrivateOrderDebugParamsSchema(Struct):
     amount: Decimal
     direction: Direction
     instrument_name: str
@@ -442,20 +410,19 @@ class PrivateOrderDebugParamsSchema:
     signer: str
     subaccount_id: int
     is_atomic_signing: Optional[bool] = False
-    label: str = ""
+    label: str = ''
     mmp: bool = False
-    order_type: OrderType = OrderType.limit
+    order_type: OrderType = 'limit'
     reduce_only: bool = False
-    referral_code: str = ""
+    referral_code: str = ''
     reject_timestamp: int = 9223372036854776000
-    time_in_force: TimeInForce = TimeInForce.gtc
+    time_in_force: TimeInForce = 'gtc'
     trigger_price: Optional[Decimal] = None
     trigger_price_type: Optional[TriggerPriceType] = None
     trigger_type: Optional[TriggerType] = None
 
 
-@dataclass
-class TradeModuleDataSchema:
+class TradeModuleDataSchema(Struct):
     asset: str
     desired_amount: Decimal
     is_bid: bool
@@ -466,59 +433,51 @@ class TradeModuleDataSchema:
     worst_fee: Decimal
 
 
-@dataclass
-class PrivateGetInterestHistoryParamsSchema:
+class PrivateGetInterestHistoryParamsSchema(Struct):
     subaccount_id: int
     end_timestamp: int = 9223372036854776000
     start_timestamp: int = 0
 
 
-@dataclass
-class InterestPaymentSchema:
+class InterestPaymentSchema(Struct):
     interest: Decimal
     timestamp: int
 
 
-@dataclass
 class PrivateGetDepositHistoryParamsSchema(PrivateGetInterestHistoryParamsSchema):
     pass
 
 
-@dataclass
-class DepositSchema:
+class DepositSchema(Struct):
     amount: Decimal
     asset: str
-    error_log: Optional[Dict[str, Any]]
     timestamp: int
     transaction_id: str
     tx_hash: str
     tx_status: TxStatus
+    error_log: Optional[Dict[str, Any]] = None
 
 
-@dataclass
 class PrivateGetMmpConfigParamsSchema(PrivateResetMmpParamsSchema):
     pass
 
 
-@dataclass
-class MMPConfigResultSchema:
+class MMPConfigResultSchema(Struct):
     currency: str
     is_frozen: bool
     mmp_frozen_time: int
     mmp_interval: int
     mmp_unfreeze_time: int
     subaccount_id: int
-    mmp_amount_limit: Decimal = "0"
-    mmp_delta_limit: Decimal = "0"
+    mmp_amount_limit: Decimal = '0'
+    mmp_delta_limit: Decimal = '0'
 
 
-@dataclass
-class PrivateSessionKeysParamsSchema:
+class PrivateSessionKeysParamsSchema(Struct):
     wallet: str
 
 
-@dataclass
-class SessionKeyResponseSchema:
+class SessionKeyResponseSchema(Struct):
     expiry_sec: int
     ip_whitelist: List[str]
     label: str
@@ -526,28 +485,25 @@ class SessionKeyResponseSchema:
     scope: str
 
 
-@dataclass
-class PublicGetInstrumentsParamsSchema:
+class PublicGetInstrumentsParamsSchema(Struct):
     currency: str
     expired: bool
     instrument_type: InstrumentType
 
 
-@dataclass
-class ERC20PublicDetailsSchema:
+class ERC20PublicDetailsSchema(Struct):
     decimals: int
-    borrow_index: Decimal = "1"
-    supply_index: Decimal = "1"
-    underlying_erc20_address: str = ""
+    borrow_index: Decimal = '1'
+    supply_index: Decimal = '1'
+    underlying_erc20_address: str = ''
 
 
 class OptionType(str, Enum):
-    C = "C"
-    P = "P"
+    C = 'C'
+    P = 'P'
 
 
-@dataclass
-class OptionPublicDetailsSchema:
+class OptionPublicDetailsSchema(Struct):
     expiry: int
     index: str
     option_type: OptionType
@@ -555,8 +511,7 @@ class OptionPublicDetailsSchema:
     settlement_price: Optional[Decimal] = None
 
 
-@dataclass
-class PerpPublicDetailsSchema:
+class PerpPublicDetailsSchema(Struct):
     aggregate_funding: Decimal
     funding_rate: Decimal
     index: str
@@ -565,13 +520,11 @@ class PerpPublicDetailsSchema:
     static_interest_rate: Decimal
 
 
-@dataclass
 class PrivateGetAllPortfoliosParamsSchema(PrivateSessionKeysParamsSchema):
     pass
 
 
-@dataclass
-class CollateralResponseSchema:
+class CollateralResponseSchema(Struct):
     amount: Decimal
     amount_step: Decimal
     asset_name: str
@@ -596,8 +549,7 @@ class CollateralResponseSchema:
     unrealized_pnl_excl_fees: Decimal
 
 
-@dataclass
-class PositionResponseSchema:
+class PositionResponseSchema(Struct):
     amount: Decimal
     amount_step: Decimal
     average_price: Decimal
@@ -610,8 +562,6 @@ class PositionResponseSchema:
     initial_margin: Decimal
     instrument_name: str
     instrument_type: InstrumentType
-    leverage: Optional[Decimal]
-    liquidation_price: Optional[Decimal]
     maintenance_margin: Decimal
     mark_price: Decimal
     mark_value: Decimal
@@ -625,21 +575,20 @@ class PositionResponseSchema:
     unrealized_pnl: Decimal
     unrealized_pnl_excl_fees: Decimal
     vega: Decimal
+    leverage: Optional[Decimal] = None
+    liquidation_price: Optional[Decimal] = None
 
 
-@dataclass
-class PublicGetInstrumentParamsSchema:
+class PublicGetInstrumentParamsSchema(Struct):
     instrument_name: str
 
 
-@dataclass
-class PublicGetInstrumentResultSchema:
+class PublicGetInstrumentResultSchema(Struct):
     amount_step: Decimal
     base_asset_address: str
     base_asset_sub_id: str
     base_currency: str
     base_fee: Decimal
-    erc20_details: Optional[ERC20PublicDetailsSchema]
     fifo_min_allocation: Decimal
     instrument_name: str
     instrument_type: InstrumentType
@@ -647,8 +596,6 @@ class PublicGetInstrumentResultSchema:
     maker_fee_rate: Decimal
     maximum_amount: Decimal
     minimum_amount: Decimal
-    option_details: Optional[OptionPublicDetailsSchema]
-    perp_details: Optional[PerpPublicDetailsSchema]
     pro_rata_amount_step: Decimal
     pro_rata_fraction: Decimal
     quote_currency: str
@@ -656,11 +603,13 @@ class PublicGetInstrumentResultSchema:
     scheduled_deactivation: int
     taker_fee_rate: Decimal
     tick_size: Decimal
+    erc20_details: Optional[ERC20PublicDetailsSchema] = None
+    option_details: Optional[OptionPublicDetailsSchema] = None
+    perp_details: Optional[PerpPublicDetailsSchema] = None
     mark_price_fee_rate_cap: Optional[Decimal] = None
 
 
-@dataclass
-class PublicExecuteQuoteDebugParamsSchema:
+class PublicExecuteQuoteDebugParamsSchema(Struct):
     direction: Direction
     legs: List[LegPricedSchema]
     max_fee: Decimal
@@ -671,11 +620,10 @@ class PublicExecuteQuoteDebugParamsSchema:
     signature_expiry_sec: int
     signer: str
     subaccount_id: int
-    label: str = ""
+    label: str = ''
 
 
-@dataclass
-class PublicExecuteQuoteDebugResultSchema:
+class PublicExecuteQuoteDebugResultSchema(Struct):
     action_hash: str
     encoded_data: str
     encoded_data_hashed: str
@@ -684,19 +632,16 @@ class PublicExecuteQuoteDebugResultSchema:
     typed_data_hash: str
 
 
-@dataclass
 class PrivateGetCollateralsParamsSchema(PrivateGetOpenOrdersParamsSchema):
     pass
 
 
-@dataclass
-class PrivateGetCollateralsResultSchema:
+class PrivateGetCollateralsResultSchema(Struct):
     collaterals: List[CollateralResponseSchema]
     subaccount_id: int
 
 
-@dataclass
-class PrivatePollQuotesParamsSchema:
+class PrivatePollQuotesParamsSchema(Struct):
     subaccount_id: int
     from_timestamp: int = 0
     page: int = 1
@@ -707,14 +652,12 @@ class PrivatePollQuotesParamsSchema:
     to_timestamp: int = 18446744073709552000
 
 
-@dataclass
-class PaginationInfoSchema:
+class PaginationInfoSchema(Struct):
     count: int
     num_pages: int
 
 
-@dataclass
-class QuoteResultPublicSchema:
+class QuoteResultPublicSchema(Struct):
     cancel_reason: CancelReason
     creation_timestamp: int
     direction: Direction
@@ -727,26 +670,23 @@ class QuoteResultPublicSchema:
     rfq_id: str
     status: Status
     subaccount_id: int
-    tx_hash: Optional[str]
-    tx_status: Optional[TxStatus]
     wallet: str
+    tx_hash: Optional[str] = None
+    tx_status: Optional[TxStatus] = None
 
 
-@dataclass
-class SimulatedCollateralSchema:
+class SimulatedCollateralSchema(Struct):
     amount: Decimal
     asset_name: str
 
 
-@dataclass
-class SimulatedPositionSchema:
+class SimulatedPositionSchema(Struct):
     amount: Decimal
     instrument_name: str
     entry_price: Optional[Decimal] = None
 
 
-@dataclass
-class PrivateGetMarginResultSchema:
+class PrivateGetMarginResultSchema(Struct):
     is_valid_trade: bool
     post_initial_margin: Decimal
     post_maintenance_margin: Decimal
@@ -755,74 +695,64 @@ class PrivateGetMarginResultSchema:
     subaccount_id: int
 
 
-@dataclass
-class PublicBuildRegisterSessionKeyTxParamsSchema:
+class PublicBuildRegisterSessionKeyTxParamsSchema(Struct):
     expiry_sec: int
-    gas: Optional[int]
-    nonce: Optional[int]
     public_session_key: str
     wallet: str
+    gas: Optional[int] = None
+    nonce: Optional[int] = None
 
 
-@dataclass
-class PublicBuildRegisterSessionKeyTxResultSchema:
+class PublicBuildRegisterSessionKeyTxResultSchema(Struct):
     tx_params: Dict[str, Any]
 
 
-@dataclass
-class PrivateCancelTriggerOrderParamsSchema:
+class PrivateCancelTriggerOrderParamsSchema(Struct):
     order_id: str
     subaccount_id: int
 
 
-@dataclass
 class PrivateCancelTriggerOrderResultSchema(OrderResponseSchema):
     pass
 
 
-@dataclass
 class PrivateGetOrderParamsSchema(PrivateCancelTriggerOrderParamsSchema):
     pass
 
 
-@dataclass
 class PrivateGetOrderResultSchema(OrderResponseSchema):
     pass
 
 
-@dataclass
 class PrivateGetWithdrawalHistoryParamsSchema(PrivateGetInterestHistoryParamsSchema):
     pass
 
 
-@dataclass
-class WithdrawalSchema:
+class WithdrawalSchema(Struct):
     amount: Decimal
     asset: str
-    error_log: Optional[Dict[str, Any]]
     timestamp: int
     tx_hash: str
     tx_status: TxStatus
+    error_log: Optional[Dict[str, Any]] = None
 
 
-@dataclass
 class PublicGetLiveIncidentsParamsSchema(PublicGetVaultStatisticsParamsSchema):
     pass
 
 
 class MonitorType(str, Enum):
-    manual = "manual"
-    auto = "auto"
+    manual = 'manual'
+    auto = 'auto'
 
 
 class Severity(str, Enum):
-    low = "low"
-    medium = "medium"
-    high = "high"
+    low = 'low'
+    medium = 'medium'
+    high = 'high'
 
 
-@dataclass
-class IncidentResponseSchema:
+class IncidentResponseSchema(Struct):
     creation_timestamp_sec: int
     label: str
     message: str
@@ -830,35 +760,29 @@ class IncidentResponseSchema:
     severity: Severity
 
 
-@dataclass
 class PrivateGetQuotesParamsSchema(PrivatePollQuotesParamsSchema):
     pass
 
 
-@dataclass
-class PrivateGetQuotesResultSchema:
-    pagination: PaginationInfoSchema
+class PrivateGetQuotesResultSchema(Struct):
     quotes: List[QuoteResultSchema]
+    pagination: PaginationInfoSchema | None = None
 
 
-@dataclass
 class PrivateGetPositionsParamsSchema(PrivateGetOpenOrdersParamsSchema):
     pass
 
 
-@dataclass
-class PrivateGetPositionsResultSchema:
+class PrivateGetPositionsResultSchema(Struct):
     positions: List[PositionResponseSchema]
     subaccount_id: int
 
 
-@dataclass
 class PrivateGetOptionSettlementHistoryParamsSchema(PrivateGetOpenOrdersParamsSchema):
     pass
 
 
-@dataclass
-class OptionSettlementResponseSchema:
+class OptionSettlementResponseSchema(Struct):
     amount: Decimal
     expiry: int
     instrument_name: str
@@ -868,21 +792,18 @@ class OptionSettlementResponseSchema:
     subaccount_id: int
 
 
-@dataclass
-class PublicDeregisterSessionKeyParamsSchema:
+class PublicDeregisterSessionKeyParamsSchema(Struct):
     public_session_key: str
     signed_raw_tx: str
     wallet: str
 
 
-@dataclass
-class PublicDeregisterSessionKeyResultSchema:
+class PublicDeregisterSessionKeyResultSchema(Struct):
     public_session_key: str
     transaction_id: str
 
 
-@dataclass
-class PublicGetVaultShareParamsSchema:
+class PublicGetVaultShareParamsSchema(Struct):
     from_timestamp_sec: int
     to_timestamp_sec: int
     vault_name: str
@@ -890,17 +811,15 @@ class PublicGetVaultShareParamsSchema:
     page_size: int = 100
 
 
-@dataclass
-class VaultShareResponseSchema:
+class VaultShareResponseSchema(Struct):
     base_value: Decimal
     block_number: int
     block_timestamp: int
-    underlying_value: Optional[Decimal]
     usd_value: Decimal
+    underlying_value: Optional[Decimal] = None
 
 
-@dataclass
-class PrivateExpiredAndCancelledHistoryParamsSchema:
+class PrivateExpiredAndCancelledHistoryParamsSchema(Struct):
     end_timestamp: int
     expiry: int
     start_timestamp: int
@@ -908,13 +827,11 @@ class PrivateExpiredAndCancelledHistoryParamsSchema:
     wallet: str
 
 
-@dataclass
-class PrivateExpiredAndCancelledHistoryResultSchema:
+class PrivateExpiredAndCancelledHistoryResultSchema(Struct):
     presigned_urls: List[str]
 
 
-@dataclass
-class PrivateEditSessionKeyParamsSchema:
+class PrivateEditSessionKeyParamsSchema(Struct):
     public_session_key: str
     wallet: str
     disable: bool = False
@@ -922,21 +839,16 @@ class PrivateEditSessionKeyParamsSchema:
     label: Optional[str] = None
 
 
-@dataclass
 class PrivateEditSessionKeyResultSchema(SessionKeyResponseSchema):
     pass
 
 
-@dataclass
 class PublicGetAllCurrenciesParamsSchema(PublicGetVaultStatisticsParamsSchema):
     pass
 
 
-@dataclass
-class CurrencyDetailedResponseSchema:
-    asset_cap_and_supply_per_manager: Dict[
-        str, Dict[str, List[OpenInterestStatsSchema]]
-    ]
+class CurrencyDetailedResponseSchema(Struct):
+    asset_cap_and_supply_per_manager: Dict[str, Dict[str, List[OpenInterestStatsSchema]]]
     borrow_apy: Decimal
     currency: str
     instrument_types: List[InstrumentType]
@@ -953,30 +865,25 @@ class CurrencyDetailedResponseSchema:
     spot_price_24h: Optional[Decimal] = None
 
 
-@dataclass
-class PrivateCancelByLabelParamsSchema:
+class PrivateCancelByLabelParamsSchema(Struct):
     label: str
     subaccount_id: int
     instrument_name: Optional[str] = None
 
 
-@dataclass
-class PrivateCancelByLabelResultSchema:
+class PrivateCancelByLabelResultSchema(Struct):
     cancelled_orders: int
 
 
-@dataclass
 class PublicWithdrawDebugParamsSchema(PublicDepositDebugParamsSchema):
     pass
 
 
-@dataclass
 class PublicWithdrawDebugResultSchema(PublicDepositDebugResultSchema):
     pass
 
 
-@dataclass
-class PublicGetMarginParamsSchema:
+class PublicGetMarginParamsSchema(Struct):
     margin_type: MarginType
     simulated_collaterals: List[SimulatedCollateralSchema]
     simulated_positions: List[SimulatedPositionSchema]
@@ -985,24 +892,20 @@ class PublicGetMarginParamsSchema:
     simulated_position_changes: Optional[List[SimulatedPositionSchema]] = None
 
 
-@dataclass
 class PublicGetMarginResultSchema(PrivateGetMarginResultSchema):
     pass
 
 
-@dataclass
 class PrivateGetSubaccountsParamsSchema(PrivateSessionKeysParamsSchema):
     pass
 
 
-@dataclass
-class PrivateGetSubaccountsResultSchema:
+class PrivateGetSubaccountsResultSchema(Struct):
     subaccount_ids: List[int]
     wallet: str
 
 
-@dataclass
-class PrivatePollRfqsParamsSchema:
+class PrivatePollRfqsParamsSchema(Struct):
     subaccount_id: int
     from_timestamp: int = 0
     page: int = 1
@@ -1013,15 +916,13 @@ class PrivatePollRfqsParamsSchema:
     to_timestamp: int = 18446744073709552000
 
 
-@dataclass
-class LegUnpricedSchema:
+class LegUnpricedSchema(Struct):
     amount: Decimal
     direction: Direction
     instrument_name: str
 
 
-@dataclass
-class PrivateWithdrawParamsSchema:
+class PrivateWithdrawParamsSchema(Struct):
     amount: Decimal
     asset_name: str
     nonce: int
@@ -1032,42 +933,36 @@ class PrivateWithdrawParamsSchema:
     is_atomic_signing: bool = False
 
 
-@dataclass
 class PrivateWithdrawResultSchema(PrivateTransferErc20ResultSchema):
     pass
 
 
 class Status6(str, Enum):
-    unseen = "unseen"
-    seen = "seen"
-    hidden = "hidden"
+    unseen = 'unseen'
+    seen = 'seen'
+    hidden = 'hidden'
 
 
-@dataclass
-class PrivateUpdateNotificationsParamsSchema:
+class PrivateUpdateNotificationsParamsSchema(Struct):
     notification_ids: List[int]
     subaccount_id: int
-    status: Status6 = Status6.seen
+    status: Status6 = 'seen'
 
 
-@dataclass
-class PrivateUpdateNotificationsResultSchema:
+class PrivateUpdateNotificationsResultSchema(Struct):
     updated_count: int
 
 
-@dataclass
-class PrivateSetCancelOnDisconnectParamsSchema:
+class PrivateSetCancelOnDisconnectParamsSchema(Struct):
     enabled: bool
     wallet: str
 
 
-@dataclass
 class PrivateSetCancelOnDisconnectResponseSchema(PrivateResetMmpResponseSchema):
     pass
 
 
-@dataclass
-class PrivateGetTradeHistoryParamsSchema:
+class PrivateGetTradeHistoryParamsSchema(Struct):
     from_timestamp: int = 0
     instrument_name: Optional[str] = None
     order_id: Optional[str] = None
@@ -1079,34 +974,29 @@ class PrivateGetTradeHistoryParamsSchema:
     wallet: Optional[str] = None
 
 
-@dataclass
-class PrivateGetTradeHistoryResultSchema:
-    pagination: PaginationInfoSchema
+class PrivateGetTradeHistoryResultSchema(Struct):
     subaccount_id: int
     trades: List[TradeResponseSchema]
+    pagination: PaginationInfoSchema | None = None
 
 
-@dataclass
 class PrivateOrderParamsSchema(PrivateOrderDebugParamsSchema):
     pass
 
 
-@dataclass
-class PrivateOrderResultSchema:
+class PrivateOrderResultSchema(Struct):
     order: OrderResponseSchema
     trades: List[TradeResponseSchema]
 
 
-@dataclass
-class PublicGetInterestRateHistoryParamsSchema:
+class PublicGetInterestRateHistoryParamsSchema(Struct):
     from_timestamp_sec: int
     to_timestamp_sec: int
     page: int = 1
     page_size: int = 100
 
 
-@dataclass
-class InterestRateHistoryResponseSchema:
+class InterestRateHistoryResponseSchema(Struct):
     block: int
     borrow_apy: Decimal
     supply_apy: Decimal
@@ -1115,27 +1005,23 @@ class InterestRateHistoryResponseSchema:
     total_supply: Decimal
 
 
-@dataclass
-class PublicGetOptionSettlementHistoryParamsSchema:
+class PublicGetOptionSettlementHistoryParamsSchema(Struct):
     page: int = 1
     page_size: int = 100
     subaccount_id: Optional[int] = None
 
 
-@dataclass
-class PublicGetOptionSettlementHistoryResultSchema:
-    pagination: PaginationInfoSchema
+class PublicGetOptionSettlementHistoryResultSchema(Struct):
     settlements: List[OptionSettlementResponseSchema]
+    pagination: PaginationInfoSchema | None = None
 
 
-@dataclass
-class PublicGetMakerProgramScoresParamsSchema:
+class PublicGetMakerProgramScoresParamsSchema(Struct):
     epoch_start_timestamp: int
     program_name: str
 
 
-@dataclass
-class ScoreBreakdownSchema:
+class ScoreBreakdownSchema(Struct):
     coverage_score: Decimal
     holder_boost: Decimal
     quality_score: Decimal
@@ -1145,8 +1031,7 @@ class ScoreBreakdownSchema:
     wallet: str
 
 
-@dataclass
-class PrivateGetOrdersParamsSchema:
+class PrivateGetOrdersParamsSchema(Struct):
     subaccount_id: int
     instrument_name: Optional[str] = None
     label: Optional[str] = None
@@ -1155,20 +1040,17 @@ class PrivateGetOrdersParamsSchema:
     status: Optional[OrderStatus] = None
 
 
-@dataclass
-class PrivateGetOrdersResultSchema:
+class PrivateGetOrdersResultSchema(Struct):
     orders: List[OrderResponseSchema]
-    pagination: PaginationInfoSchema
     subaccount_id: int
+    pagination: PaginationInfoSchema | None = None
 
 
-@dataclass
 class PublicGetTickerParamsSchema(PublicGetInstrumentParamsSchema):
     pass
 
 
-@dataclass
-class OptionPricingSchema:
+class OptionPricingSchema(Struct):
     ask_iv: Decimal
     bid_iv: Decimal
     delta: Decimal
@@ -1182,8 +1064,7 @@ class OptionPricingSchema:
     vega: Decimal
 
 
-@dataclass
-class AggregateTradingStatsSchema:
+class AggregateTradingStatsSchema(Struct):
     contract_volume: Decimal
     high: Decimal
     low: Decimal
@@ -1193,21 +1074,18 @@ class AggregateTradingStatsSchema:
     usd_change: Decimal
 
 
-@dataclass
-class PublicLoginParamsSchema:
+class PublicLoginParamsSchema(Struct):
     signature: str
     timestamp: str
     wallet: str
 
 
-@dataclass
-class PublicLoginResponseSchema:
+class PublicLoginResponseSchema(Struct):
     id: Union[str, int]
     result: List[int]
 
 
-@dataclass
-class PrivateGetFundingHistoryParamsSchema:
+class PrivateGetFundingHistoryParamsSchema(Struct):
     subaccount_id: int
     end_timestamp: int = 9223372036854776000
     instrument_name: Optional[str] = None
@@ -1216,40 +1094,35 @@ class PrivateGetFundingHistoryParamsSchema:
     start_timestamp: int = 0
 
 
-@dataclass
-class FundingPaymentSchema:
+class FundingPaymentSchema(Struct):
     funding: Decimal
     instrument_name: str
     pnl: Decimal
     timestamp: int
 
 
-@dataclass
-class PublicGetSpotFeedHistoryParamsSchema:
+class PublicGetSpotFeedHistoryParamsSchema(Struct):
     currency: str
     end_timestamp: int
     period: int
     start_timestamp: int
 
 
-@dataclass
-class SpotFeedHistoryResponseSchema:
+class SpotFeedHistoryResponseSchema(Struct):
     price: Decimal
     timestamp: int
     timestamp_bucket: int
 
 
-@dataclass
-class PrivateSetMmpConfigParamsSchema:
+class PrivateSetMmpConfigParamsSchema(Struct):
     currency: str
     mmp_frozen_time: int
     mmp_interval: int
     subaccount_id: int
-    mmp_amount_limit: Decimal = "0"
-    mmp_delta_limit: Decimal = "0"
+    mmp_amount_limit: Decimal = '0'
+    mmp_delta_limit: Decimal = '0'
 
 
-@dataclass
 class PrivateSetMmpConfigResultSchema(PrivateSetMmpConfigParamsSchema):
     pass
 
@@ -1262,32 +1135,29 @@ class Period(str, Enum):
     field_86400 = 86400
 
 
-@dataclass
-class PublicGetFundingRateHistoryParamsSchema:
+class PublicGetFundingRateHistoryParamsSchema(Struct):
     instrument_name: str
     end_timestamp: int = 9223372036854776000
-    period: Period = Period.field_3600
+    period: Period = 3600
     start_timestamp: int = 0
 
 
-@dataclass
-class FundingRateSchema:
+class FundingRateSchema(Struct):
     funding_rate: Decimal
     timestamp: int
 
 
 class TypeEnum(str, Enum):
-    deposit = "deposit"
-    withdraw = "withdraw"
-    transfer = "transfer"
-    trade = "trade"
-    settlement = "settlement"
-    liquidation = "liquidation"
-    custom = "custom"
+    deposit = 'deposit'
+    withdraw = 'withdraw'
+    transfer = 'transfer'
+    trade = 'trade'
+    settlement = 'settlement'
+    liquidation = 'liquidation'
+    custom = 'custom'
 
 
-@dataclass
-class PrivateGetNotificationsParamsSchema:
+class PrivateGetNotificationsParamsSchema(Struct):
     page: Optional[int] = 1
     page_size: Optional[int] = 50
     status: Optional[Status6] = None
@@ -1296,8 +1166,7 @@ class PrivateGetNotificationsParamsSchema:
     wallet: Optional[str] = None
 
 
-@dataclass
-class NotificationResponseSchema:
+class NotificationResponseSchema(Struct):
     event: str
     event_details: Dict[str, Any]
     id: int
@@ -1308,8 +1177,7 @@ class NotificationResponseSchema:
     tx_hash: Optional[str] = None
 
 
-@dataclass
-class PrivateCancelBatchQuotesParamsSchema:
+class PrivateCancelBatchQuotesParamsSchema(Struct):
     subaccount_id: int
     label: Optional[str] = None
     nonce: Optional[int] = None
@@ -1317,73 +1185,69 @@ class PrivateCancelBatchQuotesParamsSchema:
     rfq_id: Optional[str] = None
 
 
-@dataclass
-class PrivateCancelBatchQuotesResultSchema:
+class PrivateCancelBatchQuotesResultSchema(Struct):
     cancelled_ids: List[str]
 
 
-@dataclass
-class PrivateRfqGetBestQuoteParamsSchema:
+class PrivateRfqGetBestQuoteParamsSchema(Struct):
     legs: List[LegUnpricedSchema]
     subaccount_id: int
     counterparties: Optional[List[str]] = None
-    direction: Direction = Direction.buy
-    label: str = ""
+    direction: Direction = 'buy'
+    label: str = ''
     max_total_cost: Optional[Decimal] = None
     min_total_cost: Optional[Decimal] = None
-    partial_fill_step: Decimal = "1"
+    partial_fill_step: Decimal = '1'
     rfq_id: Optional[str] = None
 
 
 class InvalidReason(str, Enum):
     Account_is_currently_under_maintenance_margin_requirements__trading_is_frozen_ = (
-        "Account is currently under maintenance margin requirements, trading is frozen."
+        'Account is currently under maintenance margin requirements, trading is frozen.'
     )
     This_order_would_cause_account_to_fall_under_maintenance_margin_requirements_ = (
-        "This order would cause account to fall under maintenance margin requirements."
+        'This order would cause account to fall under maintenance margin requirements.'
     )
     Insufficient_buying_power__only_a_single_risk_reducing_open_order_is_allowed_ = (
-        "Insufficient buying power, only a single risk-reducing open order is allowed."
+        'Insufficient buying power, only a single risk-reducing open order is allowed.'
     )
     Insufficient_buying_power__consider_reducing_order_size_ = (
-        "Insufficient buying power, consider reducing order size."
+        'Insufficient buying power, consider reducing order size.'
     )
-    Insufficient_buying_power__consider_reducing_order_size_or_canceling_other_orders_ = "Insufficient buying power, consider reducing order size or canceling other orders."
-    Consider_canceling_other_limit_orders_or_using_IOC__FOK__or_market_orders__This_order_is_risk_reducing__but_if_filled_with_other_open_orders__buying_power_might_be_insufficient_ = "Consider canceling other limit orders or using IOC, FOK, or market orders. This order is risk-reducing, but if filled with other open orders, buying power might be insufficient."
-    Insufficient_buying_power_ = "Insufficient buying power."
+    Insufficient_buying_power__consider_reducing_order_size_or_canceling_other_orders_ = (
+        'Insufficient buying power, consider reducing order size or canceling other orders.'
+    )
+    Consider_canceling_other_limit_orders_or_using_IOC__FOK__or_market_orders__This_order_is_risk_reducing__but_if_filled_with_other_open_orders__buying_power_might_be_insufficient_ = 'Consider canceling other limit orders or using IOC, FOK, or market orders. This order is risk-reducing, but if filled with other open orders, buying power might be insufficient.'
+    Insufficient_buying_power_ = 'Insufficient buying power.'
 
 
-@dataclass
-class PrivateRfqGetBestQuoteResultSchema:
-    best_quote: Optional[QuoteResultPublicSchema]
+class PrivateRfqGetBestQuoteResultSchema(Struct):
     direction: Direction
-    down_liquidation_price: Optional[Decimal]
     estimated_fee: Decimal
     estimated_realized_pnl: Decimal
     estimated_realized_pnl_excl_fees: Decimal
     estimated_total_cost: Decimal
     filled_pct: Decimal
-    invalid_reason: Optional[InvalidReason]
     is_valid: bool
     post_initial_margin: Decimal
-    post_liquidation_price: Optional[Decimal]
     pre_initial_margin: Decimal
     suggested_max_fee: Decimal
-    up_liquidation_price: Optional[Decimal]
+    best_quote: Optional[QuoteResultPublicSchema] = None
+    down_liquidation_price: Optional[Decimal] = None
+    invalid_reason: Optional[InvalidReason] = None
+    post_liquidation_price: Optional[Decimal] = None
+    up_liquidation_price: Optional[Decimal] = None
 
 
-@dataclass
 class PrivateDepositParamsSchema(PrivateWithdrawParamsSchema):
     pass
 
 
-@dataclass
 class PrivateDepositResultSchema(PrivateTransferErc20ResultSchema):
     pass
 
 
-@dataclass
-class PublicGetLiquidationHistoryParamsSchema:
+class PublicGetLiquidationHistoryParamsSchema(Struct):
     end_timestamp: int = 9223372036854776000
     page: int = 1
     page_size: int = 100
@@ -1392,12 +1256,11 @@ class PublicGetLiquidationHistoryParamsSchema:
 
 
 class AuctionType(str, Enum):
-    solvent = "solvent"
-    insolvent = "insolvent"
+    solvent = 'solvent'
+    insolvent = 'insolvent'
 
 
-@dataclass
-class AuctionBidEventSchema:
+class AuctionBidEventSchema(Struct):
     amounts_liquidated: Dict[str, Decimal]
     cash_received: Decimal
     discount_pnl: Decimal
@@ -1410,27 +1273,21 @@ class AuctionBidEventSchema:
     tx_hash: str
 
 
-@dataclass
-class PrivateChangeSubaccountLabelParamsSchema:
+class PrivateChangeSubaccountLabelParamsSchema(Struct):
     label: str
     subaccount_id: int
 
 
-@dataclass
-class PrivateChangeSubaccountLabelResultSchema(
-    PrivateChangeSubaccountLabelParamsSchema
-):
+class PrivateChangeSubaccountLabelResultSchema(PrivateChangeSubaccountLabelParamsSchema):
     pass
 
 
-@dataclass
-class PublicMarginWatchParamsSchema:
+class PublicMarginWatchParamsSchema(Struct):
     subaccount_id: int
     force_onchain: bool = False
 
 
-@dataclass
-class CollateralPublicResponseSchema:
+class CollateralPublicResponseSchema(Struct):
     amount: Decimal
     asset_name: str
     asset_type: InstrumentType
@@ -1440,8 +1297,7 @@ class CollateralPublicResponseSchema:
     mark_value: Decimal
 
 
-@dataclass
-class PositionPublicResponseSchema:
+class PositionPublicResponseSchema(Struct):
     amount: Decimal
     delta: Decimal
     gamma: Decimal
@@ -1449,34 +1305,30 @@ class PositionPublicResponseSchema:
     initial_margin: Decimal
     instrument_name: str
     instrument_type: InstrumentType
-    liquidation_price: Optional[Decimal]
     maintenance_margin: Decimal
     mark_price: Decimal
     mark_value: Decimal
     theta: Decimal
     vega: Decimal
+    liquidation_price: Optional[Decimal] = None
 
 
-@dataclass
-class PublicGetTransactionParamsSchema:
+class PublicGetTransactionParamsSchema(Struct):
     transaction_id: str
 
 
-@dataclass
-class PublicGetTransactionResultSchema:
+class PublicGetTransactionResultSchema(Struct):
     data: str
-    error_log: Optional[str]
     status: TxStatus
-    transaction_hash: Optional[str]
+    error_log: Optional[str] = None
+    transaction_hash: Optional[str] = None
 
 
-@dataclass
 class PrivateGetErc20TransferHistoryParamsSchema(PrivateGetInterestHistoryParamsSchema):
     pass
 
 
-@dataclass
-class ERC20TransferSchema:
+class ERC20TransferSchema(Struct):
     amount: Decimal
     asset: str
     counterparty_subaccount_id: int
@@ -1485,8 +1337,7 @@ class ERC20TransferSchema:
     tx_hash: str
 
 
-@dataclass
-class PrivateReplaceParamsSchema:
+class PrivateReplaceParamsSchema(Struct):
     amount: Decimal
     direction: Direction
     instrument_name: str
@@ -1499,35 +1350,33 @@ class PrivateReplaceParamsSchema:
     subaccount_id: int
     expected_filled_amount: Optional[Decimal] = None
     is_atomic_signing: Optional[bool] = False
-    label: str = ""
+    label: str = ''
     mmp: bool = False
     nonce_to_cancel: Optional[int] = None
     order_id_to_cancel: Optional[str] = None
-    order_type: OrderType = OrderType.limit
+    order_type: OrderType = 'limit'
     reduce_only: bool = False
-    referral_code: str = ""
+    referral_code: str = ''
     reject_timestamp: int = 9223372036854776000
-    time_in_force: TimeInForce = TimeInForce.gtc
+    time_in_force: TimeInForce = 'gtc'
     trigger_price: Optional[Decimal] = None
     trigger_price_type: Optional[TriggerPriceType] = None
     trigger_type: Optional[TriggerType] = None
 
 
-@dataclass
-class RPCErrorFormatSchema:
+class RPCErrorFormatSchema(Struct):
     code: int
     message: str
     data: Optional[str] = None
 
 
 class TxStatus5(str, Enum):
-    settled = "settled"
-    reverted = "reverted"
-    timed_out = "timed_out"
+    settled = 'settled'
+    reverted = 'reverted'
+    timed_out = 'timed_out'
 
 
-@dataclass
-class PublicGetTradeHistoryParamsSchema:
+class PublicGetTradeHistoryParamsSchema(Struct):
     currency: Optional[str] = None
     from_timestamp: int = 0
     instrument_name: Optional[str] = None
@@ -1538,18 +1387,16 @@ class PublicGetTradeHistoryParamsSchema:
     to_timestamp: int = 18446744073709552000
     trade_id: Optional[str] = None
     tx_hash: Optional[str] = None
-    tx_status: TxStatus5 = TxStatus5.settled
+    tx_status: TxStatus5 = 'settled'
 
 
-@dataclass
-class TradeSettledPublicResponseSchema:
+class TradeSettledPublicResponseSchema(Struct):
     direction: Direction
     expected_rebate: Decimal
     index_price: Decimal
     instrument_name: str
     liquidity_role: LiquidityRole
     mark_price: Decimal
-    quote_id: Optional[str]
     realized_pnl: Decimal
     realized_pnl_excl_fees: Decimal
     subaccount_id: int
@@ -1561,10 +1408,10 @@ class TradeSettledPublicResponseSchema:
     tx_hash: str
     tx_status: TxStatus5
     wallet: str
+    quote_id: Optional[str] = None
 
 
-@dataclass
-class PublicSendQuoteDebugParamsSchema:
+class PublicSendQuoteDebugParamsSchema(Struct):
     direction: Direction
     legs: List[LegPricedSchema]
     max_fee: Decimal
@@ -1574,47 +1421,40 @@ class PublicSendQuoteDebugParamsSchema:
     signature_expiry_sec: int
     signer: str
     subaccount_id: int
-    label: str = ""
+    label: str = ''
     mmp: bool = False
 
 
-@dataclass
 class PublicSendQuoteDebugResultSchema(PublicDepositDebugResultSchema):
     pass
 
 
-@dataclass
-class PrivateGetOrderHistoryParamsSchema:
+class PrivateGetOrderHistoryParamsSchema(Struct):
     subaccount_id: int
     page: int = 1
     page_size: int = 100
 
 
-@dataclass
 class PrivateGetOrderHistoryResultSchema(PrivateGetOrdersResultSchema):
     pass
 
 
-@dataclass
-class PrivateCancelBatchRfqsParamsSchema:
+class PrivateCancelBatchRfqsParamsSchema(Struct):
     subaccount_id: int
     label: Optional[str] = None
     nonce: Optional[int] = None
     rfq_id: Optional[str] = None
 
 
-@dataclass
 class PrivateCancelBatchRfqsResultSchema(PrivateCancelBatchQuotesResultSchema):
     pass
 
 
-@dataclass
 class PrivateExecuteQuoteParamsSchema(PublicExecuteQuoteDebugParamsSchema):
     pass
 
 
-@dataclass
-class PrivateExecuteQuoteResultSchema:
+class PrivateExecuteQuoteResultSchema(Struct):
     cancel_reason: CancelReason
     creation_timestamp: int
     direction: Direction
@@ -1637,12 +1477,11 @@ class PrivateExecuteQuoteResultSchema:
     signer: str
     status: Status
     subaccount_id: int
-    tx_hash: Optional[str]
-    tx_status: Optional[TxStatus]
+    tx_hash: Optional[str] = None
+    tx_status: Optional[TxStatus] = None
 
 
-@dataclass
-class PublicCreateSubaccountDebugParamsSchema:
+class PublicCreateSubaccountDebugParamsSchema(Struct):
     amount: Decimal
     asset_name: str
     margin_type: MarginType
@@ -1653,47 +1492,40 @@ class PublicCreateSubaccountDebugParamsSchema:
     currency: Optional[str] = None
 
 
-@dataclass
 class PublicCreateSubaccountDebugResultSchema(PublicDepositDebugResultSchema):
     pass
 
 
-@dataclass
 class PrivateGetLiquidationHistoryParamsSchema(PrivateGetInterestHistoryParamsSchema):
     pass
 
 
-@dataclass
-class PrivateCancelRfqParamsSchema:
+class PrivateCancelRfqParamsSchema(Struct):
     rfq_id: str
     subaccount_id: int
 
 
-@dataclass
 class PrivateCancelRfqResponseSchema(PrivateResetMmpResponseSchema):
     pass
 
 
-@dataclass
-class PublicGetLatestSignedFeedsParamsSchema:
+class PublicGetLatestSignedFeedsParamsSchema(Struct):
     currency: Optional[str] = None
     expiry: Optional[int] = None
 
 
-@dataclass
-class OracleSignatureDataSchema:
+class OracleSignatureDataSchema(Struct):
     signatures: Optional[List[str]] = None
     signers: Optional[List[str]] = None
 
 
 class Type(str, Enum):
-    P = "P"
-    A = "A"
-    B = "B"
+    P = 'P'
+    A = 'A'
+    B = 'B'
 
 
-@dataclass
-class PerpFeedDataSchema:
+class PerpFeedDataSchema(Struct):
     confidence: Decimal
     currency: str
     deadline: int
@@ -1703,8 +1535,7 @@ class PerpFeedDataSchema:
     type: Type
 
 
-@dataclass
-class RateFeedDataSchema:
+class RateFeedDataSchema(Struct):
     confidence: Decimal
     currency: str
     deadline: int
@@ -1715,23 +1546,21 @@ class RateFeedDataSchema:
 
 
 class FeedSourceType(str, Enum):
-    S = "S"
-    O = "O"
+    S = 'S'
+    O = 'O'
 
 
-@dataclass
-class SpotFeedDataSchema:
+class SpotFeedDataSchema(Struct):
     confidence: Decimal
     currency: str
     deadline: int
     price: Decimal
     signatures: OracleSignatureDataSchema
     timestamp: int
-    feed_source_type: FeedSourceType = FeedSourceType.S
+    feed_source_type: FeedSourceType = 'S'
 
 
-@dataclass
-class VolSVIParamDataSchema:
+class VolSVIParamDataSchema(Struct):
     SVI_a: Decimal
     SVI_b: Decimal
     SVI_fwd: Decimal
@@ -1741,23 +1570,20 @@ class VolSVIParamDataSchema:
     SVI_sigma: Decimal
 
 
-@dataclass
-class PublicGetReferralPerformanceParamsSchema:
+class PublicGetReferralPerformanceParamsSchema(Struct):
     end_ms: int
     start_ms: int
     referral_code: Optional[str] = None
     wallet: Optional[str] = None
 
 
-@dataclass
-class ReferralPerformanceByInstrumentTypeSchema:
+class ReferralPerformanceByInstrumentTypeSchema(Struct):
     fee_reward: Decimal
     notional_volume: Decimal
     referred_fee: Decimal
 
 
-@dataclass
-class PrivateCreateSubaccountParamsSchema:
+class PrivateCreateSubaccountParamsSchema(Struct):
     amount: Decimal
     asset_name: str
     margin_type: MarginType
@@ -1769,19 +1595,16 @@ class PrivateCreateSubaccountParamsSchema:
     currency: Optional[str] = None
 
 
-@dataclass
 class PrivateCreateSubaccountResultSchema(PrivateTransferErc20ResultSchema):
     pass
 
 
-@dataclass
-class PrivateCancelParamsSchema:
+class PrivateCancelParamsSchema(Struct):
     instrument_name: str
     order_id: str
     subaccount_id: int
 
 
-@dataclass
 class PrivateCancelResultSchema(OrderResponseSchema):
     pass
 
@@ -1798,16 +1621,14 @@ class Period1(str, Enum):
     field_604800 = 604800
 
 
-@dataclass
-class PublicGetSpotFeedHistoryCandlesParamsSchema:
+class PublicGetSpotFeedHistoryCandlesParamsSchema(Struct):
     currency: str
     end_timestamp: int
     period: Period1
     start_timestamp: int
 
 
-@dataclass
-class SpotFeedHistoryCandlesResponseSchema:
+class SpotFeedHistoryCandlesResponseSchema(Struct):
     close_price: Decimal
     high_price: Decimal
     low_price: Decimal
@@ -1817,8 +1638,7 @@ class SpotFeedHistoryCandlesResponseSchema:
     timestamp_bucket: int
 
 
-@dataclass
-class PrivateGetRfqsParamsSchema:
+class PrivateGetRfqsParamsSchema(Struct):
     subaccount_id: int
     from_timestamp: int = 0
     page: int = 1
@@ -1828,83 +1648,73 @@ class PrivateGetRfqsParamsSchema:
     to_timestamp: int = 18446744073709552000
 
 
-@dataclass
-class RFQResultSchema:
-    ask_total_cost: Optional[Decimal]
-    bid_total_cost: Optional[Decimal]
+class RFQResultSchema(Struct):
     cancel_reason: CancelReason
-    counterparties: Optional[List[str]]
     creation_timestamp: int
-    filled_direction: Optional[Direction]
     filled_pct: Decimal
     label: str
     last_update_timestamp: int
     legs: List[LegUnpricedSchema]
-    mark_total_cost: Optional[Decimal]
-    max_total_cost: Optional[Decimal]
-    min_total_cost: Optional[Decimal]
     partial_fill_step: Decimal
     rfq_id: str
     status: Status
     subaccount_id: int
-    total_cost: Optional[Decimal]
     valid_until: int
+    ask_total_cost: Optional[Decimal] = None
+    bid_total_cost: Optional[Decimal] = None
+    counterparties: Optional[List[str]] = None
+    filled_direction: Optional[Direction] = None
+    mark_total_cost: Optional[Decimal] = None
+    max_total_cost: Optional[Decimal] = None
+    min_total_cost: Optional[Decimal] = None
+    total_cost: Optional[Decimal] = None
 
 
-@dataclass
-class PrivateCancelByNonceParamsSchema:
+class PrivateCancelByNonceParamsSchema(Struct):
     instrument_name: str
     nonce: int
     subaccount_id: int
     wallet: str
 
 
-@dataclass
 class PrivateCancelByNonceResultSchema(PrivateCancelByLabelResultSchema):
     pass
 
 
-@dataclass
 class PrivateGetSubaccountParamsSchema(PrivateGetOpenOrdersParamsSchema):
     pass
 
 
-@dataclass
-class PrivateSendRfqParamsSchema:
+class PrivateSendRfqParamsSchema(Struct):
     legs: List[LegUnpricedSchema]
     subaccount_id: int
     counterparties: Optional[List[str]] = None
-    label: str = ""
+    label: str = ''
     max_total_cost: Optional[Decimal] = None
     min_total_cost: Optional[Decimal] = None
-    partial_fill_step: Decimal = "1"
+    partial_fill_step: Decimal = '1'
 
 
-@dataclass
 class PrivateSendRfqResultSchema(RFQResultSchema):
     pass
 
 
-@dataclass
 class PublicGetTimeParamsSchema(PublicGetVaultStatisticsParamsSchema):
     pass
 
 
-@dataclass
-class PublicGetTimeResponseSchema:
+class PublicGetTimeResponseSchema(Struct):
     id: Union[str, int]
     result: int
 
 
-@dataclass
-class PublicStatisticsParamsSchema:
+class PublicStatisticsParamsSchema(Struct):
     instrument_name: str
     currency: Optional[str] = None
     end_time: Optional[int] = None
 
 
-@dataclass
-class PublicStatisticsResultSchema:
+class PublicStatisticsResultSchema(Struct):
     daily_fees: Decimal
     daily_notional_volume: Decimal
     daily_premium_volume: Decimal
@@ -1916,8 +1726,7 @@ class PublicStatisticsResultSchema:
     total_trades: int
 
 
-@dataclass
-class PublicGetAllInstrumentsParamsSchema:
+class PublicGetAllInstrumentsParamsSchema(Struct):
     expired: bool
     instrument_type: InstrumentType
     currency: Optional[str] = None
@@ -1925,8 +1734,7 @@ class PublicGetAllInstrumentsParamsSchema:
     page_size: int = 100
 
 
-@dataclass
-class PrivateGetLiquidatorHistoryParamsSchema:
+class PrivateGetLiquidatorHistoryParamsSchema(Struct):
     subaccount_id: int
     end_timestamp: int = 9223372036854776000
     page: int = 1
@@ -1934,14 +1742,12 @@ class PrivateGetLiquidatorHistoryParamsSchema:
     start_timestamp: int = 0
 
 
-@dataclass
-class PrivateGetLiquidatorHistoryResultSchema:
+class PrivateGetLiquidatorHistoryResultSchema(Struct):
     bids: List[AuctionBidEventSchema]
-    pagination: PaginationInfoSchema
+    pagination: PaginationInfoSchema | None = None
 
 
-@dataclass
-class PublicRegisterSessionKeyParamsSchema:
+class PublicRegisterSessionKeyParamsSchema(Struct):
     expiry_sec: int
     label: str
     public_session_key: str
@@ -1949,21 +1755,18 @@ class PublicRegisterSessionKeyParamsSchema:
     wallet: str
 
 
-@dataclass
-class PublicRegisterSessionKeyResultSchema:
+class PublicRegisterSessionKeyResultSchema(Struct):
     label: str
     public_session_key: str
     transaction_id: str
 
 
-@dataclass
-class PublicGetVaultBalancesParamsSchema:
+class PublicGetVaultBalancesParamsSchema(Struct):
     smart_contract_owner: Optional[str] = None
     wallet: Optional[str] = None
 
 
-@dataclass
-class VaultBalanceResponseSchema:
+class VaultBalanceResponseSchema(Struct):
     address: str
     amount: Decimal
     chain_id: int
@@ -1971,74 +1774,62 @@ class VaultBalanceResponseSchema:
     vault_asset_type: str
 
 
-@dataclass
 class PrivateGetAccountParamsSchema(PrivateSessionKeysParamsSchema):
     pass
 
 
-@dataclass
-class AccountFeeInfoSchema:
+class AccountFeeInfoSchema(Struct):
     base_fee_discount: Decimal
-    option_maker_fee: Optional[Decimal]
-    option_taker_fee: Optional[Decimal]
-    perp_maker_fee: Optional[Decimal]
-    perp_taker_fee: Optional[Decimal]
     rfq_maker_discount: Decimal
     rfq_taker_discount: Decimal
-    spot_maker_fee: Optional[Decimal]
-    spot_taker_fee: Optional[Decimal]
+    option_maker_fee: Optional[Decimal] = None
+    option_taker_fee: Optional[Decimal] = None
+    perp_maker_fee: Optional[Decimal] = None
+    perp_taker_fee: Optional[Decimal] = None
+    spot_maker_fee: Optional[Decimal] = None
+    spot_taker_fee: Optional[Decimal] = None
 
 
-@dataclass
-class PrivateCancelQuoteParamsSchema:
+class PrivateCancelQuoteParamsSchema(Struct):
     quote_id: str
     subaccount_id: int
 
 
-@dataclass
 class PrivateCancelQuoteResultSchema(QuoteResultSchema):
     pass
 
 
-@dataclass
-class PrivateCancelByInstrumentParamsSchema:
+class PrivateCancelByInstrumentParamsSchema(Struct):
     instrument_name: str
     subaccount_id: int
 
 
-@dataclass
 class PrivateCancelByInstrumentResultSchema(PrivateCancelByLabelResultSchema):
     pass
 
 
-@dataclass
 class PrivateSendQuoteParamsSchema(PublicSendQuoteDebugParamsSchema):
     pass
 
 
-@dataclass
 class PrivateSendQuoteResultSchema(QuoteResultSchema):
     pass
 
 
-@dataclass
 class PrivateCancelAllParamsSchema(PrivateGetOpenOrdersParamsSchema):
     pass
 
 
-@dataclass
 class PrivateCancelAllResponseSchema(PrivateResetMmpResponseSchema):
     pass
 
 
-@dataclass
-class PublicGetVaultStatisticsResponseSchema:
+class PublicGetVaultStatisticsResponseSchema(Struct):
     id: Union[str, int]
     result: List[VaultStatisticsResponseSchema]
 
 
-@dataclass
-class SignedQuoteParamsSchema:
+class SignedQuoteParamsSchema(Struct):
     direction: Direction
     legs: List[LegPricedSchema]
     max_fee: Decimal
@@ -2049,46 +1840,39 @@ class SignedQuoteParamsSchema:
     subaccount_id: int
 
 
-@dataclass
-class PrivateTransferPositionsResultSchema:
+class PrivateTransferPositionsResultSchema(Struct):
     maker_quote: QuoteResultSchema
     taker_quote: QuoteResultSchema
 
 
-@dataclass
-class PublicGetOptionSettlementPricesResultSchema:
+class PublicGetOptionSettlementPricesResultSchema(Struct):
     expiries: List[ExpiryResponseSchema]
 
 
-@dataclass
-class PrivateTransferPositionParamsSchema:
+class PrivateTransferPositionParamsSchema(Struct):
     maker_params: TradeModuleParamsSchema
     taker_params: TradeModuleParamsSchema
     wallet: str
 
 
-@dataclass
-class PrivateTransferPositionResultSchema:
+class PrivateTransferPositionResultSchema(Struct):
     maker_order: OrderResponseSchema
     maker_trade: TradeResponseSchema
     taker_order: OrderResponseSchema
     taker_trade: TradeResponseSchema
 
 
-@dataclass
-class PublicDepositDebugResponseSchema:
+class PublicDepositDebugResponseSchema(Struct):
     id: Union[str, int]
     result: PublicDepositDebugResultSchema
 
 
-@dataclass
-class PrivateGetOpenOrdersResponseSchema:
+class PrivateGetOpenOrdersResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateGetOpenOrdersResultSchema
 
 
-@dataclass
-class PrivateTransferErc20ParamsSchema:
+class PrivateTransferErc20ParamsSchema(Struct):
     recipient_details: SignatureDetailsSchema
     recipient_subaccount_id: int
     sender_details: SignatureDetailsSchema
@@ -2096,43 +1880,36 @@ class PrivateTransferErc20ParamsSchema:
     transfer: TransferDetailsSchema
 
 
-@dataclass
-class PrivateTransferErc20ResponseSchema:
+class PrivateTransferErc20ResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateTransferErc20ResultSchema
 
 
-@dataclass
-class PrivateRegisterScopedSessionKeyResponseSchema:
+class PrivateRegisterScopedSessionKeyResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateRegisterScopedSessionKeyResultSchema
 
 
-@dataclass
 class PublicGetCurrencyResultSchema(CurrencyDetailedResponseSchema):
     pass
 
 
-@dataclass
-class PrivateLiquidateResponseSchema:
+class PrivateLiquidateResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateLiquidateResultSchema
 
 
-@dataclass
-class PrivateGetSubaccountValueHistoryResultSchema:
+class PrivateGetSubaccountValueHistoryResultSchema(Struct):
     subaccount_id: int
     subaccount_value_history: List[SubAccountValueHistoryResponseSchema]
 
 
-@dataclass
-class PublicGetMakerProgramsResponseSchema:
+class PublicGetMakerProgramsResponseSchema(Struct):
     id: Union[str, int]
     result: List[ProgramResponseSchema]
 
 
-@dataclass
-class SignedTradeOrderSchema:
+class SignedTradeOrderSchema(Struct):
     data: TradeModuleDataSchema
     expiry: int
     is_atomic_signing: bool
@@ -2144,34 +1921,28 @@ class SignedTradeOrderSchema:
     subaccount_id: int
 
 
-@dataclass
-class PrivateGetInterestHistoryResultSchema:
+class PrivateGetInterestHistoryResultSchema(Struct):
     events: List[InterestPaymentSchema]
 
 
-@dataclass
-class PrivateGetDepositHistoryResultSchema:
+class PrivateGetDepositHistoryResultSchema(Struct):
     events: List[DepositSchema]
 
 
-@dataclass
-class PrivateGetMmpConfigResponseSchema:
+class PrivateGetMmpConfigResponseSchema(Struct):
     id: Union[str, int]
     result: List[MMPConfigResultSchema]
 
 
-@dataclass
-class PrivateSessionKeysResultSchema:
+class PrivateSessionKeysResultSchema(Struct):
     public_session_keys: List[SessionKeyResponseSchema]
 
 
-@dataclass
 class InstrumentPublicResponseSchema(PublicGetInstrumentResultSchema):
     pass
 
 
-@dataclass
-class PrivateGetSubaccountResultSchema:
+class PrivateGetSubaccountResultSchema(Struct):
     collaterals: List[CollateralResponseSchema]
     collaterals_initial_margin: Decimal
     collaterals_maintenance_margin: Decimal
@@ -2193,148 +1964,123 @@ class PrivateGetSubaccountResultSchema:
     subaccount_value: Decimal
 
 
-@dataclass
-class PublicGetInstrumentResponseSchema:
+class PublicGetInstrumentResponseSchema(Struct):
     id: Union[str, int]
     result: PublicGetInstrumentResultSchema
 
 
-@dataclass
-class PublicExecuteQuoteDebugResponseSchema:
+class PublicExecuteQuoteDebugResponseSchema(Struct):
     id: Union[str, int]
     result: PublicExecuteQuoteDebugResultSchema
 
 
-@dataclass
-class PrivateGetCollateralsResponseSchema:
+class PrivateGetCollateralsResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateGetCollateralsResultSchema
 
 
-@dataclass
-class PrivatePollQuotesResultSchema:
-    pagination: PaginationInfoSchema
+class PrivatePollQuotesResultSchema(Struct):
     quotes: List[QuoteResultPublicSchema]
+    pagination: PaginationInfoSchema | None = None
 
 
-@dataclass
-class PrivateGetMarginParamsSchema:
+class PrivateGetMarginParamsSchema(Struct):
     subaccount_id: int
     simulated_collateral_changes: Optional[List[SimulatedCollateralSchema]] = None
     simulated_position_changes: Optional[List[SimulatedPositionSchema]] = None
 
 
-@dataclass
-class PrivateGetMarginResponseSchema:
+class PrivateGetMarginResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateGetMarginResultSchema
 
 
-@dataclass
-class PublicBuildRegisterSessionKeyTxResponseSchema:
+class PublicBuildRegisterSessionKeyTxResponseSchema(Struct):
     id: Union[str, int]
     result: PublicBuildRegisterSessionKeyTxResultSchema
 
 
-@dataclass
-class PrivateCancelTriggerOrderResponseSchema:
+class PrivateCancelTriggerOrderResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateCancelTriggerOrderResultSchema
 
 
-@dataclass
-class PrivateGetOrderResponseSchema:
+class PrivateGetOrderResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateGetOrderResultSchema
 
 
-@dataclass
-class PrivateGetWithdrawalHistoryResultSchema:
+class PrivateGetWithdrawalHistoryResultSchema(Struct):
     events: List[WithdrawalSchema]
 
 
-@dataclass
-class PublicGetLiveIncidentsResultSchema:
+class PublicGetLiveIncidentsResultSchema(Struct):
     incidents: List[IncidentResponseSchema]
 
 
-@dataclass
-class PrivateGetQuotesResponseSchema:
+class PrivateGetQuotesResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateGetQuotesResultSchema
 
 
-@dataclass
-class PrivateGetPositionsResponseSchema:
+class PrivateGetPositionsResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateGetPositionsResultSchema
 
 
-@dataclass
-class PrivateGetOptionSettlementHistoryResultSchema:
+class PrivateGetOptionSettlementHistoryResultSchema(Struct):
     settlements: List[OptionSettlementResponseSchema]
     subaccount_id: int
 
 
-@dataclass
-class PublicDeregisterSessionKeyResponseSchema:
+class PublicDeregisterSessionKeyResponseSchema(Struct):
     id: Union[str, int]
     result: PublicDeregisterSessionKeyResultSchema
 
 
-@dataclass
-class PublicGetVaultShareResultSchema:
-    pagination: PaginationInfoSchema
+class PublicGetVaultShareResultSchema(Struct):
     vault_shares: List[VaultShareResponseSchema]
+    pagination: PaginationInfoSchema | None = None
 
 
-@dataclass
-class PrivateExpiredAndCancelledHistoryResponseSchema:
+class PrivateExpiredAndCancelledHistoryResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateExpiredAndCancelledHistoryResultSchema
 
 
-@dataclass
-class PrivateEditSessionKeyResponseSchema:
+class PrivateEditSessionKeyResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateEditSessionKeyResultSchema
 
 
-@dataclass
-class PublicGetAllCurrenciesResponseSchema:
+class PublicGetAllCurrenciesResponseSchema(Struct):
     id: Union[str, int]
     result: List[CurrencyDetailedResponseSchema]
 
 
-@dataclass
-class PrivateCancelByLabelResponseSchema:
+class PrivateCancelByLabelResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateCancelByLabelResultSchema
 
 
-@dataclass
-class PublicWithdrawDebugResponseSchema:
+class PublicWithdrawDebugResponseSchema(Struct):
     id: Union[str, int]
     result: PublicWithdrawDebugResultSchema
 
 
-@dataclass
-class PublicGetMarginResponseSchema:
+class PublicGetMarginResponseSchema(Struct):
     id: Union[str, int]
     result: PublicGetMarginResultSchema
 
 
-@dataclass
-class PrivateGetSubaccountsResponseSchema:
+class PrivateGetSubaccountsResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateGetSubaccountsResultSchema
 
 
-@dataclass
-class RFQResultPublicSchema:
+class RFQResultPublicSchema(Struct):
     cancel_reason: CancelReason
     creation_timestamp: int
-    filled_direction: Optional[Direction]
     filled_pct: Decimal
     last_update_timestamp: int
     legs: List[LegUnpricedSchema]
@@ -2342,62 +2088,54 @@ class RFQResultPublicSchema:
     rfq_id: str
     status: Status
     subaccount_id: int
-    total_cost: Optional[Decimal]
     valid_until: int
+    filled_direction: Optional[Direction] = None
+    total_cost: Optional[Decimal] = None
 
 
-@dataclass
-class PrivateWithdrawResponseSchema:
+class PrivateWithdrawResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateWithdrawResultSchema
 
 
-@dataclass
-class PrivateUpdateNotificationsResponseSchema:
+class PrivateUpdateNotificationsResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateUpdateNotificationsResultSchema
 
 
-@dataclass
-class PrivateGetTradeHistoryResponseSchema:
+class PrivateGetTradeHistoryResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateGetTradeHistoryResultSchema
 
 
-@dataclass
-class PrivateOrderResponseSchema:
+class PrivateOrderResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateOrderResultSchema
 
 
-@dataclass
-class PublicGetInterestRateHistoryResultSchema:
+class PublicGetInterestRateHistoryResultSchema(Struct):
     interest_rates: List[InterestRateHistoryResponseSchema]
-    pagination: PaginationInfoSchema
+    pagination: PaginationInfoSchema | None = None
 
 
-@dataclass
-class PublicGetOptionSettlementHistoryResponseSchema:
+class PublicGetOptionSettlementHistoryResponseSchema(Struct):
     id: Union[str, int]
     result: PublicGetOptionSettlementHistoryResultSchema
 
 
-@dataclass
-class PublicGetMakerProgramScoresResultSchema:
+class PublicGetMakerProgramScoresResultSchema(Struct):
     program: ProgramResponseSchema
     scores: List[ScoreBreakdownSchema]
     total_score: Decimal
     total_volume: Decimal
 
 
-@dataclass
-class PrivateGetOrdersResponseSchema:
+class PrivateGetOrdersResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateGetOrdersResultSchema
 
 
-@dataclass
-class PublicGetTickerResultSchema:
+class PublicGetTickerResultSchema(Struct):
     amount_step: Decimal
     base_asset_address: str
     base_asset_sub_id: str
@@ -2407,7 +2145,6 @@ class PublicGetTickerResultSchema:
     best_ask_price: Decimal
     best_bid_amount: Decimal
     best_bid_price: Decimal
-    erc20_details: Optional[ERC20PublicDetailsSchema]
     fifo_min_allocation: Decimal
     five_percent_ask_depth: Decimal
     five_percent_bid_depth: Decimal
@@ -2422,9 +2159,6 @@ class PublicGetTickerResultSchema:
     min_price: Decimal
     minimum_amount: Decimal
     open_interest: Dict[str, List[OpenInterestStatsSchema]]
-    option_details: Optional[OptionPublicDetailsSchema]
-    option_pricing: Optional[OptionPricingSchema]
-    perp_details: Optional[PerpPublicDetailsSchema]
     pro_rata_amount_step: Decimal
     pro_rata_fraction: Decimal
     quote_currency: str
@@ -2434,76 +2168,69 @@ class PublicGetTickerResultSchema:
     taker_fee_rate: Decimal
     tick_size: Decimal
     timestamp: int
+    erc20_details: Optional[ERC20PublicDetailsSchema] = None
+    option_details: Optional[OptionPublicDetailsSchema] = None
+    option_pricing: Optional[OptionPricingSchema] = None
+    perp_details: Optional[PerpPublicDetailsSchema] = None
     mark_price_fee_rate_cap: Optional[Decimal] = None
 
 
-@dataclass
-class PrivateGetFundingHistoryResultSchema:
+class PrivateGetFundingHistoryResultSchema(Struct):
     events: List[FundingPaymentSchema]
-    pagination: PaginationInfoSchema
+    pagination: PaginationInfoSchema | None = None
 
 
-@dataclass
-class PublicGetSpotFeedHistoryResultSchema:
+class PublicGetSpotFeedHistoryResultSchema(Struct):
     currency: str
     spot_feed_history: List[SpotFeedHistoryResponseSchema]
 
 
-@dataclass
-class PrivateSetMmpConfigResponseSchema:
+class PrivateSetMmpConfigResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateSetMmpConfigResultSchema
 
 
-@dataclass
-class PublicGetFundingRateHistoryResultSchema:
+class PublicGetFundingRateHistoryResultSchema(Struct):
     funding_rate_history: List[FundingRateSchema]
 
 
-@dataclass
-class PrivateGetNotificationsResultSchema:
+class PrivateGetNotificationsResultSchema(Struct):
     notifications: List[NotificationResponseSchema]
-    pagination: PaginationInfoSchema
+    pagination: PaginationInfoSchema | None = None
 
 
-@dataclass
-class PrivateCancelBatchQuotesResponseSchema:
+class PrivateCancelBatchQuotesResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateCancelBatchQuotesResultSchema
 
 
-@dataclass
-class PrivateRfqGetBestQuoteResponseSchema:
+class PrivateRfqGetBestQuoteResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateRfqGetBestQuoteResultSchema
 
 
-@dataclass
-class PrivateDepositResponseSchema:
+class PrivateDepositResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateDepositResultSchema
 
 
-@dataclass
-class AuctionResultSchema:
+class AuctionResultSchema(Struct):
     auction_id: str
     auction_type: AuctionType
     bids: List[AuctionBidEventSchema]
-    end_timestamp: Optional[int]
     fee: Decimal
     start_timestamp: int
     subaccount_id: int
     tx_hash: str
+    end_timestamp: Optional[int] = None
 
 
-@dataclass
-class PrivateChangeSubaccountLabelResponseSchema:
+class PrivateChangeSubaccountLabelResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateChangeSubaccountLabelResultSchema
 
 
-@dataclass
-class PublicMarginWatchResultSchema:
+class PublicMarginWatchResultSchema(Struct):
     collaterals: List[CollateralPublicResponseSchema]
     currency: str
     initial_margin: Decimal
@@ -2515,69 +2242,58 @@ class PublicMarginWatchResultSchema:
     valuation_timestamp: int
 
 
-@dataclass
-class PublicGetTransactionResponseSchema:
+class PublicGetTransactionResponseSchema(Struct):
     id: Union[str, int]
     result: PublicGetTransactionResultSchema
 
 
-@dataclass
-class PrivateGetErc20TransferHistoryResultSchema:
+class PrivateGetErc20TransferHistoryResultSchema(Struct):
     events: List[ERC20TransferSchema]
 
 
-@dataclass
-class PrivateReplaceResultSchema:
+class PrivateReplaceResultSchema(Struct):
     cancelled_order: OrderResponseSchema
     create_order_error: Optional[RPCErrorFormatSchema] = None
     order: Optional[OrderResponseSchema] = None
     trades: Optional[List[TradeResponseSchema]] = None
 
 
-@dataclass
-class PublicGetTradeHistoryResultSchema:
-    pagination: PaginationInfoSchema
+class PublicGetTradeHistoryResultSchema(Struct):
     trades: List[TradeSettledPublicResponseSchema]
+    pagination: PaginationInfoSchema | None = None
 
 
-@dataclass
-class PublicSendQuoteDebugResponseSchema:
+class PublicSendQuoteDebugResponseSchema(Struct):
     id: Union[str, int]
     result: PublicSendQuoteDebugResultSchema
 
 
-@dataclass
-class PrivateGetOrderHistoryResponseSchema:
+class PrivateGetOrderHistoryResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateGetOrderHistoryResultSchema
 
 
-@dataclass
-class PrivateCancelBatchRfqsResponseSchema:
+class PrivateCancelBatchRfqsResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateCancelBatchRfqsResultSchema
 
 
-@dataclass
-class PrivateExecuteQuoteResponseSchema:
+class PrivateExecuteQuoteResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateExecuteQuoteResultSchema
 
 
-@dataclass
-class PublicCreateSubaccountDebugResponseSchema:
+class PublicCreateSubaccountDebugResponseSchema(Struct):
     id: Union[str, int]
     result: PublicCreateSubaccountDebugResultSchema
 
 
-@dataclass
-class PrivateGetLiquidationHistoryResponseSchema:
+class PrivateGetLiquidationHistoryResponseSchema(Struct):
     id: Union[str, int]
     result: List[AuctionResultSchema]
 
 
-@dataclass
-class ForwardFeedDataSchema:
+class ForwardFeedDataSchema(Struct):
     confidence: Decimal
     currency: str
     deadline: int
@@ -2589,8 +2305,7 @@ class ForwardFeedDataSchema:
     timestamp: int
 
 
-@dataclass
-class VolFeedDataSchema:
+class VolFeedDataSchema(Struct):
     confidence: Decimal
     currency: str
     deadline: int
@@ -2600,8 +2315,7 @@ class VolFeedDataSchema:
     vol_data: VolSVIParamDataSchema
 
 
-@dataclass
-class PublicGetReferralPerformanceResultSchema:
+class PublicGetReferralPerformanceResultSchema(Struct):
     fee_share_percentage: Decimal
     referral_code: str
     rewards: Dict[str, Dict[str, Dict[str, ReferralPerformanceByInstrumentTypeSchema]]]
@@ -2611,80 +2325,67 @@ class PublicGetReferralPerformanceResultSchema:
     total_referred_fees: Decimal
 
 
-@dataclass
-class PrivateCreateSubaccountResponseSchema:
+class PrivateCreateSubaccountResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateCreateSubaccountResultSchema
 
 
-@dataclass
-class PrivateCancelResponseSchema:
+class PrivateCancelResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateCancelResultSchema
 
 
-@dataclass
-class PublicGetSpotFeedHistoryCandlesResultSchema:
+class PublicGetSpotFeedHistoryCandlesResultSchema(Struct):
     currency: str
     spot_feed_history: List[SpotFeedHistoryCandlesResponseSchema]
 
 
-@dataclass
-class PrivateGetRfqsResultSchema:
-    pagination: PaginationInfoSchema
+class PrivateGetRfqsResultSchema(Struct):
     rfqs: List[RFQResultSchema]
+    pagination: PaginationInfoSchema | None = None
 
 
-@dataclass
-class PrivateCancelByNonceResponseSchema:
+class PrivateCancelByNonceResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateCancelByNonceResultSchema
 
 
-@dataclass
-class PrivateGetSubaccountResponseSchema:
+class PrivateGetSubaccountResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateGetSubaccountResultSchema
 
 
-@dataclass
-class PrivateSendRfqResponseSchema:
+class PrivateSendRfqResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateSendRfqResultSchema
 
 
-@dataclass
-class PublicStatisticsResponseSchema:
+class PublicStatisticsResponseSchema(Struct):
     id: Union[str, int]
     result: PublicStatisticsResultSchema
 
 
-@dataclass
-class PublicGetAllInstrumentsResultSchema:
+class PublicGetAllInstrumentsResultSchema(Struct):
     instruments: List[InstrumentPublicResponseSchema]
-    pagination: PaginationInfoSchema
+    pagination: PaginationInfoSchema | None = None
 
 
-@dataclass
-class PrivateGetLiquidatorHistoryResponseSchema:
+class PrivateGetLiquidatorHistoryResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateGetLiquidatorHistoryResultSchema
 
 
-@dataclass
-class PublicRegisterSessionKeyResponseSchema:
+class PublicRegisterSessionKeyResponseSchema(Struct):
     id: Union[str, int]
     result: PublicRegisterSessionKeyResultSchema
 
 
-@dataclass
-class PublicGetVaultBalancesResponseSchema:
+class PublicGetVaultBalancesResponseSchema(Struct):
     id: Union[str, int]
     result: List[VaultBalanceResponseSchema]
 
 
-@dataclass
-class PrivateGetAccountResultSchema:
+class PrivateGetAccountResultSchema(Struct):
     cancel_on_disconnect: bool
     fee_info: AccountFeeInfoSchema
     is_rfq_maker: bool
@@ -2698,63 +2399,53 @@ class PrivateGetAccountResultSchema:
     referral_code: Optional[str] = None
 
 
-@dataclass
-class PrivateCancelQuoteResponseSchema:
+class PrivateCancelQuoteResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateCancelQuoteResultSchema
 
 
-@dataclass
-class PrivateCancelByInstrumentResponseSchema:
+class PrivateCancelByInstrumentResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateCancelByInstrumentResultSchema
 
 
-@dataclass
-class PrivateSendQuoteResponseSchema:
+class PrivateSendQuoteResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateSendQuoteResultSchema
 
 
-@dataclass
-class PrivateTransferPositionsParamsSchema:
+class PrivateTransferPositionsParamsSchema(Struct):
     maker_params: SignedQuoteParamsSchema
     taker_params: SignedQuoteParamsSchema
     wallet: str
 
 
-@dataclass
-class PrivateTransferPositionsResponseSchema:
+class PrivateTransferPositionsResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateTransferPositionsResultSchema
 
 
-@dataclass
-class PublicGetOptionSettlementPricesResponseSchema:
+class PublicGetOptionSettlementPricesResponseSchema(Struct):
     id: Union[str, int]
     result: PublicGetOptionSettlementPricesResultSchema
 
 
-@dataclass
-class PrivateTransferPositionResponseSchema:
+class PrivateTransferPositionResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateTransferPositionResultSchema
 
 
-@dataclass
-class PublicGetCurrencyResponseSchema:
+class PublicGetCurrencyResponseSchema(Struct):
     id: Union[str, int]
     result: PublicGetCurrencyResultSchema
 
 
-@dataclass
-class PrivateGetSubaccountValueHistoryResponseSchema:
+class PrivateGetSubaccountValueHistoryResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateGetSubaccountValueHistoryResultSchema
 
 
-@dataclass
-class PrivateOrderDebugResultSchema:
+class PrivateOrderDebugResultSchema(Struct):
     action_hash: str
     encoded_data: str
     encoded_data_hashed: str
@@ -2762,146 +2453,122 @@ class PrivateOrderDebugResultSchema:
     typed_data_hash: str
 
 
-@dataclass
-class PrivateGetInterestHistoryResponseSchema:
+class PrivateGetInterestHistoryResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateGetInterestHistoryResultSchema
 
 
-@dataclass
-class PrivateGetDepositHistoryResponseSchema:
+class PrivateGetDepositHistoryResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateGetDepositHistoryResultSchema
 
 
-@dataclass
-class PrivateSessionKeysResponseSchema:
+class PrivateSessionKeysResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateSessionKeysResultSchema
 
 
-@dataclass
-class PublicGetInstrumentsResponseSchema:
+class PublicGetInstrumentsResponseSchema(Struct):
     id: Union[str, int]
     result: List[InstrumentPublicResponseSchema]
 
 
-@dataclass
-class PrivateGetAllPortfoliosResponseSchema:
+class PrivateGetAllPortfoliosResponseSchema(Struct):
     id: Union[str, int]
     result: List[PrivateGetSubaccountResultSchema]
 
 
-@dataclass
-class PrivatePollQuotesResponseSchema:
+class PrivatePollQuotesResponseSchema(Struct):
     id: Union[str, int]
     result: PrivatePollQuotesResultSchema
 
 
-@dataclass
-class PrivateGetWithdrawalHistoryResponseSchema:
+class PrivateGetWithdrawalHistoryResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateGetWithdrawalHistoryResultSchema
 
 
-@dataclass
-class PublicGetLiveIncidentsResponseSchema:
+class PublicGetLiveIncidentsResponseSchema(Struct):
     id: Union[str, int]
     result: PublicGetLiveIncidentsResultSchema
 
 
-@dataclass
-class PrivateGetOptionSettlementHistoryResponseSchema:
+class PrivateGetOptionSettlementHistoryResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateGetOptionSettlementHistoryResultSchema
 
 
-@dataclass
-class PublicGetVaultShareResponseSchema:
+class PublicGetVaultShareResponseSchema(Struct):
     id: Union[str, int]
     result: PublicGetVaultShareResultSchema
 
 
-@dataclass
-class PrivatePollRfqsResultSchema:
-    pagination: PaginationInfoSchema
+class PrivatePollRfqsResultSchema(Struct):
     rfqs: List[RFQResultPublicSchema]
+    pagination: PaginationInfoSchema | None = None
 
 
-@dataclass
-class PublicGetInterestRateHistoryResponseSchema:
+class PublicGetInterestRateHistoryResponseSchema(Struct):
     id: Union[str, int]
     result: PublicGetInterestRateHistoryResultSchema
 
 
-@dataclass
-class PublicGetMakerProgramScoresResponseSchema:
+class PublicGetMakerProgramScoresResponseSchema(Struct):
     id: Union[str, int]
     result: PublicGetMakerProgramScoresResultSchema
 
 
-@dataclass
-class PublicGetTickerResponseSchema:
+class PublicGetTickerResponseSchema(Struct):
     id: Union[str, int]
     result: PublicGetTickerResultSchema
 
 
-@dataclass
-class PrivateGetFundingHistoryResponseSchema:
+class PrivateGetFundingHistoryResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateGetFundingHistoryResultSchema
 
 
-@dataclass
-class PublicGetSpotFeedHistoryResponseSchema:
+class PublicGetSpotFeedHistoryResponseSchema(Struct):
     id: Union[str, int]
     result: PublicGetSpotFeedHistoryResultSchema
 
 
-@dataclass
-class PublicGetFundingRateHistoryResponseSchema:
+class PublicGetFundingRateHistoryResponseSchema(Struct):
     id: Union[str, int]
     result: PublicGetFundingRateHistoryResultSchema
 
 
-@dataclass
-class PrivateGetNotificationsResponseSchema:
+class PrivateGetNotificationsResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateGetNotificationsResultSchema
 
 
-@dataclass
-class PublicGetLiquidationHistoryResultSchema:
+class PublicGetLiquidationHistoryResultSchema(Struct):
     auctions: List[AuctionResultSchema]
-    pagination: PaginationInfoSchema
+    pagination: PaginationInfoSchema | None = None
 
 
-@dataclass
-class PublicMarginWatchResponseSchema:
+class PublicMarginWatchResponseSchema(Struct):
     id: Union[str, int]
     result: PublicMarginWatchResultSchema
 
 
-@dataclass
-class PrivateGetErc20TransferHistoryResponseSchema:
+class PrivateGetErc20TransferHistoryResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateGetErc20TransferHistoryResultSchema
 
 
-@dataclass
-class PrivateReplaceResponseSchema:
+class PrivateReplaceResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateReplaceResultSchema
 
 
-@dataclass
-class PublicGetTradeHistoryResponseSchema:
+class PublicGetTradeHistoryResponseSchema(Struct):
     id: Union[str, int]
     result: PublicGetTradeHistoryResultSchema
 
 
-@dataclass
-class PublicGetLatestSignedFeedsResultSchema:
+class PublicGetLatestSignedFeedsResultSchema(Struct):
     fwd_data: Dict[str, Dict[str, ForwardFeedDataSchema]]
     perp_data: Dict[str, Dict[str, PerpFeedDataSchema]]
     rate_data: Dict[str, Dict[str, RateFeedDataSchema]]
@@ -2909,55 +2576,46 @@ class PublicGetLatestSignedFeedsResultSchema:
     vol_data: Dict[str, Dict[str, VolFeedDataSchema]]
 
 
-@dataclass
-class PublicGetReferralPerformanceResponseSchema:
+class PublicGetReferralPerformanceResponseSchema(Struct):
     id: Union[str, int]
     result: PublicGetReferralPerformanceResultSchema
 
 
-@dataclass
-class PublicGetSpotFeedHistoryCandlesResponseSchema:
+class PublicGetSpotFeedHistoryCandlesResponseSchema(Struct):
     id: Union[str, int]
     result: PublicGetSpotFeedHistoryCandlesResultSchema
 
 
-@dataclass
-class PrivateGetRfqsResponseSchema:
+class PrivateGetRfqsResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateGetRfqsResultSchema
 
 
-@dataclass
-class PublicGetAllInstrumentsResponseSchema:
+class PublicGetAllInstrumentsResponseSchema(Struct):
     id: Union[str, int]
     result: PublicGetAllInstrumentsResultSchema
 
 
-@dataclass
-class PrivateGetAccountResponseSchema:
+class PrivateGetAccountResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateGetAccountResultSchema
 
 
-@dataclass
-class PrivateOrderDebugResponseSchema:
+class PrivateOrderDebugResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateOrderDebugResultSchema
 
 
-@dataclass
-class PrivatePollRfqsResponseSchema:
+class PrivatePollRfqsResponseSchema(Struct):
     id: Union[str, int]
     result: PrivatePollRfqsResultSchema
 
 
-@dataclass
-class PublicGetLiquidationHistoryResponseSchema:
+class PublicGetLiquidationHistoryResponseSchema(Struct):
     id: Union[str, int]
     result: PublicGetLiquidationHistoryResultSchema
 
 
-@dataclass
-class PublicGetLatestSignedFeedsResponseSchema:
+class PublicGetLatestSignedFeedsResponseSchema(Struct):
     id: Union[str, int]
     result: PublicGetLatestSignedFeedsResultSchema

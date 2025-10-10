@@ -13,10 +13,10 @@ from derive_client.derive import DeriveClient
 from derive_client.exceptions import DeriveJSONRPCException
 from derive_client.utils import get_logger
 
+OWNER_TEST_WALLET = "0xA419f70C696a4b449a4A24F92e955D91482d44e9"  # SESSION_KEY_PRIVATE_KEY owns this
 TEST_WALLET = "0x8772185a1516f0d61fC1c2524926BfC69F95d698"
 # this SESSION_KEY_PRIVATE_KEY is not the owner of the wallet
 TEST_PRIVATE_KEY = "0x2ae8be44db8a590d20bffbe3b6872df9b569147d3bf6801a35a28281a4816bbd"
-# TEST_WALLET = "0xA419f70C696a4b449a4A24F92e955D91482d44e9"  # SESSION_KEY_PRIVATE_KEY owns this
 
 
 def freeze_time(derive_client):
@@ -37,6 +37,25 @@ def derive_client():
         try:
             derive_client.cancel_all()
             derive_client.cancel_batch_rfqs()
+            break
+        except DeriveJSONRPCException as e:
+            if "Retry after" in e.data:
+                wait_ms = int(e.data.split(" ")[2])
+                time.sleep(wait_ms / 1000)
+                continue
+            raise e
+
+
+@pytest.fixture
+def derive_client_2():
+    quoter_client = DeriveClient(
+        wallet=OWNER_TEST_WALLET, private_key=TEST_PRIVATE_KEY, env=Environment.TEST, logger=get_logger()
+    )
+    yield quoter_client
+    while True:
+        try:
+            quoter_client.cancel_all()
+            quoter_client.cancel_batch_rfqs()
             break
         except DeriveJSONRPCException as e:
             if "Retry after" in e.data:
