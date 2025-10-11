@@ -1,4 +1,6 @@
 import json
+import threading
+import time
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -45,7 +47,7 @@ def try_cast_response(response: bytes, response_schema: type[msgspec.Struct]) ->
     except msgspec.ValidationError:
         message = json.loads(response)
         rpc_error = RPCErrorFormatSchema(**message["error"])
-        raise DeriveJSONRPCError(message_id=message["id"], rpc_error=rpc_error)
+        raise DeriveJSONRPCError(message_id=message.get("id", ""), rpc_error=rpc_error)
     raise ValueError(f"Failed to decode response data: {response}")
 
 
@@ -84,3 +86,56 @@ RATE_LIMIT: dict[RateLimitProfile, RateLimitConfig] = {
         burst_reset_seconds=5,
     ),
 }
+
+
+def encode_json_exclude_none(obj: msgspec.Struct) -> bytes:
+    """
+    Encode msgspec Struct omitting None values.
+
+    The Derive API requires optional fields to be omitted entirely
+    rather than sent as null.
+    """
+    data = msgspec.structs.asdict(obj)
+    filtered = {k: v for k, v in data.items() if v is not None}
+    return msgspec.json.encode(filtered)
+
+
+class NonceExhaustedError(Exception):
+    """Raised when nonce counter is exhausted within a millisecond."""
+
+
+class NonceGenerator:
+    """
+    Thread-safe nonce generator for Derive L2 trading.
+    Generates nonces as: <13-digit UTC ms timestamp><3-digit counter>
+    Guarantees up to 1000 unique nonces per millisecond.
+    """
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._last_ms = 0
+        self._counter = 0
+
+    def next(self) -> int:
+        """
+        Generate a unique 16-digit nonce.
+        Format: <UTC timestamp in ms (13 digits)><counter (3 digits)>
+
+        Returns:
+            int: Unique nonce (e.g., 1695836058725001)
+        """
+        with self._lock:
+            utc_now_ms = time.time_ns() // 1_000_000
+            if utc_now_ms > self._last_ms:
+                self._last_ms = utc_now_ms
+                self._counter = 0
+            else:
+                if self._counter > 999:
+                    raise NonceExhaustedError(
+                        f"Exhausted 1000 nonces in millisecond {utc_now_ms}. "
+                        f"Cannot generate more than 1000 nonces per millisecond. "
+                        f"Consider rate limiting your requests."
+                    )
+                self._counter += 1
+
+        return utc_now_ms * 1000 + self._counter
