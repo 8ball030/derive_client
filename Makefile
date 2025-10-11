@@ -65,6 +65,12 @@ release:
 	@echo "New version is $(new_version)"
 	poetry run tbump $(new_version)
 
+.PHONY: generate-models
+generate-models:
+	python scripts/generate-models.py
+	poetry run ruff format derive_client/data/generated/models.py
+	poetry run ruff check --fix derive_client/data/generated/models.py
+
 .PHONY: generate-rest-api
 generate-rest-api:
 	python scripts/generate-rest-api.py

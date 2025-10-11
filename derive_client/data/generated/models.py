@@ -981,6 +981,7 @@ class PrivateGetTradeHistoryResultSchema(Struct):
 
 
 class PrivateOrderParamsSchema(PrivateOrderDebugParamsSchema):
+    referral_code: str = '0x9135BA0f495244dc0A5F029b25CDE95157Db89AD'
     pass
 
 
@@ -1356,7 +1357,7 @@ class PrivateReplaceParamsSchema(Struct):
     order_id_to_cancel: Optional[str] = None
     order_type: OrderType = 'limit'
     reduce_only: bool = False
-    referral_code: str = ''
+    referral_code: str = '0x9135BA0f495244dc0A5F029b25CDE95157Db89AD'
     reject_timestamp: int = 9223372036854776000
     time_in_force: TimeInForce = 'gtc'
     trigger_price: Optional[Decimal] = None

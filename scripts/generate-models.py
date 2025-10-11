@@ -127,9 +127,23 @@ def reorder_fields(body: list[ast.stmt]) -> list[ast.stmt]:
     return reordered_fields + others
 
 
+def _ensure_referral_default(node: ast.ClassDef) -> bool:
+    referral_code = "'0x9135BA0f495244dc0A5F029b25CDE95157Db89AD'"
+    for stmt in node.body:
+        if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name) and stmt.target.id == "referral_code":
+            stmt.value = ast.parse(referral_code).body[0].value
+            ast.fix_missing_locations(node)
+            return
+    ann_node = ast.parse(f"referral_code: str = {referral_code}").body[0]
+    node.body.insert(0, ann_node)
+    ast.fix_missing_locations(node)
+
+
 class OptionalRewriter(ast.NodeTransformer):
     def visit_ClassDef(self, node: ast.ClassDef) -> ast.AST:
         self.generic_visit(node)
+        if node.name in {"PrivateOrderParamsSchema", "PrivateReplaceParamsSchema"}:
+            _ensure_referral_default(node)
         if not is_struct_class(node):
             return node
         node.body = reorder_fields(node.body)
@@ -165,7 +179,7 @@ def is_struct_class(node: ast.ClassDef) -> bool:
 if __name__ == "__main__":
     base_url = "https://docs.derive.xyz"
     repo_root = Path(__file__).parent.parent
-    input_path = Path("openapi-spec.json")
+    input_path = repo_root / "openapi-spec.json"
     output_path = repo_root / "derive_client" / "data" / "generated" / "models.py"
     generate_models(input_path=input_path, output_path=output_path)
     patch_pagination_to_optional(output_path)
