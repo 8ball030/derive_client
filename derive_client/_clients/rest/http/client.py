@@ -5,6 +5,7 @@ from web3 import Web3
 
 from derive_client._clients.rest.http.account import AccountOperations
 from derive_client._clients.rest.http.api import PrivateAPI, PublicAPI
+from derive_client._clients.rest.http.funding import FundingOperations
 from derive_client._clients.rest.http.markets import MarketOperations
 from derive_client._clients.rest.http.orders import OrderOperations
 from derive_client._clients.rest.http.session import HTTPSession
@@ -39,6 +40,7 @@ class HTTPClient:
 
         self.account = AccountOperations(self)
         self.markets = MarketOperations(self)
+        self.funding = FundingOperations(self)
         self.orders = OrderOperations(self)
 
     @property

@@ -9,6 +9,7 @@ from derive_client.data.generated.models import (
     PrivateGetSubaccountsResultSchema,
     PrivateSessionKeysParamsSchema,
     PrivateSessionKeysResultSchema,
+    PrivateGetSubaccountParamsSchema,
 )
 
 
@@ -32,6 +33,11 @@ class AccountOperations:
     def get_all_portfolios(self) -> list[PrivateGetSubaccountResultSchema]:
         params = PrivateGetAllPortfoliosParamsSchema(wallet=self._client.wallet)
         response = self._client.private.get_all_portfolios(params)
+        return response.result
+
+    def get_subaccount(self) -> PrivateGetSubaccountResultSchema:
+        params = PrivateGetSubaccountParamsSchema(subaccount_id=self._client.subaccount_id)
+        response = self._client.private.get_subaccount(params)
         return response.result
 
     def get_subaccounts(self) -> PrivateGetSubaccountsResultSchema:
