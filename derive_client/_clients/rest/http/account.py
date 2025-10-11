@@ -4,12 +4,12 @@ from derive_client.data.generated.models import (
     PrivateGetAccountParamsSchema,
     PrivateGetAccountResultSchema,
     PrivateGetAllPortfoliosParamsSchema,
+    PrivateGetSubaccountParamsSchema,
     PrivateGetSubaccountResultSchema,
     PrivateGetSubaccountsParamsSchema,
     PrivateGetSubaccountsResultSchema,
     PrivateSessionKeysParamsSchema,
     PrivateSessionKeysResultSchema,
-    PrivateGetSubaccountParamsSchema,
 )
 
 

@@ -12,6 +12,7 @@ from derive_client.data.generated.models import (
     PrivateCancelByLabelResultSchema,
     PrivateCancelByNonceResultSchema,
     PrivateCancelResultSchema,
+    PrivateDepositResultSchema,
     PrivateGetAccountResultSchema,
     PrivateGetOpenOrdersResultSchema,
     PrivateGetOrderResultSchema,
@@ -25,6 +26,7 @@ from derive_client.data.generated.models import (
     PrivateOrderResultSchema,
     PrivateReplaceResultSchema,
     PrivateSessionKeysResultSchema,
+    PrivateWithdrawResultSchema,
     PublicGetAllInstrumentsResultSchema,
     PublicGetCurrencyResultSchema,
     PublicGetInstrumentResultSchema,
@@ -83,6 +85,11 @@ def test_account_get_all_portfolios(client):
     all_portfolios = client.account.get_all_portfolios()
     assert isinstance(all_portfolios, list)
     assert all(isinstance(item, PrivateGetSubaccountResultSchema) for item in all_portfolios)
+
+
+def test_account_get_subaccount(client):
+    subaccount = client.account.get_subaccount()
+    assert isinstance(subaccount, PrivateGetSubaccountResultSchema)
 
 
 def test_account_get_subaccounts(client):
@@ -160,6 +167,21 @@ def test_markets_get_all_tickers(client):
     )
     assert isinstance(tickers, list)
     assert all(isinstance(item, PublicGetTickerResultSchema) for item in tickers)
+
+
+# Funding
+def test_funding_deposit(client):
+    amount = Decimal("0.10")
+    asset_name = "USDC"
+    deposit = client.funding.deposit(amount=amount, asset_name=asset_name)
+    assert isinstance(deposit, PrivateDepositResultSchema)
+
+
+def test_funding_withdraw(client):
+    amount = Decimal("0.10")
+    asset_name = "USDC"
+    withdrawal = client.funding.withdraw(amount=amount, asset_name=asset_name)
+    assert isinstance(withdrawal, PrivateWithdrawResultSchema)
 
 
 # Orders
