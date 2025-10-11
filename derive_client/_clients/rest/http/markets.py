@@ -83,7 +83,7 @@ class MarketOperations:
         response = self._client.public.get_ticker(params)
         return response.result
 
-    def get_tickers(
+    def get_all_tickers(
         self,
         currency: str,
         expired: bool,
