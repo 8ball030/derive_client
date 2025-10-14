@@ -64,10 +64,12 @@ class HTTPClient:
         module_address: Address,
         module_data,
         signature_expiry_sec: int,
+        subaccount_id: int | None = None,
     ) -> SignedAction:
+        subaccount_id = subaccount_id if subaccount_id is not None else self.subaccount_id
         nonce = nonce if nonce is not None else self.get_nonce()
         action = SignedAction(
-            subaccount_id=self.subaccount_id,
+            subaccount_id=subaccount_id,
             owner=self.wallet,
             signer=self.signer,
             signature_expiry_sec=signature_expiry_sec,
