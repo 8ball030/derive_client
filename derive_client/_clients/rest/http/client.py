@@ -5,10 +5,10 @@ from web3 import Web3
 
 from derive_client._clients.rest.http.account import AccountOperations
 from derive_client._clients.rest.http.api import PrivateAPI, PublicAPI
-from derive_client._clients.rest.http.funding import FundingOperations
 from derive_client._clients.rest.http.markets import MarketOperations
 from derive_client._clients.rest.http.orders import OrderOperations
 from derive_client._clients.rest.http.session import HTTPSession
+from derive_client._clients.rest.http.transactions import TransactionOperations
 from derive_client._clients.utils import AuthContext, NonceGenerator
 from derive_client.constants import CONFIGS
 from derive_client.data_types import Address, Environment
@@ -40,7 +40,7 @@ class HTTPClient:
 
         self.account = AccountOperations(self)
         self.markets = MarketOperations(self)
-        self.funding = FundingOperations(self)
+        self.transactions = TransactionOperations(self)
         self.orders = OrderOperations(self)
 
     @property

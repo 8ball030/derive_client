@@ -1,4 +1,4 @@
-"""Subaccount funding operations."""
+"""Transaction operations."""
 
 from decimal import Decimal
 from typing import Optional
@@ -7,27 +7,37 @@ from derive_action_signing.module_data import DepositModuleData, WithdrawModuleD
 
 from derive_client.constants import CURRENCY_DECIMALS, INT64_MAX
 from derive_client.data.generated.models import (
+    MarginType,
     PrivateDepositParamsSchema,
     PrivateDepositResultSchema,
     PrivateWithdrawParamsSchema,
     PrivateWithdrawResultSchema,
+    PublicGetTransactionParamsSchema,
+    PublicGetTransactionResultSchema,
 )
 from derive_client.data_types import Currency
 
 
-class FundingOperations:
-    """High-level funding operations."""
+class TransactionOperations:
+    """High-level transaction operations."""
 
     def __init__(self, client):
         """
-        Initialize funding operations.
+        Initialize transaction operations.
 
         Args:
             client: HTTPClient instance providing access to public/private APIs
         """
         self._client = client
 
-    def deposit(
+    def get(self, transaction_id: str) -> PublicGetTransactionResultSchema:
+        """Get a transaction by its transaction id."""
+
+        params = PublicGetTransactionParamsSchema(transaction_id=transaction_id)
+        response = self._client.public.get_transaction(params)
+        return response.result
+
+    def deposit_to_subaccount(
         self,
         amount: Decimal,
         asset_name: str,
@@ -47,6 +57,8 @@ class FundingOperations:
 
         managers = []
         for manager in currency.managers:
+            if manager.margin_type == subaccount.margin_type == MarginType.SM:
+                managers.append(manager)
             if manager.margin_type is subaccount.margin_type and manager.currency == subaccount.currency:
                 managers.append(manager)
 
@@ -89,7 +101,7 @@ class FundingOperations:
         response = self._client.private.deposit(params)
         return response.result
 
-    def withdraw(
+    def withdraw_from_subaccount(
         self,
         amount: Decimal,
         asset_name: str,
@@ -97,7 +109,7 @@ class FundingOperations:
         signature_expiry_sec: int = INT64_MAX,
         is_atomic_signing: bool = False,
     ) -> PrivateWithdrawResultSchema:
-        """Deposit from subaccount inot LightAccount smart contract wallet."""
+        """Deposit from subaccount into LightAccount smart contract wallet."""
 
         subaccount_id = self._client.subaccount_id
         module_address = self._client._config.contracts.WITHDRAWAL_MODULE
