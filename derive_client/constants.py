@@ -3,10 +3,16 @@ Constants for Derive (formerly Lyra).
 """
 
 from pathlib import Path
+from typing import Final
 
 from pydantic import BaseModel
 
 from derive_client.data_types import Currency, Environment, UnderlyingCurrency
+
+INT32_MAX: Final[int] = (1 << 31) - 1
+UINT32_MAX: Final[int] = (1 << 32) - 1
+INT64_MAX: Final[int] = (1 << 63) - 1
+UINT64_MAX: Final[int] = (1 << 64) - 1
 
 
 class ContractAddresses(BaseModel, frozen=True):
