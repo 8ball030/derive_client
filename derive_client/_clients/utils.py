@@ -5,12 +5,15 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 import msgspec
+from derive_action_signing import ModuleData, SignedAction
 from derive_action_signing.utils import sign_rest_auth_header
 from eth_account import Account
 from pydantic import BaseModel
 from web3 import AsyncWeb3, Web3
 
+from derive_client.constants import EnvConfig
 from derive_client.data.generated.models import RPCErrorFormatSchema
+from derive_client.data_types import Address
 
 
 @dataclass
@@ -18,6 +21,11 @@ class AuthContext:
     wallet: str
     w3: Web3 | AsyncWeb3
     account: Account
+    config: EnvConfig
+
+    @property
+    def signer(self) -> Address:
+        return self.account.address
 
     @property
     def signed_headers(self):
@@ -26,6 +34,28 @@ class AuthContext:
             smart_contract_wallet=self.wallet,
             session_key_or_wallet_private_key=self.account.key,
         )
+
+    def sign_action(
+        self,
+        nonce: int,
+        module_address: Address,
+        module_data: ModuleData,
+        signature_expiry_sec: int,
+        subaccount_id: int,
+    ) -> SignedAction:
+        action = SignedAction(
+            subaccount_id=subaccount_id,
+            owner=self.wallet,
+            signer=self.signer,
+            signature_expiry_sec=signature_expiry_sec,
+            nonce=nonce,
+            module_address=module_address,
+            module_data=module_data,
+            DOMAIN_SEPARATOR=self.config.DOMAIN_SEPARATOR,
+            ACTION_TYPEHASH=self.config.ACTION_TYPEHASH,
+        )
+        action.sign(self.account.key)
+        return action
 
 
 class DeriveJSONRPCError(Exception):
