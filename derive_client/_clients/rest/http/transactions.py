@@ -1,7 +1,9 @@
 """Transaction operations."""
 
+from __future__ import annotations
+
 from decimal import Decimal
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from derive_action_signing.module_data import DepositModuleData, WithdrawModuleData
 
@@ -17,24 +19,27 @@ from derive_client.data.generated.models import (
 )
 from derive_client.data_types import Currency
 
+if TYPE_CHECKING:
+    from .subaccount import Subaccount
+
 
 class TransactionOperations:
     """High-level transaction operations."""
 
-    def __init__(self, client):
+    def __init__(self, subaccount: Subaccount):
         """
-        Initialize transaction operations.
+        Initialize order operations.
 
         Args:
-            client: HTTPClient instance providing access to public/private APIs
+            subaccount: Subaccount instance providing access to auth, config, and APIs
         """
-        self._client = client
+        self._subaccount = subaccount
 
     def get(self, transaction_id: str) -> PublicGetTransactionResultSchema:
         """Get a transaction by its transaction id."""
 
         params = PublicGetTransactionParamsSchema(transaction_id=transaction_id)
-        response = self._client.public.get_transaction(params)
+        response = self._subaccount._public_api.get_transaction(params)
         return response.result
 
     def deposit_to_subaccount(
@@ -47,23 +52,21 @@ class TransactionOperations:
     ) -> PrivateDepositResultSchema:
         """Deposit from LightAccount smart contract wallet into subaccount."""
 
-        subaccount_id = self._client.subaccount_id
-        module_address = self._client._config.contracts.DEPOSIT_MODULE
+        subaccount_id = self._subaccount.id
+        module_address = self._subaccount._config.contracts.DEPOSIT_MODULE
 
-        currency = self._client.markets.get_currency(asset_name)
-        subaccount = self._client.account.get_subaccount()
-
+        currency = self._subaccount.markets.get_currency(asset_name)
         underlying_address = currency.protocol_asset_addresses.spot
 
         managers = []
         for manager in currency.managers:
-            if manager.margin_type == subaccount.margin_type == MarginType.SM:
+            if manager.margin_type == self._subaccount.margin_type == MarginType.SM:
                 managers.append(manager)
-            if manager.margin_type is subaccount.margin_type and manager.currency == subaccount.currency:
+            if manager.margin_type is self._subaccount.margin_type and manager.currency == self._subaccount.currency:
                 managers.append(manager)
 
         if len(managers) != 1:
-            msg = f"Expected exactly one manager for {(subaccount.margin_type, subaccount.currency)}, found {managers}"
+            msg = f"Expected exactly one manager for {(self._subaccount.margin_type, self._subaccount.currency)}, found {managers}"
             raise ValueError(msg)
 
         manager_address = managers[0].address
@@ -77,7 +80,7 @@ class TransactionOperations:
             asset_name=asset_name,
         )
 
-        signed_action = self._client._sign_action(
+        signed_action = self._subaccount.sign_action(
             nonce=nonce,
             module_address=module_address,
             module_data=module_data,
@@ -98,7 +101,7 @@ class TransactionOperations:
             subaccount_id=subaccount_id,
             is_atomic_signing=is_atomic_signing,
         )
-        response = self._client.private.deposit(params)
+        response = self._subaccount._private_api.deposit(params)
         return response.result
 
     def withdraw_from_subaccount(
@@ -111,10 +114,10 @@ class TransactionOperations:
     ) -> PrivateWithdrawResultSchema:
         """Deposit from subaccount into LightAccount smart contract wallet."""
 
-        subaccount_id = self._client.subaccount_id
-        module_address = self._client._config.contracts.WITHDRAWAL_MODULE
+        subaccount_id = self._subaccount.id
+        module_address = self._subaccount._config.contracts.WITHDRAWAL_MODULE
 
-        currency = self._client.markets.get_currency(asset_name)
+        currency = self._subaccount.markets.get_currency(asset_name)
 
         underlying_address = currency.protocol_asset_addresses.spot
         decimals = CURRENCY_DECIMALS[Currency[currency.currency]]
@@ -126,7 +129,7 @@ class TransactionOperations:
             asset_name=asset_name,
         )
 
-        signed_action = self._client._sign_action(
+        signed_action = self._subaccount.sign_action(
             nonce=nonce,
             module_address=module_address,
             module_data=module_data,
@@ -147,5 +150,5 @@ class TransactionOperations:
             subaccount_id=subaccount_id,
             is_atomic_signing=is_atomic_signing,
         )
-        response = self._client.private.withdraw(params)
+        response = self._subaccount._private_api.withdraw(params)
         return response.result

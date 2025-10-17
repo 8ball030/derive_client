@@ -1,11 +1,16 @@
 """Account management operations."""
 
+from __future__ import annotations
+
 from decimal import Decimal
+from logging import Logger
 from typing import Optional
 
 from derive_action_signing.module_data import DepositModuleData
 
-from derive_client.constants import CURRENCY_DECIMALS, INT64_MAX, Currency
+from derive_client._clients.rest.http.api import PrivateAPI, PublicAPI
+from derive_client._clients.utils import AuthContext, NonceGenerator
+from derive_client.constants import CURRENCY_DECIMALS, INT64_MAX, Currency, EnvConfig
 from derive_client.data.generated.models import (
     MarginType,
     PrivateCreateSubaccountParamsSchema,
@@ -15,7 +20,6 @@ from derive_client.data.generated.models import (
     PrivateGetAccountParamsSchema,
     PrivateGetAccountResultSchema,
     PrivateGetAllPortfoliosParamsSchema,
-    PrivateGetSubaccountParamsSchema,
     PrivateGetSubaccountResultSchema,
     PrivateGetSubaccountsParamsSchema,
     PrivateGetSubaccountsResultSchema,
@@ -28,19 +32,100 @@ from derive_client.data.generated.models import (
     PublicRegisterSessionKeyResultSchema,
     Scope,
 )
+from derive_client.data_types import Address
 
 
-class AccountOperations:
-    """High-level account management operations."""
+class LightAccount:
+    """LightAccount smart contract wallet operations."""
 
-    def __init__(self, client):
+    def __init__(
+        self,
+        auth: AuthContext,
+        config: EnvConfig,
+        logger: Logger,
+        public_api: PublicAPI,
+        private_api: PrivateAPI,
+        nonce_generator: NonceGenerator,
+        _state: PrivateGetAccountResultSchema | None = None,
+    ):
         """
-        Initialize account operations.
+        Initialize LightAccount (internal use - use from_api() instead).
 
         Args:
-            client: HTTPClient instance providing access to public/private APIs
+            auth: Authentication context for signing operations
+            config: Environment configuration
+            public_api: Public API interface
+            private_api: Private API interface for authenticated requests
+            nonce_generator: Generator for unique nonces
+            _state: Initial state (internal use only)
         """
-        self._client = client
+        self._auth = auth
+        self._config = config
+        self._logger = logger
+        self._public_api = public_api
+        self._private_api = private_api
+        self._nonce_generator = nonce_generator
+        self._state = _state
+
+    @classmethod
+    def from_api(
+        cls,
+        auth: AuthContext,
+        config: EnvConfig,
+        logger: Logger,
+        public_api: PublicAPI,
+        private_api: PrivateAPI,
+        nonce_generator: NonceGenerator,
+    ) -> LightAccount:
+        """
+        Validate LightAccount by fetching its state from the API.
+
+        This performs a network call to verify the wallet exists and that
+        the provided session key is registered and valid.
+
+        Args:
+            auth: Authentication context for signing operations
+            config: Environment configuration
+            public_api: Public API interface
+            private_api: Private API interface for authenticated requests
+            nonce_generator: Generator for unique nonces
+
+        Returns:
+            Initialized LightAccount instance
+
+        Raises:
+            APIError: If wallet does not exist
+        """
+
+        params = PrivateGetAccountParamsSchema(wallet=auth.wallet)
+        response = private_api.get_account(params)
+        state = response.result
+        logger.debug(f"LightAccount validated: {state.wallet}")
+
+        # Check if the current signer is in the list of valid session keys
+        session_keys_params = PrivateSessionKeysParamsSchema(wallet=auth.wallet)
+        session_keys_response = private_api.session_keys(session_keys_params)
+
+        valid_signers = {key.public_session_key: key for key in session_keys_response.result.public_session_keys}
+        if auth.account.address not in valid_signers:
+            logger.warning(f"Session key {auth.account.address} is not registered for wallet {auth.wallet}")
+        else:
+            logger.debug(f"Session key validated: {auth.account.address}")
+
+        return cls(
+            auth=auth,
+            config=config,
+            logger=logger,
+            public_api=public_api,
+            private_api=private_api,
+            nonce_generator=nonce_generator,
+            _state=state,
+        )
+
+    @property
+    def address(self) -> Address:
+        """LightAccount wallet address."""
+        return self._auth.wallet
 
     def build_register_session_key_tx(
         self,
@@ -116,7 +201,7 @@ class AccountOperations:
         signed_raw_tx: Optional[str] = None,
     ) -> PrivateRegisterScopedSessionKeyResultSchema:
         params = PrivateRegisterScopedSessionKeyParamsSchema(
-            wallet=self._client.wallet,
+            wallet=self._auth.wallet,
             expiry_sec=expiry_sec,
             public_session_key=public_session_key,
             ip_whitelist=ip_whitelist,
@@ -124,12 +209,12 @@ class AccountOperations:
             scope=scope,
             signed_raw_tx=signed_raw_tx,
         )
-        response = self._client.private.register_scoped_session_key(params)
+        response = self._private_api.register_scoped_session_key(params)
         return response.result
 
     def session_keys(self) -> PrivateSessionKeysResultSchema:
-        params = PrivateSessionKeysParamsSchema(wallet=self._client.wallet)
-        response = self._client.private.session_keys(params)
+        params = PrivateSessionKeysParamsSchema(wallet=self.address)
+        response = self._private_api.session_keys(params)
         return response.result
 
     def edit_session_key(
@@ -140,18 +225,18 @@ class AccountOperations:
         label: Optional[str] = None,
     ) -> PrivateEditSessionKeyResultSchema:
         params = PrivateEditSessionKeyParamsSchema(
-            wallet=self._client.wallet,
+            wallet=self.address,
             public_session_key=public_session_key,
             disable=disable,
             ip_whitelist=ip_whitelist,
             label=label,
         )
-        response = self._client.private.edit_session_key(params)
+        response = self._private_api.edit_session_key(params)
         return response.result
 
     def get_all_portfolios(self) -> list[PrivateGetSubaccountResultSchema]:
-        params = PrivateGetAllPortfoliosParamsSchema(wallet=self._client.wallet)
-        response = self._client.private.get_all_portfolios(params)
+        params = PrivateGetAllPortfoliosParamsSchema(wallet=self.address)
+        response = self._private_api.get_all_portfolios(params)
         return response.result
 
     def create_subaccount(
@@ -180,12 +265,13 @@ class AccountOperations:
         if margin_type == MarginType.SM and currency is not None:
             raise ValueError("base_currency must not be provided for standard-margin (SM) subaccounts.")
 
+        nonce = nonce if nonce is not None else self._nonce_generator.next()
         subaccount_id = 0  # must be zero for new account creation
-        module_address = self._client._config.contracts.DEPOSIT_MODULE
+        module_address = self._config.contracts.DEPOSIT_MODULE
 
         decimals = CURRENCY_DECIMALS[Currency(asset_name)]
-        manager_address = self._client._config.contracts.STANDARD_RISK_MANAGER
-        asset = self._client._config.contracts.CASH_ASSET
+        manager_address = self._config.contracts.STANDARD_RISK_MANAGER
+        asset = self._config.contracts.CASH_ASSET
 
         module_data = DepositModuleData(
             amount=str(amount),
@@ -195,7 +281,7 @@ class AccountOperations:
             asset_name=asset_name,
         )
 
-        signed_action = self._client._sign_action(
+        signed_action = self._auth.sign_action(
             nonce=nonce,
             module_address=module_address,
             module_data=module_data,
@@ -215,22 +301,20 @@ class AccountOperations:
             signature=signature,
             signature_expiry_sec=signature_expiry_sec,
             signer=signer,
-            wallet=self._client.wallet,
+            wallet=self.address,
         )
-        response = self._client.private.create_subaccount(params)
-        return response.result
-
-    def get_subaccount(self) -> PrivateGetSubaccountResultSchema:
-        params = PrivateGetSubaccountParamsSchema(subaccount_id=self._client.subaccount_id)
-        response = self._client.private.get_subaccount(params)
+        response = self._private_api.create_subaccount(params)
         return response.result
 
     def get_subaccounts(self) -> PrivateGetSubaccountsResultSchema:
-        params = PrivateGetSubaccountsParamsSchema(wallet=self._client.wallet)
-        response = self._client.private.get_subaccounts(params)
+        params = PrivateGetSubaccountsParamsSchema(wallet=self.address)
+        response = self._private_api.get_subaccounts(params)
         return response.result
 
     def get(self) -> PrivateGetAccountResultSchema:
-        params = PrivateGetAccountParamsSchema(wallet=self._client.wallet)
-        response = self._client.private.get_account(params)
+        params = PrivateGetAccountParamsSchema(wallet=self.address)
+        response = self._private_api.get_account(params)
         return response.result
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__qualname__}({self.address}) object at {hex(id(self))}>"

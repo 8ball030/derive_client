@@ -1,7 +1,10 @@
 """Market data queries."""
 
+from __future__ import annotations
+
 from typing import Optional
 
+from derive_client._clients.rest.http.api import PublicAPI
 from derive_client.data.generated.models import (
     CurrencyDetailedResponseSchema,
     InstrumentPublicResponseSchema,
@@ -22,28 +25,28 @@ from derive_client.data.generated.models import (
 class MarketOperations:
     """Market data queries."""
 
-    def __init__(self, client):
+    def __init__(self, public_api: PublicAPI):
         """
-        Initialize account operations.
+        Initialize market data queries.
 
         Args:
-            client: HTTPClient instance providing access to public/private APIs
+            public_api: PublicAPI instance providing access to public APIs
         """
-        self._client = client
+        self._public_api = public_api
 
     def get_currency(self, currency: str) -> PublicGetCurrencyResultSchema:
         params = PublicGetCurrencyParamsSchema(currency=currency)
-        response = self._client.public.get_currency(params)
+        response = self._public_api.get_currency(params)
         return response.result
 
     def get_all_currencies(self) -> list[CurrencyDetailedResponseSchema]:
         params = PublicGetAllCurrenciesParamsSchema()
-        response = self._client.public.get_all_currencies(params)
+        response = self._public_api.get_all_currencies(params)
         return response.result
 
     def get_instrument(self, instrument_name: str) -> PublicGetInstrumentResultSchema:
         params = PublicGetInstrumentParamsSchema(instrument_name=instrument_name)
-        response = self._client.public.get_instrument(params)
+        response = self._public_api.get_instrument(params)
         return response.result
 
     def get_instruments(
@@ -57,7 +60,7 @@ class MarketOperations:
             expired=expired,
             instrument_type=instrument_type,
         )
-        response = self._client.public.get_instruments(params)
+        response = self._public_api.get_instruments(params)
         return response.result
 
     def get_all_instruments(
@@ -75,12 +78,12 @@ class MarketOperations:
             page=page,
             page_size=page_size,
         )
-        response = self._client.public.get_all_instruments(params)
+        response = self._public_api.get_all_instruments(params)
         return response.result
 
     def get_ticker(self, instrument_name: str) -> PublicGetTickerResultSchema:
         params = PublicGetTickerParamsSchema(instrument_name=instrument_name)
-        response = self._client.public.get_ticker(params)
+        response = self._public_api.get_ticker(params)
         return response.result
 
     def get_all_tickers(
