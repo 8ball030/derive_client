@@ -1,7 +1,9 @@
 """Order management operations."""
 
+from __future__ import annotations
+
 from decimal import Decimal
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from derive_action_signing.module_data import TradeModuleData
 
@@ -35,18 +37,21 @@ from derive_client.data.generated.models import (
     TriggerType,
 )
 
+if TYPE_CHECKING:
+    from .subaccount import Subaccount
+
 
 class OrderOperations:
     """High-level order management operations."""
 
-    def __init__(self, client):
+    def __init__(self, subaccount: Subaccount):
         """
         Initialize order operations.
 
         Args:
-            client: HTTPClient instance providing access to public/private APIs
+            subaccount: Subaccount instance providing access to auth, config, and APIs
         """
-        self._client = client
+        self._subaccount = subaccount
 
     def create(
         self,
@@ -68,8 +73,8 @@ class OrderOperations:
         trigger_price_type: Optional[TriggerPriceType] = None,
         trigger_type: Optional[TriggerType] = None,
     ) -> PrivateOrderResultSchema:
-        subaccount_id = self._client.subaccount_id
-        instrument = self._client.markets.get_instrument(instrument_name=instrument_name)
+        subaccount_id = self._subaccount.id
+        instrument = self._subaccount.markets.get_instrument(instrument_name=instrument_name)
 
         is_bid = direction == Direction.buy
         module_data = TradeModuleData(
@@ -82,8 +87,8 @@ class OrderOperations:
             is_bid=is_bid,
         )
 
-        module_address = self._client._config.contracts.TRADE_MODULE
-        signed_action = self._client._sign_action(
+        module_address = self._subaccount._config.contracts.TRADE_MODULE
+        signed_action = self._subaccount.sign_action(
             nonce=nonce,
             module_address=module_address,
             module_data=module_data,
@@ -116,15 +121,16 @@ class OrderOperations:
             trigger_price_type=trigger_price_type,
             trigger_type=trigger_type,
         )
-        response = self._client.private.order(params)
+        response = self._subaccount._private_api.order(params)
         return response.result
 
     def get(self, order_id: str) -> PrivateGetOrderResultSchema:
+        subaccount_id = self._subaccount.id
         params = PrivateGetOrderParamsSchema(
             order_id=order_id,
-            subaccount_id=self._client.subaccount_id,
+            subaccount_id=subaccount_id,
         )
-        response = self._client.private.get_order(params)
+        response = self._subaccount._private_api.get_order(params)
         return response.result
 
     def list(
@@ -136,60 +142,60 @@ class OrderOperations:
         status: Optional[OrderStatus] = None,
     ) -> PrivateGetOrdersResultSchema:
         params = PrivateGetOrdersParamsSchema(
-            subaccount_id=self._client.subaccount_id,
+            subaccount_id=self._subaccount.id,
             instrument_name=instrument_name,
             label=label,
             page=page,
             page_size=page_size,
             status=status,
         )
-        response = self._client.private.get_orders(params)
+        response = self._subaccount._private_api.get_orders(params)
         return response.result
 
     def list_open(self) -> PrivateGetOpenOrdersResultSchema:
-        params = PrivateGetOpenOrdersParamsSchema(subaccount_id=self._client.subaccount_id)
-        response = self._client.private.get_open_orders(params)
+        params = PrivateGetOpenOrdersParamsSchema(subaccount_id=self._subaccount.id)
+        response = self._subaccount._private_api.get_open_orders(params)
         return response.result
 
     def cancel(self, instrument_name: str, order_id: str) -> PrivateCancelResultSchema:
         params = PrivateCancelParamsSchema(
             instrument_name=instrument_name,
             order_id=order_id,
-            subaccount_id=self._client.subaccount_id,
+            subaccount_id=self._subaccount.id,
         )
-        response = self._client.private.cancel(params)
+        response = self._subaccount._private_api.cancel(params)
         return response.result
 
     def cancel_by_label(self, label: str, instrument_name: Optional[str] = None) -> PrivateCancelByLabelResultSchema:
         params = PrivateCancelByLabelParamsSchema(
             label=label,
             instrument_name=instrument_name,
-            subaccount_id=self._client.subaccount_id,
+            subaccount_id=self._subaccount.id,
         )
-        response = self._client.private.cancel_by_label(params)
+        response = self._subaccount._private_api.cancel_by_label(params)
         return response.result
 
     def cancel_by_nonce(self, instrument_name: str, nonce: int) -> PrivateCancelByNonceResultSchema:
         params = PrivateCancelByNonceParamsSchema(
             nonce=nonce,
             instrument_name=instrument_name,
-            subaccount_id=self._client.subaccount_id,
-            wallet=self._client._auth.wallet,
+            subaccount_id=self._subaccount.id,
+            wallet=self._subaccount._auth.wallet,
         )
-        response = self._client.private.cancel_by_nonce(params)
+        response = self._subaccount._private_api.cancel_by_nonce(params)
         return response.result
 
     def cancel_by_instrument(self, instrument_name: str) -> PrivateCancelByInstrumentResultSchema:
         params = PrivateCancelByInstrumentParamsSchema(
             instrument_name=instrument_name,
-            subaccount_id=self._client.subaccount_id,
+            subaccount_id=self._subaccount.id,
         )
-        response = self._client.private.cancel_by_instrument(params)
+        response = self._subaccount._private_api.cancel_by_instrument(params)
         return response.result
 
     def cancel_all(self) -> Result:
-        params = PrivateCancelAllParamsSchema(subaccount_id=self._client.subaccount_id)
-        response = self._client.private.cancel_all(params)
+        params = PrivateCancelAllParamsSchema(subaccount_id=self._subaccount.id)
+        response = self._subaccount._private_api.cancel_all(params)
         return response.result
 
     def replace(
@@ -218,8 +224,8 @@ class OrderOperations:
         if (nonce_to_cancel is None) == (order_id_to_cancel is None):
             raise ValueError("Replace requires exactly one of nonce_to_cancel or order_id_to_cancel (but not both).")
 
-        subaccount_id = self._client.subaccount_id
-        instrument = self._client.markets.get_instrument(instrument_name=instrument_name)
+        subaccount_id = self._subaccount.id
+        instrument = self._subaccount.markets.get_instrument(instrument_name=instrument_name)
 
         is_bid = direction == Direction.buy
         module_data = TradeModuleData(
@@ -232,8 +238,8 @@ class OrderOperations:
             is_bid=is_bid,
         )
 
-        module_address = self._client._config.contracts.TRADE_MODULE
-        signed_action = self._client._sign_action(
+        module_address = self._subaccount._config.contracts.TRADE_MODULE
+        signed_action = self._subaccount.sign_action(
             nonce=nonce,
             module_address=module_address,
             module_data=module_data,
@@ -269,5 +275,5 @@ class OrderOperations:
             trigger_price_type=trigger_price_type,
             trigger_type=trigger_type,
         )
-        response = self._client.private.replace(params)
+        response = self._subaccount._private_api.replace(params)
         return response.result
