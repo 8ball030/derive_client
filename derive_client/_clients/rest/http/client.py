@@ -58,7 +58,7 @@ class HTTPClient:
         self._markets = MarketOperations(public_api=self._public_api)
 
         self._account: LightAccount | None = None
-        self._active_subaccount: Subaccount | None = None
+        self._subaccounts: dict[int, Subaccount] = {}
 
     def connect(self) -> None:
         """
@@ -90,8 +90,12 @@ class HTTPClient:
             )
             return
 
-        self._active_subaccount = Subaccount.from_api(
-            subaccount_id=self._subaccount_id,
+        subaccount = self._instantiate_subaccount(self._subaccount_id)
+        self._subaccounts[subaccount.id] = subaccount
+
+    def _instantiate_subaccount(self, subaccount_id: int) -> Subaccount:
+        return Subaccount.from_api(
+            subaccount_id=subaccount_id,
             auth=self._auth,
             config=self._config,
             logger=self._logger,
@@ -101,10 +105,6 @@ class HTTPClient:
             nonce_generator=self._nonce_generator,
         )
 
-    def get_subaccounts(self) -> list[Subaccount]:
-        account_subaccounts = self.account.get_subaccounts()
-        return [Subaccount.from_api(subaccount_id) for subaccount_id in account_subaccounts.subaccount_ids]
-
     @property
     def account(self) -> LightAccount:
         if self._light_account is None:
@@ -113,9 +113,23 @@ class HTTPClient:
 
     @property
     def active_subaccount(self) -> Subaccount:
-        if self._active_subaccount is None:
+        if (subaccount := self._subaccounts.get(self._subaccount_id)) is None:
             raise NotConnectedError("No active subaccount. Call connect() first and ensure subaccount exists.")
-        return self._active_subaccount
+        return subaccount
+
+    def fetch_subaccount(self, subaccount_id: int) -> Subaccount:
+        """Fetch a subaccount from API and cache it."""
+        self._subaccounts[subaccount_id] = self._instantiate_subaccount(subaccount_id)
+        return self._subaccounts[subaccount_id]
+
+    def fetch_subaccounts(self) -> list[Subaccount]:
+        """Fetch subaccounts from API and cache them."""
+        account_subaccounts = self.account.get_subaccounts()
+        return [self.fetch_subaccount(sid) for sid in account_subaccounts.subaccount_ids]
+
+    @property
+    def cached_subaccounts(self) -> list[Subaccount]:
+        return list(self._subaccounts.values())
 
     @property
     def markets(self) -> MarketOperations:
