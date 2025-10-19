@@ -76,6 +76,9 @@ class OrderOperations:
         subaccount_id = self._subaccount.id
         instrument = self._subaccount.markets.get_instrument(instrument_name=instrument_name)
 
+        amount = amount.quantize(instrument.amount_step)
+        limit_price = limit_price.quantize(instrument.tick_size)
+
         is_bid = direction == Direction.buy
         module_data = TradeModuleData(
             asset_address=instrument.base_asset_address,

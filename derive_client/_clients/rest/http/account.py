@@ -9,7 +9,7 @@ from typing import Optional
 from derive_action_signing.module_data import DepositModuleData
 
 from derive_client._clients.rest.http.api import PrivateAPI, PublicAPI
-from derive_client._clients.utils import AuthContext, NonceGenerator
+from derive_client._clients.utils import AuthContext
 from derive_client.constants import CURRENCY_DECIMALS, INT64_MAX, Currency, EnvConfig
 from derive_client.data.generated.models import (
     MarginType,
@@ -45,7 +45,6 @@ class LightAccount:
         logger: Logger,
         public_api: PublicAPI,
         private_api: PrivateAPI,
-        nonce_generator: NonceGenerator,
         _state: PrivateGetAccountResultSchema | None = None,
     ):
         """
@@ -56,7 +55,6 @@ class LightAccount:
             config: Environment configuration
             public_api: Public API interface
             private_api: Private API interface for authenticated requests
-            nonce_generator: Generator for unique nonces
             _state: Initial state (internal use only)
         """
         self._auth = auth
@@ -64,7 +62,6 @@ class LightAccount:
         self._logger = logger
         self._public_api = public_api
         self._private_api = private_api
-        self._nonce_generator = nonce_generator
         self._state = _state
 
     @classmethod
@@ -75,7 +72,6 @@ class LightAccount:
         logger: Logger,
         public_api: PublicAPI,
         private_api: PrivateAPI,
-        nonce_generator: NonceGenerator,
     ) -> LightAccount:
         """
         Validate LightAccount by fetching its state from the API.
@@ -88,7 +84,6 @@ class LightAccount:
             config: Environment configuration
             public_api: Public API interface
             private_api: Private API interface for authenticated requests
-            nonce_generator: Generator for unique nonces
 
         Returns:
             Initialized LightAccount instance
@@ -118,7 +113,6 @@ class LightAccount:
             logger=logger,
             public_api=public_api,
             private_api=private_api,
-            nonce_generator=nonce_generator,
             _state=state,
         )
 
@@ -265,7 +259,7 @@ class LightAccount:
         if margin_type == MarginType.SM and currency is not None:
             raise ValueError("base_currency must not be provided for standard-margin (SM) subaccounts.")
 
-        nonce = nonce if nonce is not None else self._nonce_generator.next()
+        nonce = nonce if nonce is not None else self._auth.nonce_generator.next()
         subaccount_id = 0  # must be zero for new account creation
         module_address = self._config.contracts.DEPOSIT_MODULE
 
