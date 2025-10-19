@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import json
 import threading
 import time
 from dataclasses import dataclass
+from decimal import Decimal
 from enum import StrEnum
 
 import msgspec
@@ -18,10 +21,11 @@ from derive_client.data_types import Address
 
 @dataclass
 class AuthContext:
-    wallet: str
+    wallet: Address
     w3: Web3 | AsyncWeb3
     account: Account
     config: EnvConfig
+    nonce_generator: NonceGenerator
 
     @property
     def signer(self) -> Address:
@@ -37,12 +41,14 @@ class AuthContext:
 
     def sign_action(
         self,
-        nonce: int,
         module_address: Address,
         module_data: ModuleData,
         signature_expiry_sec: int,
         subaccount_id: int,
+        nonce: int | None = None,
     ) -> SignedAction:
+        module_address = self.w3.to_checksum_address(module_address)
+        nonce = nonce if nonce is not None else self.nonce_generator.next()
         action = SignedAction(
             subaccount_id=subaccount_id,
             owner=self.wallet,
@@ -169,3 +175,11 @@ class NonceGenerator:
                 self._counter += 1
 
         return utc_now_ms * 1000 + self._counter
+
+
+@dataclass
+class PositionTransfer:
+    """Position to transfer between subaccounts."""
+
+    instrument_name: str
+    amount: Decimal  # Can be negative (sign indicates long/short)

@@ -36,12 +36,14 @@ class HTTPClient:
         config = CONFIGS[env]
         w3 = Web3(Web3.HTTPProvider(config.rpc_endpoint))
         account = w3.eth.account.from_key(session_key)
+        nonce_generator = NonceGenerator()
 
         auth = AuthContext(
             w3=w3,
             wallet=wallet,
             account=account,
             config=config,
+            nonce_generator=nonce_generator,
         )
 
         self._auth = auth
@@ -50,7 +52,6 @@ class HTTPClient:
 
         self._session = HTTPSession()
         self._logger = logger if logger is not None else get_logger()
-        self._nonce_generator = NonceGenerator()
 
         self._public_api = PublicAPI(session=self._session, config=config)
         self._private_api = PrivateAPI(session=self._session, config=config, auth=auth)
@@ -79,7 +80,6 @@ class HTTPClient:
             logger=self._logger,
             public_api=self._public_api,
             private_api=self._private_api,
-            nonce_generator=self._nonce_generator,
         )
 
         subaccount_ids = self._light_account._state.subaccount_ids
@@ -102,7 +102,6 @@ class HTTPClient:
             markets=self._markets,
             public_api=self._public_api,
             private_api=self._private_api,
-            nonce_generator=self._nonce_generator,
         )
 
     @property
@@ -156,7 +155,7 @@ class HTTPClient:
         return self._auth.signer
 
     def get_nonce(self) -> int:
-        return self._nonce_generator.next()
+        return self._auth.nonce_generator.next()
 
     def __enter__(self):
         self._session.__enter__()
