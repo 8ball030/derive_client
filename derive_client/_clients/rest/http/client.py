@@ -9,6 +9,7 @@ from derive_client._clients.rest.http.api import PrivateAPI, PublicAPI
 from derive_client._clients.rest.http.markets import MarketOperations
 from derive_client._clients.rest.http.orders import OrderOperations
 from derive_client._clients.rest.http.positions import PositionOperations
+from derive_client._clients.rest.http.rfq import RFQOperations
 from derive_client._clients.rest.http.session import HTTPSession
 from derive_client._clients.rest.http.subaccount import Subaccount
 from derive_client._clients.rest.http.transactions import TransactionOperations
@@ -58,7 +59,7 @@ class HTTPClient:
 
         self._markets = MarketOperations(public_api=self._public_api)
 
-        self._account: LightAccount | None = None
+        self._light_account: LightAccount | None = None
         self._subaccounts: dict[int, Subaccount] = {}
 
     def connect(self) -> None:
@@ -85,7 +86,7 @@ class HTTPClient:
         subaccount_ids = self._light_account._state.subaccount_ids
         if self._subaccount_id not in subaccount_ids:
             self._logger.warning(
-                f"Subaccount {self._subaccount_id} does not exist for wallet {self.wallet}. "
+                f"Subaccount {self._subaccount_id} does not exist for wallet {self._light_account.address}. "
                 f"Available subaccounts: {subaccount_ids}"
             )
             return
@@ -147,15 +148,8 @@ class HTTPClient:
         return self.active_subaccount.positions
 
     @property
-    def wallet(self) -> Address:
-        return self._auth.wallet
-
-    @property
-    def signer(self) -> Address:
-        return self._auth.signer
-
-    def get_nonce(self) -> int:
-        return self._auth.nonce_generator.next()
+    def rfq(self) -> RFQOperations:
+        return self.active_subaccount.rfq
 
     def __enter__(self):
         self._session.__enter__()

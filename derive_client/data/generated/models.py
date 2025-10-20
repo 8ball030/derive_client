@@ -1319,9 +1319,9 @@ class PublicGetTransactionParamsSchema(Struct):
 
 
 class PublicGetTransactionResultSchema(Struct):
-    data: str
+    data: dict
     status: TxStatus
-    error_log: Optional[str] = None
+    error_log: Optional[dict] = None
     transaction_hash: Optional[str] = None
 
 
