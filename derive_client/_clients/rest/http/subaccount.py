@@ -10,6 +10,7 @@ from derive_client._clients.rest.http.api import PrivateAPI, PublicAPI
 from derive_client._clients.rest.http.markets import MarketOperations
 from derive_client._clients.rest.http.orders import OrderOperations
 from derive_client._clients.rest.http.positions import PositionOperations
+from derive_client._clients.rest.http.rfq import RFQOperations
 from derive_client._clients.rest.http.transactions import TransactionOperations
 from derive_client._clients.utils import AuthContext
 from derive_client.constants import EnvConfig
@@ -58,6 +59,7 @@ class Subaccount:
         self._transactions = TransactionOperations(self)
         self._orders = OrderOperations(self)
         self._positions = PositionOperations(self)
+        self._rfq = RFQOperations(self)
 
         self._state: PrivateGetSubaccountResultSchema | None = _state
 
@@ -152,6 +154,10 @@ class Subaccount:
     @property
     def positions(self) -> PositionOperations:
         return self._positions
+
+    @property
+    def rfq(self) -> RFQOperations:
+        return self._rfq
 
     def sign_action(
         self,
