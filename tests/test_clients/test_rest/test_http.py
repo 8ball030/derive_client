@@ -123,7 +123,7 @@ def test_public_get_ticker(client_admin_wallet):
 
 
 def test_get_private_get_subaccounts(client_admin_wallet):
-    wallet = client_admin_wallet.wallet
+    wallet = client_admin_wallet._auth.wallet
     params = PrivateGetSubaccountsParamsSchema(wallet=wallet)
     response = client_admin_wallet._private_api.get_subaccounts(params=params)
     assert isinstance(response, PrivateGetSubaccountsResponseSchema)

@@ -151,17 +151,6 @@ class HTTPClient:
     def rfq(self) -> RFQOperations:
         return self.active_subaccount.rfq
 
-    @property
-    def wallet(self) -> Address:
-        return self._auth.wallet
-
-    @property
-    def signer(self) -> Address:
-        return self._auth.signer
-
-    def get_nonce(self) -> int:
-        return self._auth.nonce_generator.next()
-
     def __enter__(self):
         self._session.__enter__()
         return self
