@@ -59,7 +59,7 @@ class HTTPClient:
 
         self._markets = MarketOperations(public_api=self._public_api)
 
-        self._account: LightAccount | None = None
+        self._light_account: LightAccount | None = None
         self._subaccounts: dict[int, Subaccount] = {}
 
     def connect(self) -> None:
@@ -86,7 +86,7 @@ class HTTPClient:
         subaccount_ids = self._light_account._state.subaccount_ids
         if self._subaccount_id not in subaccount_ids:
             self._logger.warning(
-                f"Subaccount {self._subaccount_id} does not exist for wallet {self.wallet}. "
+                f"Subaccount {self._subaccount_id} does not exist for wallet {self._light_account.address}. "
                 f"Available subaccounts: {subaccount_ids}"
             )
             return

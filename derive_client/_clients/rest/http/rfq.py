@@ -38,7 +38,6 @@ from derive_client.data.generated.models import (
     PrivateSendQuoteResultSchema,
     PrivateSendRfqParamsSchema,
     PrivateSendRfqResultSchema,
-    QuoteResultPublicSchema,
     Result,
     Status,
 )

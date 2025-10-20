@@ -114,7 +114,7 @@ class Subaccount:
         """Refresh mutable state from API."""
         params = PrivateGetSubaccountParamsSchema(subaccount_id=self.id)
         response = self._private_api.get_subaccount(params)
-        self._latest_state = response.result
+        self._state = response.result
         return self
 
     @property

@@ -1,6 +1,5 @@
 """Auto-generated API classes from OpenAPI spec"""
 
-
 from derive_client._clients.rest.endpoints import PrivateEndpoints, PublicEndpoints
 from derive_client._clients.rest.http.session import HTTPSession
 from derive_client._clients.utils import AuthContext, encode_json_exclude_none, try_cast_response
