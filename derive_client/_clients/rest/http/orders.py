@@ -61,7 +61,7 @@ class OrderOperations:
         limit_price: Decimal,
         max_fee: Decimal,
         nonce: Optional[int] = None,
-        signature_expiry_sec: int = INT64_MAX,
+        signature_expiry_sec: Optional[int] = None,
         is_atomic_signing: Optional[bool] = False,
         label: str = '',
         mmp: bool = False,
@@ -98,20 +98,16 @@ class OrderOperations:
             signature_expiry_sec=signature_expiry_sec,
         )
 
-        signer = signed_action.signer
-        signature = signed_action.signature
-        nonce = signed_action.nonce
-
         params = PrivateOrderParamsSchema(
             amount=amount,
             direction=direction,
             instrument_name=instrument_name,
             limit_price=limit_price,
             max_fee=max_fee,
-            nonce=nonce,
-            signature=signature,
-            signature_expiry_sec=signature_expiry_sec,
-            signer=signer,
+            nonce=signed_action.nonce,
+            signature=signed_action.signature,
+            signature_expiry_sec=signed_action.signature_expiry_sec,
+            signer=signed_action.signer,
             subaccount_id=subaccount_id,
             is_atomic_signing=is_atomic_signing,
             label=label,
@@ -209,7 +205,7 @@ class OrderOperations:
         limit_price: Decimal,
         max_fee: Decimal,
         nonce: Optional[int] = None,
-        signature_expiry_sec: int = INT64_MAX,
+        signature_expiry_sec: Optional[int] = None,
         expected_filled_amount: Optional[Decimal] = None,
         is_atomic_signing: Optional[bool] = False,
         label: str = '',
@@ -249,21 +245,17 @@ class OrderOperations:
             signature_expiry_sec=signature_expiry_sec,
         )
 
-        signer = signed_action.signer
-        signature = signed_action.signature
-        nonce = signed_action.nonce
-
         params = PrivateReplaceParamsSchema(
             amount=amount,
             direction=direction,
             instrument_name=instrument_name,
             limit_price=limit_price,
             max_fee=max_fee,
-            nonce=nonce,
-            signature=signature,
-            signature_expiry_sec=signature_expiry_sec,
+            nonce=signed_action.nonce,
+            signature=signed_action.signature,
+            signature_expiry_sec=signed_action.signature_expiry_sec,
             expected_filled_amount=expected_filled_amount,
-            signer=signer,
+            signer=signed_action.signer,
             subaccount_id=subaccount_id,
             is_atomic_signing=is_atomic_signing,
             label=label,

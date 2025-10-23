@@ -56,7 +56,7 @@ class PositionOperations:
         amount: Decimal,
         instrument_name: str,
         to_subaccount: int,
-        signature_expiry_sec: int = INT64_MAX,
+        signature_expiry_sec: Optional[int] = None,
         limit_price: Optional[Decimal] = None,
         maker_nonce: Optional[int] = None,
         taker_nonce: Optional[int] = None,
@@ -142,7 +142,7 @@ class PositionOperations:
         positions: list[PositionTransfer],
         direction: Direction,
         to_subaccount: int,
-        signature_expiry_sec: int = INT64_MAX,
+        signature_expiry_sec: Optional[int] = None,
         maker_nonce: Optional[int] = None,
         taker_nonce: Optional[int] = None,
     ) -> PrivateTransferPositionsResultSchema:

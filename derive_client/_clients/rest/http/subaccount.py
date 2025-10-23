@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from logging import Logger
+from typing import Optional
 
 from derive_action_signing import ModuleData, SignedAction
 
@@ -163,8 +164,8 @@ class Subaccount:
         self,
         module_address: Address,
         module_data: ModuleData,
-        signature_expiry_sec: int,
-        nonce: int | None = None,
+        signature_expiry_sec: Optional[int] = None,
+        nonce: Optional[int] = None,
     ) -> SignedAction:
         return self._auth.sign_action(
             nonce=nonce,

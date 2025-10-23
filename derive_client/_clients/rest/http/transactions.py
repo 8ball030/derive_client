@@ -47,7 +47,7 @@ class TransactionOperations:
         amount: Decimal,
         asset_name: str,
         nonce: Optional[int] = None,
-        signature_expiry_sec: int = INT64_MAX,
+        signature_expiry_sec: Optional[int] = None,
         is_atomic_signing: bool = False,
     ) -> PrivateDepositResultSchema:
         """Deposit from LightAccount smart contract wallet into subaccount."""
@@ -87,17 +87,13 @@ class TransactionOperations:
             signature_expiry_sec=signature_expiry_sec,
         )
 
-        signer = signed_action.signer
-        signature = signed_action.signature
-        nonce = signed_action.nonce
-
         params = PrivateDepositParamsSchema(
             amount=amount,
             asset_name=asset_name,
-            nonce=nonce,
-            signature=signature,
-            signature_expiry_sec=signature_expiry_sec,
-            signer=signer,
+            nonce=signed_action.nonce,
+            signature=signed_action.signature,
+            signature_expiry_sec=signed_action.signature_expiry_sec,
+            signer=signed_action.signer,
             subaccount_id=subaccount_id,
             is_atomic_signing=is_atomic_signing,
         )
@@ -109,7 +105,7 @@ class TransactionOperations:
         amount: Decimal,
         asset_name: str,
         nonce: Optional[int] = None,
-        signature_expiry_sec: int = INT64_MAX,
+        signature_expiry_sec: Optional[int] = None,
         is_atomic_signing: bool = False,
     ) -> PrivateWithdrawResultSchema:
         """Deposit from subaccount into LightAccount smart contract wallet."""
@@ -136,17 +132,13 @@ class TransactionOperations:
             signature_expiry_sec=signature_expiry_sec,
         )
 
-        signer = signed_action.signer
-        signature = signed_action.signature
-        nonce = signed_action.nonce
-
         params = PrivateWithdrawParamsSchema(
             amount=amount,
             asset_name=asset_name,
-            nonce=nonce,
-            signature=signature,
-            signature_expiry_sec=signature_expiry_sec,
-            signer=signer,
+            nonce=signed_action.nonce,
+            signature=signed_action.signature,
+            signature_expiry_sec=signed_action.signature_expiry_sec,
+            signer=signed_action.signer,
             subaccount_id=subaccount_id,
             is_atomic_signing=is_atomic_signing,
         )

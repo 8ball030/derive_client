@@ -5,6 +5,7 @@ import time
 from dataclasses import dataclass
 from decimal import Decimal
 from enum import StrEnum
+from typing import Optional
 
 import msgspec
 from derive_action_signing import ModuleData, SignedAction
@@ -16,6 +17,22 @@ from web3 import AsyncWeb3, Web3
 from derive_client.constants import EnvConfig
 from derive_client.data.generated.models import RPCErrorFormatSchema
 from derive_client.data_types import Address
+
+
+def get_default_signature_expiry_sec() -> int:
+    """
+    Compute a conservative default signature_expiry_sec (Unix epoch seconds)
+
+    Rationale:
+    - RFQ send/execute docs require expiry >= 310 seconds from now and mark the quote
+      expired once time-to-expiry <= 300 seconds.
+    - We choose 330 seconds from current local time (310 + 20s margin) to cover:
+      - small local/server clock skew
+      - signing and network transmission latency
+      - brief processing/queue delays on client or server
+    """
+    utc_time_now_s = int(time.time())
+    return utc_time_now_s + 330
 
 
 @dataclass
@@ -41,12 +58,14 @@ class AuthContext:
         self,
         module_address: Address,
         module_data: ModuleData,
-        signature_expiry_sec: int,
         subaccount_id: int,
-        nonce: int | None = None,
+        signature_expiry_sec: Optional[int] = None,
+        nonce: Optional[int] = None,
     ) -> SignedAction:
         module_address = self.w3.to_checksum_address(module_address)
-        nonce = nonce if nonce is not None else time.time_ns()
+
+        nonce = nonce or time.time_ns()
+        signature_expiry_sec = signature_expiry_sec or get_default_signature_expiry_sec()
 
         action = SignedAction(
             subaccount_id=subaccount_id,

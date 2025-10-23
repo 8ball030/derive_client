@@ -156,7 +156,7 @@ class RFQOperations:
         legs: list[LegPricedSchema],
         max_fee: Decimal,
         rfq_id: str,
-        signature_expiry_sec: int,
+        signature_expiry_sec: Optional[int] = None,
         nonce: Optional[int] = None,
         label: str = '',
         mmp: bool = False,
@@ -191,19 +191,15 @@ class RFQOperations:
             signature_expiry_sec=signature_expiry_sec,
         )
 
-        signer = signed_action.signer
-        signature = signed_action.signature
-        nonce = signed_action.nonce
-
         params = PrivateSendQuoteParamsSchema(
             direction=direction,
             legs=legs,
             max_fee=max_fee,
-            nonce=nonce,
+            nonce=signed_action.nonce,
             rfq_id=rfq_id,
-            signature=signature,
-            signature_expiry_sec=signature_expiry_sec,
-            signer=signer,
+            signature=signed_action.signature,
+            signature_expiry_sec=signed_action.signature_expiry_sec,
+            signer=signed_action.signer,
             subaccount_id=subaccount_id,
             label=label,
             mmp=mmp,
@@ -293,7 +289,7 @@ class RFQOperations:
         max_fee: Decimal,
         quote_id: str,
         rfq_id: str,
-        signature_expiry_sec: int,
+        signature_expiry_sec: Optional[int] = None,
         nonce: Optional[int] = None,
         label: str = '',
     ) -> PrivateExecuteQuoteResultSchema:
@@ -327,21 +323,17 @@ class RFQOperations:
             signature_expiry_sec=signature_expiry_sec,
         )
 
-        signer = signed_action.signer
-        signature = signed_action.signature
-        nonce = signed_action.nonce
-
         params = PrivateExecuteQuoteParamsSchema(
             subaccount_id=subaccount_id,
             direction=direction,
             legs=legs,
             max_fee=max_fee,
-            nonce=nonce,
+            nonce=signed_action.nonce,
             quote_id=quote_id,
             rfq_id=rfq_id,
-            signature=signature,
-            signature_expiry_sec=signature_expiry_sec,
-            signer=signer,
+            signature=signed_action.signature,
+            signature_expiry_sec=signed_action.signature_expiry_sec,
+            signer=signed_action.signer,
             label=label,
         )
         response = self._subaccount._private_api.execute_quote(params)
