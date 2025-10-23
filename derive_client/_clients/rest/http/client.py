@@ -13,7 +13,7 @@ from derive_client._clients.rest.http.rfq import RFQOperations
 from derive_client._clients.rest.http.session import HTTPSession
 from derive_client._clients.rest.http.subaccount import Subaccount
 from derive_client._clients.rest.http.transactions import TransactionOperations
-from derive_client._clients.utils import AuthContext, NonceGenerator
+from derive_client._clients.utils import AuthContext
 from derive_client.constants import CONFIGS
 from derive_client.data_types import Address, Environment
 from derive_client.utils.logger import get_logger
@@ -37,14 +37,12 @@ class HTTPClient:
         config = CONFIGS[env]
         w3 = Web3(Web3.HTTPProvider(config.rpc_endpoint))
         account = w3.eth.account.from_key(session_key)
-        nonce_generator = NonceGenerator()
 
         auth = AuthContext(
             w3=w3,
             wallet=wallet,
             account=account,
             config=config,
-            nonce_generator=nonce_generator,
         )
 
         self._auth = auth
