@@ -141,7 +141,7 @@ class OrderOperations:
         instrument_name: Optional[str] = None,
         label: Optional[str] = None,
         page: int = 1,
-        page_size: int = 100,
+        page_size: int = 1000,
         status: Optional[OrderStatus] = None,
     ) -> PrivateGetOrdersResultSchema:
         params = PrivateGetOrdersParamsSchema(
