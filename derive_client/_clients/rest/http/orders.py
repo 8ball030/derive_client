@@ -74,15 +74,18 @@ class OrderOperations:
         trigger_type: Optional[TriggerType] = None,
     ) -> PrivateOrderResultSchema:
         subaccount_id = self._subaccount.id
+
         instrument = self._subaccount.markets.get_cached_instrument(instrument_name=instrument_name)
+        asset_address = instrument.base_asset_address
+        sub_id = int(instrument.base_asset_sub_id)
 
         amount = amount.quantize(instrument.amount_step)
         limit_price = limit_price.quantize(instrument.tick_size)
 
         is_bid = direction == Direction.buy
         module_data = TradeModuleData(
-            asset_address=instrument.base_asset_address,
-            sub_id=int(instrument.base_asset_sub_id),
+            asset_address=asset_address,
+            sub_id=sub_id,
             limit_price=limit_price,
             amount=amount,
             max_fee=max_fee,
@@ -224,12 +227,15 @@ class OrderOperations:
             raise ValueError("Replace requires exactly one of nonce_to_cancel or order_id_to_cancel (but not both).")
 
         subaccount_id = self._subaccount.id
+
         instrument = self._subaccount.markets.get_cached_instrument(instrument_name=instrument_name)
+        asset_address = instrument.base_asset_address
+        sub_id = int(instrument.base_asset_sub_id)
 
         is_bid = direction == Direction.buy
         module_data = TradeModuleData(
-            asset_address=instrument.base_asset_address,
-            sub_id=int(instrument.base_asset_sub_id),
+            asset_address=asset_address,
+            sub_id=sub_id,
             limit_price=limit_price,
             amount=amount,
             max_fee=max_fee,

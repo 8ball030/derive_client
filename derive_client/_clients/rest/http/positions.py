@@ -68,22 +68,22 @@ class PositionOperations:
 
         instrument = self._subaccount.markets.get_cached_instrument(instrument_name=instrument_name)
         limit_price = instrument.tick_size
-        base_asset_address = instrument.base_asset_address
-        base_asset_sub_id = int(instrument.base_asset_sub_id)
+        asset_address = instrument.base_asset_address
+        sub_id = int(instrument.base_asset_sub_id)
 
         module_address = self._subaccount._config.contracts.TRADE_MODULE
 
         maker_module_data = MakerTransferPositionModuleData(
-            asset_address=base_asset_address,
-            sub_id=base_asset_sub_id,
+            asset_address=asset_address,
+            sub_id=sub_id,
             limit_price=limit_price,
             amount=abs(amount),
             recipient_id=from_subaccount,
             position_amount=amount,
         )
         taker_module_data = TakerTransferPositionModuleData(
-            asset_address=base_asset_address,
-            sub_id=base_asset_sub_id,
+            asset_address=asset_address,
+            sub_id=sub_id,
             limit_price=limit_price,
             amount=abs(amount),
             recipient_id=to_subaccount,
@@ -163,8 +163,8 @@ class PositionOperations:
             instrument_name = position.instrument_name
             instrument = self._subaccount.markets.get_cached_instrument(instrument_name=instrument_name)
             price = instrument.tick_size
-            base_asset_address = instrument.base_asset_address
-            base_asset_sub_id = int(instrument.base_asset_sub_id)
+            asset_address = instrument.base_asset_address
+            sub_id = int(instrument.base_asset_sub_id)
 
             priced_leg = LegPricedSchema(
                 amount=amount,
@@ -177,8 +177,8 @@ class PositionOperations:
             details = TransferPositionsDetails(
                 instrument_name=instrument_name,
                 direction=leg_direction,
-                asset_address=base_asset_address,
-                sub_id=base_asset_sub_id,
+                asset_address=asset_address,
+                sub_id=sub_id,
                 price=price,
                 amount=amount,
             )

@@ -67,8 +67,9 @@ class RFQOperations:
         min_total_cost: Optional[Decimal] = None,
         partial_fill_step: Decimal = '1',
     ) -> PrivateSendRfqResultSchema:
-        legs.sort(key=lambda x: x.instrument_name)
         subaccount_id = self._subaccount.id
+        legs.sort(key=lambda x: x.instrument_name)
+
         params = PrivateSendRfqParamsSchema(
             legs=legs,
             subaccount_id=subaccount_id,
@@ -162,17 +163,21 @@ class RFQOperations:
         mmp: bool = False,
     ) -> PrivateSendQuoteResultSchema:
         subaccount_id = self._subaccount.id
+        legs.sort(key=lambda x: x.instrument_name)
 
         module_address = self._subaccount._config.contracts.RFQ_MODULE
 
         rfq_legs = []
         for leg in legs:
-            ticker = self._subaccount.markets.get_ticker(instrument_name=leg.instrument_name)
+            instrument = self._subaccount.markets.get_cached_instrument(instrument_name=leg.instrument_name)
+            asset_address = instrument.base_asset_address
+            sub_id = int(instrument.base_asset_sub_id)
+
             rfq_quote_details = RFQQuoteDetails(
-                instrument_name=ticker.instrument_name,
+                instrument_name=leg.instrument_name,
                 direction=leg.direction,
-                asset_address=ticker.base_asset_address,
-                sub_id=int(ticker.base_asset_sub_id),
+                asset_address=asset_address,
+                sub_id=sub_id,
                 price=leg.price,
                 amount=leg.amount,
             )
@@ -294,17 +299,21 @@ class RFQOperations:
         label: str = '',
     ) -> PrivateExecuteQuoteResultSchema:
         subaccount_id = self._subaccount.id
+        legs.sort(key=lambda x: x.instrument_name)
 
         module_address = self._subaccount._config.contracts.RFQ_MODULE
 
         quote_legs = []
         for leg in legs:
-            ticker = self._subaccount.markets.get_ticker(instrument_name=leg.instrument_name)
+            instrument = self._subaccount.markets.get_cached_instrument(instrument_name=leg.instrument_name)
+            asset_address = instrument.base_asset_address
+            sub_id = int(instrument.base_asset_sub_id)
+
             rfq_quote_details = RFQQuoteDetails(
                 instrument_name=leg.instrument_name,
                 direction=leg.direction,
-                asset_address=ticker.base_asset_address,
-                sub_id=int(ticker.base_asset_sub_id),
+                asset_address=asset_address,
+                sub_id=sub_id,
                 price=leg.price,
                 amount=leg.amount,
             )
