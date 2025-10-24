@@ -63,13 +63,13 @@ class PositionOperations:
     ) -> PrivateTransferPositionResultSchema:
         """Transfer position to another subaccount"""
 
-        from_subaccount = self._subaccount.id  # maker_subaccount
-        max_fee = Decimal("0")  # Always 0 for transfers
+        from_subaccount = self._subaccount.id
+        max_fee = Decimal("0")
 
-        ticker = self._subaccount.markets.get_ticker(instrument_name=instrument_name)
-        limit_price = ticker.index_price.quantize(ticker.tick_size)
-        base_asset_address = ticker.base_asset_address
-        base_asset_sub_id = int(ticker.base_asset_sub_id)
+        instrument = self._subaccount.markets.get_cached_instrument(instrument_name=instrument_name)
+        limit_price = instrument.tick_size
+        base_asset_address = instrument.base_asset_address
+        base_asset_sub_id = int(instrument.base_asset_sub_id)
 
         module_address = self._subaccount._config.contracts.TRADE_MODULE
 
@@ -148,22 +148,23 @@ class PositionOperations:
     ) -> PrivateTransferPositionsResultSchema:
         """Transfer multiple positions"""
 
-        from_subaccount = self._subaccount.id  # maker_subaccount
-        max_fee = Decimal("0")  # Always 0 for transfers
+        from_subaccount = self._subaccount.id
+        max_fee = Decimal("0")
 
-        # Derive RPC -32602: Invalid params  [data=['Legs must be sorted by instrument name']]
+        # Legs must be sorted by instrument name
         positions.sort(key=lambda x: x.instrument_name)
 
         legs = []
         transfer_details = []
         for position in positions:
             amount = abs(position.amount)
-            instrument_name = position.instrument_name
-            ticker = self._subaccount.markets.get_ticker(instrument_name)
-            price = ticker.index_price.quantize(ticker.tick_size)
-            base_asset_address = ticker.base_asset_address
-            base_asset_sub_id = ticker.base_asset_sub_id
             leg_direction = Direction.buy if position.amount < 0 else Direction.sell
+
+            instrument_name = position.instrument_name
+            instrument = self._subaccount.markets.get_cached_instrument(instrument_name=instrument_name)
+            price = instrument.tick_size
+            base_asset_address = instrument.base_asset_address
+            base_asset_sub_id = int(instrument.base_asset_sub_id)
 
             priced_leg = LegPricedSchema(
                 amount=amount,
@@ -177,7 +178,7 @@ class PositionOperations:
                 instrument_name=instrument_name,
                 direction=leg_direction,
                 asset_address=base_asset_address,
-                sub_id=int(base_asset_sub_id),
+                sub_id=base_asset_sub_id,
                 price=price,
                 amount=amount,
             )
