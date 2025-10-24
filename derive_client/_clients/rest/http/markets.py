@@ -67,6 +67,8 @@ class MarketOperations:
         return self._active_instrument_cache
 
     def get_cached_instrument(self, instrument_name: str) -> InstrumentPublicResponseSchema:
+        """Lookup an instrument from the active cache; avoids API calls in performance-critical paths."""
+
         if (instrument := self.cached_active_instruments.get(instrument_name)) is None:
             raise RuntimeError(
                 f"Instrument '{instrument_name}' not found in active instrument cache. "
@@ -133,6 +135,8 @@ class MarketOperations:
         expired: bool,
         instrument_type: InstrumentType,
     ) -> list[PublicGetTickerResultSchema]:
+        """Collect tickers by calling get_ticker for each instrument. May issue many HTTP requests; use with care."""
+
         instruments = self.get_instruments(currency=currency, expired=expired, instrument_type=instrument_type)
         tickers = [self.get_ticker(instrument_name=instrument.instrument_name) for instrument in instruments]
         return tickers

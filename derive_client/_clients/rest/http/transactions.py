@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Optional
 
 from derive_action_signing.module_data import DepositModuleData, WithdrawModuleData
 
-from derive_client.constants import CURRENCY_DECIMALS, INT64_MAX
+from derive_client.constants import CURRENCY_DECIMALS
 from derive_client.data.generated.models import (
     MarginType,
     PrivateDepositParamsSchema,
