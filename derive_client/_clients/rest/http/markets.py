@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Optional
 
 from derive_client._clients.rest.http.api import PublicAPI
+from derive_client._clients.utils import fetch_all_pages_of_instrument_type
 from derive_client.data.generated.models import (
     CurrencyDetailedResponseSchema,
     InstrumentPublicResponseSchema,
@@ -33,6 +34,46 @@ class MarketOperations:
             public_api: PublicAPI instance providing access to public APIs
         """
         self._public_api = public_api
+        self._active_instrument_cache: dict[str, InstrumentPublicResponseSchema] = {}
+
+    def fetch_instruments(self, expired: bool = False) -> dict[str, InstrumentPublicResponseSchema]:
+        """
+        Fetch all instruments from API:
+        - If expired == False (default): build cache of active instruments and replace persistent cache.
+        - If expired == True: return a mapping of expired instruments without modifying persistent cache.
+        """
+
+        instruments = {}
+        for instrument_type in InstrumentType:
+            for instrument in fetch_all_pages_of_instrument_type(
+                markets=self,
+                instrument_type=instrument_type,
+                expired=expired,
+            ):
+                if instrument.instrument_name in instruments:
+                    msg = f"Duplicate instrument_name '{instrument.instrument_name}' found while building instrument mapping."
+                    raise RuntimeError(msg)
+                instruments[instrument.instrument_name] = instrument
+
+        if expired:
+            return instruments
+
+        self._active_instrument_cache.clear()
+        self._active_instrument_cache.update(instruments)
+        return self._active_instrument_cache
+
+    @property
+    def cached_active_instruments(self) -> dict[str, InstrumentPublicResponseSchema]:
+        return self._active_instrument_cache
+
+    def get_cached_instrument(self, instrument_name: str) -> InstrumentPublicResponseSchema:
+        if (instrument := self.cached_active_instruments.get(instrument_name)) is None:
+            raise RuntimeError(
+                f"Instrument '{instrument_name}' not found in active instrument cache. "
+                "Either the name is incorrect, or the local cache is stale. "
+                "Call fetch_instruments() to refresh the cache."
+            )
+        return instrument
 
     def get_currency(self, currency: str) -> PublicGetCurrencyResultSchema:
         params = PublicGetCurrencyParamsSchema(currency=currency)

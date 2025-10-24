@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from logging import Logger
 
+from pydantic import validate_call
 from web3 import Web3
 
 from derive_client._clients.rest.http.account import LightAccount
@@ -26,6 +27,7 @@ class NotConnectedError(RuntimeError):
 class HTTPClient:
     """Synchronous HTTP client"""
 
+    @validate_call(config=dict(arbitrary_types_allowed=True))
     def __init__(
         self,
         wallet: Address,
@@ -80,6 +82,9 @@ class HTTPClient:
             public_api=self._public_api,
             private_api=self._private_api,
         )
+
+        self.markets.fetch_instruments(expired=False)
+        self._logger.debug(f"Cached {len(self.markets.cached_active_instruments)} instruments")
 
         subaccount_ids = self._light_account._state.subaccount_ids
         if self._subaccount_id not in subaccount_ids:

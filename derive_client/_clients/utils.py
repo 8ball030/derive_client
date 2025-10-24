@@ -5,7 +5,7 @@ import time
 from dataclasses import dataclass
 from decimal import Decimal
 from enum import StrEnum
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import msgspec
 from derive_action_signing import ModuleData, SignedAction
@@ -15,8 +15,11 @@ from pydantic import BaseModel
 from web3 import AsyncWeb3, Web3
 
 from derive_client.constants import EnvConfig
-from derive_client.data.generated.models import RPCErrorFormatSchema
+from derive_client.data.generated.models import InstrumentPublicResponseSchema, InstrumentType, RPCErrorFormatSchema
 from derive_client.data_types import Address
+
+if TYPE_CHECKING:
+    from derive_client._clients.rest.http.markets import MarketOperations
 
 
 def get_default_signature_expiry_sec() -> int:
@@ -160,3 +163,29 @@ class PositionTransfer:
 
     instrument_name: str
     amount: Decimal  # Can be negative (sign indicates long/short)
+
+
+def fetch_all_pages_of_instrument_type(
+    markets: MarketOperations,
+    instrument_type: InstrumentType,
+    expired: bool,
+) -> list[InstrumentPublicResponseSchema]:
+    """Fetch all instruments of a type, handling pagination."""
+
+    page = 1
+    page_size = 1000
+    instruments = []
+
+    while True:
+        result = markets.get_all_instruments(
+            expired=expired,
+            instrument_type=instrument_type,
+            page=page,
+            page_size=page_size,
+        )
+        instruments.extend(result.instruments)
+        if page >= result.pagination.num_pages:
+            break
+        page += 1
+
+    return instruments
