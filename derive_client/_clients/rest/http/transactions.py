@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Optional
 
 from derive_action_signing.module_data import DepositModuleData, WithdrawModuleData
 
-from derive_client.constants import CURRENCY_DECIMALS, INT64_MAX
+from derive_client.constants import CURRENCY_DECIMALS
 from derive_client.data.generated.models import (
     MarginType,
     PrivateDepositParamsSchema,
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 class TransactionOperations:
     """High-level transaction operations."""
 
-    def __init__(self, subaccount: Subaccount):
+    def __init__(self, *, subaccount: Subaccount):
         """
         Initialize order operations.
 
@@ -35,7 +35,7 @@ class TransactionOperations:
         """
         self._subaccount = subaccount
 
-    def get(self, transaction_id: str) -> PublicGetTransactionResultSchema:
+    def get(self, *, transaction_id: str) -> PublicGetTransactionResultSchema:
         """Get a transaction by its transaction id."""
 
         params = PublicGetTransactionParamsSchema(transaction_id=transaction_id)
@@ -44,10 +44,11 @@ class TransactionOperations:
 
     def deposit_to_subaccount(
         self,
+        *,
         amount: Decimal,
         asset_name: str,
         nonce: Optional[int] = None,
-        signature_expiry_sec: int = INT64_MAX,
+        signature_expiry_sec: Optional[int] = None,
         is_atomic_signing: bool = False,
     ) -> PrivateDepositResultSchema:
         """Deposit from LightAccount smart contract wallet into subaccount."""
@@ -55,7 +56,7 @@ class TransactionOperations:
         subaccount_id = self._subaccount.id
         module_address = self._subaccount._config.contracts.DEPOSIT_MODULE
 
-        currency = self._subaccount.markets.get_currency(asset_name)
+        currency = self._subaccount.markets.get_currency(currency=asset_name)
         underlying_address = currency.protocol_asset_addresses.spot
 
         managers = []
@@ -87,17 +88,13 @@ class TransactionOperations:
             signature_expiry_sec=signature_expiry_sec,
         )
 
-        signer = signed_action.signer
-        signature = signed_action.signature
-        nonce = signed_action.nonce
-
         params = PrivateDepositParamsSchema(
             amount=amount,
             asset_name=asset_name,
-            nonce=nonce,
-            signature=signature,
-            signature_expiry_sec=signature_expiry_sec,
-            signer=signer,
+            nonce=signed_action.nonce,
+            signature=signed_action.signature,
+            signature_expiry_sec=signed_action.signature_expiry_sec,
+            signer=signed_action.signer,
             subaccount_id=subaccount_id,
             is_atomic_signing=is_atomic_signing,
         )
@@ -106,10 +103,11 @@ class TransactionOperations:
 
     def withdraw_from_subaccount(
         self,
+        *,
         amount: Decimal,
         asset_name: str,
         nonce: Optional[int] = None,
-        signature_expiry_sec: int = INT64_MAX,
+        signature_expiry_sec: Optional[int] = None,
         is_atomic_signing: bool = False,
     ) -> PrivateWithdrawResultSchema:
         """Deposit from subaccount into LightAccount smart contract wallet."""
@@ -117,7 +115,7 @@ class TransactionOperations:
         subaccount_id = self._subaccount.id
         module_address = self._subaccount._config.contracts.WITHDRAWAL_MODULE
 
-        currency = self._subaccount.markets.get_currency(asset_name)
+        currency = self._subaccount.markets.get_currency(currency=asset_name)
 
         underlying_address = currency.protocol_asset_addresses.spot
         decimals = CURRENCY_DECIMALS[Currency[currency.currency]]
@@ -136,17 +134,13 @@ class TransactionOperations:
             signature_expiry_sec=signature_expiry_sec,
         )
 
-        signer = signed_action.signer
-        signature = signed_action.signature
-        nonce = signed_action.nonce
-
         params = PrivateWithdrawParamsSchema(
             amount=amount,
             asset_name=asset_name,
-            nonce=nonce,
-            signature=signature,
-            signature_expiry_sec=signature_expiry_sec,
-            signer=signer,
+            nonce=signed_action.nonce,
+            signature=signed_action.signature,
+            signature_expiry_sec=signed_action.signature_expiry_sec,
+            signer=signed_action.signer,
             subaccount_id=subaccount_id,
             is_atomic_signing=is_atomic_signing,
         )

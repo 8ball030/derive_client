@@ -40,6 +40,7 @@ class LightAccount:
 
     def __init__(
         self,
+        *,
         auth: AuthContext,
         config: EnvConfig,
         logger: Logger,
@@ -67,6 +68,7 @@ class LightAccount:
     @classmethod
     def from_api(
         cls,
+        *,
         auth: AuthContext,
         config: EnvConfig,
         logger: Logger,
@@ -123,6 +125,7 @@ class LightAccount:
 
     def build_register_session_key_tx(
         self,
+        *,
         expiry_sec: int,
         public_session_key: str,
         gas: Optional[int] = None,
@@ -145,6 +148,7 @@ class LightAccount:
 
     def register_session_key(
         self,
+        *,
         expiry_sec: int,
         label: str,
         public_session_key: str,
@@ -167,6 +171,7 @@ class LightAccount:
 
     def deregister_session_key(
         self,
+        *,
         public_session_key: str,
         signed_raw_tx: str,
     ) -> PublicDeregisterSessionKeyResultSchema:
@@ -187,6 +192,7 @@ class LightAccount:
 
     def register_scoped_session_key(
         self,
+        *,
         expiry_sec: int,
         public_session_key: str,
         ip_whitelist: Optional[list[str]] = None,
@@ -213,6 +219,7 @@ class LightAccount:
 
     def edit_session_key(
         self,
+        *,
         public_session_key: str,
         disable: bool = False,
         ip_whitelist: Optional[list[str]] = None,
@@ -235,11 +242,12 @@ class LightAccount:
 
     def create_subaccount(
         self,
+        *,
         amount: Decimal = Decimal("0"),
         asset_name: str = "USDC",
         margin_type: MarginType = MarginType.SM,
         nonce: Optional[int] = None,
-        signature_expiry_sec: int = INT64_MAX,
+        signature_expiry_sec: Optional[int] = None,
         currency: Optional[str] = None,
     ) -> PrivateCreateSubaccountResultSchema:
         """Create subaccount."""
@@ -283,18 +291,14 @@ class LightAccount:
             subaccount_id=subaccount_id,
         )
 
-        signer = signed_action.signer
-        signature = signed_action.signature
-        nonce = signed_action.nonce
-
         params = PrivateCreateSubaccountParamsSchema(
             amount=amount,
             asset_name=asset_name,
             margin_type=margin_type,
-            nonce=nonce,
-            signature=signature,
-            signature_expiry_sec=signature_expiry_sec,
-            signer=signer,
+            nonce=signed_action.nonce,
+            signature=signed_action.signature,
+            signature_expiry_sec=signed_action.signature_expiry_sec,
+            signer=signed_action.signer,
             wallet=self.address,
         )
         response = self._private_api.create_subaccount(params)

@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import contextlib
 from logging import Logger
+from typing import Generator
 
+from pydantic import validate_call
 from web3 import Web3
 
 from derive_client._clients.rest.http.account import LightAccount
@@ -13,7 +16,7 @@ from derive_client._clients.rest.http.rfq import RFQOperations
 from derive_client._clients.rest.http.session import HTTPSession
 from derive_client._clients.rest.http.subaccount import Subaccount
 from derive_client._clients.rest.http.transactions import TransactionOperations
-from derive_client._clients.utils import AuthContext, NonceGenerator
+from derive_client._clients.utils import AuthContext
 from derive_client.constants import CONFIGS
 from derive_client.data_types import Address, Environment
 from derive_client.utils.logger import get_logger
@@ -26,32 +29,33 @@ class NotConnectedError(RuntimeError):
 class HTTPClient:
     """Synchronous HTTP client"""
 
+    @validate_call(config=dict(arbitrary_types_allowed=True))
     def __init__(
         self,
+        *,
         wallet: Address,
         session_key: str,
         subaccount_id: int,
         env: Environment,
         logger: Logger | None = None,
+        request_timeout: float = 10.0,
     ):
         config = CONFIGS[env]
         w3 = Web3(Web3.HTTPProvider(config.rpc_endpoint))
         account = w3.eth.account.from_key(session_key)
-        nonce_generator = NonceGenerator()
 
         auth = AuthContext(
             w3=w3,
             wallet=wallet,
             account=account,
             config=config,
-            nonce_generator=nonce_generator,
         )
 
         self._auth = auth
         self._config = config
         self._subaccount_id = subaccount_id
 
-        self._session = HTTPSession()
+        self._session = HTTPSession(request_timeout=request_timeout)
         self._logger = logger if logger is not None else get_logger()
 
         self._public_api = PublicAPI(session=self._session, config=config)
@@ -82,6 +86,9 @@ class HTTPClient:
             public_api=self._public_api,
             private_api=self._private_api,
         )
+
+        self.markets.fetch_instruments(expired=False)
+        self._logger.debug(f"Cached {len(self.markets.cached_active_instruments)} instruments")
 
         subaccount_ids = self._light_account._state.subaccount_ids
         if self._subaccount_id not in subaccount_ids:
@@ -150,6 +157,17 @@ class HTTPClient:
     @property
     def rfq(self) -> RFQOperations:
         return self.active_subaccount.rfq
+
+    @contextlib.contextmanager
+    def timeout(self, seconds: float) -> Generator[None, None, None]:
+        """Temporarily overwrite client's HTTPSession's request_timeout."""
+
+        prev = self._session._request_timeout
+        try:
+            self._session._request_timeout = float(seconds)
+            yield
+        finally:
+            self._session._request_timeout = prev
 
     def __enter__(self):
         self._session.__enter__()

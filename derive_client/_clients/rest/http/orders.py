@@ -55,34 +55,38 @@ class OrderOperations:
 
     def create(
         self,
+        *,
         amount: Decimal,
         direction: Direction,
         instrument_name: str,
         limit_price: Decimal,
         max_fee: Decimal,
         nonce: Optional[int] = None,
-        signature_expiry_sec: int = INT64_MAX,
+        signature_expiry_sec: Optional[int] = None,
         is_atomic_signing: Optional[bool] = False,
-        label: str = '',
+        label: str = "",
         mmp: bool = False,
-        order_type: OrderType = 'limit',
+        order_type: OrderType = OrderType.limit,
         reduce_only: bool = False,
         reject_timestamp: int = INT64_MAX,
-        time_in_force: TimeInForce = 'gtc',
+        time_in_force: TimeInForce = TimeInForce.gtc,
         trigger_price: Optional[Decimal] = None,
         trigger_price_type: Optional[TriggerPriceType] = None,
         trigger_type: Optional[TriggerType] = None,
     ) -> PrivateOrderResultSchema:
         subaccount_id = self._subaccount.id
-        instrument = self._subaccount.markets.get_instrument(instrument_name=instrument_name)
+
+        instrument = self._subaccount.markets.get_cached_instrument(instrument_name=instrument_name)
+        asset_address = instrument.base_asset_address
+        sub_id = int(instrument.base_asset_sub_id)
 
         amount = amount.quantize(instrument.amount_step)
         limit_price = limit_price.quantize(instrument.tick_size)
 
         is_bid = direction == Direction.buy
         module_data = TradeModuleData(
-            asset_address=instrument.base_asset_address,
-            sub_id=int(instrument.base_asset_sub_id),
+            asset_address=asset_address,
+            sub_id=sub_id,
             limit_price=limit_price,
             amount=amount,
             max_fee=max_fee,
@@ -98,20 +102,16 @@ class OrderOperations:
             signature_expiry_sec=signature_expiry_sec,
         )
 
-        signer = signed_action.signer
-        signature = signed_action.signature
-        nonce = signed_action.nonce
-
         params = PrivateOrderParamsSchema(
             amount=amount,
             direction=direction,
             instrument_name=instrument_name,
             limit_price=limit_price,
             max_fee=max_fee,
-            nonce=nonce,
-            signature=signature,
-            signature_expiry_sec=signature_expiry_sec,
-            signer=signer,
+            nonce=signed_action.nonce,
+            signature=signed_action.signature,
+            signature_expiry_sec=signed_action.signature_expiry_sec,
+            signer=signed_action.signer,
             subaccount_id=subaccount_id,
             is_atomic_signing=is_atomic_signing,
             label=label,
@@ -127,7 +127,7 @@ class OrderOperations:
         response = self._subaccount._private_api.order(params)
         return response.result
 
-    def get(self, order_id: str) -> PrivateGetOrderResultSchema:
+    def get(self, *, order_id: str) -> PrivateGetOrderResultSchema:
         subaccount_id = self._subaccount.id
         params = PrivateGetOrderParamsSchema(
             order_id=order_id,
@@ -138,6 +138,7 @@ class OrderOperations:
 
     def list(
         self,
+        *,
         instrument_name: Optional[str] = None,
         label: Optional[str] = None,
         page: int = 1,
@@ -160,7 +161,7 @@ class OrderOperations:
         response = self._subaccount._private_api.get_open_orders(params)
         return response.result
 
-    def cancel(self, instrument_name: str, order_id: str) -> PrivateCancelResultSchema:
+    def cancel(self, *, instrument_name: str, order_id: str) -> PrivateCancelResultSchema:
         params = PrivateCancelParamsSchema(
             instrument_name=instrument_name,
             order_id=order_id,
@@ -169,7 +170,7 @@ class OrderOperations:
         response = self._subaccount._private_api.cancel(params)
         return response.result
 
-    def cancel_by_label(self, label: str, instrument_name: Optional[str] = None) -> PrivateCancelByLabelResultSchema:
+    def cancel_by_label(self, *, label: str, instrument_name: Optional[str] = None) -> PrivateCancelByLabelResultSchema:
         params = PrivateCancelByLabelParamsSchema(
             label=label,
             instrument_name=instrument_name,
@@ -178,7 +179,7 @@ class OrderOperations:
         response = self._subaccount._private_api.cancel_by_label(params)
         return response.result
 
-    def cancel_by_nonce(self, instrument_name: str, nonce: int) -> PrivateCancelByNonceResultSchema:
+    def cancel_by_nonce(self, *, instrument_name: str, nonce: int) -> PrivateCancelByNonceResultSchema:
         params = PrivateCancelByNonceParamsSchema(
             nonce=nonce,
             instrument_name=instrument_name,
@@ -188,7 +189,7 @@ class OrderOperations:
         response = self._subaccount._private_api.cancel_by_nonce(params)
         return response.result
 
-    def cancel_by_instrument(self, instrument_name: str) -> PrivateCancelByInstrumentResultSchema:
+    def cancel_by_instrument(self, *, instrument_name: str) -> PrivateCancelByInstrumentResultSchema:
         params = PrivateCancelByInstrumentParamsSchema(
             instrument_name=instrument_name,
             subaccount_id=self._subaccount.id,
@@ -203,23 +204,24 @@ class OrderOperations:
 
     def replace(
         self,
+        *,
         amount: Decimal,
         direction: Direction,
         instrument_name: str,
         limit_price: Decimal,
         max_fee: Decimal,
         nonce: Optional[int] = None,
-        signature_expiry_sec: int = INT64_MAX,
+        signature_expiry_sec: Optional[int] = None,
         expected_filled_amount: Optional[Decimal] = None,
         is_atomic_signing: Optional[bool] = False,
-        label: str = '',
+        label: str = "",
         mmp: bool = False,
         nonce_to_cancel: Optional[int] = None,
         order_id_to_cancel: Optional[str] = None,
-        order_type: OrderType = 'limit',
+        order_type: OrderType = OrderType.limit,
         reduce_only: bool = False,
         reject_timestamp: int = INT64_MAX,
-        time_in_force: TimeInForce = 'gtc',
+        time_in_force: TimeInForce = TimeInForce.gtc,
         trigger_price: Optional[Decimal] = None,
         trigger_price_type: Optional[TriggerPriceType] = None,
         trigger_type: Optional[TriggerType] = None,
@@ -228,12 +230,15 @@ class OrderOperations:
             raise ValueError("Replace requires exactly one of nonce_to_cancel or order_id_to_cancel (but not both).")
 
         subaccount_id = self._subaccount.id
-        instrument = self._subaccount.markets.get_instrument(instrument_name=instrument_name)
+
+        instrument = self._subaccount.markets.get_cached_instrument(instrument_name=instrument_name)
+        asset_address = instrument.base_asset_address
+        sub_id = int(instrument.base_asset_sub_id)
 
         is_bid = direction == Direction.buy
         module_data = TradeModuleData(
-            asset_address=instrument.base_asset_address,
-            sub_id=int(instrument.base_asset_sub_id),
+            asset_address=asset_address,
+            sub_id=sub_id,
             limit_price=limit_price,
             amount=amount,
             max_fee=max_fee,
@@ -249,21 +254,17 @@ class OrderOperations:
             signature_expiry_sec=signature_expiry_sec,
         )
 
-        signer = signed_action.signer
-        signature = signed_action.signature
-        nonce = signed_action.nonce
-
         params = PrivateReplaceParamsSchema(
             amount=amount,
             direction=direction,
             instrument_name=instrument_name,
             limit_price=limit_price,
             max_fee=max_fee,
-            nonce=nonce,
-            signature=signature,
-            signature_expiry_sec=signature_expiry_sec,
+            nonce=signed_action.nonce,
+            signature=signed_action.signature,
+            signature_expiry_sec=signed_action.signature_expiry_sec,
             expected_filled_amount=expected_filled_amount,
-            signer=signer,
+            signer=signed_action.signer,
             subaccount_id=subaccount_id,
             is_atomic_signing=is_atomic_signing,
             label=label,

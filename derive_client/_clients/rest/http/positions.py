@@ -13,8 +13,7 @@ from derive_action_signing.module_data import (
     TransferPositionsDetails,
 )
 
-from derive_client._clients.utils import PositionTransfer
-from derive_client.constants import INT64_MAX
+from derive_client._clients.utils import PositionTransfer, sort_by_instrument_name
 from derive_client.data.generated.models import (
     Direction,
     LegPricedSchema,
@@ -53,37 +52,37 @@ class PositionOperations:
 
     def transfer(
         self,
+        *,
         amount: Decimal,
         instrument_name: str,
         to_subaccount: int,
-        signature_expiry_sec: int = INT64_MAX,
-        limit_price: Optional[Decimal] = None,
+        signature_expiry_sec: Optional[int] = None,
         maker_nonce: Optional[int] = None,
         taker_nonce: Optional[int] = None,
     ) -> PrivateTransferPositionResultSchema:
         """Transfer position to another subaccount"""
 
-        from_subaccount = self._subaccount.id  # maker_subaccount
-        max_fee = Decimal("0")  # Always 0 for transfers
+        from_subaccount = self._subaccount.id
+        max_fee = Decimal("0")
 
-        ticker = self._subaccount.markets.get_ticker(instrument_name=instrument_name)
-        limit_price = ticker.index_price.quantize(ticker.tick_size)
-        base_asset_address = ticker.base_asset_address
-        base_asset_sub_id = int(ticker.base_asset_sub_id)
+        instrument = self._subaccount.markets.get_cached_instrument(instrument_name=instrument_name)
+        limit_price = instrument.tick_size
+        asset_address = instrument.base_asset_address
+        sub_id = int(instrument.base_asset_sub_id)
 
         module_address = self._subaccount._config.contracts.TRADE_MODULE
 
         maker_module_data = MakerTransferPositionModuleData(
-            asset_address=base_asset_address,
-            sub_id=base_asset_sub_id,
+            asset_address=asset_address,
+            sub_id=sub_id,
             limit_price=limit_price,
             amount=abs(amount),
             recipient_id=from_subaccount,
             position_amount=amount,
         )
         taker_module_data = TakerTransferPositionModuleData(
-            asset_address=base_asset_address,
-            sub_id=base_asset_sub_id,
+            asset_address=asset_address,
+            sub_id=sub_id,
             limit_price=limit_price,
             amount=abs(amount),
             recipient_id=to_subaccount,
@@ -139,31 +138,31 @@ class PositionOperations:
 
     def transfer_batch(
         self,
+        *,
         positions: list[PositionTransfer],
         direction: Direction,
         to_subaccount: int,
-        signature_expiry_sec: int = INT64_MAX,
+        signature_expiry_sec: Optional[int] = None,
         maker_nonce: Optional[int] = None,
         taker_nonce: Optional[int] = None,
     ) -> PrivateTransferPositionsResultSchema:
         """Transfer multiple positions"""
 
-        from_subaccount = self._subaccount.id  # maker_subaccount
-        max_fee = Decimal("0")  # Always 0 for transfers
-
-        # Derive RPC -32602: Invalid params  [data=['Legs must be sorted by instrument name']]
-        positions.sort(key=lambda x: x.instrument_name)
+        from_subaccount = self._subaccount.id
+        positions = sort_by_instrument_name(positions)
+        max_fee = Decimal("0")
 
         legs = []
         transfer_details = []
         for position in positions:
             amount = abs(position.amount)
-            instrument_name = position.instrument_name
-            ticker = self._subaccount.markets.get_ticker(instrument_name)
-            price = ticker.index_price.quantize(ticker.tick_size)
-            base_asset_address = ticker.base_asset_address
-            base_asset_sub_id = ticker.base_asset_sub_id
             leg_direction = Direction.buy if position.amount < 0 else Direction.sell
+
+            instrument_name = position.instrument_name
+            instrument = self._subaccount.markets.get_cached_instrument(instrument_name=instrument_name)
+            price = instrument.tick_size
+            asset_address = instrument.base_asset_address
+            sub_id = int(instrument.base_asset_sub_id)
 
             priced_leg = LegPricedSchema(
                 amount=amount,
@@ -176,8 +175,8 @@ class PositionOperations:
             details = TransferPositionsDetails(
                 instrument_name=instrument_name,
                 direction=leg_direction,
-                asset_address=base_asset_address,
-                sub_id=int(base_asset_sub_id),
+                asset_address=asset_address,
+                sub_id=sub_id,
                 price=price,
                 amount=amount,
             )

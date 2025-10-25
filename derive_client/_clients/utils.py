@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import json
-import threading
 import time
 from dataclasses import dataclass
 from decimal import Decimal
 from enum import StrEnum
+from typing import TYPE_CHECKING, Iterable, Optional, Protocol, TypeVar
 
 import msgspec
 from derive_action_signing import ModuleData, SignedAction
@@ -15,8 +15,39 @@ from pydantic import BaseModel
 from web3 import AsyncWeb3, Web3
 
 from derive_client.constants import EnvConfig
-from derive_client.data.generated.models import RPCErrorFormatSchema
+from derive_client.data.generated.models import InstrumentPublicResponseSchema, InstrumentType, RPCErrorFormatSchema
 from derive_client.data_types import Address
+
+if TYPE_CHECKING:
+    from derive_client._clients.rest.http.markets import MarketOperations
+
+
+class HasInstrumentName(Protocol):
+    instrument_name: str
+
+
+T = TypeVar("T", bound=HasInstrumentName)
+
+
+def sort_by_instrument_name(items: Iterable[T]) -> list[T]:
+    """Derive API mandate: 'Legs must be sorted by instrument name'."""
+    return sorted(items, key=lambda item: item.instrument_name)
+
+
+def get_default_signature_expiry_sec() -> int:
+    """
+    Compute a conservative default signature_expiry_sec (Unix epoch seconds)
+
+    Rationale:
+    - RFQ send/execute docs require expiry >= 310 seconds from now and mark the quote
+      expired once time-to-expiry <= 300 seconds.
+    - We choose 330 seconds from current local time (310 + 20s margin) to cover:
+      - small local/server clock skew
+      - signing and network transmission latency
+      - brief processing/queue delays on client or server
+    """
+    utc_time_now_s = int(time.time())
+    return utc_time_now_s + 330
 
 
 @dataclass
@@ -25,7 +56,6 @@ class AuthContext:
     w3: Web3 | AsyncWeb3
     account: Account
     config: EnvConfig
-    nonce_generator: NonceGenerator
 
     @property
     def signer(self) -> Address:
@@ -43,12 +73,15 @@ class AuthContext:
         self,
         module_address: Address,
         module_data: ModuleData,
-        signature_expiry_sec: int,
         subaccount_id: int,
-        nonce: int | None = None,
+        signature_expiry_sec: Optional[int] = None,
+        nonce: Optional[int] = None,
     ) -> SignedAction:
         module_address = self.w3.to_checksum_address(module_address)
-        nonce = nonce if nonce is not None else self.nonce_generator.next()
+
+        nonce = nonce or time.time_ns()
+        signature_expiry_sec = signature_expiry_sec or get_default_signature_expiry_sec()
+
         action = SignedAction(
             subaccount_id=subaccount_id,
             owner=self.wallet,
@@ -136,50 +169,35 @@ def encode_json_exclude_none(obj: msgspec.Struct) -> bytes:
     return msgspec.json.encode(filtered)
 
 
-class NonceExhaustedError(Exception):
-    """Raised when nonce counter is exhausted within a millisecond."""
-
-
-class NonceGenerator:
-    """
-    Thread-safe nonce generator for Derive L2 trading.
-    Generates nonces as: <13-digit UTC ms timestamp><3-digit counter>
-    Guarantees up to 1000 unique nonces per millisecond.
-    """
-
-    def __init__(self):
-        self._lock = threading.Lock()
-        self._last_ms = 0
-        self._counter = 0
-
-    def next(self) -> int:
-        """
-        Generate a unique 16-digit nonce.
-        Format: <UTC timestamp in ms (13 digits)><counter (3 digits)>
-
-        Returns:
-            int: Unique nonce (e.g., 1695836058725001)
-        """
-        with self._lock:
-            utc_now_ms = time.time_ns() // 1_000_000
-            if utc_now_ms > self._last_ms:
-                self._last_ms = utc_now_ms
-                self._counter = 0
-            else:
-                if self._counter > 999:
-                    raise NonceExhaustedError(
-                        f"Exhausted 1000 nonces in millisecond {utc_now_ms}. "
-                        f"Cannot generate more than 1000 nonces per millisecond. "
-                        f"Consider rate limiting your requests."
-                    )
-                self._counter += 1
-
-        return utc_now_ms * 1000 + self._counter
-
-
 @dataclass
 class PositionTransfer:
     """Position to transfer between subaccounts."""
 
     instrument_name: str
     amount: Decimal  # Can be negative (sign indicates long/short)
+
+
+def fetch_all_pages_of_instrument_type(
+    markets: MarketOperations,
+    instrument_type: InstrumentType,
+    expired: bool,
+) -> list[InstrumentPublicResponseSchema]:
+    """Fetch all instruments of a type, handling pagination."""
+
+    page = 1
+    page_size = 1000
+    instruments = []
+
+    while True:
+        result = markets.get_all_instruments(
+            expired=expired,
+            instrument_type=instrument_type,
+            page=page,
+            page_size=page_size,
+        )
+        instruments.extend(result.instruments)
+        if page >= result.pagination.num_pages:
+            break
+        page += 1
+
+    return instruments
