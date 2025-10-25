@@ -201,3 +201,29 @@ def fetch_all_pages_of_instrument_type(
         page += 1
 
     return instruments
+
+
+async def async_fetch_all_pages_of_instrument_type(
+    markets: MarketOperations,
+    instrument_type: InstrumentType,
+    expired: bool,
+) -> list[InstrumentPublicResponseSchema]:
+    """Fetch all instruments of a type, handling pagination."""
+
+    page = 1
+    page_size = 1000
+    instruments = []
+
+    while True:
+        result = await markets.get_all_instruments(
+            expired=expired,
+            instrument_type=instrument_type,
+            page=page,
+            page_size=page_size,
+        )
+        instruments.extend(result.instruments)
+        if page >= result.pagination.num_pages:
+            break
+        page += 1
+
+    return instruments
