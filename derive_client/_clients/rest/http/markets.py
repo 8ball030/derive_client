@@ -112,7 +112,7 @@ class MarketOperations:
         instrument_type: InstrumentType,
         currency: Optional[str] = None,
         page: int = 1,
-        page_size: int = 1000,
+        page_size: int = 100,
     ) -> PublicGetAllInstrumentsResultSchema:
         params = PublicGetAllInstrumentsParamsSchema(
             expired=expired,

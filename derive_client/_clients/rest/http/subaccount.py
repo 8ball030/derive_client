@@ -165,7 +165,7 @@ class Subaccount:
         module_address: Address,
         module_data: ModuleData,
         signature_expiry_sec: Optional[int] = None,
-        nonce: Optional[int] = None,
+        nonce: Optional[int] | None = None,
     ) -> SignedAction:
         return self._auth.sign_action(
             nonce=nonce,
