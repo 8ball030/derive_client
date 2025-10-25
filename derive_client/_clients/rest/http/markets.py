@@ -26,7 +26,7 @@ from derive_client.data.generated.models import (
 class MarketOperations:
     """Market data queries."""
 
-    def __init__(self, public_api: PublicAPI):
+    def __init__(self, *, public_api: PublicAPI):
         """
         Initialize market data queries.
 
@@ -36,7 +36,7 @@ class MarketOperations:
         self._public_api = public_api
         self._active_instrument_cache: dict[str, InstrumentPublicResponseSchema] = {}
 
-    def fetch_instruments(self, expired: bool = False) -> dict[str, InstrumentPublicResponseSchema]:
+    def fetch_instruments(self, *, expired: bool = False) -> dict[str, InstrumentPublicResponseSchema]:
         """
         Fetch all instruments from API:
         - If expired == False (default): build cache of active instruments and replace persistent cache.
@@ -66,7 +66,7 @@ class MarketOperations:
     def cached_active_instruments(self) -> dict[str, InstrumentPublicResponseSchema]:
         return self._active_instrument_cache
 
-    def get_cached_instrument(self, instrument_name: str) -> InstrumentPublicResponseSchema:
+    def get_cached_instrument(self, *, instrument_name: str) -> InstrumentPublicResponseSchema:
         """Lookup an instrument from the active cache; avoids API calls in performance-critical paths."""
 
         if (instrument := self.cached_active_instruments.get(instrument_name)) is None:
@@ -77,7 +77,7 @@ class MarketOperations:
             )
         return instrument
 
-    def get_currency(self, currency: str) -> PublicGetCurrencyResultSchema:
+    def get_currency(self, *, currency: str) -> PublicGetCurrencyResultSchema:
         params = PublicGetCurrencyParamsSchema(currency=currency)
         response = self._public_api.get_currency(params)
         return response.result
@@ -87,13 +87,14 @@ class MarketOperations:
         response = self._public_api.get_all_currencies(params)
         return response.result
 
-    def get_instrument(self, instrument_name: str) -> PublicGetInstrumentResultSchema:
+    def get_instrument(self, *, instrument_name: str) -> PublicGetInstrumentResultSchema:
         params = PublicGetInstrumentParamsSchema(instrument_name=instrument_name)
         response = self._public_api.get_instrument(params)
         return response.result
 
     def get_instruments(
         self,
+        *,
         currency: str,
         expired: bool,
         instrument_type: InstrumentType,
@@ -108,6 +109,7 @@ class MarketOperations:
 
     def get_all_instruments(
         self,
+        *,
         expired: bool,
         instrument_type: InstrumentType,
         currency: Optional[str] = None,
@@ -124,13 +126,14 @@ class MarketOperations:
         response = self._public_api.get_all_instruments(params)
         return response.result
 
-    def get_ticker(self, instrument_name: str) -> PublicGetTickerResultSchema:
+    def get_ticker(self, *, instrument_name: str) -> PublicGetTickerResultSchema:
         params = PublicGetTickerParamsSchema(instrument_name=instrument_name)
         response = self._public_api.get_ticker(params)
         return response.result
 
     def get_all_tickers(
         self,
+        *,
         currency: str,
         expired: bool,
         instrument_type: InstrumentType,

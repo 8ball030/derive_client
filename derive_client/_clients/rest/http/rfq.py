@@ -51,7 +51,7 @@ if TYPE_CHECKING:
 class RFQOperations:
     """High-level RFQ management operations."""
 
-    def __init__(self, subaccount: Subaccount):
+    def __init__(self, *, subaccount: Subaccount):
         """
         Initialize order operations.
 
@@ -62,6 +62,7 @@ class RFQOperations:
 
     def send_rfq(
         self,
+        *,
         legs: list[LegUnpricedSchema],
         counterparties: Optional[list[str]] = None,
         label: str = "",
@@ -86,6 +87,7 @@ class RFQOperations:
 
     def get_rfqs(
         self,
+        *,
         page: int = 1,
         page_size: int = 100,
         rfq_id: Optional[str] = None,
@@ -106,7 +108,7 @@ class RFQOperations:
         response = self._subaccount._private_api.get_rfqs(params)
         return response.result
 
-    def cancel_rfq(self, rfq_id: str) -> Result:
+    def cancel_rfq(self, *, rfq_id: str) -> Result:
         subaccount_id = self._subaccount.id
         params = PrivateCancelRfqParamsSchema(rfq_id=rfq_id, subaccount_id=subaccount_id)
         response = self._subaccount._private_api.cancel_rfq(params)
@@ -114,6 +116,7 @@ class RFQOperations:
 
     def cancel_batch_rfqs(
         self,
+        *,
         label: Optional[str] = None,
         nonce: Optional[int] = None,
         rfq_id: Optional[str] = None,
@@ -130,6 +133,7 @@ class RFQOperations:
 
     def poll_rfqs(
         self,
+        *,
         from_timestamp: int = 0,
         page: int = 1,
         page_size: int = 100,
@@ -155,6 +159,7 @@ class RFQOperations:
 
     def send_quote(
         self,
+        *,
         direction: Direction,
         legs: list[LegPricedSchema],
         max_fee: Decimal,
@@ -225,6 +230,7 @@ class RFQOperations:
 
     def cancel_batch_quotes(
         self,
+        *,
         label: Optional[str] = None,
         nonce: Optional[int] = None,
         quote_id: Optional[str] = None,
@@ -243,6 +249,7 @@ class RFQOperations:
 
     def get_quotes(
         self,
+        *,
         from_timestamp: int = 0,
         page: int = 1,
         page_size: int = 100,
@@ -267,6 +274,7 @@ class RFQOperations:
 
     def poll_quotes(
         self,
+        *,
         from_timestamp: int = 0,
         page: int = 1,
         page_size: int = 100,
@@ -291,6 +299,7 @@ class RFQOperations:
 
     def execute_quote(
         self,
+        *,
         direction: Direction,
         legs: list[LegPricedSchema],
         max_fee: Decimal,

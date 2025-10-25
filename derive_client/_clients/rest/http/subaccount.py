@@ -28,6 +28,7 @@ class Subaccount:
 
     def __init__(
         self,
+        *,
         subaccount_id: int,
         auth: AuthContext,
         config: EnvConfig,
@@ -57,16 +58,17 @@ class Subaccount:
         self._public_api = public_api
         self._private_api = private_api
 
-        self._transactions = TransactionOperations(self)
-        self._orders = OrderOperations(self)
-        self._positions = PositionOperations(self)
-        self._rfq = RFQOperations(self)
+        self._transactions = TransactionOperations(subaccount=self)
+        self._orders = OrderOperations(subaccount=self)
+        self._positions = PositionOperations(subaccount=self)
+        self._rfq = RFQOperations(subaccount=self)
 
         self._state: PrivateGetSubaccountResultSchema | None = _state
 
     @classmethod
     def from_api(
         cls,
+        *,
         subaccount_id: int,
         auth: AuthContext,
         config: EnvConfig,
@@ -162,6 +164,7 @@ class Subaccount:
 
     def sign_action(
         self,
+        *,
         module_address: Address,
         module_data: ModuleData,
         signature_expiry_sec: Optional[int] = None,

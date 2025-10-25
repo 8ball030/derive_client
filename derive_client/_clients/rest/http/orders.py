@@ -55,6 +55,7 @@ class OrderOperations:
 
     def create(
         self,
+        *,
         amount: Decimal,
         direction: Direction,
         instrument_name: str,
@@ -126,7 +127,7 @@ class OrderOperations:
         response = self._subaccount._private_api.order(params)
         return response.result
 
-    def get(self, order_id: str) -> PrivateGetOrderResultSchema:
+    def get(self, *, order_id: str) -> PrivateGetOrderResultSchema:
         subaccount_id = self._subaccount.id
         params = PrivateGetOrderParamsSchema(
             order_id=order_id,
@@ -137,6 +138,7 @@ class OrderOperations:
 
     def list(
         self,
+        *,
         instrument_name: Optional[str] = None,
         label: Optional[str] = None,
         page: int = 1,
@@ -159,7 +161,7 @@ class OrderOperations:
         response = self._subaccount._private_api.get_open_orders(params)
         return response.result
 
-    def cancel(self, instrument_name: str, order_id: str) -> PrivateCancelResultSchema:
+    def cancel(self, *, instrument_name: str, order_id: str) -> PrivateCancelResultSchema:
         params = PrivateCancelParamsSchema(
             instrument_name=instrument_name,
             order_id=order_id,
@@ -168,7 +170,7 @@ class OrderOperations:
         response = self._subaccount._private_api.cancel(params)
         return response.result
 
-    def cancel_by_label(self, label: str, instrument_name: Optional[str] = None) -> PrivateCancelByLabelResultSchema:
+    def cancel_by_label(self, *, label: str, instrument_name: Optional[str] = None) -> PrivateCancelByLabelResultSchema:
         params = PrivateCancelByLabelParamsSchema(
             label=label,
             instrument_name=instrument_name,
@@ -177,7 +179,7 @@ class OrderOperations:
         response = self._subaccount._private_api.cancel_by_label(params)
         return response.result
 
-    def cancel_by_nonce(self, instrument_name: str, nonce: int) -> PrivateCancelByNonceResultSchema:
+    def cancel_by_nonce(self, *, instrument_name: str, nonce: int) -> PrivateCancelByNonceResultSchema:
         params = PrivateCancelByNonceParamsSchema(
             nonce=nonce,
             instrument_name=instrument_name,
@@ -187,7 +189,7 @@ class OrderOperations:
         response = self._subaccount._private_api.cancel_by_nonce(params)
         return response.result
 
-    def cancel_by_instrument(self, instrument_name: str) -> PrivateCancelByInstrumentResultSchema:
+    def cancel_by_instrument(self, *, instrument_name: str) -> PrivateCancelByInstrumentResultSchema:
         params = PrivateCancelByInstrumentParamsSchema(
             instrument_name=instrument_name,
             subaccount_id=self._subaccount.id,
@@ -202,6 +204,7 @@ class OrderOperations:
 
     def replace(
         self,
+        *,
         amount: Decimal,
         direction: Direction,
         instrument_name: str,

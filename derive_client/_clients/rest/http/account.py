@@ -40,6 +40,7 @@ class LightAccount:
 
     def __init__(
         self,
+        *,
         auth: AuthContext,
         config: EnvConfig,
         logger: Logger,
@@ -67,6 +68,7 @@ class LightAccount:
     @classmethod
     def from_api(
         cls,
+        *,
         auth: AuthContext,
         config: EnvConfig,
         logger: Logger,
@@ -123,6 +125,7 @@ class LightAccount:
 
     def build_register_session_key_tx(
         self,
+        *,
         expiry_sec: int,
         public_session_key: str,
         gas: Optional[int] = None,
@@ -145,6 +148,7 @@ class LightAccount:
 
     def register_session_key(
         self,
+        *,
         expiry_sec: int,
         label: str,
         public_session_key: str,
@@ -167,6 +171,7 @@ class LightAccount:
 
     def deregister_session_key(
         self,
+        *,
         public_session_key: str,
         signed_raw_tx: str,
     ) -> PublicDeregisterSessionKeyResultSchema:
@@ -187,6 +192,7 @@ class LightAccount:
 
     def register_scoped_session_key(
         self,
+        *,
         expiry_sec: int,
         public_session_key: str,
         ip_whitelist: Optional[list[str]] = None,
@@ -213,6 +219,7 @@ class LightAccount:
 
     def edit_session_key(
         self,
+        *,
         public_session_key: str,
         disable: bool = False,
         ip_whitelist: Optional[list[str]] = None,
@@ -235,6 +242,7 @@ class LightAccount:
 
     def create_subaccount(
         self,
+        *,
         amount: Decimal = Decimal("0"),
         asset_name: str = "USDC",
         margin_type: MarginType = MarginType.SM,

@@ -52,6 +52,7 @@ class PositionOperations:
 
     def transfer(
         self,
+        *,
         amount: Decimal,
         instrument_name: str,
         to_subaccount: int,
@@ -137,6 +138,7 @@ class PositionOperations:
 
     def transfer_batch(
         self,
+        *,
         positions: list[PositionTransfer],
         direction: Direction,
         to_subaccount: int,
