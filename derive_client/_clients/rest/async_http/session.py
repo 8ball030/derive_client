@@ -8,8 +8,8 @@ from derive_client.constants import PUBLIC_HEADERS
 
 
 class AsyncHTTPSession:
-    def __init__(self):
-        self.default_timeout = 5
+    def __init__(self, request_timeout: float):
+        self._request_timeout = request_timeout
 
         self._connector: aiohttp.TCPConnector | None = None
         self._aiohttp_session: aiohttp.ClientSession | None = None
@@ -59,7 +59,7 @@ class AsyncHTTPSession:
     async def _send_request(
         self,
         url: str,
-        params: dict,
+        data: bytes,
         *,
         headers: dict | None = None,
         timeout: float | None = None,
@@ -67,14 +67,14 @@ class AsyncHTTPSession:
         await self.open()
 
         headers = headers or PUBLIC_HEADERS
-        total = timeout or self.default_timeout
+        total = timeout or self._request_timeout
         timeout = aiohttp.ClientTimeout(total=total)
 
         try:
-            async with self._aiohttp_session.post(url, json=params, headers=headers, timeout=timeout) as response:
+            async with self._aiohttp_session.post(url, data=data, headers=headers, timeout=timeout) as response:
                 response.raise_for_status()
                 try:
-                    return await response.json()
+                    return await response.content.read()
                 except Exception as e:
                     raise ValueError(f"Failed to decode JSON from {url}: {e}") from e
         except aiohttp.ClientError as e:
