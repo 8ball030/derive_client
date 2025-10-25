@@ -11,6 +11,7 @@ from derive_action_signing.module_data import (
     RFQQuoteModuleData,
 )
 
+from derive_client._clients.utils import sort_by_instrument_name
 from derive_client.data.generated.models import (
     Direction,
     LegPricedSchema,
@@ -68,7 +69,7 @@ class RFQOperations:
         partial_fill_step: Decimal = '1',
     ) -> PrivateSendRfqResultSchema:
         subaccount_id = self._subaccount.id
-        legs.sort(key=lambda x: x.instrument_name)
+        legs = sort_by_instrument_name(legs)
 
         params = PrivateSendRfqParamsSchema(
             legs=legs,
@@ -163,7 +164,7 @@ class RFQOperations:
         mmp: bool = False,
     ) -> PrivateSendQuoteResultSchema:
         subaccount_id = self._subaccount.id
-        legs.sort(key=lambda x: x.instrument_name)
+        legs = sort_by_instrument_name(legs)
 
         module_address = self._subaccount._config.contracts.RFQ_MODULE
 
@@ -299,7 +300,7 @@ class RFQOperations:
         label: str = '',
     ) -> PrivateExecuteQuoteResultSchema:
         subaccount_id = self._subaccount.id
-        legs.sort(key=lambda x: x.instrument_name)
+        legs = sort_by_instrument_name(legs)
 
         module_address = self._subaccount._config.contracts.RFQ_MODULE
 
@@ -360,6 +361,7 @@ class RFQOperations:
         rfq_id: Optional[str] = None,
     ) -> PrivateRfqGetBestQuoteResultSchema:
         subaccount_id = self._subaccount.id
+        legs = sort_by_instrument_name(legs)
 
         params = PrivateRfqGetBestQuoteParamsSchema(
             legs=legs,

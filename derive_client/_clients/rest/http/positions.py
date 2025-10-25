@@ -13,8 +13,7 @@ from derive_action_signing.module_data import (
     TransferPositionsDetails,
 )
 
-from derive_client._clients.utils import PositionTransfer
-from derive_client.constants import INT64_MAX
+from derive_client._clients.utils import PositionTransfer, sort_by_instrument_name
 from derive_client.data.generated.models import (
     Direction,
     LegPricedSchema,
@@ -149,10 +148,8 @@ class PositionOperations:
         """Transfer multiple positions"""
 
         from_subaccount = self._subaccount.id
+        positions = sort_by_instrument_name(positions)
         max_fee = Decimal("0")
-
-        # Legs must be sorted by instrument name
-        positions.sort(key=lambda x: x.instrument_name)
 
         legs = []
         transfer_details = []

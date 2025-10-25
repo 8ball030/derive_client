@@ -5,7 +5,7 @@ import time
 from dataclasses import dataclass
 from decimal import Decimal
 from enum import StrEnum
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Iterable, Optional, Protocol, TypeVar
 
 import msgspec
 from derive_action_signing import ModuleData, SignedAction
@@ -20,6 +20,18 @@ from derive_client.data_types import Address
 
 if TYPE_CHECKING:
     from derive_client._clients.rest.http.markets import MarketOperations
+
+
+class HasInstrumentName(Protocol):
+    instrument_name: str
+
+
+T = TypeVar("T", bound=HasInstrumentName)
+
+
+def sort_by_instrument_name(items: Iterable[T]) -> list[T]:
+    """Derive API mandate: 'Legs must be sorted by instrument name'."""
+    return sorted(items, key=lambda item: item.instrument_name)
 
 
 def get_default_signature_expiry_sec() -> int:
