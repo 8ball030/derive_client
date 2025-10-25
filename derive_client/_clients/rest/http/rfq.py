@@ -12,6 +12,7 @@ from derive_action_signing.module_data import (
 )
 
 from derive_client._clients.utils import sort_by_instrument_name
+from derive_client.constants import UINT64_MAX
 from derive_client.data.generated.models import (
     Direction,
     LegPricedSchema,
@@ -63,10 +64,10 @@ class RFQOperations:
         self,
         legs: list[LegUnpricedSchema],
         counterparties: Optional[list[str]] = None,
-        label: str = '',
+        label: str = "",
         max_total_cost: Optional[Decimal] = None,
         min_total_cost: Optional[Decimal] = None,
-        partial_fill_step: Decimal = '1',
+        partial_fill_step: Decimal = Decimal("1"),
     ) -> PrivateSendRfqResultSchema:
         subaccount_id = self._subaccount.id
         legs = sort_by_instrument_name(legs)
@@ -90,7 +91,7 @@ class RFQOperations:
         rfq_id: Optional[str] = None,
         status: Optional[Status] = None,
         from_timestamp: int = 0,
-        to_timestamp: int = 18446744073709552000,
+        to_timestamp: int = UINT64_MAX,
     ) -> PrivateGetRfqsResultSchema:
         subaccount_id = self._subaccount.id
         params = PrivateGetRfqsParamsSchema(
@@ -135,7 +136,7 @@ class RFQOperations:
         rfq_id: Optional[str] = None,
         rfq_subaccount_id: Optional[int] = None,
         status: Optional[Status] = None,
-        to_timestamp: int = 18446744073709552000,
+        to_timestamp: int = UINT64_MAX,
     ) -> PrivatePollRfqsResultSchema:
         # requires authorization: Unauthorized as RFQ maker
         subaccount_id = self._subaccount.id
@@ -160,7 +161,7 @@ class RFQOperations:
         rfq_id: str,
         signature_expiry_sec: Optional[int] = None,
         nonce: Optional[int] = None,
-        label: str = '',
+        label: str = "",
         mmp: bool = False,
     ) -> PrivateSendQuoteResultSchema:
         subaccount_id = self._subaccount.id
@@ -248,7 +249,7 @@ class RFQOperations:
         quote_id: Optional[str] = None,
         rfq_id: Optional[str] = None,
         status: Optional[Status] = None,
-        to_timestamp: int = 18446744073709552000,
+        to_timestamp: int = UINT64_MAX,
     ) -> PrivateGetQuotesResultSchema:
         subaccount_id = self._subaccount.id
         params = PrivateGetQuotesParamsSchema(
@@ -272,7 +273,7 @@ class RFQOperations:
         quote_id: Optional[str] = None,
         rfq_id: Optional[str] = None,
         status: Optional[Status] = None,
-        to_timestamp: int = 18446744073709552000,
+        to_timestamp: int = UINT64_MAX,
     ) -> PrivatePollQuotesResultSchema:
         subaccount_id = self._subaccount.id
         params = PrivatePollQuotesParamsSchema(
@@ -295,9 +296,9 @@ class RFQOperations:
         max_fee: Decimal,
         quote_id: str,
         rfq_id: str,
+        label: str = "",
         signature_expiry_sec: Optional[int] = None,
         nonce: Optional[int] = None,
-        label: str = '',
     ) -> PrivateExecuteQuoteResultSchema:
         subaccount_id = self._subaccount.id
         legs = sort_by_instrument_name(legs)
@@ -352,13 +353,13 @@ class RFQOperations:
     def get_best_quote(
         self,
         legs: list[LegUnpricedSchema],
+        direction: Direction = Direction.buy,
+        rfq_id: Optional[str] = None,
+        label: str = "",
         counterparties: Optional[list[str]] = None,
-        direction: Direction = 'buy',
-        label: str = '',
         max_total_cost: Optional[Decimal] = None,
         min_total_cost: Optional[Decimal] = None,
-        partial_fill_step: Decimal = '1',
-        rfq_id: Optional[str] = None,
+        partial_fill_step: Decimal = Decimal("1"),
     ) -> PrivateRfqGetBestQuoteResultSchema:
         subaccount_id = self._subaccount.id
         legs = sort_by_instrument_name(legs)

@@ -56,7 +56,6 @@ class PositionOperations:
         instrument_name: str,
         to_subaccount: int,
         signature_expiry_sec: Optional[int] = None,
-        limit_price: Optional[Decimal] = None,
         maker_nonce: Optional[int] = None,
         taker_nonce: Optional[int] = None,
     ) -> PrivateTransferPositionResultSchema:
