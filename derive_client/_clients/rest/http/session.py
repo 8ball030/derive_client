@@ -11,8 +11,8 @@ from derive_client._clients.logger import logger
 class HTTPSession:
     """HTTP session."""
 
-    def __init__(self):
-        self.default_timeout = 5
+    def __init__(self, request_timeout: float):
+        self._request_timeout = request_timeout
 
         self._requests_session: requests.Session | None = None
         self._finalizer = weakref.finalize(self, self._finalize)
@@ -59,11 +59,10 @@ class HTTPSession:
         data: bytes,
         *,
         headers: dict | None = None,
-        timeout: float | None = None,
     ) -> bytes:
         self.open()
 
-        timeout = timeout or self.default_timeout
+        timeout = self._request_timeout
 
         try:
             response = self._requests_session.post(url, data=data, headers=headers, timeout=timeout)

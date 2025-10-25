@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import contextlib
 from logging import Logger
+from typing import Generator
 
 from pydantic import validate_call
 from web3 import Web3
@@ -30,11 +32,13 @@ class HTTPClient:
     @validate_call(config=dict(arbitrary_types_allowed=True))
     def __init__(
         self,
+        *,
         wallet: Address,
         session_key: str,
         subaccount_id: int,
         env: Environment,
         logger: Logger | None = None,
+        request_timeout: float = 10.0,
     ):
         config = CONFIGS[env]
         w3 = Web3(Web3.HTTPProvider(config.rpc_endpoint))
@@ -51,7 +55,7 @@ class HTTPClient:
         self._config = config
         self._subaccount_id = subaccount_id
 
-        self._session = HTTPSession()
+        self._session = HTTPSession(request_timeout=request_timeout)
         self._logger = logger if logger is not None else get_logger()
 
         self._public_api = PublicAPI(session=self._session, config=config)
@@ -153,6 +157,17 @@ class HTTPClient:
     @property
     def rfq(self) -> RFQOperations:
         return self.active_subaccount.rfq
+
+    @contextlib.contextmanager
+    def timeout(self, seconds: float) -> Generator[None, None, None]:
+        """Temporarily overwrite client's HTTPSession's request_timeout."""
+
+        prev = self._session._request_timeout
+        try:
+            self._session._request_timeout = float(seconds)
+            yield
+        finally:
+            self._session._request_timeout = prev
 
     def __enter__(self):
         self._session.__enter__()
