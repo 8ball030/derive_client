@@ -11,6 +11,7 @@ from web3 import AsyncWeb3
 from derive_client._clients.rest.async_http.account import LightAccount
 from derive_client._clients.rest.async_http.api import AsyncPrivateAPI, AsyncPublicAPI
 from derive_client._clients.rest.async_http.markets import MarketOperations
+from derive_client._clients.rest.async_http.mmp import MMPOperations
 from derive_client._clients.rest.async_http.orders import OrderOperations
 from derive_client._clients.rest.async_http.positions import PositionOperations
 from derive_client._clients.rest.async_http.rfq import RFQOperations
@@ -168,6 +169,10 @@ class AsyncHTTPClient:
     @property
     def rfq(self) -> RFQOperations:
         return self.active_subaccount.rfq
+
+    @property
+    def mmp(self) -> MMPOperations:
+        return self.active_subaccount.mmp
 
     @contextlib.asynccontextmanager
     async def timeout(self, seconds: float) -> AsyncGenerator[None, None]:
