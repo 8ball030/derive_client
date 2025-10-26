@@ -41,11 +41,12 @@ mkdocs-material-extensions = "^1.0.3"
 mkdocs-autorefs = "^0.4.1"
 ruff = "^0.13.0"
 datamodel-code-generator = "^0.34.0"
+libcst = "^1.8.5"
+pytest-asyncio = "<1.0.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
 
 [tool.ruff]
 line-length = 120
@@ -72,11 +73,11 @@ select = [
   "F",   # pyflakes
   "I",   # isort
   "SIM", # flake8-simplify
-#  "B",   # flake8-bugbear
-#  "UP",  # pyupgrade
-#  "C4",  # flake8-comprehensions
-#  "PT",  # flake8-pytest-style (if you use pytest)
-#  "RUF", # Ruff-specific rules
+  #  "B",   # flake8-bugbear
+  #  "UP",  # pyupgrade
+  #  "C4",  # flake8-comprehensions
+  #  "PT",  # flake8-pytest-style (if you use pytest)
+  #  "RUF", # Ruff-specific rules
 ]
 ignore = ["E501"]
 
@@ -89,4 +90,3 @@ line-ending = "auto"
 quote-style = "preserve"
 indent-style = "space"
 skip-magic-trailing-comma = false
-
