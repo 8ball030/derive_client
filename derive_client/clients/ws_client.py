@@ -19,6 +19,7 @@ from derive_client.data.generated.models import (
     Direction,
     OrderResponseSchema,
     PrivateGetOrdersResultSchema,
+    PrivateGetPositionsResultSchema,
     PrivateOrderParamsSchema,
     PublicGetTickerResultSchema,
     TradeResponseSchema,
@@ -51,106 +52,6 @@ class Orderbook:
         )
 
 
-@dataclass
-class Position:
-    """
-    {'instrument_type': 'perp', 'instrument_name': 'ETH-PERP', 'amount': '0', 'average_price': '0', 'realized_pnl': '0',
-      'unrealized_pnl': '0', 'total_fees': '0', 'average_price_excl_fees': '0', 'realized_pnl_excl_fees': '0', 'unrealized_pnl_excl_fees': '0',
-      'net_settlements': '0', 'cumulative_funding': '0', 'pending_funding': '0', 'mark_price': '4153.1395224770267304847948253154754638671875',
-        'index_price': '4156.522924638571', 'delta': '1', 'gamma': '0', 'vega': '0', 'theta': '0', 'mark_value': '0', 'maintenance_margin': '0',
-          'initial_margin': '0', 'open_orders_margin': '-81.7268423838896751476568169891834259033203125', 'leverage': None, 'liquidation_price': None,
-            'creation_timestamp': 0, 'amount_step': '0'}
-    """
-
-    instrument_type: str | None = None
-    instrument_name: str | None = None
-    amount: float | None = None
-    average_price: float | None = None
-    realized_pnl: float | None = None
-    unrealized_pnl: float | None = None
-    total_fees: float | None = None
-    average_price_excl_fees: float | None = None
-    realized_pnl_excl_fees: float | None = None
-    unrealized_pnl_excl_fees: float | None = None
-    net_settlements: float | None = None
-    cumulative_funding: float | None = None
-    pending_funding: float | None = None
-    mark_price: float | None = None
-    index_price: float | None = None
-    delta: float | None = None
-    gamma: float | None = None
-    vega: float | None = None
-    theta: float | None = None
-    mark_value: float | None = None
-    maintenance_margin: float | None = None
-    initial_margin: float | None = None
-    open_orders_margin: float | None = None
-    leverage: float | None = None
-    liquidation_price: float | None = None
-    creation_timestamp: int | None = None
-    amount_step: float | None = None
-
-    @classmethod
-    def from_json(cls, data):
-        return cls(
-            instrument_type=data.get("instrument_type"),
-            instrument_name=data.get("instrument_name"),
-            amount=float(data.get("amount", 0)) if data.get("amount") is not None else None,
-            average_price=float(data.get("average_price", 0)) if data.get("average_price") is not None else None,
-            realized_pnl=float(data.get("realized_pnl", 0)) if data.get("realized_pnl") is not None else None,
-            unrealized_pnl=float(data.get("unrealized_pnl", 0)) if data.get("unrealized_pnl") is not None else None,
-            total_fees=float(data.get("total_fees", 0)) if data.get("total_fees") is not None else None,
-            average_price_excl_fees=float(data.get("average_price_excl_fees", 0))
-            if data.get("average_price_excl_fees") is not None
-            else None,
-            realized_pnl_excl_fees=float(data.get("realized_pnl_excl_fees", 0))
-            if data.get("realized_pnl_excl_fees") is not None
-            else None,
-            unrealized_pnl_excl_fees=float(data.get("unrealized_pnl_excl_fees", 0))
-            if data.get("unrealized_pnl_excl_fees") is not None
-            else None,
-            net_settlements=float(data.get("net_settlements", 0)) if data.get("net_settlements") is not None else None,
-            cumulative_funding=float(data.get("cumulative_funding", 0))
-            if data.get("cumulative_funding") is not None
-            else None,
-            pending_funding=float(data.get("pending_funding", 0)) if data.get("pending_funding") is not None else None,
-            mark_price=float(data.get("mark_price", 0)) if data.get("mark_price") is not None else None,
-            index_price=float(data.get("index_price", 0)) if data.get("index_price") is not None else None,
-            delta=float(data.get("delta", 0)) if data.get("delta") is not None else None,
-            gamma=float(data.get("gamma", 0)) if data.get("gamma") is not None else None,
-            vega=float(data.get("vega", 0)) if data.get("vega") is not None else None,
-            theta=float(data.get("theta", 0)) if data.get("theta") is not None else None,
-            mark_value=float(data.get("mark_value", 0)) if data.get("mark_value") is not None else None,
-            maintenance_margin=float(data.get("maintenance_margin", 0))
-            if data.get("maintenance_margin") is not None
-            else None,
-            initial_margin=float(data.get("initial_margin", 0)) if data.get("initial_margin") is not None else None,
-            open_orders_margin=float(data.get("open_orders_margin", 0))
-            if data.get("open_orders_margin") is not None
-            else None,
-            leverage=float(data.get("leverage")) if data.get("leverage") is not None else None,
-            liquidation_price=float(data.get("liquidation_price"))
-            if data.get("liquidation_price") is not None
-            else None,
-            creation_timestamp=int(data.get("creation_timestamp", 0))
-            if data.get("creation_timestamp") is not None
-            else None,
-            amount_step=float(data.get("amount_step", 0)) if data.get("amount_step") is not None else None,
-        )
-
-
-@dataclass
-class Positions:
-    positions: list[Position]
-    subaccount_id: str
-
-    @classmethod
-    def from_json(cls, data):
-        return cls(
-            positions=[Position.from_json(pos) for pos in data],
-            subaccount_id=data["subaccount_id"],
-        )
-
 
 class Depth(StrEnum):
     DEPTH_1 = "1"
@@ -170,7 +71,7 @@ class Interval(StrEnum):
     ONE_SECOND = "1000"
 
 
-class WsClient(BaseClient):
+class WsClient():
     """Websocket client class."""
 
     _ws: ClientConnection | None = None
@@ -319,13 +220,31 @@ class WsClient(BaseClient):
         """
         msg = f"ticker.{instrument_name}.{interval}"
         self.ws.send(json.dumps({"method": "subscribe", "params": {"channels": [msg]}, "id": str(utc_now_ms())}))
-        self.subsriptions[msg] = self._parse_ticker_stream
+        self.subsriptions[msg] = self._parse_ticker
 
-    def _parse_ticker_stream(self, json_message):
+    def get_positions(self):
+        """
+        Get positions
+        """
+        id = str(uuid.uuid4())
+        payload = {"subaccount_id": self.subaccount_id}
+        self.ws.send(json.dumps({"method": "private/get_positions", "params": payload, "id": id}))
+        self.requests_in_flight[id] = self._parse_positions_response
+
+    def get_orders(self):
+        """
+        Get orders
+        """
+        id = str(uuid.uuid4())
+        payload = {"subaccount_id": self.subaccount_id}
+        self.ws.send(json.dumps({"method": "private/get_open_orders", "params": payload, "id": id}))
+        self.requests_in_flight[id] = self._parse_orders_message
+
+    def _parse_ticker(self, json_message):
         """
         Parse a ticker message.
         """
-        return PublicGetTickerResultSchema(**json_message["params"]["data"])
+        return msgspec.convert(json_message["params"]["data"]['instrument_ticker'], PublicGetTickerResultSchema)
 
     def _parse_orderbook_message(self, json_message):
         """
@@ -337,7 +256,7 @@ class WsClient(BaseClient):
         """
         Parse a trades message.
         """
-        return TradeResponseSchema.from_json(json_message["params"]["data"])
+        return msgspec.convert(json_message["params"]["data"], TradeResponseSchema)
 
     def _parse_order_message(self, json_message):
         """
@@ -365,32 +284,12 @@ class WsClient(BaseClient):
         """
         return msgspec.convert(json_message['result'], PrivateGetOrdersResultSchema)
 
-    def get_positions(self):
-        """
-        Get positions
-        """
-        id = str(uuid.uuid4())
-        payload = {"subaccount_id": self.subaccount_id}
-        self.ws.send(json.dumps({"method": "private/get_positions", "params": payload, "id": id}))
-        self.requests_in_flight[id] = self._parse_positions_response
-
-    def get_orders(self):
-        """
-        Get orders
-        """
-        id = str(uuid.uuid4())
-        payload = {"subaccount_id": self.subaccount_id}
-        self.ws.send(json.dumps({"method": "private/get_open_orders", "params": payload, "id": id}))
-        self.requests_in_flight[id] = self._parse_orders_message
 
     def _parse_positions_response(self, json_message):
         """
         Parse a positions response message.
         """
-        return Positions(
-            [Position.from_json(pos) for pos in json_message["result"]["positions"]],
-            subaccount_id=json_message["result"]["subaccount_id"],
-        )
+        return msgspec.convert(json_message['result'], PrivateGetPositionsResultSchema)
 
     def parse_message(self, raw_message):
         """

@@ -3,6 +3,7 @@ Simple trading class for the websocket client.
 """
 
 import os
+import traceback
 
 from dotenv import load_dotenv
 from websockets import ConnectionClosedError
@@ -10,13 +11,11 @@ from websockets import ConnectionClosedError
 from derive_client.clients.ws_client import (
     Orderbook,
     OrderResponseSchema,
-    Position,
-    Positions,
     PrivateGetOrdersResultSchema,
     TradeResponseSchema,
     WsClient,
 )
-from derive_client.data.generated.models import Direction, OrderStatus
+from derive_client.data.generated.models import Direction, OrderStatus, PrivateGetPositionsResultSchema, PositionResponseSchema, PrivateGetPositionsResponseSchema
 from derive_client.data_types import Environment
 from derive_client.data_types.enums import OrderSide, OrderType
 
@@ -30,8 +29,8 @@ SELL_OFFSET = 1.01
 class WebsocketQuoterStrategy:
     def __init__(self, ws_client: WsClient):
         self.ws_client = ws_client
-        self.current_positions: Positions | None = None
-        self.current_position: Position | None = None
+        self.current_positions: PrivateGetPositionsResponseSchema| None = None
+        self.current_position: PositionResponseSchema| None | bool = False
         self.orders = {
             Direction.buy: {},
             Direction.sell: {},
@@ -45,8 +44,10 @@ class WebsocketQuoterStrategy:
         if not orderbook.bids or not orderbook.asks:
             return
 
-        if not self.current_position:
+        if self.current_position is False:
             return
+
+        print(orderbook )
 
         bid_price = orderbook.bids[0][0] * BUY_OFFSET
         ask_price = orderbook.asks[0][0] * SELL_OFFSET
@@ -68,6 +69,9 @@ class WebsocketQuoterStrategy:
         ):
             self.create_order(Direction.sell, ask_price, QUOTE_SIZE)
 
+    def update_order_price(self, old_order_nonce: str, new_price: float):
+        pass
+
     def create_order(self, side: OrderSide, price: float, amount: float) -> OrderResponseSchema:
         order = self.ws_client.create_order(
             instrument_name=MARKET_1,
@@ -80,16 +84,22 @@ class WebsocketQuoterStrategy:
         print(f"{side.value} order placed: {order.nonce} at {price} for {amount}")
         return order
 
-    def on_position_update(self, positions: Positions):
+    def on_position_update(self, positions: PrivateGetPositionsResultSchema):
         self.current_positions = positions
         if not positions.positions:
-            self.current_position = Position(instrument_name=MARKET_1, amount=0)
+            self.current_position = None
+            print("No current position")
+
         else:
             _matches = [p for p in positions.positions if p.instrument_name == MARKET_1]
-            self.current_position = _matches[0] if _matches else Position(instrument_name=MARKET_1, amount=0)
+            if _matches:
+                self.current_position = _matches[0]
+                pos = self.current_position
+                print(f"Current position: {pos.instrument_name} {pos.amount} @ {pos.average_price}")
+            else:
+                self.current_position = None
+                print("No current position")
 
-        pos = self.current_position
-        print(f"Current position: {pos.instrument_name} {pos.amount} @ {pos.average_price}")
 
     def on_order(self, order: OrderResponseSchema):
         print(f"Order update: {order.nonce} {order.order_status} {order.direction} {order.limit_price} {order.amount}")
@@ -132,18 +142,21 @@ class WebsocketQuoterStrategy:
                 print("Connection closed, exiting...")
                 self.setup_session()
             parsed_message = self.ws_client.parse_message(raw_message)
-            if isinstance(parsed_message, TradeResponseSchema):
-                self.on_trade(parsed_message)
-            elif isinstance(parsed_message, Positions):
-                self.on_position_update(parsed_message)
-            elif isinstance(parsed_message, PrivateGetOrdersResultSchema):
-                self.on_orders_update(parsed_message)
-            elif isinstance(parsed_message, OrderResponseSchema):
-                self.on_order(parsed_message)
-            elif isinstance(parsed_message, Orderbook):
-                self.on_orderbook_update(parsed_message)
-            else:
-                print(f"Received unhandled message: {parsed_message}")
+            try:
+                if isinstance(parsed_message, TradeResponseSchema):
+                    self.on_trade(parsed_message)
+                elif isinstance(parsed_message, PrivateGetPositionsResultSchema):
+                    self.on_position_update(parsed_message)
+                elif isinstance(parsed_message, PrivateGetOrdersResultSchema):
+                    self.on_orders_update(parsed_message)
+                elif isinstance(parsed_message, OrderResponseSchema):
+                    self.on_order(parsed_message)
+                elif isinstance(parsed_message, Orderbook):
+                    self.on_orderbook_update(parsed_message)
+                else:
+                    print(f"Received unhandled message: {parsed_message}")
+            except Exception as e:
+                print(f"Error processing message {parsed_message}: {traceback.format_exc()}")
 
     def setup_session(self):
         self.ws_client.connect_ws()
