@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 from logging import Logger
 from typing import Optional
 
@@ -23,6 +24,7 @@ from derive_client.data.generated.models import (
 from derive_client.data_types import Address
 
 
+@functools.total_ordering
 class Subaccount:
     """Subaccount operations."""
 
@@ -180,3 +182,8 @@ class Subaccount:
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__qualname__}({self.id}) object at {hex(id(self))}>"
+
+    def __lt__(self, other):
+        if not isinstance(other, type(self)):
+            return NotImplemented
+        return self.id < other.id
