@@ -222,22 +222,7 @@ class AsyncTestConverter(cst.CSTTransformer):
         return updated_node
 
     def leave_Module(self, original_node: cst.Module, updated_node: cst.Module) -> cst.Module:
-        """Add pytest import if needed."""
-
-        # Check if pytest is already imported
-        has_pytest = False
-        for statement in updated_node.body:
-            if isinstance(statement, cst.SimpleStatementLine):
-                for item in statement.body:
-                    if isinstance(item, cst.Import):
-                        for name in item.names:
-                            if isinstance(name, cst.ImportAlias):
-                                if isinstance(name.name, cst.Name) and name.name.value == "pytest":
-                                    has_pytest = True
-                                    break
-
-        if has_pytest:
-            return updated_node
+        """Add pytest import. We rely on ruff check --fix to fix duplicate import and ordering."""
 
         # Add pytest import at the top (after any existing imports)
         pytest_import = cst.SimpleStatementLine(
@@ -262,6 +247,54 @@ class AsyncTestConverter(cst.CSTTransformer):
         new_body.insert(insert_pos, pytest_import)
 
         return updated_node.with_changes(body=new_body)
+
+    def leave_ImportFrom(
+        self,
+        original_node: cst.ImportFrom,
+        updated_node: cst.ImportFrom,
+    ) -> cst.ImportFrom:
+        """Update imports from http to async_http."""
+
+        if original_node.module:
+            module_parts = []
+            current = original_node.module
+
+            # Traverse the attribute chain to get full module path
+            while isinstance(current, cst.Attribute):
+                module_parts.insert(0, current.attr.value)
+                current = current.value
+
+            if isinstance(current, cst.Name):
+                module_parts.insert(0, current.value)
+
+            # Check if this is an import from .http
+            if "http" in module_parts and "async_http" not in module_parts:
+                # Replace 'http' with 'async_http' in the module path
+                new_module_parts = ["async_http" if part == "http" else part for part in module_parts]
+
+                # Reconstruct the module path
+                new_module = cst.Name(new_module_parts[0])
+                for part in new_module_parts[1:]:
+                    new_module = cst.Attribute(value=new_module, attr=cst.Name(part))
+
+                if "api" in module_parts:
+                    new_names = []
+                    for name in updated_node.names:
+                        if isinstance(name, cst.ImportAlias):
+                            imported_name = name.name.value if isinstance(name.name, cst.Name) else str(name.name)
+                            if imported_name in ("PrivateAPI", "PublicAPI"):
+                                new_name = cst.Name(f"Async{imported_name}")
+                                new_names.append(name.with_changes(name=new_name))
+                            else:
+                                new_names.append(name)
+                        else:
+                            new_names.append(name)
+
+                    return updated_node.with_changes(module=new_module, names=new_names)
+
+                return updated_node.with_changes(module=new_module)
+
+        return updated_node
 
     def _should_skip(self, node: cst.FunctionDef) -> bool:
         """Check if function should not be made async."""
