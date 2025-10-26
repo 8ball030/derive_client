@@ -76,3 +76,9 @@ generate-rest-api:
 	python scripts/generate-rest-api.py
 	poetry run ruff format derive_client/_clients/rest/
 	poetry run ruff check --fix derive_client/_clients/rest/
+
+.PHONY: generate-rest-async-http
+generate-rest-async-http:
+	python scripts/generate-rest-async-http.py
+	poetry run ruff format tests/test_clients/test_rest/test_async_http
+	poetry run ruff check --fix tests/test_clients/test_rest/test_async_http
