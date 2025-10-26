@@ -1,0 +1,69 @@
+"""Auto-generated API classes from OpenAPI spec"""
+
+import msgspec
+
+from derive_client._clients.rest{% if is_async %}.async_http{% else %}.http{% endif %}.session import {% if is_async %}AsyncHTTPSession{% else %}HTTPSession{% endif %}
+from derive_client.constants import EnvConfig, PUBLIC_HEADERS
+from derive_client._clients.utils import try_cast_response, AuthContext, encode_json_exclude_none
+from derive_client._clients.rest.endpoints import PublicEndpoints, PrivateEndpoints
+from derive_client.data.generated.models import (
+{% for schema in schema_imports -%}
+    {{ schema }},
+{% endfor %}
+)
+
+class {{ api_prefix }}PublicAPI:
+    """{{ api_prefix }} public API methods"""
+
+    def __init__(self, session: {% if is_async %}AsyncHTTPSession{% else %}HTTPSession{% endif %}, config: EnvConfig):
+        self._session = session
+        self._config = config
+        self._endpoints = PublicEndpoints(config.base_url)
+
+    @property
+    def headers(self) -> dict:
+        return PUBLIC_HEADERS
+
+{% for method in public_methods %}
+    {% if is_async %}async {% endif %}def {{ method.name }}(self, params: {{ method.request_type }},) -> {{ method.response_type }}:
+        {% if method.description %}
+        """
+        {{ method.description | format_docstring }}
+        """
+        {% endif %}
+
+        url = self._endpoints.{{ method.name }}
+        data = encode_json_exclude_none(params)
+        message = {% if is_async %}await {% endif %}self._session._send_request(url, data, headers=self.headers)
+        response = try_cast_response(message, {{ method.response_type }})
+        return response
+{% endfor %}
+
+
+class {{ api_prefix }}PrivateAPI:
+    """{{ api_prefix }} private API methods"""
+    
+    def __init__(self, session: {% if is_async %}AsyncHTTPSession{% else %}HTTPSession{% endif %}, config: EnvConfig, auth: AuthContext):
+        self._session = session
+        self._config = config
+        self._auth = auth
+        self._endpoints = PrivateEndpoints(config.base_url)
+
+    @property
+    def headers(self) -> dict:
+        return {**PUBLIC_HEADERS, **self._auth.signed_headers}
+
+{% for method in private_methods %}
+    {% if is_async %}async {% endif %}def {{ method.name }}(self, params: {{ method.request_type }},) -> {{ method.response_type }}:
+        {% if method.description %}
+        """
+        {{ method.description | format_docstring }}
+        """
+        {% endif %}
+
+        url = self._endpoints.{{ method.name }}
+        data = encode_json_exclude_none(params)
+        message = {% if is_async %}await {% endif %}self._session._send_request(url, data, headers=self.headers)
+        response = try_cast_response(message, {{ method.response_type }})
+        return response
+{% endfor %}

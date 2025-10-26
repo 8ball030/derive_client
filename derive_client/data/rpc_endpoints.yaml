@@ -22,16 +22,15 @@ BASE:
   - https://base.llamarpc.com
   - https://mainnet.base.org
   - https://base-rpc.publicnode.com
-  - https://0xrpc.io/base
-  - https://base.therpc.io
+  # - https://base.therpc.io
   - https://base-pokt.nodies.app
   # - https://base.api.onfinality.io/public
 
 ARBITRUM:
   - https://arbitrum.drpc.org
   - https://arb1.arbitrum.io/rpc
-  - https://arbitrum-one.publicnode.com
-  - https://arbitrum.therpc.io
+  # - https://arbitrum-one.publicnode.com
+  # - https://arbitrum.therpc.io
   - https://arb1.lava.build
   - https://arbitrum.rpc.subquery.network/public
   - https://arb-pokt.nodies.app

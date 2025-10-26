@@ -541,7 +541,7 @@ class Leg(BaseModel):
     amount: float
     direction: OrderSide  # TODO: PositionSide
     instrument_name: str
-    price: float
+    price: float = 0.0
 
 
 class Quote(BaseModel):

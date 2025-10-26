@@ -7,10 +7,9 @@ readme = "README.md"
 packages = [{ include = "derive_client" }]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<=3.12"
+python = ">=3.11,<=3.13"
 requests = "^2"
 web3 = { version = ">=6,<8" }
-websocket-client = ">=0.32.0,<1"
 setuptools = ">=68.2.2,<80"
 rich-click = "^1.7.1"
 python-dotenv = ">=0.14.0,<2"
@@ -21,6 +20,8 @@ pydantic = "^2.11.3"
 aiolimiter = "^1.2.1"
 returns = "^0.26.0"
 eth-typing = "<5"
+py-vollib = "^1.0.1"
+msgspec = "^0.19.0"
 
 [tool.poetry.scripts]
 drv = "derive_client.cli:cli"
@@ -40,11 +41,12 @@ mkdocs-material-extensions = "^1.0.3"
 mkdocs-autorefs = "^0.4.1"
 ruff = "^0.13.0"
 datamodel-code-generator = "^0.34.0"
+libcst = "^1.8.5"
+pytest-asyncio = "<1.0.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
 
 [tool.ruff]
 line-length = 120
@@ -70,12 +72,12 @@ select = [
   "W",   # pycodestyle warnings
   "F",   # pyflakes
   "I",   # isort
-#  "B",   # flake8-bugbear
-#  "UP",  # pyupgrade
-#  "C4",  # flake8-comprehensions
-#  "SIM", # flake8-simplify
-#  "PT",  # flake8-pytest-style (if you use pytest)
-#  "RUF", # Ruff-specific rules
+  "SIM", # flake8-simplify
+  #  "B",   # flake8-bugbear
+  #  "UP",  # pyupgrade
+  #  "C4",  # flake8-comprehensions
+  #  "PT",  # flake8-pytest-style (if you use pytest)
+  #  "RUF", # Ruff-specific rules
 ]
 ignore = ["E501"]
 
@@ -88,4 +90,3 @@ line-ending = "auto"
 quote-style = "preserve"
 indent-style = "space"
 skip-magic-trailing-comma = false
-
