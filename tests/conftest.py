@@ -6,12 +6,21 @@ import time
 from unittest.mock import MagicMock
 
 import pytest
+from pytest_asyncio import is_async_test
 
 from derive_client.clients import AsyncClient
 from derive_client.data_types import Environment
 from derive_client.derive import DeriveClient
 from derive_client.exceptions import DeriveJSONRPCException
 from derive_client.utils import get_logger
+
+
+def pytest_collection_modifyitems(items):
+    pytest_asyncio_tests = (item for item in items if is_async_test(item))
+    session_scope_marker = pytest.mark.asyncio(scope="session")
+    for async_test in pytest_asyncio_tests:
+        async_test.add_marker(session_scope_marker, append=False)
+
 
 OWNER_TEST_WALLET = "0xA419f70C696a4b449a4A24F92e955D91482d44e9"  # SESSION_KEY_PRIVATE_KEY owns this
 TEST_WALLET = "0x8772185a1516f0d61fC1c2524926BfC69F95d698"
