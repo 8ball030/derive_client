@@ -68,7 +68,7 @@ class AsyncHTTPSession:
         data: bytes,
         *,
         headers: dict | None = None,
-    ):
+    ) -> bytes:
         await self.open()
 
         headers = headers or PUBLIC_HEADERS

@@ -161,7 +161,12 @@ class OrderOperations:
         response = self._subaccount._private_api.get_open_orders(params)
         return response.result
 
-    def cancel(self, *, instrument_name: str, order_id: str) -> PrivateCancelResultSchema:
+    def cancel(
+        self,
+        *,
+        instrument_name: str,
+        order_id: str,
+    ) -> PrivateCancelResultSchema:
         params = PrivateCancelParamsSchema(
             instrument_name=instrument_name,
             order_id=order_id,
@@ -170,7 +175,12 @@ class OrderOperations:
         response = self._subaccount._private_api.cancel(params)
         return response.result
 
-    def cancel_by_label(self, *, label: str, instrument_name: Optional[str] = None) -> PrivateCancelByLabelResultSchema:
+    def cancel_by_label(
+        self,
+        *,
+        label: str,
+        instrument_name: Optional[str] = None,
+    ) -> PrivateCancelByLabelResultSchema:
         params = PrivateCancelByLabelParamsSchema(
             label=label,
             instrument_name=instrument_name,
@@ -179,7 +189,12 @@ class OrderOperations:
         response = self._subaccount._private_api.cancel_by_label(params)
         return response.result
 
-    def cancel_by_nonce(self, *, instrument_name: str, nonce: int) -> PrivateCancelByNonceResultSchema:
+    def cancel_by_nonce(
+        self,
+        *,
+        instrument_name: str,
+        nonce: int,
+    ) -> PrivateCancelByNonceResultSchema:
         params = PrivateCancelByNonceParamsSchema(
             nonce=nonce,
             instrument_name=instrument_name,

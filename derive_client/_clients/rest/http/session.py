@@ -71,11 +71,7 @@ class HTTPSession:
             logger.error("HTTP request failed: %s -> %s", url, e)
             raise
 
-        try:
-            return response.content
-        except Exception as e:
-            logger.error("Failed to decode JSON from %s: %s", url, e)
-            raise ValueError(f"Failed to decode JSON from {url}: {e}") from e
+        return response.content
 
     def _finalize(self):
         if self._requests_session:

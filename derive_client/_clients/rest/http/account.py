@@ -10,7 +10,7 @@ from derive_action_signing.module_data import DepositModuleData
 
 from derive_client._clients.rest.http.api import PrivateAPI, PublicAPI
 from derive_client._clients.utils import AuthContext
-from derive_client.constants import CURRENCY_DECIMALS, INT64_MAX, Currency, EnvConfig
+from derive_client.constants import CURRENCY_DECIMALS, Currency, EnvConfig
 from derive_client.data.generated.models import (
     MarginType,
     PrivateCreateSubaccountParamsSchema,
