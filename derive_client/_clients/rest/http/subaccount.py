@@ -10,6 +10,7 @@ from derive_action_signing import ModuleData, SignedAction
 
 from derive_client._clients.rest.http.api import PrivateAPI, PublicAPI
 from derive_client._clients.rest.http.markets import MarketOperations
+from derive_client._clients.rest.http.mmp import MMPOperations
 from derive_client._clients.rest.http.orders import OrderOperations
 from derive_client._clients.rest.http.positions import PositionOperations
 from derive_client._clients.rest.http.rfq import RFQOperations
@@ -64,6 +65,7 @@ class Subaccount:
         self._orders = OrderOperations(subaccount=self)
         self._positions = PositionOperations(subaccount=self)
         self._rfq = RFQOperations(subaccount=self)
+        self._mmp = MMPOperations(subaccount=self)
 
         self._state: PrivateGetSubaccountResultSchema | None = _state
 
@@ -163,6 +165,10 @@ class Subaccount:
     @property
     def rfq(self) -> RFQOperations:
         return self._rfq
+
+    @property
+    def mmp(self) -> MMPOperations:
+        return self._mmp
 
     def sign_action(
         self,

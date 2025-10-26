@@ -60,7 +60,7 @@ class OrderOperations:
         direction: Direction,
         instrument_name: str,
         limit_price: Decimal,
-        max_fee: Decimal,
+        max_fee: Decimal = Decimal("1000"),
         nonce: Optional[int] = None,
         signature_expiry_sec: Optional[int] = None,
         is_atomic_signing: Optional[bool] = False,
@@ -74,14 +74,20 @@ class OrderOperations:
         trigger_price_type: Optional[TriggerPriceType] = None,
         trigger_type: Optional[TriggerType] = None,
     ) -> PrivateOrderResultSchema:
+        """
+        Create a new order.
+
+        Amount and limit_price are automatically quantized to match instrument specifications.
+        """
+
         subaccount_id = self._subaccount.id
 
         instrument = self._subaccount.markets.get_cached_instrument(instrument_name=instrument_name)
         asset_address = instrument.base_asset_address
         sub_id = int(instrument.base_asset_sub_id)
 
-        amount = amount.quantize(instrument.amount_step)
-        limit_price = limit_price.quantize(instrument.tick_size)
+        amount = Decimal(amount).quantize(instrument.amount_step)
+        limit_price = Decimal(limit_price).quantize(instrument.tick_size)
 
         is_bid = direction == Direction.buy
         module_data = TradeModuleData(
@@ -224,7 +230,7 @@ class OrderOperations:
         direction: Direction,
         instrument_name: str,
         limit_price: Decimal,
-        max_fee: Decimal,
+        max_fee: Decimal = Decimal("1000"),
         nonce: Optional[int] = None,
         signature_expiry_sec: Optional[int] = None,
         expected_filled_amount: Optional[Decimal] = None,
@@ -241,6 +247,12 @@ class OrderOperations:
         trigger_price_type: Optional[TriggerPriceType] = None,
         trigger_type: Optional[TriggerType] = None,
     ) -> PrivateReplaceResultSchema:
+        """
+        Replace an existing order.
+
+        Amount and limit_price are automatically quantized to match instrument specifications.
+        """
+
         if (nonce_to_cancel is None) == (order_id_to_cancel is None):
             raise ValueError("Replace requires exactly one of nonce_to_cancel or order_id_to_cancel (but not both).")
 
@@ -249,6 +261,9 @@ class OrderOperations:
         instrument = self._subaccount.markets.get_cached_instrument(instrument_name=instrument_name)
         asset_address = instrument.base_asset_address
         sub_id = int(instrument.base_asset_sub_id)
+
+        amount = Decimal(amount).quantize(instrument.amount_step)
+        limit_price = Decimal(limit_price).quantize(instrument.tick_size)
 
         is_bid = direction == Direction.buy
         module_data = TradeModuleData(

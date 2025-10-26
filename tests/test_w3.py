@@ -85,13 +85,14 @@ def test_rpc_endpoints_reachability_and_chain_id(chain, rpc_endpoints):
         pytest.fail(f"[{chain}] Too many unresponsive endpoints ({len(rate_limited)}/{len(rpc_endpoints)}):\n{msg}")
 
 
-@pytest.mark.flaky(reruns=3, reruns_delay=10)
+@pytest.mark.flaky(reruns=3, reruns_delay=1)
 @pytest.mark.parametrize("chain, rpc_endpoints", RPC_ENDPOINTS)
 def test_rpc_methods_supported(chain, rpc_endpoints):
     missing = {}
     exceptions = {}
+    request_kwargs = {"timeout": 1}
     for url in rpc_endpoints:
-        prov = HTTPProvider(url)
+        prov = HTTPProvider(url, request_kwargs=request_kwargs)
         w3 = Web3(prov)
 
         for method, params in REQUIRED_METHODS.items():

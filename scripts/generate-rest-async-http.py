@@ -15,6 +15,7 @@ ASYNC_OPERATION_MODULES = {
     "positions",
     "transactions",
     "rfq",
+    "mmp",
     "_private_api",
     "_public_api",
 }

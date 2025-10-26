@@ -47,6 +47,7 @@ def client_owner_wallet():
     client.orders.cancel_all()
     client.rfq.cancel_batch_rfqs()
     client.rfq.cancel_batch_quotes()
+    client.disconnect()
 
 
 @pytest.fixture(scope="session")
@@ -67,3 +68,4 @@ def client_admin_wallet():
     client.orders.cancel_all()
     client.rfq.cancel_batch_rfqs()
     client.rfq.cancel_batch_quotes()
+    client.disconnect()

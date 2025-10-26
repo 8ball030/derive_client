@@ -10,6 +10,7 @@ from web3 import Web3
 from derive_client._clients.rest.http.account import LightAccount
 from derive_client._clients.rest.http.api import PrivateAPI, PublicAPI
 from derive_client._clients.rest.http.markets import MarketOperations
+from derive_client._clients.rest.http.mmp import MMPOperations
 from derive_client._clients.rest.http.orders import OrderOperations
 from derive_client._clients.rest.http.positions import PositionOperations
 from derive_client._clients.rest.http.rfq import RFQOperations
@@ -167,6 +168,10 @@ class HTTPClient:
     @property
     def rfq(self) -> RFQOperations:
         return self.active_subaccount.rfq
+
+    @property
+    def mmp(self) -> MMPOperations:
+        return self.active_subaccount.mmp
 
     @contextlib.contextmanager
     def timeout(self, seconds: float) -> Generator[None, None, None]:
