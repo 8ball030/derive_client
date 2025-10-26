@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 from logging import Logger
-from typing import Generator
+from typing import AsyncGenerator
 
 from pydantic import validate_call
 from web3 import AsyncWeb3
@@ -14,7 +14,7 @@ from derive_client._clients.rest.async_http.markets import MarketOperations
 from derive_client._clients.rest.async_http.orders import OrderOperations
 from derive_client._clients.rest.async_http.positions import PositionOperations
 from derive_client._clients.rest.async_http.rfq import RFQOperations
-from derive_client._clients.rest.async_http.session import AsyncHTTPSession
+from derive_client._clients.rest.async_http.session import AsyncHTTPSession, _request_timeout_override
 from derive_client._clients.rest.async_http.subaccount import Subaccount
 from derive_client._clients.rest.async_http.transactions import TransactionOperations
 from derive_client._clients.utils import AuthContext
@@ -168,6 +168,16 @@ class AsyncHTTPClient:
     @property
     def rfq(self) -> RFQOperations:
         return self.active_subaccount.rfq
+
+    @contextlib.asynccontextmanager
+    async def timeout(self, seconds: float) -> AsyncGenerator[None, None]:
+        """Temporarily overwrite client's AsyncHTTPSession's request_timeout."""
+
+        token = _request_timeout_override.set(float(seconds))
+        try:
+            yield
+        finally:
+            _request_timeout_override.reset(token)
 
     async def __aenter__(self):
         await self.connect()

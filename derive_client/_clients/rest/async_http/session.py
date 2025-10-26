@@ -1,10 +1,16 @@
 import asyncio
+import contextvars
 import weakref
 
 import aiohttp
 
 from derive_client._clients.logger import logger
 from derive_client.constants import PUBLIC_HEADERS
+
+# Context-local timeout (task-scoped) used to temporarily override session timeout.
+_request_timeout_override: contextvars.ContextVar[float | None] = contextvars.ContextVar(
+    '_request_timeout_override', default=None
+)
 
 
 class AsyncHTTPSession:
@@ -62,21 +68,21 @@ class AsyncHTTPSession:
         data: bytes,
         *,
         headers: dict | None = None,
-        timeout: float | None = None,
     ):
         await self.open()
 
         headers = headers or PUBLIC_HEADERS
-        total = timeout or self._request_timeout
+        total = _request_timeout_override.get() or self._request_timeout
+
         timeout = aiohttp.ClientTimeout(total=total)
 
         try:
             async with self._aiohttp_session.post(url, data=data, headers=headers, timeout=timeout) as response:
                 response.raise_for_status()
                 try:
-                    return await response.content.read()
+                    return await response.read()
                 except Exception as e:
-                    raise ValueError(f"Failed to decode JSON from {url}: {e}") from e
+                    raise ValueError(f"Failed to read response from {url}: {e}") from e
         except aiohttp.ClientError as e:
             logger.error("HTTP request failed: %s -> %s", url, e)
             raise
