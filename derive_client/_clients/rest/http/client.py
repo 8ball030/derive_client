@@ -79,6 +79,8 @@ class HTTPClient:
             APIError: If wallet/subaccount don't exist or session key is invalid
         """
 
+        self._session.open()
+
         self._light_account = LightAccount.from_api(
             auth=self._auth,
             config=self._config,
@@ -100,6 +102,14 @@ class HTTPClient:
 
         subaccount = self._instantiate_subaccount(self._subaccount_id)
         self._subaccounts[subaccount.id] = subaccount
+
+    def disconnect(self) -> None:
+        """Close the underlying session and clear cached state. Idempotent."""
+
+        self._session.close()
+        self._light_account = None
+        self._subaccounts.clear()
+        self.markets._active_instrument_cache.clear()
 
     def _instantiate_subaccount(self, subaccount_id: int) -> Subaccount:
         return Subaccount.from_api(
@@ -132,11 +142,11 @@ class HTTPClient:
     def fetch_subaccounts(self) -> list[Subaccount]:
         """Fetch subaccounts from API and cache them."""
         account_subaccounts = self.account.get_subaccounts()
-        return [self.fetch_subaccount(sid) for sid in account_subaccounts.subaccount_ids]
+        return sorted(self.fetch_subaccount(sid) for sid in account_subaccounts.subaccount_ids)
 
     @property
     def cached_subaccounts(self) -> list[Subaccount]:
-        return list(self._subaccounts.values())
+        return sorted(self._subaccounts.values())
 
     @property
     def markets(self) -> MarketOperations:
@@ -170,14 +180,8 @@ class HTTPClient:
             self._session._request_timeout = prev
 
     def __enter__(self):
-        self._session.__enter__()
+        self.connect()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self._session.__exit__(exc_type, exc_val, exc_tb)
-
-    def open(self) -> None:
-        self._session.open()
-
-    def close(self) -> None:
-        self._session.close()
+        self.disconnect()
