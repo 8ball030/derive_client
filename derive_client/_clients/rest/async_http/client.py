@@ -8,6 +8,7 @@ from typing import AsyncGenerator
 from pydantic import validate_call
 from web3 import AsyncWeb3
 
+from derive_client._bridge.async_client import AsyncBridgeClient
 from derive_client._clients.rest.async_http.account import LightAccount
 from derive_client._clients.rest.async_http.api import AsyncPrivateAPI, AsyncPublicAPI
 from derive_client._clients.rest.async_http.markets import MarketOperations
@@ -21,11 +22,8 @@ from derive_client._clients.rest.async_http.transactions import TransactionOpera
 from derive_client._clients.utils import AuthContext
 from derive_client.constants import CONFIGS
 from derive_client.data_types import Address, Environment
+from derive_client.exceptions import BridgePrimarySignerRequiredError, NotConnectedError
 from derive_client.utils.logger import get_logger
-
-
-class NotConnectedError(RuntimeError):
-    """Raised when the client hasn't connected (call await connect())."""
 
 
 class AsyncHTTPClient:
@@ -53,6 +51,7 @@ class AsyncHTTPClient:
             config=config,
         )
 
+        self._env = env
         self._auth = auth
         self._config = config
         self._subaccount_id = subaccount_id
@@ -68,17 +67,14 @@ class AsyncHTTPClient:
         self._light_account: LightAccount | None = None
         self._subaccounts: dict[int, Subaccount] = {}
 
-    async def connect(self) -> None:
+        self._bridge_client: AsyncBridgeClient | None = None
+
+    async def connect(self, initialize_bridge: bool = True) -> None:
         """
         Connect to Derive and validate credentials.
 
-        Performs API calls to:
-        - Verify the wallet exists
-        - Validate the session key is registered
-        - Verify the subaccount exists
-
-        Raises:
-            APIError: If wallet/subaccount don't exist or session key is invalid
+        Args:
+            initialize_bridge: If True, attempt to initialize bridge client (requires owner signer)
         """
 
         await self._session.open()
@@ -93,6 +89,20 @@ class AsyncHTTPClient:
 
         await self.markets.fetch_instruments(expired=False)
         self._logger.debug(f"Cached {len(self.markets.cached_active_instruments)} instruments")
+
+        if initialize_bridge and self._env is Environment.PROD:
+            try:
+                self._bridge_client = AsyncBridgeClient(
+                    env=self._env,
+                    account=self._auth.account,
+                    wallet=self._auth.wallet,
+                    logger=self._logger,
+                )
+                await self._bridge_client.connect()
+            except BridgePrimarySignerRequiredError:
+                self._logger.info("Bridge unavailable: requires signer to be the LightAccount owner.")
+        elif initialize_bridge:
+            self._logger.debug("Bridge module unavailable in non-prod environment.")
 
         subaccount_ids = self._light_account._state.subaccount_ids
         if self._subaccount_id not in subaccount_ids:
@@ -135,6 +145,13 @@ class AsyncHTTPClient:
         if (subaccount := self._subaccounts.get(self._subaccount_id)) is None:
             raise NotConnectedError("No active subaccount. Call connect() first and ensure subaccount exists.")
         return subaccount
+
+    @property
+    def bridge(self) -> AsyncBridgeClient:
+        if not self._bridge_client:
+            msg = "Bridge unavailable: call connect() and ensure session key is the LightAccount owner."
+            raise NotConnectedError(msg)
+        return self._bridge_client
 
     async def fetch_subaccount(self, subaccount_id: int) -> Subaccount:
         """Fetch a subaccount from API and cache it."""
