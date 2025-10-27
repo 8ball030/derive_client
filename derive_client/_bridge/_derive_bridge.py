@@ -1,11 +1,10 @@
-"""
-Bridge client to deposit funds to the Derive smart contract funding account
-"""
+"""Internal: Derive-specific bridge implementation using Socket/LayerZero."""
 
 from __future__ import annotations
 
 import functools
 import json
+from decimal import Decimal
 from logging import Logger
 
 from eth_account import Account
@@ -20,7 +19,6 @@ from web3.types import HexBytes, LogReceipt, TxReceipt
 from derive_client.constants import (
     ARBITRUM_DEPOSIT_WRAPPER,
     BASE_DEPOSIT_WRAPPER,
-    CONFIGS,
     CONTROLLER_ABI_PATH,
     CONTROLLER_V0_ABI_PATH,
     CURRENCY_DECIMALS,
@@ -53,7 +51,6 @@ from derive_client.data_types import (
     Currency,
     DeriveTokenAddresses,
     Direction,
-    Environment,
     LayerZeroChainIDv2,
     MintableTokenData,
     NonMintableTokenData,
@@ -63,7 +60,6 @@ from derive_client.data_types import (
 )
 from derive_client.exceptions import (
     BridgeEventParseError,
-    BridgePrimarySignerRequiredError,
     BridgeRouteError,
     PartialBridgeResult,
 )
@@ -122,23 +118,19 @@ def _get_min_fees(
     return bridge_contract.functions.getMinFees(**params)
 
 
-class BridgeClient:
-    """
-    Synchronous constructor that performs minimal, non-blocking setup.
+class DeriveBridge:
+    """Bridge ERC-20 tokens and Derive's native token (DRV) to and from Derive."""
 
-    Args:
-        env: Environment to connect to (only PROD supported for bridging)
-        account: Account object containing the private key of the owner of the smart contract funding account
-        wallet: Address of the smart contract funding account
-        logger: Logger instance for logging
+    def __init__(self, account: Account, wallet: Address, logger: Logger):
+        """
+        Initialize Derive bridge.
 
-    """
+        Args:
+            account: Account object containing the private key of the owner of the smart contract funding account
+            wallet: Address of the smart contract funding account
+            logger: Logger instance for logging
+        """
 
-    def __init__(self, env: Environment, account: Account, wallet: Address, logger: Logger):
-        if not env == Environment.PROD:
-            raise RuntimeError(f"Bridging is not supported in the {env.name} environment.")
-
-        self.config = CONFIGS[env]
         self.account = account
         self.owner = account.address
         self.wallet = wallet
@@ -159,19 +151,6 @@ class BridgeClient:
     def light_account(self):
         """Smart contract funding wallet."""
         return _load_light_account(w3=self.derive_w3, wallet=self.wallet)
-
-    async def verify_owner(self):
-        """We verify the wallet owner on each prepare_deposit and prepare_withdrawal."""
-
-        owner = await self.light_account.functions.owner().call()
-        if owner != self.owner:
-            raise BridgePrimarySignerRequiredError(
-                "Bridging disabled for secondary session-key signers: old-style assets "
-                "(USDC, USDT) on Derive cannot specify a custom receiver. Using a "
-                "secondary signer routes funds to the session key's contract instead of "
-                "the primary owner's. Please run all bridge operations with the "
-                "primary wallet owner."
-            )
 
     def get_deposit_helper(self, chain_id: ChainID) -> AsyncContract:
         match chain_id:
@@ -320,16 +299,14 @@ class BridgeClient:
     @future_safe
     async def prepare_deposit(
         self,
-        human_amount: float,
+        amount: Decimal,
         currency: Currency,
         chain_id: ChainID,
     ) -> IOResult[PreparedBridgeTx, Exception]:
         if currency is Currency.ETH:
             raise NotImplementedError("ETH deposits are not implemented.")
 
-        amount: int = to_base_units(human_amount=human_amount, currency=currency)
-        await self.verify_owner()
-
+        amount: int = to_base_units(decimal_amount=amount, currency=currency)
         direction = Direction.DEPOSIT
 
         if currency == Currency.DRV:
@@ -344,16 +321,14 @@ class BridgeClient:
     @future_safe
     async def prepare_withdrawal(
         self,
-        human_amount: float,
+        amount: Decimal,
         currency: Currency,
         chain_id: ChainID,
     ) -> IOResult[PreparedBridgeTx, Exception]:
         if currency is Currency.ETH:
             raise NotImplementedError("ETH withdrawals are not implemented.")
 
-        amount: int = to_base_units(human_amount=human_amount, currency=currency)
-        await self.verify_owner()
-
+        amount: int = to_base_units(decimal_amount=amount, currency=currency)
         direction = Direction.WITHDRAW
 
         if currency == Currency.DRV:
