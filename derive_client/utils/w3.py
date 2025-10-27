@@ -2,6 +2,7 @@ import functools
 import heapq
 import threading
 import time
+from decimal import Decimal
 from logging import Logger
 from pathlib import Path
 from typing import Any, Callable
@@ -149,13 +150,13 @@ def get_w3_connection(
     return w3
 
 
-def to_base_units(human_amount: float, currency: Currency) -> int:
+def to_base_units(decimal_amount: Decimal, currency: Currency) -> int:
     """Convert a human-readable token amount to base units using the currency's decimals."""
 
-    return int(human_amount * 10 ** CURRENCY_DECIMALS[currency])
+    return int(decimal_amount * 10 ** CURRENCY_DECIMALS[currency])
 
 
-def from_base_units(amount: int, currency: Currency) -> float:
+def from_base_units(amount: int, currency: Currency) -> Decimal:
     """Convert base units to human-readable amount using the currency's decimals."""
 
-    return amount / 10 ** CURRENCY_DECIMALS[currency]
+    return Decimal(amount) / Decimal(10) ** CURRENCY_DECIMALS[currency]
