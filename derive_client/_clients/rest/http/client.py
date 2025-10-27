@@ -4,10 +4,10 @@ import contextlib
 from logging import Logger
 from typing import Generator
 
+from derive_client._bridge.client import BridgeClient
 from pydantic import validate_call
 from web3 import Web3
 
-from derive_client._bridge.client import BridgeClient
 from derive_client._clients.rest.http.account import LightAccount
 from derive_client._clients.rest.http.api import PrivateAPI, PublicAPI
 from derive_client._clients.rest.http.markets import MarketOperations
