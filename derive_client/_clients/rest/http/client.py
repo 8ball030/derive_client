@@ -100,7 +100,9 @@ class HTTPClient:
         self._session.close()
         self._light_account = None
         self._subaccounts.clear()
-        self.markets._active_instrument_cache.clear()
+        self._markets._erc20_instruments_cache.clear()
+        self._markets._perp_instruments_cache.clear()
+        self._markets._option_instruments_cache.clear()
 
     def _instantiate_subaccount(self, subaccount_id: int) -> Subaccount:
         return Subaccount.from_api(

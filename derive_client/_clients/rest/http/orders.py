@@ -82,7 +82,7 @@ class OrderOperations:
 
         subaccount_id = self._subaccount.id
 
-        instrument = self._subaccount.markets.get_cached_instrument(instrument_name=instrument_name)
+        instrument = self._subaccount.markets._get_cached_instrument(instrument_name=instrument_name)
         asset_address = instrument.base_asset_address
         sub_id = int(instrument.base_asset_sub_id)
 
@@ -258,7 +258,7 @@ class OrderOperations:
 
         subaccount_id = self._subaccount.id
 
-        instrument = self._subaccount.markets.get_cached_instrument(instrument_name=instrument_name)
+        instrument = self._subaccount.markets._get_cached_instrument(instrument_name=instrument_name)
         asset_address = instrument.base_asset_address
         sub_id = int(instrument.base_asset_sub_id)
 

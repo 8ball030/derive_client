@@ -239,8 +239,8 @@ def infer_instrument_type(*, instrument_name: str) -> InstrumentType:
     - ERC20: Everything else (typically short token pairs like 'ETH-USDC')
     """
     if instrument_name.endswith("-PERP"):
-        return InstrumentType.PERP
+        return InstrumentType.perp
     elif instrument_name.endswith("-P") or instrument_name.endswith("-C"):
-        return InstrumentType.OPTION
+        return InstrumentType.option
     else:
-        return InstrumentType.ERC20
+        return InstrumentType.erc20

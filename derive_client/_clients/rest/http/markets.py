@@ -110,7 +110,7 @@ class MarketOperations:
 
     @property
     def erc20_instruments_cache(self) -> dict[str, InstrumentPublicResponseSchema]:
-        """Get cached ERC20 instruments, fetching from API if cache is empty."""
+        """Get cached ERC20 instruments."""
 
         if not self._erc20_instruments_cache:
             self.fetch_instruments(instrument_type=InstrumentType.erc20)
@@ -118,7 +118,7 @@ class MarketOperations:
 
     @property
     def perp_instruments_cache(self) -> dict[str, InstrumentPublicResponseSchema]:
-        """Get cached perpetual instruments, fetching from API if cache is empty."""
+        """Get cached perpetual instruments."""
 
         if not self._perp_instruments_cache:
             self.fetch_instruments(instrument_type=InstrumentType.perp)
@@ -126,14 +126,14 @@ class MarketOperations:
 
     @property
     def option_instruments_cache(self) -> dict[str, InstrumentPublicResponseSchema]:
-        """Get cached option instruments, fetching from API if cache is empty."""
+        """Get cached option instruments."""
 
         if not self._option_instruments_cache:
             self.fetch_instruments(instrument_type=InstrumentType.option)
         return self._option_instruments_cache
 
     def _get_cached_instrument(self, *, instrument_name: str) -> InstrumentPublicResponseSchema:
-        """Internal helper to retrieve an instrument from cache with lazy loading."""
+        """Internal helper to retrieve an instrument from cache."""
 
         instrument_type = infer_instrument_type(instrument_name=instrument_name)
 
