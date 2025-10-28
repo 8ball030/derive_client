@@ -73,15 +73,8 @@ class HTTPClient:
 
         self._session.open()
 
-        self._light_account = LightAccount.from_api(
-            auth=self._auth,
-            config=self._config,
-            logger=self._logger,
-            public_api=self._public_api,
-            private_api=self._private_api,
-        )
-
-        self.markets.fetch_all_instruments(expired=False)
+        self._instantiate_account()
+        self._markets.fetch_all_instruments(expired=False)
 
         subaccount_ids = self._light_account._state.subaccount_ids
         if self._subaccount_id not in subaccount_ids:
@@ -103,6 +96,15 @@ class HTTPClient:
         self._markets._erc20_instruments_cache.clear()
         self._markets._perp_instruments_cache.clear()
         self._markets._option_instruments_cache.clear()
+
+    def _instantiate_account(self) -> None:
+        self._light_account = LightAccount.from_api(
+            auth=self._auth,
+            config=self._config,
+            logger=self._logger,
+            public_api=self._public_api,
+            private_api=self._private_api,
+        )
 
     def _instantiate_subaccount(self, subaccount_id: int) -> Subaccount:
         return Subaccount.from_api(
@@ -134,13 +136,13 @@ class HTTPClient:
     @property
     def account(self) -> LightAccount:
         if self._light_account is None:
-            raise NotConnectedError("HTTPClient.account accessed before connect(); call connect() first.")
+            self._instantiate_account()
         return self._light_account
 
     @property
     def active_subaccount(self) -> Subaccount:
         if (subaccount := self._subaccounts.get(self._subaccount_id)) is None:
-            raise NotConnectedError("No active subaccount. Call connect() first and ensure subaccount exists.")
+            subaccount = self.fetch_subaccount(subaccount_id=self._subaccount_id)
         return subaccount
 
     @property
