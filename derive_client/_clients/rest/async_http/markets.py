@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+from logging import Logger
 from typing import Optional
 
 from derive_client._clients.rest.async_http.api import AsyncPublicAPI
-from derive_client._clients.utils import async_fetch_all_pages_of_instrument_type
+from derive_client._clients.utils import async_fetch_all_pages_of_instrument_type, infer_instrument_type
 from derive_client.data.generated.models import (
     CurrencyDetailedResponseSchema,
     InstrumentPublicResponseSchema,
@@ -26,7 +27,7 @@ from derive_client.data.generated.models import (
 class MarketOperations:
     """Market data queries."""
 
-    def __init__(self, *, public_api: AsyncPublicAPI):
+    def __init__(self, *, public_api: AsyncPublicAPI, logger: Logger):
         """
         Initialize market data queries.
 
@@ -34,47 +35,117 @@ class MarketOperations:
             public_api: PublicAPI instance providing access to public APIs
         """
         self._public_api = public_api
-        self._active_instrument_cache: dict[str, InstrumentPublicResponseSchema] = {}
+        self._logger = logger
 
-    async def fetch_instruments(self, *, expired: bool = False) -> dict[str, InstrumentPublicResponseSchema]:
+        self._erc20_instruments_cache: dict[str, InstrumentPublicResponseSchema] = {}
+        self._perp_instruments_cache: dict[str, InstrumentPublicResponseSchema] = {}
+        self._option_instruments_cache: dict[str, InstrumentPublicResponseSchema] = {}
+
+    async def fetch_instruments(
+        self,
+        *,
+        instrument_type: InstrumentType,
+        expired: bool = False,
+    ) -> dict[str, InstrumentPublicResponseSchema]:
         """
-        Fetch all instruments from API:
-        - If expired == False (default): build cache of active instruments and replace persistent cache.
-        - If expired == True: return a mapping of expired instruments without modifying persistent cache.
+        Fetch instruments for a specific instrument type from API.
+
+        Args:
+            instrument_type: The type of instruments to fetch (erc20, perp, or option)
+            expired: If False (default), update cache with active instruments.
+                     If True, return expired instruments without caching.
+
+        Returns:
+            Dictionary mapping instrument_name to instrument data
         """
 
         instruments = {}
-        for instrument_type in InstrumentType:
-            for instrument in await async_fetch_all_pages_of_instrument_type(
-                markets=self,
-                instrument_type=instrument_type,
-                expired=expired,
-            ):
-                if instrument.instrument_name in instruments:
-                    msg = f"Duplicate instrument_name '{instrument.instrument_name}' found while building instrument mapping."
-                    raise RuntimeError(msg)
-                instruments[instrument.instrument_name] = instrument
+        for instrument in await async_fetch_all_pages_of_instrument_type(
+            markets=self,
+            instrument_type=instrument_type,
+            expired=expired,
+        ):
+            instruments[instrument.instrument_name] = instrument
 
         if expired:
             return instruments
 
-        self._active_instrument_cache.clear()
-        self._active_instrument_cache.update(instruments)
-        return self._active_instrument_cache
+        cache = self._get_cache_for_type(instrument_type)
+        cache.clear()
+        cache.update(instruments)
+        self._logger.debug(f"Cached {len(cache)} {instrument_type.name.upper()} instruments")
+        return cache
+
+    async def fetch_all_instruments(self, *, expired: bool = False) -> dict[str, InstrumentPublicResponseSchema]:
+        """
+        Fetch all instrument types from API.
+
+        Args:
+            expired: If False (default), update all caches with active instruments.
+                     If True, return expired instruments without caching.
+
+        Returns:
+            Dictionary mapping instrument_name to instrument data for all types
+        """
+
+        all_instruments = {}
+        for instrument_type in InstrumentType:
+            instruments = await self.fetch_instruments(instrument_type=instrument_type, expired=expired)
+            all_instruments.update(instruments)
+
+        return all_instruments
+
+    def _get_cache_for_type(self, instrument_type: InstrumentType) -> dict[str, InstrumentPublicResponseSchema]:
+        """Get the cache for a specific instrument type."""
+
+        match instrument_type:
+            case InstrumentType.erc20:
+                return self._erc20_instruments_cache
+            case InstrumentType.perp:
+                return self._perp_instruments_cache
+            case InstrumentType.option:
+                return self._option_instruments_cache
+            case _:
+                raise TypeError(f"Unsupported instrument_type: {instrument_type!r}")
 
     @property
-    def cached_active_instruments(self) -> dict[str, InstrumentPublicResponseSchema]:
-        return self._active_instrument_cache
+    def erc20_instruments_cache(self) -> dict[str, InstrumentPublicResponseSchema]:
+        """Get cached ERC20 instruments."""
 
-    def get_cached_instrument(self, *, instrument_name: str) -> InstrumentPublicResponseSchema:
-        """Lookup an instrument from the active cache; avoids API calls in performance-critical paths."""
+        if not self._erc20_instruments_cache:
+            raise RuntimeError("Call fetch_instruments() or fetch_all_instruments() to create the erc20_instruments_cache.")
+        return self._erc20_instruments_cache
 
-        if (instrument := self.cached_active_instruments.get(instrument_name)) is None:
+    @property
+    def perp_instruments_cache(self) -> dict[str, InstrumentPublicResponseSchema]:
+        """Get cached perpetual instruments."""
+
+        if not self._perp_instruments_cache:
+            raise RuntimeError("Call fetch_instruments() or fetch_all_instruments() to create the perp_instruments_cache.")
+        return self._perp_instruments_cache
+
+    @property
+    def option_instruments_cache(self) -> dict[str, InstrumentPublicResponseSchema]:
+        """Get cached option instruments."""
+
+        if not self._option_instruments_cache:
+            raise RuntimeError("Call fetch_instruments() or fetch_all_instruments() to create the option_instruments_cache.")
+        return self._option_instruments_cache
+
+    def _get_cached_instrument(self, *, instrument_name: str) -> InstrumentPublicResponseSchema:
+        """Internal helper to retrieve an instrument from cache."""
+
+        instrument_type = infer_instrument_type(instrument_name=instrument_name)
+
+        cache = self._get_cache_for_type(instrument_type)
+
+        if (instrument := cache.get(instrument_name)) is None:
             raise RuntimeError(
-                f"Instrument '{instrument_name}' not found in active instrument cache. "
+                f"Instrument '{instrument_name}' not found in {instrument_type} instrument cache. "
                 "Either the name is incorrect, or the local cache is stale. "
-                "Call fetch_instruments() to refresh the cache."
+                "Call fetch_instruments() or fetch_all_instruments() to refresh the cache."
             )
+
         return instrument
 
     async def get_currency(self, *, currency: str) -> PublicGetCurrencyResultSchema:
