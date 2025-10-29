@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-SLEEP_TIME=3
+SLEEP_TIME=4
 
 clear
 cowsay "The Derive client offers both a library and CLI tool to manage positions on Derive."
@@ -33,15 +33,8 @@ drv account portfolios
 sleep $SLEEP_TIME
 clear
 
-
 # Markets
-cowsay "Next, let's explore market data."
-echo drv market --help
-drv market --help
-sleep $SLEEP_TIME
-clear
-
-cowsay "We can list all available currencies..."
+cowsay "Next, let's explore market data. We can list all available currencies..."
 echo drv market currency --all
 drv market currency --all
 sleep $SLEEP_TIME
@@ -64,7 +57,7 @@ cowsay "Now for the fun part: let's place an order! How about buying ETH-PERP at
 sleep $SLEEP_TIME
 clear
 
-cowsay "...I mean, you never know, right? 🤷"
+cowsay "...I mean, you never know, right?"
 echo drv order create ETH-PERP buy -a 0.1 -p 100
 drv order create ETH-PERP buy -a 0.1 -p 100
 sleep $SLEEP_TIME
@@ -89,6 +82,6 @@ drv position list
 sleep $SLEEP_TIME
 clear
 
-cowsay "And that's the Derive CLI! Trade responsibly. 🚀"
+cowsay "And that's only part of the CLI. Try the library for RFQs, bridging, and full market interactions."
 sleep $SLEEP_TIME
 clear
