@@ -41,15 +41,7 @@ DERIVE:
   - https://957.rpc.thirdweb.com/
 
 MODE:
-  - https://mainnet.mode.network/
   - https://mode.drpc.org
-  - https://mode.gateway.tenderly.co/
-  - https://mode.rpc.thirdweb.com/
 
 BLAST:
   - https://blast.drpc.org
-  - https://blast.therpc.io
-  - https://rpc.blast.io/
-  - https://blast-rpc.publicnode.com/
-  - https://blast.gateway.tenderly.co/
-  - https://blast-public.nodies.app

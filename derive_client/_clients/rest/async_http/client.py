@@ -62,7 +62,7 @@ class AsyncHTTPClient:
         self._public_api = AsyncPublicAPI(session=self._session, config=config)
         self._private_api = AsyncPrivateAPI(session=self._session, config=config, auth=auth)
 
-        self._markets = MarketOperations(public_api=self._public_api)
+        self._markets = MarketOperations(public_api=self._public_api, logger=self._logger)
 
         self._light_account: LightAccount | None = None
         self._subaccounts: dict[int, Subaccount] = {}
@@ -87,8 +87,7 @@ class AsyncHTTPClient:
             private_api=self._private_api,
         )
 
-        await self.markets.fetch_instruments(expired=False)
-        self._logger.debug(f"Cached {len(self.markets.cached_active_instruments)} instruments")
+        await self._markets.fetch_all_instruments(expired=False)
 
         if initialize_bridge and self._env is Environment.PROD:
             try:
@@ -121,7 +120,9 @@ class AsyncHTTPClient:
         await self._session.close()
         self._light_account = None
         self._subaccounts.clear()
-        self.markets._active_instrument_cache.clear()
+        self._markets._erc20_instruments_cache.clear()
+        self._markets._perp_instruments_cache.clear()
+        self._markets._option_instruments_cache.clear()
 
     async def _instantiate_subaccount(self, subaccount_id: int) -> Subaccount:
         return await Subaccount.from_api(
@@ -133,6 +134,22 @@ class AsyncHTTPClient:
             public_api=self._public_api,
             private_api=self._private_api,
         )
+
+    async def _initialize_bridge(self) -> None:
+        """Initialize bridge client lazily."""
+        if self._env is not Environment.PROD:
+            raise NotConnectedError("Bridge module unavailable in non-prod environment.")
+
+        try:
+            self._bridge_client = AsyncBridgeClient(
+                env=self._env,
+                account=self._auth.account,
+                wallet=self._auth.wallet,
+                logger=self._logger,
+            )
+            await self._bridge_client.connect()
+        except BridgePrimarySignerRequiredError:
+            raise NotConnectedError("Bridge unavailable: requires signer to be the LightAccount owner.")
 
     @property
     def account(self) -> LightAccount:

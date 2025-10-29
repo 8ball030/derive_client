@@ -2,17 +2,15 @@
 Conftest for derive tests
 """
 
-import time
-from unittest.mock import MagicMock
+from contextlib import contextmanager
+from unittest.mock import patch
 
 import pytest
 from pytest_asyncio import is_async_test
 
-from derive_client.clients import AsyncClient
-from derive_client.data_types import Environment
-from derive_client.derive import DeriveClient
-from derive_client.exceptions import DeriveJSONRPCException
-from derive_client.utils import get_logger
+OWNER_TEST_WALLET = "0xA419f70C696a4b449a4A24F92e955D91482d44e9"
+ADMIN_TEST_WALLET = "0x8772185a1516f0d61fC1c2524926BfC69F95d698"
+SESSION_KEY_PRIVATE_KEY = "0x2ae8be44db8a590d20bffbe3b6872df9b569147d3bf6801a35a28281a4816bbd"
 
 
 def pytest_collection_modifyitems(items):
@@ -22,62 +20,12 @@ def pytest_collection_modifyitems(items):
         async_test.add_marker(session_scope_marker, append=False)
 
 
-OWNER_TEST_WALLET = "0xA419f70C696a4b449a4A24F92e955D91482d44e9"  # SESSION_KEY_PRIVATE_KEY owns this
-TEST_WALLET = "0x8772185a1516f0d61fC1c2524926BfC69F95d698"
-# this SESSION_KEY_PRIVATE_KEY is not the owner of the wallet
-TEST_PRIVATE_KEY = "0x2ae8be44db8a590d20bffbe3b6872df9b569147d3bf6801a35a28281a4816bbd"
-
-
-def freeze_time(derive_client):
-    ts = 1705439697008
-    nonce = 17054396970088651
-    expiration = 1705439703008
-    derive_client.get_nonce_and_signature_expiry = MagicMock(return_value=(ts, nonce, expiration))
-    return derive_client
-
-
-@pytest.fixture
-def derive_client():
-    derive_client = DeriveClient(
-        wallet=TEST_WALLET, private_key=TEST_PRIVATE_KEY, env=Environment.TEST, logger=get_logger()
-    )
-    yield derive_client
-    while True:
-        try:
-            derive_client.cancel_all()
-            derive_client.cancel_batch_rfqs()
-            break
-        except DeriveJSONRPCException as e:
-            if "Retry after" in e.data:
-                wait_ms = int(e.data.split(" ")[2])
-                time.sleep(wait_ms / 1000)
-                continue
-            raise e
-
-
-@pytest.fixture
-def derive_client_2():
-    quoter_client = DeriveClient(
-        wallet=OWNER_TEST_WALLET, private_key=TEST_PRIVATE_KEY, env=Environment.TEST, logger=get_logger()
-    )
-    yield quoter_client
-    while True:
-        try:
-            quoter_client.cancel_all()
-            quoter_client.cancel_batch_rfqs()
-            break
-        except DeriveJSONRPCException as e:
-            if "Retry after" in e.data:
-                wait_ms = int(e.data.split(" ")[2])
-                time.sleep(wait_ms / 1000)
-                continue
-            raise e
-
-
-@pytest.fixture
-async def derive_async_client():
-    derive_client = AsyncClient(
-        wallet=TEST_WALLET, private_key=TEST_PRIVATE_KEY, env=Environment.TEST, logger=get_logger()
-    )
-    yield derive_client
-    await derive_client.cancel_all()
+@contextmanager
+def assert_api_calls(client, expected: int):
+    with patch.object(client._session, "_send_request", wraps=client._session._send_request) as api_requests:
+        before = api_requests.call_count
+        yield
+        after = api_requests.call_count
+    actual = after - before
+    if actual != expected:
+        raise AssertionError(f"Expected {expected} HTTP calls, got {actual}. (before={before}, after={after})")

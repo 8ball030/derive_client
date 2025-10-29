@@ -16,7 +16,7 @@ from derive_client.data.generated.models import (
     PrivateReplaceResultSchema,
     Result,
 )
-from tests.test_clients.test_rest.test_http.conftest import assert_api_calls
+from tests.conftest import assert_api_calls
 
 
 def _create_order(

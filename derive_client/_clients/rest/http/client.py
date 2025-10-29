@@ -4,10 +4,10 @@ import contextlib
 from logging import Logger
 from typing import Generator
 
-from derive_client._bridge.client import BridgeClient
 from pydantic import validate_call
 from web3 import Web3
 
+from derive_client._bridge.client import BridgeClient
 from derive_client._clients.rest.http.account import LightAccount
 from derive_client._clients.rest.http.api import PrivateAPI, PublicAPI
 from derive_client._clients.rest.http.markets import MarketOperations
@@ -61,47 +61,20 @@ class HTTPClient:
         self._public_api = PublicAPI(session=self._session, config=config)
         self._private_api = PrivateAPI(session=self._session, config=config, auth=auth)
 
-        self._markets = MarketOperations(public_api=self._public_api)
+        self._markets = MarketOperations(public_api=self._public_api, logger=self._logger)
 
         self._light_account: LightAccount | None = None
         self._subaccounts: dict[int, Subaccount] = {}
 
         self._bridge_client: BridgeClient | None = None
 
-    def connect(self, initialize_bridge: bool = True) -> None:
-        """
-        Connect to Derive and validate credentials.
-
-        Args:
-            initialize_bridge: If True, attempt to initialize bridge client (requires owner signer)
-        """
+    def connect(self) -> None:
+        """Connect to Derive and validate credentials, fetch and cache market instruments."""
 
         self._session.open()
 
-        self._light_account = LightAccount.from_api(
-            auth=self._auth,
-            config=self._config,
-            logger=self._logger,
-            public_api=self._public_api,
-            private_api=self._private_api,
-        )
-
-        self.markets.fetch_instruments(expired=False)
-        self._logger.debug(f"Cached {len(self.markets.cached_active_instruments)} instruments")
-
-        if initialize_bridge and self._env is Environment.PROD:
-            try:
-                self._bridge_client = BridgeClient(
-                    env=self._env,
-                    account=self._auth.account,
-                    wallet=self._auth.wallet,
-                    logger=self._logger,
-                )
-                self._bridge_client.connect()
-            except BridgePrimarySignerRequiredError:
-                self._logger.info("Bridge unavailable: requires signer to be the LightAccount owner.")
-        elif initialize_bridge:
-            self._logger.debug("Bridge module unavailable in non-prod environment.")
+        self._instantiate_account()
+        self._markets.fetch_all_instruments(expired=False)
 
         subaccount_ids = self._light_account._state.subaccount_ids
         if self._subaccount_id not in subaccount_ids:
@@ -120,7 +93,18 @@ class HTTPClient:
         self._session.close()
         self._light_account = None
         self._subaccounts.clear()
-        self.markets._active_instrument_cache.clear()
+        self._markets._erc20_instruments_cache.clear()
+        self._markets._perp_instruments_cache.clear()
+        self._markets._option_instruments_cache.clear()
+
+    def _instantiate_account(self) -> None:
+        self._light_account = LightAccount.from_api(
+            auth=self._auth,
+            config=self._config,
+            logger=self._logger,
+            public_api=self._public_api,
+            private_api=self._private_api,
+        )
 
     def _instantiate_subaccount(self, subaccount_id: int) -> Subaccount:
         return Subaccount.from_api(
@@ -133,23 +117,38 @@ class HTTPClient:
             private_api=self._private_api,
         )
 
+    def _initialize_bridge(self) -> None:
+        """Initialize bridge client lazily."""
+        if self._env is not Environment.PROD:
+            raise NotConnectedError("Bridge module unavailable in non-prod environment.")
+
+        try:
+            self._bridge_client = BridgeClient(
+                env=self._env,
+                account=self._auth.account,
+                wallet=self._auth.wallet,
+                logger=self._logger,
+            )
+            self._bridge_client.connect()
+        except BridgePrimarySignerRequiredError:
+            raise NotConnectedError("Bridge unavailable: requires signer to be the LightAccount owner.")
+
     @property
     def account(self) -> LightAccount:
         if self._light_account is None:
-            raise NotConnectedError("HTTPClient.account accessed before connect(); call connect() first.")
+            self._instantiate_account()
         return self._light_account
 
     @property
     def active_subaccount(self) -> Subaccount:
         if (subaccount := self._subaccounts.get(self._subaccount_id)) is None:
-            raise NotConnectedError("No active subaccount. Call connect() first and ensure subaccount exists.")
+            subaccount = self.fetch_subaccount(subaccount_id=self._subaccount_id)
         return subaccount
 
     @property
     def bridge(self) -> BridgeClient:
         if not self._bridge_client:
-            msg = "Bridge unavailable: call connect() and ensure session key is the LightAccount owner."
-            raise NotConnectedError(msg)
+            self._initialize_bridge()
         return self._bridge_client
 
     def fetch_subaccount(self, subaccount_id: int) -> Subaccount:

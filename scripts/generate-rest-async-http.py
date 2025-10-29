@@ -22,7 +22,8 @@ ASYNC_OPERATION_MODULES = {
 
 # Methods that should remain synchronous
 SYNC_METHODS = {
-    "get_cached_instrument",
+    "_get_cache_for_type",
+    "_get_cached_instrument",
     "sign_action",
 }
 
@@ -37,8 +38,15 @@ class AsyncConverter(cst.CSTTransformer):
     ) -> cst.FunctionDef:
         """Add async to method definitions."""
 
+        if original_node.name.value == "_get_cached_instrument":
+            return self._remove_lazy_load_if(updated_node)
+
+        if self._is_cache_property(original_node):
+            return self._convert_cache_property(updated_node)
+
         if not self._should_make_async(original_node):
             return updated_node
+
         return updated_node.with_changes(asynchronous=cst.Asynchronous(whitespace_after=cst.SimpleWhitespace(" ")))
 
     def leave_Call(self, original_node: cst.Call, updated_node: cst.Call) -> cst.Call | cst.Await:
@@ -145,6 +153,37 @@ class AsyncConverter(cst.CSTTransformer):
                 return True
         return False
 
+    def _is_cache_property(self, node: cst.FunctionDef) -> bool:
+        """Check if this is a cache property (erc20/perp/option_instruments_cache)."""
+
+        name = node.name.value
+        return self._is_property(node) and name.endswith("_instruments_cache")
+
+    def _convert_cache_property(self, node: cst.FunctionDef) -> cst.FunctionDef:
+        """Convert cache property to raise error if cache is empty instead of lazy loading."""
+
+        statements = node.body.body
+
+        if_index = next((i for i, stmt in enumerate(statements) if isinstance(stmt, cst.If)), None)
+        if if_index is None:
+            raise ValueError(f"Could not find expected if-statement in {node.name.value} function body: ")
+
+        if_stmt = statements[if_index]
+        err_msg = f"Call fetch_instruments() or fetch_all_instruments() to create the {node.name.value}."
+        raise_exc = cst.Call(
+            func=cst.Name("RuntimeError"),
+            args=[cst.Arg(value=cst.SimpleString(f'"{err_msg}"'))],
+        )
+        raise_stmt = cst.Raise(exc=raise_exc)
+
+        new_if_body = cst.IndentedBlock(body=[cst.SimpleStatementLine(body=[raise_stmt])])
+        new_if = if_stmt.with_changes(body=new_if_body)
+
+        new_statements = list(statements[:if_index]) + [new_if] + list(statements[if_index + 1 :])
+        new_body = node.body.with_changes(body=new_statements)
+
+        return node.with_changes(body=new_body)
+
     def _is_api_call(self, node: cst.Call) -> bool:
         """Check if this call should be awaited."""
 
@@ -178,6 +217,36 @@ class AsyncConverter(cst.CSTTransformer):
                 return True
 
         return False
+
+    def _remove_lazy_load_if(self, node: cst.FunctionDef) -> cst.FunctionDef:
+        """
+        Remove the `if not cache: cache = await self.fetch_instruments(...)` block.
+
+        Looks for a top-level `If` whose test is `not cache` and removes that statement.
+        Returns the original node unchanged if not found (safe).
+        """
+
+        statements = node.body.body
+
+        # find an If with `not cache`
+        def is_not_cache_if(stmt: cst.BaseSmallStatement) -> bool:
+            if not isinstance(stmt, cst.If):
+                return False
+            test = stmt.test
+            if isinstance(test, cst.UnaryOperation) and isinstance(test.operator, cst.Not):
+                expr = test.expression
+                return isinstance(expr, cst.Name) and expr.value == "cache"
+            return False
+
+        if_index = next((i for i, s in enumerate(statements) if is_not_cache_if(s)), None)
+        if if_index is None:
+            return node
+
+        # remove that If statement
+        new_statements = [*statements[:if_index], *statements[if_index + 1 :]]
+
+        new_body = node.body.with_changes(body=new_statements)
+        return node.with_changes(body=new_body)
 
 
 class AsyncTestConverter(cst.CSTTransformer):

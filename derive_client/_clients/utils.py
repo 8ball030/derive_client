@@ -227,3 +227,20 @@ async def async_fetch_all_pages_of_instrument_type(
         page += 1
 
     return instruments
+
+
+def infer_instrument_type(*, instrument_name: str) -> InstrumentType:
+    """
+    Infer instrument type from name pattern.
+
+    Patterns:
+    - PERP: Contains '-PERP' suffix
+    - Option: Ends with '-P' or '-C' (put/call)
+    - ERC20: Everything else (typically short token pairs like 'ETH-USDC')
+    """
+    if instrument_name.endswith("-PERP"):
+        return InstrumentType.perp
+    elif instrument_name.endswith("-P") or instrument_name.endswith("-C"):
+        return InstrumentType.option
+    else:
+        return InstrumentType.erc20
