@@ -2,6 +2,7 @@
 Conftest for derive tests
 """
 
+import time
 from unittest.mock import MagicMock
 
 import pytest
@@ -9,6 +10,7 @@ import pytest
 from derive_client.clients import AsyncClient
 from derive_client.data_types import Environment
 from derive_client.derive import DeriveClient
+from derive_client.exceptions import DeriveJSONRPCException
 from derive_client.utils import get_logger
 
 TEST_WALLET = "0x8772185a1516f0d61fC1c2524926BfC69F95d698"
@@ -31,7 +33,17 @@ def derive_client():
         wallet=TEST_WALLET, private_key=TEST_PRIVATE_KEY, env=Environment.TEST, logger=get_logger()
     )
     yield derive_client
-    derive_client.cancel_all()
+    while True:
+        try:
+            derive_client.cancel_all()
+            derive_client.cancel_batch_rfqs()
+            break
+        except DeriveJSONRPCException as e:
+            if "Retry after" in e.data:
+                wait_ms = int(e.data.split(" ")[2])
+                time.sleep(wait_ms / 1000)
+                continue
+            raise e
 
 
 @pytest.fixture

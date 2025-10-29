@@ -243,6 +243,9 @@ class RfqStatus(Enum):
     """RFQ statuses."""
 
     OPEN = "open"
+    FILLED = "filled"
+    CANCELLED = "cancelled"
+    EXPIRED = "expired"
 
 
 class EthereumJSONRPCErrorCode(IntEnum):

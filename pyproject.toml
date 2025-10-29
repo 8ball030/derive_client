@@ -33,6 +33,7 @@ pytest-rerunfailures = "^13.0"
 semver = ">=2.9.1,<3.0.0"
 numpy = "<2"
 ruff = "^0.13.0"
+datamodel-code-generator = "^0.34.0"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.6.1"
