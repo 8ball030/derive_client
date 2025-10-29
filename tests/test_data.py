@@ -1,21 +1,16 @@
-import json
+from __future__ import annotations
 
-from derive_client.constants import DATA_DIR
 from derive_client.data_types import ChainID, Currency
+from derive_client.utils.prod_addresses import get_prod_derive_addresses
 
-prod_lyra_addresses = DATA_DIR / "prod_lyra_addresses.json"
 
+def test_get_prod_derive_addresses():
+    """Test to ensure our enums cover all chain ids and currencies listed."""
 
-def test_prod_lyra_addresses():
-    raw_data = json.loads(prod_lyra_addresses.read_text())
-    chain_ids = set()
-    currencies = set()
-    for chain_id, data in raw_data.items():
-        chain_ids.add(int(chain_id))
-        for currency, item in data.items():
-            currencies.add(currency)
-
-    missing_chains = chain_ids.difference(ChainID.__members__.values())
-    missing_currencies = currencies.difference(Currency.__members__)
+    prod_addresses = get_prod_derive_addresses()
+    chain_ids = set(prod_addresses.chains)
+    currencies = {currency for value in prod_addresses.chains.values() for currency in value}
+    missing_chains = chain_ids - set(ChainID)
+    missing_currencies = currencies - set(Currency)
     assert not missing_chains
     assert not missing_currencies

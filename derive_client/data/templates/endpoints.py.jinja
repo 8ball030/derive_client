@@ -1,0 +1,37 @@
+"""Auto-generated endpoint definitions from OpenAPI spec"""
+
+from typing import Any
+
+
+class Endpoint:
+    """Descriptor that provides both REST URLs and WebSocket method names"""
+
+    def __init__(self, section: str, path: str):
+        self.section = section
+        self.path = path
+        self.method = f"{section}/{path}"
+
+    def url(self, base_url: str) -> str:
+        """Returns full URL for REST"""
+        return f"{base_url.rstrip('/')}/{self.method}"
+
+    def __get__(self, inst: Any, owner: Any):
+        if inst is None:
+            return self  # Allow class-level access to .method
+        return self.url(inst._base_url)
+
+
+class PublicEndpoints:
+    def __init__(self, base_url: str):
+        self._base_url = base_url
+{% for method in public_methods %}
+    {{ method.name }} = Endpoint("public", "{{ method.name }}")
+{%- endfor %}
+
+
+class PrivateEndpoints:
+    def __init__(self, base_url: str):
+        self._base_url = base_url
+{% for method in private_methods %}
+    {{ method.name }} = Endpoint("private", "{{ method.name }}")
+{%- endfor %}

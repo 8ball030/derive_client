@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 import threading
 from concurrent.futures import TimeoutError as _TimeoutError
 from typing import Any, Optional
@@ -47,7 +48,16 @@ def run_coroutine_sync(coro: object, timeout: Optional[float] = None) -> Any:
 
     _start_bg_loop()
     loop = _bg["loop"]
-    fut = asyncio.run_coroutine_threadsafe(coro, loop)
+
+    if inspect.iscoroutine(coro):
+        fut = asyncio.run_coroutine_threadsafe(coro, loop)
+    else:
+
+        async def _await_it():
+            return await coro
+
+        fut = asyncio.run_coroutine_threadsafe(_await_it(), loop)
+
     try:
         return fut.result(timeout)
     except _TimeoutError:

@@ -1,5 +1,8 @@
+"""Internal: Standard bridge implementation."""
+
 import asyncio
 import json
+from decimal import Decimal
 from logging import Logger
 
 from eth_account import Account
@@ -76,7 +79,17 @@ def _load_l2_cross_domain_messenger_proxy(w3: AsyncWeb3) -> AsyncContract:
 
 
 class StandardBridge:
+    """Bridge tokens using Optimism's native standard bridge."""
+
     def __init__(self, account: Account, logger: Logger):
+        """
+        Initialize Standard bridge.
+
+        Args:
+            account: Account object containing the private key of the owner of the smart contract funding account
+            logger: Logger instance for logging
+        """
+
         self.account = account
         self.logger = logger
         self.w3s = get_w3_connections(logger=logger)
@@ -88,7 +101,7 @@ class StandardBridge:
     @future_safe
     async def prepare_eth_tx(
         self,
-        human_amount: float,
+        amount: Decimal,
         to: Address,
         source_chain: ChainID,
         target_chain: ChainID,
@@ -98,7 +111,7 @@ class StandardBridge:
         if source_chain is not ChainID.ETH or target_chain is not ChainID.DERIVE or to != self.account.address:
             raise NotImplementedError("Only ETH transfers from Ethereum to Derive EOA are currently supported.")
 
-        value: int = to_base_units(human_amount=human_amount, currency=currency)
+        value: int = to_base_units(decimal_amount=amount, currency=currency)
         prepared_tx = await self._prepare_eth_tx(
             value=value,
             to=to,
@@ -150,9 +163,7 @@ class StandardBridge:
 
         tx_gas_cost = tx["gas"] * tx["maxFeePerGas"]
         if value < tx_gas_cost:
-            msg = (
-                f"⚠️ Bridge tx value {value} is smaller than gas cost {tx_gas_cost} (~{tx_gas_cost / value:.2f}x value)"
-            )
+            msg = f"⚠️ Bridge tx value {value} is smaller than max gas cost {tx_gas_cost} (~{tx_gas_cost / value:.2f}x value)"
             self.logger.warning(msg)
 
         signed_tx = sign_tx(w3=w3, tx=tx, private_key=self.private_key)
