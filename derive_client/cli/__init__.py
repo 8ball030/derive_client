@@ -19,18 +19,25 @@ click.rich_click.USE_RICH_MARKUP = True
 
 @click.group("Derive Client")
 @click.option(
-    "--signer-key-path",
+    "--session-key-path",
     "-k",
     type=click.Path(exists=True, dir_okay=False, readable=True, path_type=Path),
     default=None,
-    help="Path to the file containing the private key for the signer.",
+    help="Path to the file containing the session key to be used as signer.",
+)
+@click.option(
+    "--env-file",
+    "-e",
+    type=click.Path(exists=True, dir_okay=False, readable=True, path_type=Path),
+    default=None,
+    help="Path to a .env file. Defaults to .env in the current working directory.",
 )
 @click.pass_context
-def cli(ctx, signer_key_path: Path | None):
+def cli(ctx, session_key_path: Path | None, env_file: Path | None):
     """Derive v2 client command line interface."""
 
     ctx.ensure_object(dict)
-    client = create_client(ctx=ctx, signer_key_path=signer_key_path)
+    client = create_client(ctx=ctx, session_key_path=session_key_path, env_file=env_file)
     ctx.obj["client"] = client
 
 
