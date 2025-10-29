@@ -23,7 +23,7 @@ from derive_client.data.generated.models import (
     PrivateSendRfqResultSchema,
     Result,
 )
-from tests.test_clients.test_rest.test_http.conftest import assert_api_calls
+from tests.conftest import assert_api_calls
 
 
 async def _create_unpriced_legs(client):

@@ -176,7 +176,7 @@ class RFQOperations:
 
         rfq_legs = []
         for leg in legs:
-            instrument = self._subaccount.markets.get_cached_instrument(instrument_name=leg.instrument_name)
+            instrument = self._subaccount.markets._get_cached_instrument(instrument_name=leg.instrument_name)
             asset_address = instrument.base_asset_address
             sub_id = int(instrument.base_asset_sub_id)
 
@@ -316,7 +316,7 @@ class RFQOperations:
 
         quote_legs = []
         for leg in legs:
-            instrument = self._subaccount.markets.get_cached_instrument(instrument_name=leg.instrument_name)
+            instrument = self._subaccount.markets._get_cached_instrument(instrument_name=leg.instrument_name)
             asset_address = instrument.base_asset_address
             sub_id = int(instrument.base_asset_sub_id)
 

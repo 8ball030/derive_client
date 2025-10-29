@@ -65,7 +65,7 @@ class PositionOperations:
         from_subaccount = self._subaccount.id
         max_fee = Decimal("0")
 
-        instrument = self._subaccount.markets.get_cached_instrument(instrument_name=instrument_name)
+        instrument = self._subaccount.markets._get_cached_instrument(instrument_name=instrument_name)
         limit_price = instrument.tick_size
         asset_address = instrument.base_asset_address
         sub_id = int(instrument.base_asset_sub_id)
@@ -159,7 +159,7 @@ class PositionOperations:
             leg_direction = Direction.buy if position.amount < 0 else Direction.sell
 
             instrument_name = position.instrument_name
-            instrument = self._subaccount.markets.get_cached_instrument(instrument_name=instrument_name)
+            instrument = self._subaccount.markets._get_cached_instrument(instrument_name=instrument_name)
             price = instrument.tick_size
             asset_address = instrument.base_asset_address
             sub_id = int(instrument.base_asset_sub_id)

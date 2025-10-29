@@ -10,6 +10,10 @@ if TYPE_CHECKING:
     from derive_client.data_types import BridgeTxResult, ChainID, FeeEstimate, Wei
 
 
+class NotConnectedError(RuntimeError):
+    """Raised when the client hasn't connected (call connect())."""
+
+
 class ApiException(Exception):
     """Raised when an API request fails or returns an error response."""
 

@@ -39,3 +39,9 @@ ARBITRUM:
 DERIVE:
   - https://rpc.derive.xyz/
   - https://957.rpc.thirdweb.com/
+
+MODE:
+  - https://mode.drpc.org
+
+BLAST:
+  - https://blast.drpc.org

@@ -11,7 +11,7 @@ from derive_client.data.generated.models import (
     PrivateTransferPositionsResultSchema,
     TxStatus,
 )
-from tests.test_clients.test_rest.test_http.conftest import assert_api_calls
+from tests.conftest import assert_api_calls
 
 
 def _get_open_positions_for_instrument(
