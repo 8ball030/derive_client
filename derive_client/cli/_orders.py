@@ -24,16 +24,6 @@ def order(ctx):
     required=True,
 )
 @click.argument(
-    "amount",
-    required=True,
-    type=Decimal,
-)
-@click.argument(
-    "limit_price",
-    required=True,
-    type=Decimal,
-)
-@click.argument(
     "direction",
     required=True,
     type=click.Choice([i.value for i in Direction]),
@@ -44,6 +34,25 @@ def order(ctx):
     type=click.Choice([i.value for i in OrderType]),
     default=OrderType.limit,
 )
+@click.argument(
+    "reduce_only",
+    required=True,
+    type=bool,
+    default=False,
+)
+@click.option(
+    "--amount",
+    "-a",
+    required=True,
+    type=Decimal,
+)
+@click.option(
+    "--price",
+    "-p",
+    "limit_price",
+    required=True,
+    type=Decimal,
+)
 @click.pass_context
 def create(
     ctx,
@@ -52,11 +61,12 @@ def create(
     limit_price: Decimal,
     direction: str,
     order_type: str,
+    reduce_only: bool,
 ):
     """Create a new order.
 
     Examples:
-        drv order create ETH-PERP 0.1 200
+        drv order create ETH-PERP buy -a 0.1 -p 2000
     """
 
     client = ctx.obj["client"]
@@ -68,6 +78,7 @@ def create(
         instrument_name=instrument_name,
         limit_price=limit_price,
         order_type=order_type,
+        reduce_only=reduce_only,
     )
 
     print("\n=== Order ===")
