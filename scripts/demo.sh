@@ -1,83 +1,94 @@
 #!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
 SLEEP_TIME=3
 
-cowsay The Derive client offers both a library and a cli tool to manage positions on Derive.
-
+clear
+cowsay "The Derive client offers both a library and CLI tool to manage positions on Derive."
 sleep $SLEEP_TIME
-
 clear
 
-cowsay "The client can be installed from pip as so;" 
-
+cowsay "The client can be installed from pip:"
 echo "pip install derive-client"
-
-sleep $SLEEP_TIME
-
-clear
-
-cowsay "Once the Derive client is installed, we can programatically interact with Derive"
-
-drv
-
 sleep $SLEEP_TIME
 clear
 
-cowsay we can fetch markets by instrument type and currency
-
-drv instruments fetch --help
-
+cowsay "Once installed, we can interact with Derive programmatically via the CLI."
+echo drv --help
+drv --help
 sleep $SLEEP_TIME
 clear
 
-echo \`drv instruments fetch -i perp\`
-drv instruments fetch -i perp
-
+# Account
+cowsay "Let's start by querying our account details."
+echo drv account get
+drv account get
 sleep $SLEEP_TIME
 clear
 
-echo \`drv instruments fetch -i perp -c btc\`
-drv instruments fetch -i perp -c btc
+cowsay "We can also view our subaccount portfolios."
+echo drv account portfolios
+drv account portfolios
 sleep $SLEEP_TIME
 clear
 
 
-cowsay we can manage orders
-echo \`drv orders\`
-drv orders
+# Markets
+cowsay "Next, let's explore market data."
+echo drv market --help
+drv market --help
 sleep $SLEEP_TIME
 clear
 
-cowsay we can create orders
-echo \`drv orders create -s sell -i ETH-PERP -a 1 -p 3000\`
-drv orders create -s sell -i ETH-PERP -a 1 -p 3000
+cowsay "We can list all available currencies..."
+echo drv market currency --all
+drv market currency --all
 sleep $SLEEP_TIME
 clear
 
-cowsay "we can then retrieve them"
-echo \`drv orders fetch -i ETH-PERP --status open\`
-drv orders fetch -i ETH-PERP --status open
+cowsay "...query instruments by currency and type..."
+echo drv market instrument -c ETH -t option
+drv market instrument -c ETH -t option
 sleep $SLEEP_TIME
 clear
 
-
-cowsay "we can then cancel them"
-echo \`drv orders cancel_all\`
-drv orders cancel_all
+cowsay "...and check real-time ticker data."
+echo drv market ticker ETH-PERP
+drv market ticker ETH-PERP
 sleep $SLEEP_TIME
 clear
 
-cowsay "we can also check our balances"
-echo \`drv collateral fetch\`
-drv collateral fetch
+# Orders
+cowsay "Now for the fun part: let's place an order! How about buying ETH-PERP at \$100?"
 sleep $SLEEP_TIME
 clear
 
-cowsay "we can also check our positions"
-echo \`drv positions fetch\`
-drv positions fetch
+cowsay "...I mean, you never know, right? 🤷"
+echo drv order create ETH-PERP buy -a 0.1 -p 100
+drv order create ETH-PERP buy -a 0.1 -p 100
 sleep $SLEEP_TIME
 clear
 
+cowsay "Let's check if anyone's desperate enough to sell at that price..."
+echo drv order list_open
+drv order list_open
+sleep $SLEEP_TIME
+clear
+
+cowsay "Yeah, thought so. Let's cancel that pipe dream."
+echo drv order cancel_all
+drv order cancel_all
+sleep $SLEEP_TIME
+clear
+
+# Positions
+cowsay "On second thought, maybe I'm long enough already. Let's check our positions."
+echo drv position list
+drv position list
+sleep $SLEEP_TIME
+clear
+
+cowsay "And that's the Derive CLI! Trade responsibly. 🚀"
+sleep $SLEEP_TIME
+clear
