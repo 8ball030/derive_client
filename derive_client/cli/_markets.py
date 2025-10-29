@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import msgspec
 import pandas as pd
 import rich_click as click
 
@@ -110,22 +109,21 @@ def instrument(ctx, instrument_name, currency, type, expired):
     complex_cols = ["erc20_details", "perp_details", "option_details"]
 
     if instrument_name:
-        result = client.markets.get_instrument(instrument_name=instrument_name)
-        data = msgspec.structs.asdict(result)
-        series = pd.Series(data)
+        instrument = client.markets.get_instrument(instrument_name=instrument_name)
+        series = struct_to_series(instrument)
 
         print("\n=== Instrument Info ===")
-        print(series.drop(complex_cols))
+        print(series.drop(complex_cols).to_string(index=True))
 
         if series.erc20_details is not None:
             print("\n=== ERC20 Details ===")
-            print(pd.Series(msgspec.structs.asdict(series["erc20_details"])))
+            print(struct_to_series(series.erc20_details).to_string(index=True))
         if series.perp_details is not None:
             print("\n=== Perp Details ===")
-            print(pd.Series(msgspec.structs.asdict(series["perp_details"])))
+            print(struct_to_series(series.perp_details).to_string(index=True))
         if series.option_details is not None:
             print("\n=== Option Details ===")
-            print(pd.Series(msgspec.structs.asdict(series["option_details"])))
+            print(struct_to_series(series.option_details).to_string(index=True))
 
     else:
         instrument_type = InstrumentType[type]
@@ -189,24 +187,24 @@ def ticker(ctx, instrument_name, currency, type, expired):
         series = struct_to_series(ticker)
 
         print("\n=== Ticker Info ===")
-        print(series.drop(complex_cols))
+        print(series.drop(complex_cols).to_string(index=True))
 
         if series.erc20_details is not None:
             print("\n=== ERC20 Details ===")
-            print(struct_to_series(series.erc20_details))
+            print(struct_to_series(series.erc20_details).to_string(index=True))
         if series.perp_details is not None:
             print("\n=== Perp Details ===")
-            print(struct_to_series(series.perp_details))
+            print(struct_to_series(series.perp_details).to_string(index=True))
         if series.option_details is not None:
             print("\n=== Option Details ===")
-            print(struct_to_series(series.option_details))
+            print(struct_to_series(series.option_details).to_string(index=True))
 
         print("\n=== Open Interest ===")
         items = series["open_interest"].items()
         print(pd.DataFrame({k: struct_to_series(v2) for k, v in items for v2 in v}))
 
         print("\n=== Stats ===")
-        print(struct_to_series(series.stats))
+        print(struct_to_series(series.stats).to_string(index=True))
 
     else:
         instrument_type = InstrumentType[type]

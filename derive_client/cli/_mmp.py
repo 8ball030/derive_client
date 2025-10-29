@@ -83,7 +83,7 @@ def set_config(
     )
 
     print("\n=== Updated Market Maker Protection Config ===")
-    print(struct_to_series(mmp_config))
+    print(struct_to_series(mmp_config).to_string(index=True))
 
 
 @mmp.command("reset")

@@ -82,7 +82,7 @@ def create(
     )
 
     print("\n=== Order ===")
-    print(struct_to_series(order.order)[ORDER_COLUMNS])
+    print(struct_to_series(order.order)[ORDER_COLUMNS].to_string(index=True))
 
     if order.trades:
         print("\n=== Trades ===")
@@ -103,7 +103,7 @@ def get(ctx, order_id: str):
     order = subaccount.orders.get(order_id=order_id)
 
     print("\n=== Order ===")
-    print(struct_to_series(order))
+    print(struct_to_series(order).to_string(index=True))
 
 
 @order.command("list_open")
@@ -144,7 +144,7 @@ def cancel(ctx, order_id: str, instrument_name: str):
     cancelled_order = subaccount.orders.cancel(order_id=order_id, instrument_name=instrument_name)
 
     print("\n=== Cancelled Order ===")
-    print(struct_to_series(cancelled_order))
+    print(struct_to_series(cancelled_order).to_string(index=True))
 
 
 @order.command("cancel_all")
