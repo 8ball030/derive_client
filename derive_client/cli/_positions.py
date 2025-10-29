@@ -7,7 +7,7 @@ from decimal import Decimal
 import pandas as pd
 import rich_click as click
 
-from ._columns import TRADE_COLUMNS
+from ._columns import OPEN_POSITION_COLUMNS, TRADE_COLUMNS
 from ._utils import struct_to_series, structs_to_dataframe
 
 
@@ -27,25 +27,11 @@ def list(ctx):
     positions = subaccount.positions.list()
     df = structs_to_dataframe(positions.positions)
 
-    columns = [
-        "instrument_name",
-        "instrument_type",
-        "amount",
-        "mark_price",
-        "index_price",
-        "mark_value",
-        "unrealized_pnl",
-        "realized_pnl",
-        "leverage",
-        "initial_margin",
-        "maintenance_margin",
-        "open_orders_margin",
-        "liquidation_price",
-        "total_fees",
-    ]
-
     print(f"\n=== Active Positions of subaccount {subaccount.id} ===")
-    print(df[columns])
+    if not df.empty:
+        print(df[OPEN_POSITION_COLUMNS])
+    else:
+        print("No open positions")
 
 
 @position.command("transfer")

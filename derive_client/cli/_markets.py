@@ -114,10 +114,8 @@ def instrument(ctx, instrument_name, currency, type, expired):
         data = msgspec.structs.asdict(result)
         series = pd.Series(data)
 
-        simple_series = series.drop(complex_cols, errors='ignore')
-
         print("\n=== Instrument Info ===")
-        print(simple_series)
+        print(series.drop(complex_cols))
 
         if series.erc20_details is not None:
             print("\n=== ERC20 Details ===")
@@ -137,6 +135,8 @@ def instrument(ctx, instrument_name, currency, type, expired):
             instrument_type=instrument_type,
         )
         df = structs_to_dataframe(instruments)
+
+        print("\n=== Instruments Info ===")
         print(df[INSTRUMENT_COLUMNS])
 
 
@@ -218,5 +218,5 @@ def ticker(ctx, instrument_name, currency, type, expired):
         )
         df = structs_to_dataframe(tickers)
 
-        print("\n=== Ticker Info ===")
+        print("\n=== Tickers Info ===")
         print(df)

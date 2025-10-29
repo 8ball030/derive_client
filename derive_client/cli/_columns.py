@@ -63,6 +63,24 @@ POSITION_COLUMNS = [
 ]
 
 
+OPEN_POSITION_COLUMNS = [
+    "instrument_name",
+    "instrument_type",
+    "amount",
+    "mark_price",
+    "index_price",
+    "mark_value",
+    "unrealized_pnl",
+    "realized_pnl",
+    "leverage",
+    "initial_margin",
+    "maintenance_margin",
+    "open_orders_margin",
+    "liquidation_price",
+    "total_fees",
+]
+
+
 TRADE_COLUMNS = [
     "subaccount_id",
     "liquidity_role",
