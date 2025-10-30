@@ -1,8 +1,10 @@
 # ruff: noqa: E741
 from __future__ import annotations
+
 from decimal import Decimal
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
+
 from msgspec import Struct
 
 
