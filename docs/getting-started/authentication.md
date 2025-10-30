@@ -24,7 +24,7 @@ At the moment, registration is done via the [Derive web app](https://derive.xyz)
 You can generate a private key using the helper script:
 
 ```shell
-python ./scripts/create_new_pk.py
+python ./scripts/create-new-private-key.py
 ```
 
 Or use an existing key
@@ -68,9 +68,9 @@ Or use an existing key
 You will need the following information to use the client:
 
 ```bash
-export DERIVE_SESSION_PRIVATE_KEY=0x742d...  # Required: EOA private key registered as a session key
-export DERIVE_WALLET=0x8f5B...               # Required: LightAccount (smart contract wallet) address
-export DERIVE_SUBACCOUNT=123456              # Recommended: Subaccount ID (explicit)
+export DERIVE_SESSION_KEY=0x742d...  # Required: EOA private key registered as a session key
+export DERIVE_WALLET=0x8f5B...       # Required: LightAccount (smart contract wallet) address
+export DERIVE_SUBACCOUNT_ID=123456   # Required: Subaccount ID
 ```
 
 ---

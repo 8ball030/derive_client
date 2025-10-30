@@ -76,16 +76,14 @@ All bridge operations follow the same general lifecycle:
 5. Wait for confirmation and finality on the target chain
 
 This flow is abstracted in the client.  
-You only need to call the high-level methods exposed on the `DeriveClient`.
+You only need to call the high-level methods exposed on the `HTTPClient`.
 
 ---
 
 ## Usage
 
-The client exposes bridging via high-level methods on `DeriveClient`.  
-Underlying bridge implementations live in the private `_bridge` module.
+The client exposes bridging via high-level methods on `HTTPClient.bridge`.
 
-- **We do not document the private modules here.**
 - Refer to [Quickstart](quickstart.md) or [Examples](examples/) for usage patterns and sample code.
 
 ---
