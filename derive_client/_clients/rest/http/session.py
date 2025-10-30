@@ -1,18 +1,18 @@
 from __future__ import annotations
 
 import weakref
+from logging import Logger
 
 import requests
 from requests.adapters import HTTPAdapter, Retry
-
-from derive_client._clients.logger import logger
 
 
 class HTTPSession:
     """HTTP session."""
 
-    def __init__(self, request_timeout: float):
+    def __init__(self, request_timeout: float, logger: Logger):
         self._request_timeout = request_timeout
+        self._logger = logger
 
         self._requests_session: requests.Session | None = None
         self._finalizer = weakref.finalize(self, self._finalize)
@@ -68,7 +68,7 @@ class HTTPSession:
             response = self._requests_session.post(url, data=data, headers=headers, timeout=timeout)
             response.raise_for_status()
         except requests.RequestException as e:
-            logger.error("HTTP request failed: %s -> %s", url, e)
+            self._logger.error("HTTP request failed: %s -> %s", url, e)
             raise
 
         return response.content
@@ -76,11 +76,11 @@ class HTTPSession:
     def _finalize(self):
         if self._requests_session:
             msg = "%s was garbage collected without explicit close(); closing session automatically"
-            logger.debug(msg, self.__class__.__name__)
+            self._logger.debug(msg, self.__class__.__name__)
             try:
                 self._requests_session.close()
             except Exception:
-                logger.exception("Error closing session in finalizer")
+                self._logger.exception("Error closing session in finalizer")
             self._requests_session = None
 
     def __enter__(self):

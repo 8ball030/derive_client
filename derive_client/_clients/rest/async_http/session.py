@@ -1,10 +1,10 @@
 import asyncio
 import contextvars
 import weakref
+from logging import Logger
 
 import aiohttp
 
-from derive_client._clients.logger import logger
 from derive_client.constants import PUBLIC_HEADERS
 
 # Context-local timeout (task-scoped) used to temporarily override session timeout.
@@ -14,8 +14,9 @@ _request_timeout_override: contextvars.ContextVar[float | None] = contextvars.Co
 
 
 class AsyncHTTPSession:
-    def __init__(self, request_timeout: float):
+    def __init__(self, request_timeout: float, logger: Logger):
         self._request_timeout = request_timeout
+        self._logger = logger
 
         self._connector: aiohttp.TCPConnector | None = None
         self._aiohttp_session: aiohttp.ClientSession | None = None
@@ -54,13 +55,13 @@ class AsyncHTTPSession:
             try:
                 await session.close()
             except Exception:
-                logger.exception("Error closing session")
+                self._logger.exception("Error closing session")
 
         if connector and not connector.closed:
             try:
                 await connector.close()
             except Exception:
-                logger.exception("Error closing connector")
+                self._logger.exception("Error closing connector")
 
     async def _send_request(
         self,
@@ -84,13 +85,13 @@ class AsyncHTTPSession:
                 except Exception as e:
                     raise ValueError(f"Failed to read response from {url}: {e}") from e
         except aiohttp.ClientError as e:
-            logger.error("HTTP request failed: %s -> %s", url, e)
+            self._logger.error("HTTP request failed: %s -> %s", url, e)
             raise
 
     def _finalize(self):
         if self._aiohttp_session and not self._aiohttp_session.closed:
             msg = "%s was garbage collected with an open session. Session will be closed by process exit if needed."
-            logger.debug(msg, self.__class__.__name__)
+            self._logger.debug(msg, self.__class__.__name__)
 
     async def __aenter__(self):
         await self.open()

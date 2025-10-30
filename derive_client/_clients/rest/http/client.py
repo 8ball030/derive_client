@@ -55,8 +55,8 @@ class HTTPClient:
         self._config = config
         self._subaccount_id = subaccount_id
 
-        self._session = HTTPSession(request_timeout=request_timeout)
         self._logger = logger if logger is not None else get_logger()
+        self._session = HTTPSession(request_timeout=request_timeout, logger=self._logger)
 
         self._public_api = PublicAPI(session=self._session, config=config)
         self._private_api = PrivateAPI(session=self._session, config=config, auth=auth)
