@@ -176,12 +176,58 @@ def is_struct_class(node: ast.ClassDef) -> bool:
     return False
 
 
+def inject_transaction_structs(path: Path, template_path: Path) -> None:
+    """Inject transaction struct definitions and fix PublicGetTransactionResultSchema."""
+
+    print("Injecting transaction structs via AST")
+
+    template_code = template_path.read_text()
+    template_tree = ast.parse(template_code)
+
+    struct_classes = [node for node in template_tree.body if isinstance(node, ast.ClassDef)]
+
+    code = path.read_text()
+    tree = ast.parse(code)
+
+    target_class_idx = None
+    target_class = None
+    for idx, node in enumerate(tree.body):
+        if isinstance(node, ast.ClassDef) and node.name == "PublicGetTransactionResultSchema":
+            target_class_idx = idx
+            target_class = node
+            break
+
+    if target_class_idx is None:
+        print("Warning: PublicGetTransactionResultSchema not found, skipping injection")
+        return
+
+    for struct_class in reversed(struct_classes):
+        tree.body.insert(target_class_idx, struct_class)
+
+    for stmt in target_class.body:
+        if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
+            field_name = stmt.target.id
+
+            if field_name == "data":
+                stmt.annotation = ast.Name(id="TransactionData", ctx=ast.Load())
+
+            elif field_name == "error_log" and isinstance(stmt.annotation, ast.Subscript):
+                stmt.annotation.slice = ast.Name(id="TransactionErrorLog", ctx=ast.Load())
+
+    ast.fix_missing_locations(tree)
+    new_code = ast.unparse(tree)
+    path.write_text(CUSTOM_HEADER + "\n" + new_code)
+
+
 if __name__ == "__main__":
     base_url = "https://docs.derive.xyz"
     repo_root = Path(__file__).parent.parent
     input_path = repo_root / "openapi-spec.json"
     output_path = repo_root / "derive_client" / "data" / "generated" / "models.py"
+    transaction_structs_template = repo_root / "derive_client" / "data" / "templates" / "transaction_structs.py"
+
     generate_models(input_path=input_path, output_path=output_path)
     patch_pagination_to_optional(output_path)
+    inject_transaction_structs(output_path, transaction_structs_template)
     patch_file(output_path)
     print("Done.")

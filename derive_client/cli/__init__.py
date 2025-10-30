@@ -13,6 +13,7 @@ from ._markets import market
 from ._mmp import mmp
 from ._orders import order
 from ._positions import position
+from ._transactions import transaction
 
 click.rich_click.USE_RICH_MARKUP = True
 
@@ -34,7 +35,7 @@ click.rich_click.USE_RICH_MARKUP = True
 )
 @click.pass_context
 def cli(ctx, session_key_path: Path | None, env_file: Path | None):
-    """Derive v2 client command line interface."""
+    """Derive client command line interface."""
 
     ctx.ensure_object(dict)
     client = create_client(ctx=ctx, session_key_path=session_key_path, env_file=env_file)
@@ -47,3 +48,4 @@ cli.add_command(market)
 cli.add_command(mmp)
 cli.add_command(order)
 cli.add_command(position)
+cli.add_command(transaction)

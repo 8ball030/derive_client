@@ -1318,10 +1318,34 @@ class PublicGetTransactionParamsSchema(Struct):
     transaction_id: str
 
 
+class TransactionDataInner(Struct):
+    asset: str
+    amount: str
+    decimals: int
+
+
+class TransactionData(Struct):
+    data: TransactionDataInner
+    nonce: int
+    owner: str
+    expiry: int
+    module: str
+    signer: str
+    asset_id: str
+    signature: str
+    asset_name: str
+    subaccount_id: int
+    is_atomic_signing: bool
+
+
+class TransactionErrorLog(Struct):
+    error: str
+
+
 class PublicGetTransactionResultSchema(Struct):
-    data: dict
+    data: TransactionData
     status: TxStatus
-    error_log: Optional[dict] = None
+    error_log: Optional[TransactionErrorLog] = None
     transaction_hash: Optional[str] = None
 
 
