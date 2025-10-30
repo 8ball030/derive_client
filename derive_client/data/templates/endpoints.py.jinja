@@ -1,10 +1,12 @@
-"""Auto-generated endpoint definitions from OpenAPI spec"""
+"""Auto-generated endpoint definitions from OpenAPI spec."""
 
-from typing import Any
+from __future__ import annotations
+
+from typing import Any, overload
 
 
 class Endpoint:
-    """Descriptor that provides both REST URLs and WebSocket method names"""
+    """Descriptor that provides both REST URLs and WebSocket method names."""
 
     def __init__(self, section: str, path: str):
         self.section = section
@@ -15,7 +17,13 @@ class Endpoint:
         """Returns full URL for REST"""
         return f"{base_url.rstrip('/')}/{self.method}"
 
-    def __get__(self, inst: Any, owner: Any):
+    @overload
+    def __get__(self, inst: None, owner: type) -> Endpoint: ...
+
+    @overload
+    def __get__(self, inst: object, owner: type) -> str: ...
+
+    def __get__(self, inst: Any, owner: Any) -> Endpoint | str:
         if inst is None:
             return self  # Allow class-level access to .method
         return self.url(inst._base_url)

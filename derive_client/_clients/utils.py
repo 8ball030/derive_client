@@ -71,13 +71,13 @@ class AuthContext:
 
     def sign_action(
         self,
-        module_address: Address,
+        module_address: Address | str,
         module_data: ModuleData,
         subaccount_id: int,
         signature_expiry_sec: Optional[int] = None,
         nonce: Optional[int] = None,
     ) -> SignedAction:
-        module_address = self.w3.to_checksum_address(module_address)
+        """Sign action using v2-action-signing library."""
 
         nonce = nonce or time.time_ns()
         signature_expiry_sec = signature_expiry_sec or get_default_signature_expiry_sec()
