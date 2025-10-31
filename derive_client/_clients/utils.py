@@ -20,16 +20,18 @@ from derive_client.data_types import Address
 
 if TYPE_CHECKING:
     from derive_client._clients.rest.http.markets import MarketOperations
+    from derive_client._clients.rest.async_http.markets import MarketOperations as AsyncMarketOperations
 
 
 class HasInstrumentName(Protocol):
     instrument_name: str
 
 
-T = TypeVar("T", bound=HasInstrumentName)
+StructT = TypeVar("StructT", bound=msgspec.Struct)
+InstrumentT = TypeVar("InstrumentT", bound=HasInstrumentName)
 
 
-def sort_by_instrument_name(items: Iterable[T]) -> list[T]:
+def sort_by_instrument_name(items: Iterable[InstrumentT]) -> list[InstrumentT]:
     """Derive API mandate: 'Legs must be sorted by instrument name'."""
     return sorted(items, key=lambda item: item.instrument_name)
 
@@ -110,7 +112,7 @@ class DeriveJSONRPCError(Exception):
         return f"{base}  [data={self.rpc_error.data!r}]" if self.rpc_error.data is not None else base
 
 
-def try_cast_response(response: bytes, response_schema: type[msgspec.Struct]) -> msgspec.Struct:
+def try_cast_response(response: bytes, response_schema: type[StructT]) -> StructT:
     try:
         return msgspec.json.decode(response, type=response_schema)
     except msgspec.ValidationError:
@@ -204,7 +206,7 @@ def fetch_all_pages_of_instrument_type(
 
 
 async def async_fetch_all_pages_of_instrument_type(
-    markets: MarketOperations,
+    markets: AsyncMarketOperations,
     instrument_type: InstrumentType,
     expired: bool,
 ) -> list[InstrumentPublicResponseSchema]:

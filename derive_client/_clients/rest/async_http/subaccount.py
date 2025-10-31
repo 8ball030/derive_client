@@ -173,7 +173,7 @@ class Subaccount:
     def sign_action(
         self,
         *,
-        module_address: Address,
+        module_address: Address | str,
         module_data: ModuleData,
         signature_expiry_sec: Optional[int] = None,
         nonce: Optional[int] | None = None,

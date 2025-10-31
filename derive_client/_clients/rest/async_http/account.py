@@ -104,10 +104,11 @@ class LightAccount:
         session_keys_response = await private_api.session_keys(session_keys_params)
 
         valid_signers = {key.public_session_key: key for key in session_keys_response.result.public_session_keys}
-        if auth.account.address not in valid_signers:
-            logger.warning(f"Session key {auth.account.address} is not registered for wallet {auth.wallet}")
+        signer_address = auth.account.address  # type: ignore[attr-defined]
+        if signer_address not in valid_signers:
+            logger.warning(f"Session key {signer_address} is not registered for wallet {auth.wallet}")
         else:
-            logger.debug(f"Session key validated: {auth.account.address}")
+            logger.debug(f"Session key validated: {signer_address}")
 
         return cls(
             auth=auth,
@@ -119,9 +120,24 @@ class LightAccount:
         )
 
     @property
+    def state(self) -> PrivateGetAccountResultSchema:
+        """Current mutable state."""
+        if not self._state:
+            msg = "Account state not loaded. Use Account.from_api() to instantiate or call refresh() to load state."
+            raise RuntimeError(msg)
+        return self._state
+
+    @property
     def address(self) -> Address:
         """LightAccount wallet address."""
         return self._auth.wallet
+
+    async def refresh(self) -> LightAccount:
+        """Refresh mutable state from API."""
+        params = PrivateGetAccountParamsSchema(wallet=self._auth.wallet)
+        response = await self._private_api.get_account(params)
+        self._state = response.result
+        return self
 
     async def build_register_session_key_tx(
         self,
@@ -197,7 +213,7 @@ class LightAccount:
         public_session_key: str,
         ip_whitelist: Optional[list[str]] = None,
         label: Optional[str] = None,
-        scope: Scope = 'read_only',
+        scope: Scope = Scope.read_only,
         signed_raw_tx: Optional[str] = None,
     ) -> PrivateRegisterScopedSessionKeyResultSchema:
         params = PrivateRegisterScopedSessionKeyParamsSchema(
@@ -267,7 +283,6 @@ class LightAccount:
         if margin_type == MarginType.SM and currency is not None:
             raise ValueError("base_currency must not be provided for standard-margin (SM) subaccounts.")
 
-        nonce = nonce if nonce is not None else self._auth.nonce_generator.next()
         subaccount_id = 0  # must be zero for new account creation
         module_address = self._config.contracts.DEPOSIT_MODULE
 
@@ -276,7 +291,7 @@ class LightAccount:
         asset = self._config.contracts.CASH_ASSET
 
         module_data = DepositModuleData(
-            amount=str(amount),
+            amount=amount,
             asset=asset,
             manager=manager_address,
             decimals=decimals,
@@ -284,7 +299,6 @@ class LightAccount:
         )
 
         signed_action = self._auth.sign_action(
-            nonce=nonce,
             module_address=module_address,
             module_data=module_data,
             signature_expiry_sec=signature_expiry_sec,

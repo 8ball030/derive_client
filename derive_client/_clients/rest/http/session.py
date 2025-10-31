@@ -17,11 +17,11 @@ class HTTPSession:
         self._requests_session: requests.Session | None = None
         self._finalizer = weakref.finalize(self, self._finalize)
 
-    def open(self):
+    def open(self) -> requests.Session:
         """Lazy session creation"""
 
         if self._requests_session is not None:
-            return
+            return self._requests_session
 
         session = requests.Session()
 
@@ -43,6 +43,7 @@ class HTTPSession:
         session.mount("http://", adapter)
 
         self._requests_session = session
+        return self._requests_session
 
     def close(self):
         """Explicit cleanup"""
@@ -60,12 +61,12 @@ class HTTPSession:
         *,
         headers: dict | None = None,
     ) -> bytes:
-        self.open()
+        session = self.open()
 
         timeout = self._request_timeout
 
         try:
-            response = self._requests_session.post(url, data=data, headers=headers, timeout=timeout)
+            response = session.post(url, data=data, headers=headers, timeout=timeout)
             response.raise_for_status()
         except requests.RequestException as e:
             self._logger.error("HTTP request failed: %s -> %s", url, e)

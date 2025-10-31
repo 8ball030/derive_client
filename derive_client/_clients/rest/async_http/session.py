@@ -23,15 +23,15 @@ class AsyncHTTPSession:
         self._lock = asyncio.Lock()
         self._finalizer = weakref.finalize(self, self._finalize)
 
-    async def open(self) -> None:
+    async def open(self) -> aiohttp.ClientSession:
         """Explicit session creation."""
 
         if self._aiohttp_session and not self._aiohttp_session.closed:
-            return
+            return self._aiohttp_session
 
         async with self._lock:
             if self._aiohttp_session and not self._aiohttp_session.closed:
-                return
+                return self._aiohttp_session
 
             self._connector = aiohttp.TCPConnector(
                 limit=100,
@@ -41,6 +41,7 @@ class AsyncHTTPSession:
             )
 
             self._aiohttp_session = aiohttp.ClientSession(connector=self._connector)
+            return self._aiohttp_session
 
     async def close(self):
         """Explicit cleanup"""
@@ -70,7 +71,7 @@ class AsyncHTTPSession:
         *,
         headers: dict | None = None,
     ) -> bytes:
-        await self.open()
+        session = await self.open()
 
         headers = headers or PUBLIC_HEADERS
         total = _request_timeout_override.get() or self._request_timeout
@@ -78,7 +79,7 @@ class AsyncHTTPSession:
         timeout = aiohttp.ClientTimeout(total=total)
 
         try:
-            async with self._aiohttp_session.post(url, data=data, headers=headers, timeout=timeout) as response:
+            async with session.post(url, data=data, headers=headers, timeout=timeout) as response:
                 response.raise_for_status()
                 try:
                     return await response.read()

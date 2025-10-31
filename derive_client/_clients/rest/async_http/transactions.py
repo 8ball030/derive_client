@@ -57,7 +57,8 @@ class TransactionOperations:
         module_address = self._subaccount._config.contracts.DEPOSIT_MODULE
 
         currency = await self._subaccount.markets.get_currency(currency=asset_name)
-        underlying_address = currency.protocol_asset_addresses.spot
+        if (asset := currency.protocol_asset_addresses.spot) is None:
+            raise ValueError(f"asset '{asset_name}' has no spot address, found: {currency}")
 
         managers = []
         for manager in currency.managers:
@@ -74,8 +75,8 @@ class TransactionOperations:
         decimals = CURRENCY_DECIMALS[Currency[currency.currency]]
 
         module_data = DepositModuleData(
-            amount=str(amount),
-            asset=underlying_address,
+            amount=amount,
+            asset=asset,
             manager=manager_address,
             decimals=decimals,
             asset_name=asset_name,
@@ -116,13 +117,14 @@ class TransactionOperations:
         module_address = self._subaccount._config.contracts.WITHDRAWAL_MODULE
 
         currency = await self._subaccount.markets.get_currency(currency=asset_name)
+        if (asset := currency.protocol_asset_addresses.spot) is None:
+            raise ValueError(f"asset '{asset_name}' has no spot address, found: {currency}")
 
-        underlying_address = currency.protocol_asset_addresses.spot
         decimals = CURRENCY_DECIMALS[Currency[currency.currency]]
 
         module_data = WithdrawModuleData(
-            amount=str(amount),
-            asset=underlying_address,
+            amount=amount,
+            asset=asset,
             decimals=decimals,
             asset_name=asset_name,
         )

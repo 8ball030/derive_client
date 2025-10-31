@@ -105,7 +105,7 @@ class PositionOperations:
 
         maker_params = TradeModuleParamsSchema(
             amount=abs(amount),
-            direction=maker_module_data.get_direction(),
+            direction=Direction[maker_module_data.get_direction()],
             instrument_name=instrument_name,
             limit_price=limit_price,
             max_fee=max_fee,
@@ -117,7 +117,7 @@ class PositionOperations:
         )
         taker_params = TradeModuleParamsSchema(
             amount=abs(amount),
-            direction=taker_module_data.get_direction(),
+            direction=Direction[taker_module_data.get_direction()],
             instrument_name=instrument_name,
             limit_price=limit_price,
             max_fee=max_fee,
@@ -174,7 +174,7 @@ class PositionOperations:
 
             details = TransferPositionsDetails(
                 instrument_name=instrument_name,
-                direction=leg_direction,
+                direction=leg_direction.value,
                 asset_address=asset_address,
                 sub_id=sub_id,
                 price=price,
@@ -188,11 +188,11 @@ class PositionOperations:
         module_address = self._subaccount._config.contracts.RFQ_MODULE
 
         maker_module_data = MakerTransferPositionsModuleData(
-            global_direction=maker_direction,
+            global_direction=maker_direction.value,
             positions=transfer_details,
         )
         taker_module_data = TakerTransferPositionsModuleData(
-            global_direction=taker_direction,
+            global_direction=taker_direction.value,
             positions=transfer_details,
         )
 
