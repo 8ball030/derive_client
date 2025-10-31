@@ -5,7 +5,7 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 
-from derive_action_signing.module_data import DepositModuleData, WithdrawModuleData
+from derive_action_signing import DepositModuleData, WithdrawModuleData
 
 from derive_client.constants import CURRENCY_DECIMALS
 from derive_client.data.generated.models import (

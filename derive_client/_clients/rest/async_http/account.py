@@ -6,7 +6,7 @@ from decimal import Decimal
 from logging import Logger
 from typing import Optional
 
-from derive_action_signing.module_data import DepositModuleData
+from derive_action_signing import DepositModuleData
 
 from derive_client._clients.rest.async_http.api import AsyncPrivateAPI, AsyncPublicAPI
 from derive_client._clients.utils import AuthContext

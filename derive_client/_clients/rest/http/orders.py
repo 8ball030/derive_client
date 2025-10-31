@@ -5,7 +5,7 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 
-from derive_action_signing.module_data import TradeModuleData
+from derive_action_signing import TradeModuleData
 
 from derive_client.constants import INT64_MAX
 from derive_client.data.generated.models import (

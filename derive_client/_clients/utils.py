@@ -3,9 +3,8 @@ from __future__ import annotations
 import json
 import time
 from dataclasses import dataclass
-from decimal import Decimal
 from enum import StrEnum
-from typing import TYPE_CHECKING, Iterable, Optional, Protocol, TypeVar
+from typing import TYPE_CHECKING, Iterable, Optional, TypeVar
 
 import msgspec
 from derive_action_signing import ModuleData, SignedAction
@@ -15,20 +14,23 @@ from pydantic import BaseModel
 from web3 import AsyncWeb3, Web3
 
 from derive_client.constants import EnvConfig
-from derive_client.data.generated.models import InstrumentPublicResponseSchema, InstrumentType, RPCErrorFormatSchema
+from derive_client.data.generated.models import (
+    InstrumentPublicResponseSchema,
+    InstrumentType,
+    LegPricedSchema,
+    LegUnpricedSchema,
+    PositionTransfer,
+    RPCErrorFormatSchema,
+)
 from derive_client.data_types import Address
 
 if TYPE_CHECKING:
-    from derive_client._clients.rest.http.markets import MarketOperations
     from derive_client._clients.rest.async_http.markets import MarketOperations as AsyncMarketOperations
-
-
-class HasInstrumentName(Protocol):
-    instrument_name: str
+    from derive_client._clients.rest.http.markets import MarketOperations
 
 
 StructT = TypeVar("StructT", bound=msgspec.Struct)
-InstrumentT = TypeVar("InstrumentT", bound=HasInstrumentName)
+InstrumentT = TypeVar("InstrumentT", LegUnpricedSchema, LegPricedSchema, PositionTransfer)
 
 
 def sort_by_instrument_name(items: Iterable[InstrumentT]) -> list[InstrumentT]:
@@ -169,14 +171,6 @@ def encode_json_exclude_none(obj: msgspec.Struct) -> bytes:
     data = msgspec.structs.asdict(obj)
     filtered = {k: v for k, v in data.items() if v is not None}
     return msgspec.json.encode(filtered)
-
-
-@dataclass
-class PositionTransfer:
-    """Position to transfer between subaccounts."""
-
-    instrument_name: str
-    amount: Decimal  # Can be negative (sign indicates long/short)
 
 
 def fetch_all_pages_of_instrument_type(

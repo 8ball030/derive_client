@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import TYPE_CHECKING, Optional
+from typing import List, TYPE_CHECKING, Optional
 
-from derive_action_signing.module_data import (
+from derive_action_signing import (
     MakerTransferPositionModuleData,
     MakerTransferPositionsModuleData,
     TakerTransferPositionModuleData,
@@ -13,7 +13,7 @@ from derive_action_signing.module_data import (
     TransferPositionsDetails,
 )
 
-from derive_client._clients.utils import PositionTransfer, sort_by_instrument_name
+from derive_client._clients.utils import sort_by_instrument_name
 from derive_client.data.generated.models import (
     Direction,
     LegPricedSchema,
@@ -26,6 +26,7 @@ from derive_client.data.generated.models import (
     SignedQuoteParamsSchema,
     TradeModuleParamsSchema,
 )
+from derive_client.data_types import PositionTransfer
 
 if TYPE_CHECKING:
     from .subaccount import Subaccount
@@ -139,7 +140,7 @@ class PositionOperations:
     def transfer_batch(
         self,
         *,
-        positions: list[PositionTransfer],
+        positions: List[PositionTransfer],
         direction: Direction,
         to_subaccount: int,
         signature_expiry_sec: Optional[int] = None,

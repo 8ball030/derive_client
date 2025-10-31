@@ -5,7 +5,7 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 
-from derive_action_signing.module_data import (
+from derive_action_signing import (
     RFQExecuteModuleData,
     RFQQuoteDetails,
     RFQQuoteModuleData,
