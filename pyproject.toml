@@ -37,6 +37,7 @@ ruff = "^0.13.0"
 datamodel-code-generator = "^0.34.0"
 libcst = "^1.8.5"
 pytest-asyncio = "<1.0.0"
+pyright = "^1.1.407"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.6.1"
@@ -47,6 +48,14 @@ mkdocs-mermaid2-plugin = "^1.2.2"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pyright]
+include = ["derive_client", "tests"]
+exclude = ["**/__pycache__", "derive_client/data/generated"]
+typeCheckingMode = "basic"
+reportMissingImports = true
+reportMissingTypeStubs = false
+pythonVersion = "3.11"
 
 [tool.ruff]
 line-length = 120
