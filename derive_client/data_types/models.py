@@ -1,231 +1,281 @@
 """Models used in the bridge module."""
 
-from typing import Any
+from __future__ import annotations
 
-from derive_action_signing.module_data import ModuleData
-from derive_action_signing.utils import decimal_to_big_int
-from eth_abi.abi import encode
+from dataclasses import dataclass
+from decimal import Decimal
+from typing import TYPE_CHECKING, Any, Literal, cast
+
 from eth_account.datastructures import SignedTransaction
-from eth_utils import is_0x_prefixed, is_address, is_hex, to_checksum_address
+from eth_typing import BlockNumber, HexStr
+from eth_utils.address import is_address, to_checksum_address
+from eth_utils.hexadecimal import is_0x_prefixed, is_hex
 from hexbytes import HexBytes
 from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
-    GetCoreSchemaHandler,
-    GetJsonSchemaHandler,
     HttpUrl,
-    PositiveFloat,
     RootModel,
 )
-from pydantic.dataclasses import dataclass
-from pydantic_core import core_schema
-from web3 import AsyncWeb3, Web3
-from web3.contract import AsyncContract
-from web3.contract.async_contract import AsyncContractEvent
-from web3.datastructures import AttributeDict
+from web3 import AsyncWeb3
+from web3.contract.async_contract import AsyncContract, AsyncContractEvent
+from web3.types import ChecksumAddress as ETHChecksumAddress
+from web3.types import FilterParams, LogReceipt, TxReceipt
+from web3.types import Wei as ETHWei
 
 from derive_client.exceptions import TxReceiptMissing
 
-from .enums import (
-    BridgeType,
-    ChainID,
-    Currency,
-    DeriveTxStatus,
-    GasPriority,
-    LiquidityRole,
-    MainnetCurrency,
-    MarginType,
-    OrderSide,
-    OrderStatus,
-    QuoteStatus,
-    SessionKeyScope,
-    TimeInForce,
-    TxStatus,
-)
+if TYPE_CHECKING:
+    from derive_client.constants import ChainID
+
+    from .enums import (
+        BridgeType,
+        Currency,
+        GasPriority,
+        TxStatus,
+    )
 
 
-class PAttributeDict(AttributeDict):
-    @classmethod
-    def __get_pydantic_core_schema__(cls, _source, _handler: GetCoreSchemaHandler) -> core_schema.CoreSchema:
-        return core_schema.no_info_plain_validator_function(lambda v, **kwargs: cls._validate(v))
+class ChecksumAddress(str):
+    """ChecksumAddress with validation."""
 
-    @classmethod
-    def __get_pydantic_json_schema__(cls, _schema, _handler: GetJsonSchemaHandler) -> dict:
-        return {"type": "object", "additionalProperties": True}
-
-    @classmethod
-    def _validate(cls, v) -> AttributeDict:
-        if not isinstance(v, (dict, AttributeDict)):
-            raise TypeError(f"Expected AttributeDict, got {v!r}")
-        return AttributeDict(v)
-
-
-class PHexBytes(HexBytes):
-    @classmethod
-    def __get_pydantic_core_schema__(cls, _source: Any, _handler: Any) -> core_schema.CoreSchema:
-        # Allow either HexBytes or bytes/hex strings to be parsed into HexBytes
-        return core_schema.no_info_before_validator_function(
-            cls._validate,
-            core_schema.union_schema(
-                [
-                    core_schema.is_instance_schema(HexBytes),
-                    core_schema.bytes_schema(),
-                    core_schema.str_schema(),
-                ]
-            ),
-        )
-
-    @classmethod
-    def __get_pydantic_json_schema__(cls, _schema: core_schema.CoreSchema, _handler: Any) -> dict:
-        return {"type": "string", "format": "hex"}
-
-    @classmethod
-    def _validate(cls, v: Any) -> HexBytes:
-        if isinstance(v, HexBytes):
-            return v
-        if isinstance(v, (bytes, bytearray)):
-            return HexBytes(v)
-        if isinstance(v, str):
-            return HexBytes(v)
-        raise TypeError(f"Expected HexBytes-compatible type, got {type(v).__name__}")
-
-
-class PSignedTransaction(SignedTransaction):
-    @classmethod
-    def __get_pydantic_core_schema__(cls, _source: Any, _handler: Any) -> core_schema.CoreSchema:
-        # Accept existing SignedTransaction or a tuple/dict of its fields
-        return core_schema.no_info_plain_validator_function(cls._validate)
-
-    @classmethod
-    def __get_pydantic_json_schema__(cls, _schema: core_schema.CoreSchema, _handler: Any) -> dict:
-        return {
-            "type": "object",
-            "properties": {
-                "raw_transaction": {"type": "string", "format": "hex"},
-                "hash": {"type": "string", "format": "hex"},
-                "r": {"type": "integer"},
-                "s": {"type": "integer"},
-                "v": {"type": "integer"},
-            },
-        }
-
-    @classmethod
-    def _validate(cls, v: Any) -> SignedTransaction:
-        if isinstance(v, SignedTransaction):
-            return v
-        if isinstance(v, dict):
-            return SignedTransaction(
-                raw_transaction=PHexBytes(v["raw_transaction"]),
-                hash=PHexBytes(v["hash"]),
-                r=int(v["r"]),
-                s=int(v["s"]),
-                v=int(v["v"]),
-            )
-        raise TypeError(f"Expected SignedTransaction or dict, got {type(v).__name__}")
-
-
-class Address(str):
-    @classmethod
-    def __get_pydantic_core_schema__(cls, _source, _handler: GetCoreSchemaHandler) -> core_schema.CoreSchema:
-        return core_schema.no_info_before_validator_function(cls._validate, core_schema.any_schema())
-
-    @classmethod
-    def __get_pydantic_json_schema__(cls, _schema, _handler: GetJsonSchemaHandler) -> dict:
-        return {"type": "string", "format": "ethereum-address"}
-
-    @classmethod
-    def _validate(cls, v: str) -> str:
+    def __new__(cls, v: str) -> ChecksumAddress:
         if not is_address(v):
             raise ValueError(f"Invalid Ethereum address: {v}")
-        return to_checksum_address(v)
+        return cast(ChecksumAddress, to_checksum_address(v))
 
 
 class TxHash(str):
-    @classmethod
-    def __get_pydantic_core_schema__(cls, _source, _handler: GetCoreSchemaHandler):
-        return core_schema.no_info_before_validator_function(cls._validate, core_schema.str_schema())
+    """Transaction hash with validation."""
 
-    @classmethod
-    def __get_pydantic_json_schema__(cls, _schema, _handler: GetJsonSchemaHandler):
-        return {"type": "string", "format": "ethereum-tx-hash"}
-
-    @classmethod
-    def _validate(cls, v: str | HexBytes) -> str:
-        if isinstance(v, HexBytes):
-            v = v.to_0x_hex()
-        if not isinstance(v, str):
-            raise TypeError("Expected a string or HexBytes for TxHash")
-        if not is_0x_prefixed(v) or not is_hex(v) or len(v) != 66:
-            raise ValueError(f"Invalid Ethereum transaction hash: {v}")
-        return v
+    def __new__(cls, value: str | HexBytes) -> TxHash:
+        if isinstance(value, HexBytes):
+            value = value.hex()
+        if not isinstance(value, str):
+            raise TypeError(f"Expected string or HexBytes, got {type(value)}")
+        if not is_0x_prefixed(value) or not is_hex(value) or len(value) != 66:
+            raise ValueError(f"Invalid transaction hash: {value}")
+        return cast(TxHash, value)
 
 
 class Wei(int):
-    @classmethod
-    def __get_pydantic_core_schema__(cls, _source, _handler: GetCoreSchemaHandler) -> core_schema.CoreSchema:
-        return core_schema.no_info_before_validator_function(cls._validate, core_schema.int_schema())
+    """Wei with validation."""
 
-    @classmethod
-    def __get_pydantic_json_schema__(cls, _schema, _handler: GetJsonSchemaHandler) -> dict:
-        return {"type": ["string", "integer"], "title": "Wei"}
-
-    @classmethod
-    def _validate(cls, v: str | int) -> int:
-        if isinstance(v, int):
-            return v
-        if isinstance(v, str) and is_hex(v):
-            return int(v, 16)
-        raise TypeError(f"Invalid type for Wei: {type(v)}")
+    def __new__(cls, value: str | int) -> Wei:
+        if isinstance(value, str) and is_hex(value):
+            value = int(value, 16)
+        return cast(Wei, value)
 
 
-@dataclass
-class CreateSubAccountDetails:
-    amount: int
-    base_asset_address: str
-    sub_asset_address: str
+class TypedFilterParams(BaseModel):
+    """Typed filter params for eth_getLogs that we actually use.
 
-    def to_eth_tx_params(self):
-        return (
-            decimal_to_big_int(self.amount),
-            Web3.to_checksum_address(self.base_asset_address),
-            Web3.to_checksum_address(self.sub_asset_address),
+    Unlike web3.types.FilterParams which has overly-broad unions,
+    this reflects our actual runtime behavior:
+    - We work with int block numbers internally
+    - We convert to hex strings right before RPC calls
+    - We use 'latest' as a special case for open-ended queries
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    address: ChecksumAddress | list[ChecksumAddress]
+    topics: tuple[HexBytes | None, ...] | None = None
+
+    # Block range - we use int internally, convert to hex for RPC
+    # 'latest' is used as sentinel for open-ended queries
+    fromBlock: int | Literal["latest"]
+    toBlock: int | Literal["latest"]
+    blockHash: HexBytes | None = None
+
+    def to_rpc_params(self) -> FilterParams:
+        """Convert to RPC-compatible filter params with hex block numbers."""
+
+        address: ETHChecksumAddress | list[ETHChecksumAddress]
+        if isinstance(self.address, list):
+            address = [cast(ETHChecksumAddress, addr) for addr in self.address]
+        else:
+            address = cast(ETHChecksumAddress, self.address)
+
+        from_block = cast(HexStr, hex(self.fromBlock)) if self.fromBlock != "latest" else self.fromBlock
+        to_block = cast(HexStr, hex(self.toBlock)) if self.toBlock != "latest" else self.toBlock
+
+        params: FilterParams = {
+            "address": address,
+            "fromBlock": from_block,
+            "toBlock": to_block,
+        }
+
+        if self.topics is not None:
+            params["topics"] = list(self.topics)
+        if self.blockHash is not None:
+            params["blockHash"] = self.blockHash
+
+        return params
+
+
+class TypedLogReceipt(BaseModel):
+    """Typed log entry from transaction receipt."""
+
+    address: ChecksumAddress
+    blockHash: HexBytes
+    blockNumber: int
+    data: HexBytes
+    logIndex: int
+    removed: bool
+    topics: list[HexBytes]
+    transactionHash: HexBytes
+    transactionIndex: int
+
+    def to_w3(self) -> LogReceipt:
+        """Convert to web3.py LogReceipt dict."""
+
+        return LogReceipt(
+            address=cast(ETHChecksumAddress, self.address),
+            blockHash=self.blockHash,
+            blockNumber=cast(BlockNumber, self.blockNumber),
+            data=self.data,
+            logIndex=self.logIndex,
+            removed=self.removed,
+            topics=self.topics,
+            transactionHash=self.transactionHash,
+            transactionIndex=self.transactionIndex,
         )
 
 
-@dataclass
-class CreateSubAccountData(ModuleData):
-    amount: int
-    asset_name: str
-    margin_type: str
-    create_account_details: CreateSubAccountDetails
+class TypedTxReceipt(BaseModel):
+    """Fully typed transaction receipt with attribute access.
 
-    def to_abi_encoded(self):
-        return encode(
-            ['uint256', 'address', 'address'],
-            self.create_account_details.to_eth_tx_params(),
+    Based on web3.types.TxReceipt but actually usable with type checkers.
+    All fields from EIP-658 and common extensions included.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    blockHash: HexBytes
+    blockNumber: int
+    contractAddress: ChecksumAddress | None
+    cumulativeGasUsed: int
+    effectiveGasPrice: int
+    from_: ChecksumAddress = Field(alias='from')
+    gasUsed: int
+    logs: list[TypedLogReceipt]
+    logsBloom: HexBytes
+    status: int  # 0 or 1 per EIP-658
+    to: ChecksumAddress
+    transactionHash: HexBytes
+    transactionIndex: int
+    type: int = Field(alias='type')  # Transaction type (0=legacy, 1=EIP-2930, 2=EIP-1559)
+
+    # Optional fields (depending on chain/tx type)
+    root: HexStr  # Pre-EIP-658 state root
+    # blobGasPrice: int | None = None  # EIP-4844
+    # blobGasUsed: int | None = None  # EIP-4844
+
+    def to_w3(self) -> TxReceipt:
+        """Convert to web3.py TxReceipt dict."""
+
+        return {
+            'blockHash': self.blockHash,
+            'blockNumber': cast(BlockNumber, self.blockNumber),
+            'contractAddress': cast(ETHChecksumAddress, self.contractAddress) if self.contractAddress else None,
+            'cumulativeGasUsed': self.cumulativeGasUsed,
+            'effectiveGasPrice': cast(ETHWei, self.effectiveGasPrice),
+            'from': cast(ETHChecksumAddress, self.from_),
+            'gasUsed': self.gasUsed,
+            'logs': [log.to_w3() for log in self.logs],
+            'logsBloom': self.logsBloom,
+            'status': self.status,
+            'to': cast(ETHChecksumAddress, self.to),
+            'transactionHash': self.transactionHash,
+            'transactionIndex': self.transactionIndex,
+            'type': self.type,
+            'root': self.root,
+        }
+
+        # return tx_receipt
+
+
+class TypedSignedTransaction(BaseModel):
+    """Properly typed signed transaction.
+
+    Immutable replacement for eth_account.datastructures.SignedTransaction.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    raw_transaction: HexBytes
+    hash: HexBytes
+    r: int
+    s: int
+    v: int
+
+    def to_w3(self) -> SignedTransaction:
+        """Convert to eth_account SignedTransaction."""
+
+        return SignedTransaction(
+            raw_transaction=self.raw_transaction,
+            hash=self.hash,
+            r=self.r,
+            s=self.s,
+            v=self.v,
         )
 
-    def to_json(self):
-        return {}
+
+class TypedTransaction(BaseModel):
+    """Fully typed transaction data retrieved from the blockchain.
+
+    Based on web3.types.TxData but with proper attribute access.
+    This represents a transaction that has been retrieved from a node,
+    which may or may not be mined yet.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    blockHash: HexBytes | None
+    blockNumber: int | None  # None if pending
+    from_: ChecksumAddress = Field(alias='from')
+    gas: int
+    gasPrice: int | None = None  # Legacy transactions
+    maxFeePerGas: int | None = None  # EIP-1559
+    maxPriorityFeePerGas: int | None = None  # EIP-1559
+    hash: HexBytes
+    input: HexBytes
+    nonce: int
+    to: ChecksumAddress | None  # None for contract creation
+    transactionIndex: int | None  # None if pending
+    value: int
+    type: int  # 0=legacy, 1=EIP-2930, 2=EIP-1559
+    chainId: int | None = None
+    v: int
+    r: HexBytes
+    s: HexBytes
+
+    # EIP-2930 (optional)
+    accessList: list[dict[str, Any]] | None = None
+
+    # EIP-4844 (optional)
+    maxFeePerBlobGas: int | None = None
+    blobVersionedHashes: list[HexBytes] | None = None
 
 
 class TokenData(BaseModel):
     isAppChain: bool
-    connectors: dict[ChainID, dict[str, str]]
-    LyraTSAShareHandlerDepositHook: Address | None = None
-    LyraTSADepositHook: Address | None = None
+    connectors: dict[ChainID, dict[str, ChecksumAddress]]
+    LyraTSAShareHandlerDepositHook: ChecksumAddress | None = None
+    LyraTSADepositHook: ChecksumAddress | None = None
     isNewBridge: bool
 
 
 class MintableTokenData(TokenData):
-    Controller: Address
-    MintableToken: Address
+    Controller: ChecksumAddress
+    MintableToken: ChecksumAddress
 
 
 class NonMintableTokenData(TokenData):
-    Vault: Address
-    NonMintableToken: Address
+    Vault: ChecksumAddress
+    NonMintableToken: ChecksumAddress
 
 
 class DeriveAddresses(BaseModel):
@@ -233,21 +283,7 @@ class DeriveAddresses(BaseModel):
     chains: dict[ChainID, dict[Currency, MintableTokenData | NonMintableTokenData]]
 
 
-class SessionKey(BaseModel):
-    public_session_key: Address
-    expiry_sec: int
-    ip_whitelist: list
-    label: str
-    scope: SessionKeyScope
-
-
-class ManagerAddress(BaseModel):
-    address: Address
-    margin_type: MarginType
-    currency: MainnetCurrency | None
-
-
-@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
+@dataclass
 class BridgeContext:
     currency: Currency
     source_w3: AsyncWeb3
@@ -263,13 +299,12 @@ class BridgeContext:
         return BridgeType.LAYERZERO if self.currency == Currency.DRV else BridgeType.SOCKET
 
 
-@dataclass
-class BridgeTxDetails:
-    contract: Address
-    method: str
-    kwargs: dict[str, Any]
+class BridgeTxDetails(BaseModel):
+    contract: ChecksumAddress
+    fn_name: str
+    fn_kwargs: dict[str, Any]
     tx: dict[str, Any]
-    signed_tx: PSignedTransaction
+    signed_tx: TypedSignedTransaction
 
     @property
     def tx_hash(self) -> str:
@@ -282,7 +317,7 @@ class BridgeTxDetails:
         return self.tx["nonce"]
 
     @property
-    def gas(self) -> int:
+    def gas(self) -> Wei:
         """Gas limit"""
         return self.tx["gas"]
 
@@ -291,8 +326,7 @@ class BridgeTxDetails:
         return self.tx["maxFeePerGas"]
 
 
-@dataclass
-class PreparedBridgeTx:
+class PreparedBridgeTx(BaseModel):
     amount: int
     value: int
     currency: Currency
@@ -330,22 +364,21 @@ class PreparedBridgeTx:
         return self.tx_details.nonce
 
     @property
-    def gas(self) -> int:
+    def gas(self) -> Wei:
         return self.tx_details.gas
 
     @property
-    def max_fee_per_gas(self) -> Wei:
+    def max_fee_per_gas(self) -> int:
         return self.tx_details.max_fee_per_gas
 
     @property
-    def max_total_fee(self) -> Wei:
+    def max_total_fee(self) -> int:
         return self.gas * self.max_fee_per_gas
 
 
-@dataclass(config=ConfigDict(validate_assignment=True))
-class TxResult:
+class TxResult(BaseModel):
     tx_hash: TxHash
-    tx_receipt: PAttributeDict | None = None
+    tx_receipt: TypedTxReceipt | None = None
 
     @property
     def status(self) -> TxStatus:
@@ -354,8 +387,7 @@ class TxResult:
         return TxStatus.PENDING
 
 
-@dataclass(config=ConfigDict(validate_assignment=True))
-class BridgeTxResult:
+class BridgeTxResult(BaseModel):
     prepared_tx: PreparedBridgeTx
     source_tx: TxResult
     target_from_block: int
@@ -388,44 +420,17 @@ class BridgeTxResult:
     def gas_used(self) -> int:
         if not self.source_tx.tx_receipt:
             raise TxReceiptMissing("Source tx receipt not available")
-        return self.source_tx.tx_receipt["gasUsed"]
+        return self.source_tx.tx_receipt.gasUsed
 
     @property
-    def effective_gas_price(self) -> Wei:
+    def effective_gas_price(self) -> int:
         if not self.source_tx.tx_receipt:
             raise TxReceiptMissing("Source tx receipt not available")
-        return self.source_tx.tx_receipt["effectiveGasPrice"]
+        return self.source_tx.tx_receipt.effectiveGasPrice
 
     @property
-    def total_fee(self) -> Wei:
+    def total_fee(self) -> int:
         return self.gas_used * self.effective_gas_price
-
-
-class DepositResult(BaseModel):
-    status: DeriveTxStatus  # should be "REQUESTED"
-    transaction_id: str
-
-
-class WithdrawResult(BaseModel):
-    status: DeriveTxStatus  # should be "REQUESTED"
-    transaction_id: str
-
-
-class TransferPosition(BaseModel):
-    """Model for position transfer data."""
-
-    # Ref: https://docs.pydantic.dev/2.3/usage/types/number_types/#constrained-types
-    instrument_name: str
-    amount: PositiveFloat
-    limit_price: PositiveFloat
-
-
-class DeriveTxResult(BaseModel):
-    data: dict  # Data used to create transaction
-    status: DeriveTxStatus
-    error_log: dict
-    transaction_id: str
-    tx_hash: str | None = Field(alias="transaction_hash")
 
 
 class RPCEndpoints(BaseModel, frozen=True):
@@ -469,104 +474,9 @@ class FeeEstimates(RootModel):
         return self.root.items()
 
 
-class Order(BaseModel):
-    amount: float
-    average_price: float
-    cancel_reason: str
-    creation_timestamp: int
-    direction: OrderSide
-    filled_amount: float
+@dataclass
+class PositionTransfer:
+    """Position to transfer between subaccounts."""
+
     instrument_name: str
-    is_transfer: bool
-    label: str
-    last_update_timestamp: int
-    limit_price: float
-    max_fee: float
-    mmp: bool
-    nonce: int
-    order_fee: float
-    order_id: str
-    order_status: OrderStatus
-    order_type: str
-    quote_id: None
-    replaced_order_id: str | None
-    signature: str
-    signature_expiry_sec: int
-    signer: str
-    subaccount_id: int
-    time_in_force: TimeInForce
-    trigger_price: float | None
-    trigger_price_type: str | None
-    trigger_reject_message: str | None
-    trigger_type: str | None
-
-
-class Trade(BaseModel):
-    direction: OrderSide
-    expected_rebate: float
-    index_price: float
-    instrument_name: str
-    is_transfer: bool
-    label: str
-    liquidity_role: LiquidityRole
-    mark_price: float
-    order_id: str
-    quote_id: None
-    realized_pnl: float
-    realized_pnl_excl_fees: float
-    subaccount_id: int
-    timestamp: int
-    trade_amount: float
-    trade_fee: float
-    trade_id: str
-    trade_price: float
-    transaction_id: str
-    tx_hash: str | None
-    tx_status: DeriveTxStatus
-
-
-class PositionSpec(BaseModel):
-    amount: float  # negative allowed to indicate direction
-    instrument_name: str
-
-
-class PositionTransfer(BaseModel):
-    maker_order: Order
-    taker_order: Order
-    maker_trade: Trade
-    taker_trade: Trade
-
-
-class Leg(BaseModel):
-    amount: float
-    direction: OrderSide  # TODO: PositionSide
-    instrument_name: str
-    price: float = 0.0
-
-
-class Quote(BaseModel):
-    cancel_reason: str
-    creation_timestamp: int
-    direction: OrderSide
-    fee: float
-    fill_pct: int
-    is_transfer: bool
-    label: str
-    last_update_timestamp: int
-    legs: list[Leg]
-    legs_hash: str
-    liquidity_role: LiquidityRole
-    max_fee: float
-    mmp: bool
-    nonce: int
-    quote_id: str
-    rfq_id: str
-    signature: str
-    signature_expiry_sec: int
-    signer: Address
-    status: QuoteStatus
-
-
-class PositionsTransfer(BaseModel):
-    maker_quote: Quote
-    taker_quote: Quote
+    amount: Decimal  # Can be negative (sign indicates long/short)

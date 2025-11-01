@@ -2,12 +2,13 @@
 Constants for Derive (formerly Lyra).
 """
 
+from enum import Enum, IntEnum
 from pathlib import Path
 from typing import Final
 
 from pydantic import BaseModel
 
-from derive_client.data_types import Currency, Environment, UnderlyingCurrency
+from derive_client.data_types import ChecksumAddress, Currency, Environment, UnderlyingCurrency
 
 INT32_MAX: Final[int] = (1 << 31) - 1
 UINT32_MAX: Final[int] = (1 << 32) - 1
@@ -16,20 +17,20 @@ UINT64_MAX: Final[int] = (1 << 64) - 1
 
 
 class ContractAddresses(BaseModel, frozen=True):
-    ETH_PERP: str
-    BTC_PERP: str
-    ETH_OPTION: str
-    BTC_OPTION: str
-    TRADE_MODULE: str
-    RFQ_MODULE: str
-    STANDARD_RISK_MANAGER: str
-    BTC_PORTFOLIO_RISK_MANAGER: str
-    ETH_PORTFOLIO_RISK_MANAGER: str
-    CASH_ASSET: str
-    USDC_ASSET: str
-    DEPOSIT_MODULE: str
-    WITHDRAWAL_MODULE: str
-    TRANSFER_MODULE: str
+    ETH_PERP: ChecksumAddress
+    BTC_PERP: ChecksumAddress
+    ETH_OPTION: ChecksumAddress
+    BTC_OPTION: ChecksumAddress
+    TRADE_MODULE: ChecksumAddress
+    RFQ_MODULE: ChecksumAddress
+    STANDARD_RISK_MANAGER: ChecksumAddress
+    BTC_PORTFOLIO_RISK_MANAGER: ChecksumAddress
+    ETH_PORTFOLIO_RISK_MANAGER: ChecksumAddress
+    CASH_ASSET: ChecksumAddress
+    USDC_ASSET: ChecksumAddress
+    DEPOSIT_MODULE: ChecksumAddress
+    WITHDRAWAL_MODULE: ChecksumAddress
+    TRANSFER_MODULE: ChecksumAddress
 
     def __getitem__(self, key):
         return getattr(self, key)
@@ -104,6 +105,60 @@ CONFIGS: dict[Environment, EnvConfig] = {
         ),
     ),
 }
+
+
+class ChainID(IntEnum):
+    ETH = 1
+    OPTIMISM = 10
+    DERIVE = LYRA = 957
+    BASE = 8453
+    MODE = 34443
+    ARBITRUM = 42161
+    BLAST = 81457
+
+    @classmethod
+    def _missing_(cls, value):
+        try:
+            int_value = int(value)
+            return next(member for member in cls if member == int_value)
+        except (ValueError, TypeError, StopIteration):
+            return super()._missing_(value)
+
+
+class LayerZeroChainIDv2(IntEnum):
+    # https://docs.layerzero.network/v2/deployments/deployed-contracts
+    ETH = 30101
+    ARBITRUM = 30110
+    OPTIMISM = 30111
+    BASE = 30184
+    DERIVE = 30311
+
+
+class SocketAddress(Enum):
+    ETH = ChecksumAddress("0x943ac2775928318653e91d350574436a1b9b16f9")
+    ARBITRUM = ChecksumAddress("0x37cc674582049b579571e2ffd890a4d99355f6ba")
+    OPTIMISM = ChecksumAddress("0x301bD265F0b3C16A58CbDb886Ad87842E3A1c0a4")
+    BASE = ChecksumAddress("0x12E6e58864cE4402cF2B4B8a8E9c75eAD7280156")
+    DERIVE = ChecksumAddress("0x565810cbfa3Cf1390963E5aFa2fB953795686339")
+
+
+class DeriveTokenAddress(Enum):
+    # https://www.coingecko.com/en/coins/derive
+
+    # impl: 0x4909ad99441ea5311b90a94650c394cea4a881b8 (Derive)
+    ETH = ChecksumAddress("0xb1d1eae60eea9525032a6dcb4c1ce336a1de71be")
+
+    # impl: 0x1eda1f6e04ae37255067c064ae783349cf10bdc5 (DeriveL2)
+    OPTIMISM = ChecksumAddress("0x33800de7e817a70a694f31476313a7c572bba100")
+
+    # impl: 0x01259207a40925b794c8ac320456f7f6c8fe2636 (DeriveL2)
+    BASE = ChecksumAddress("0x9d0e8f5b25384c7310cb8c6ae32c8fbeb645d083")
+
+    # impl: 0x5d22b63d83a9be5e054df0e3882592ceffcef097 (DeriveL2)
+    ARBITRUM = ChecksumAddress("0x77b7787a09818502305c95d68a2571f090abb135")
+
+    # impl: 0x340B51Cb46DBF63B55deD80a78a40aa75Dd4ceDF (DeriveL2)
+    DERIVE = ChecksumAddress("0x2EE0fd70756EDC663AcC9676658A1497C247693A")
 
 
 DEFAULT_REFERER = "0x9135BA0f495244dc0A5F029b25CDE95157Db89AD"
@@ -187,13 +242,13 @@ CONNECTOR_PLUG = ABI_DATA_DIR / "ConnectorPlug.json"
 
 
 # Contracts used in bridging module
-LYRA_OFT_WITHDRAW_WRAPPER_ADDRESS = "0x9400cc156dad38a716047a67c897973A29A06710"
-L1_CHUG_SPLASH_PROXY = "0x61e44dc0dae6888b5a301887732217d5725b0bff"
-RESOLVED_DELEGATE_PROXY = "0x5456f02c08e9A018E42C39b351328E5AA864174A"
-L2_STANDARD_BRIDGE_PROXY = "0x4200000000000000000000000000000000000010"
-L2_CROSS_DOMAIN_MESSENGER_PROXY = "0x4200000000000000000000000000000000000007"
-WITHDRAW_WRAPPER_V2 = "0xea8E683D8C46ff05B871822a00461995F93df800"
-ETH_DEPOSIT_WRAPPER = "0x46e75B6983126896227a5717f2484efb04A0c151"
-BASE_DEPOSIT_WRAPPER = "0x9628bba16db41ea7fe1fd84f9ce53bc27c63f59b"
-ARBITRUM_DEPOSIT_WRAPPER = "0x076BB6117750e80AD570D98891B68da86C203A88"
-OPTIMISM_DEPOSIT_WRAPPER = "0xC65005131Cfdf06622b99E8E17f72Cf694b586cC"
+LYRA_OFT_WITHDRAW_WRAPPER_ADDRESS = ChecksumAddress("0x9400cc156dad38a716047a67c897973A29A06710")
+L1_CHUG_SPLASH_PROXY = ChecksumAddress("0x61e44dc0dae6888b5a301887732217d5725b0bff")
+RESOLVED_DELEGATE_PROXY = ChecksumAddress("0x5456f02c08e9A018E42C39b351328E5AA864174A")
+L2_STANDARD_BRIDGE_PROXY = ChecksumAddress("0x4200000000000000000000000000000000000010")
+L2_CROSS_DOMAIN_MESSENGER_PROXY = ChecksumAddress("0x4200000000000000000000000000000000000007")
+WITHDRAW_WRAPPER_V2 = ChecksumAddress("0xea8E683D8C46ff05B871822a00461995F93df800")
+ETH_DEPOSIT_WRAPPER = ChecksumAddress("0x46e75B6983126896227a5717f2484efb04A0c151")
+BASE_DEPOSIT_WRAPPER = ChecksumAddress("0x9628bba16db41ea7fe1fd84f9ce53bc27c63f59b")
+ARBITRUM_DEPOSIT_WRAPPER = ChecksumAddress("0x076BB6117750e80AD570D98891B68da86C203A88")
+OPTIMISM_DEPOSIT_WRAPPER = ChecksumAddress("0xC65005131Cfdf06622b99E8E17f72Cf694b586cC")
