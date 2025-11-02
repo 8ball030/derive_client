@@ -4,16 +4,15 @@ import asyncio
 import json
 from decimal import Decimal
 from logging import Logger
+from typing import cast
 
-from eth_account import Account
-from eth_utils import keccak
+from eth_account.signers.local import LocalAccount
+from eth_utils.crypto import keccak
 from returns.future import future_safe
-from returns.io import IOResult
 from web3 import AsyncWeb3
-from web3.contract import AsyncContract
-from web3.types import HexBytes, LogReceipt, TxReceipt
+from web3.contract.async_contract import AsyncContract, AsyncContractEvent
 
-from derive_client.constants import (
+from derive_client.config import (
     L1_CHUG_SPLASH_PROXY,
     L1_CROSS_DOMAIN_MESSENGER_ABI_PATH,
     L1_STANDARD_BRIDGE_ABI_PATH,
@@ -25,14 +24,17 @@ from derive_client.constants import (
     RESOLVED_DELEGATE_PROXY,
 )
 from derive_client.data_types import (
-    Address,
     BridgeTxDetails,
     BridgeTxResult,
     BridgeType,
     ChainID,
+    ChecksumAddress,
     Currency,
     PreparedBridgeTx,
+    TxHash,
     TxResult,
+    TypedLogReceipt,
+    TypedTxReceipt,
 )
 from derive_client.exceptions import BridgeEventParseError, PartialBridgeResult, StandardBridgeRelayFailed
 from derive_client.utils.w3 import to_base_units
@@ -81,7 +83,7 @@ def _load_l2_cross_domain_messenger_proxy(w3: AsyncWeb3) -> AsyncContract:
 class StandardBridge:
     """Bridge tokens using Optimism's native standard bridge."""
 
-    def __init__(self, account: Account, logger: Logger):
+    def __init__(self, account: LocalAccount, logger: Logger):
         """
         Initialize Standard bridge.
 
@@ -102,10 +104,10 @@ class StandardBridge:
     async def prepare_eth_tx(
         self,
         amount: Decimal,
-        to: Address,
+        to: ChecksumAddress,
         source_chain: ChainID,
         target_chain: ChainID,
-    ) -> IOResult[PreparedBridgeTx, Exception]:
+    ) -> PreparedBridgeTx:
         currency = Currency.ETH
 
         if source_chain is not ChainID.ETH or target_chain is not ChainID.DERIVE or to != self.account.address:
@@ -124,16 +126,16 @@ class StandardBridge:
     @property
     def private_key(self) -> str:
         """Private key of the owner (EOA)."""
-        return self.account._private_key
+        return self.account.key.to_0x_hex()  # type: ignore[attr-defined]
 
     @future_safe
-    async def submit_bridge_tx(self, prepared_tx: PreparedBridgeTx) -> IOResult[BridgeTxResult, Exception]:
+    async def submit_bridge_tx(self, prepared_tx: PreparedBridgeTx) -> BridgeTxResult:
         tx_result = await self._send_bridge_tx(prepared_tx=prepared_tx)
 
         return tx_result
 
     @future_safe
-    async def poll_bridge_progress(self, tx_result: BridgeTxResult) -> IOResult[BridgeTxResult, Exception]:
+    async def poll_bridge_progress(self, tx_result: BridgeTxResult) -> BridgeTxResult:
         try:
             tx_result.source_tx.tx_receipt = await self._confirm_source_tx(tx_result=tx_result)
             tx_result.target_tx = TxResult(tx_hash=await self._wait_for_target_event(tx_result=tx_result))
@@ -146,7 +148,7 @@ class StandardBridge:
     async def _prepare_eth_tx(
         self,
         value: int,
-        to: Address,
+        to: ChecksumAddress,
         source_chain: ChainID,
         target_chain: ChainID,
     ) -> PreparedBridgeTx:
@@ -169,9 +171,9 @@ class StandardBridge:
         signed_tx = sign_tx(w3=w3, tx=tx, private_key=self.private_key)
 
         tx_details = BridgeTxDetails(
-            contract=func.address,
-            method=func.fn_name,
-            kwargs=func.kwargs,
+            contract=ChecksumAddress(func.address),
+            fn_name=func.fn_name,
+            fn_kwargs=func.kwargs,
             tx=tx,
             signed_tx=signed_tx,
         )
@@ -209,7 +211,7 @@ class StandardBridge:
 
         return tx_result
 
-    async def _confirm_source_tx(self, tx_result: BridgeTxResult) -> TxReceipt:
+    async def _confirm_source_tx(self, tx_result: BridgeTxResult) -> TypedTxReceipt:
         msg = "⏳ Checking source chain [%s] tx receipt for %s"
         self.logger.info(msg, tx_result.source_chain.name, tx_result.source_tx.tx_hash)
 
@@ -222,14 +224,16 @@ class StandardBridge:
 
         return tx_receipt
 
-    async def _wait_for_target_event(self, tx_result: BridgeTxResult) -> HexBytes:
+    async def _wait_for_target_event(self, tx_result: BridgeTxResult) -> TxHash:
         event_log = await self._fetch_standard_event_log(tx_result)
-        tx_hash = event_log["transactionHash"]
+        tx_hash = event_log.transactionHash
         self.logger.info(f"Target event tx_hash found: {tx_hash.to_0x_hex()}")
 
-        return tx_hash
+        return TxHash(tx_hash)
 
-    async def _confirm_target_tx(self, tx_result: BridgeTxResult) -> TxReceipt:
+    async def _confirm_target_tx(self, tx_result: BridgeTxResult) -> TypedTxReceipt:
+        assert tx_result.target_tx is not None, "Expected tx_result.target_tx to exist"
+
         msg = "⏳ Checking target chain [%s] tx receipt for %s"
         self.logger.info(msg, tx_result.target_chain.name, tx_result.target_tx.tx_hash)
 
@@ -242,7 +246,9 @@ class StandardBridge:
 
         return tx_receipt
 
-    async def _fetch_standard_event_log(self, tx_result: BridgeTxResult) -> LogReceipt:
+    async def _fetch_standard_event_log(self, tx_result: BridgeTxResult) -> TypedLogReceipt:
+        assert tx_result.source_tx.tx_receipt, "Expected source_tx.receipt to exist"
+
         source_event = self.l1_messenger_proxy.events.SentMessage()
 
         target_w3 = self.w3s[tx_result.target_chain]
@@ -259,7 +265,7 @@ class StandardBridge:
         sender = AsyncWeb3.to_checksum_address(args["sender"])
         target = AsyncWeb3.to_checksum_address(args["target"])
         message = args["message"]
-        value = tx_result.amount
+        value = tx_result.prepared_tx.amount
 
         func = self.l1_messenger_proxy.functions.relayMessage(
             _nonce=nonce,
@@ -274,8 +280,8 @@ class StandardBridge:
         tx_result.event_id = msg_hash.hex()
         self.logger.info(f"🗝️ Computed msgHash: {tx_result.event_id}")
 
-        target_event = self.l2_messenger_proxy.events.RelayedMessage()
-        failed_target_event = self.l2_messenger_proxy.events.FailedRelayedMessage()
+        target_event = cast(AsyncContractEvent, self.l2_messenger_proxy.events.RelayedMessage())
+        failed_target_event = cast(AsyncContractEvent, self.l2_messenger_proxy.events.FailedRelayedMessage())
 
         filter_params = make_filter_params(
             event=target_event,
