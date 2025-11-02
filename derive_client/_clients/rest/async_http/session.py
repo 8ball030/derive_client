@@ -5,8 +5,6 @@ from logging import Logger
 
 import aiohttp
 
-from derive_client.constants import PUBLIC_HEADERS
-
 # Context-local timeout (task-scoped) used to temporarily override session timeout.
 _request_timeout_override: contextvars.ContextVar[float | None] = contextvars.ContextVar(
     '_request_timeout_override', default=None
@@ -73,7 +71,6 @@ class AsyncHTTPSession:
     ) -> bytes:
         session = await self.open()
 
-        headers = headers or PUBLIC_HEADERS
         total = _request_timeout_override.get() or self._request_timeout
 
         timeout = aiohttp.ClientTimeout(total=total)

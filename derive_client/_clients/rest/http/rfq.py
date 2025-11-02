@@ -12,8 +12,8 @@ from derive_action_signing import (
 )
 
 from derive_client._clients.utils import sort_by_instrument_name
-from derive_client.constants import UINT64_MAX
-from derive_client.data.generated.models import (
+from derive_client.config import UINT64_MAX
+from derive_client.data_types.generated_models import (
     Direction,
     LegPricedSchema,
     LegUnpricedSchema,

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import List, TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from derive_action_signing import (
     MakerTransferPositionModuleData,
@@ -14,7 +14,8 @@ from derive_action_signing import (
 )
 
 from derive_client._clients.utils import sort_by_instrument_name
-from derive_client.data.generated.models import (
+from derive_client.data_types import PositionTransfer
+from derive_client.data_types.generated_models import (
     Direction,
     LegPricedSchema,
     PrivateGetPositionsParamsSchema,
@@ -26,7 +27,6 @@ from derive_client.data.generated.models import (
     SignedQuoteParamsSchema,
     TradeModuleParamsSchema,
 )
-from derive_client.data_types import PositionTransfer
 
 if TYPE_CHECKING:
     from .subaccount import Subaccount

@@ -10,8 +10,9 @@ from derive_action_signing import DepositModuleData
 
 from derive_client._clients.rest.http.api import PrivateAPI, PublicAPI
 from derive_client._clients.utils import AuthContext
-from derive_client.constants import CURRENCY_DECIMALS, Currency, EnvConfig
-from derive_client.data.generated.models import (
+from derive_client.config import CURRENCY_DECIMALS, Currency, EnvConfig
+from derive_client.data_types import ChecksumAddress
+from derive_client.data_types.generated_models import (
     MarginType,
     PrivateCreateSubaccountParamsSchema,
     PrivateCreateSubaccountResultSchema,
@@ -32,7 +33,6 @@ from derive_client.data.generated.models import (
     PublicRegisterSessionKeyResultSchema,
     Scope,
 )
-from derive_client.data_types import Address
 
 
 class LightAccount:
@@ -128,7 +128,7 @@ class LightAccount:
         return self._state
 
     @property
-    def address(self) -> Address:
+    def address(self) -> ChecksumAddress:
         """LightAccount wallet address."""
         return self._auth.wallet
 

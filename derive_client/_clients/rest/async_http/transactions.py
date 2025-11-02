@@ -7,8 +7,9 @@ from typing import TYPE_CHECKING, Optional
 
 from derive_action_signing import DepositModuleData, WithdrawModuleData
 
-from derive_client.constants import CURRENCY_DECIMALS
-from derive_client.data.generated.models import (
+from derive_client.config import CURRENCY_DECIMALS
+from derive_client.data_types import Currency
+from derive_client.data_types.generated_models import (
     MarginType,
     PrivateDepositParamsSchema,
     PrivateDepositResultSchema,
@@ -17,7 +18,6 @@ from derive_client.data.generated.models import (
     PublicGetTransactionParamsSchema,
     PublicGetTransactionResultSchema,
 )
-from derive_client.data_types import Currency
 
 if TYPE_CHECKING:
     from .subaccount import Subaccount

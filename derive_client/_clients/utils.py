@@ -7,22 +7,21 @@ from enum import StrEnum
 from typing import TYPE_CHECKING, Iterable, Optional, TypeVar
 
 import msgspec
-from derive_action_signing import ModuleData, SignedAction
-from derive_action_signing.utils import sign_rest_auth_header
-from eth_account import Account
+from derive_action_signing import ModuleData, SignedAction, sign_rest_auth_header
+from eth_account.signers.local import LocalAccount
+from hexbytes import HexBytes
 from pydantic import BaseModel
 from web3 import AsyncWeb3, Web3
 
-from derive_client.constants import EnvConfig
-from derive_client.data.generated.models import (
+from derive_client.config import EnvConfig
+from derive_client.data_types import ChecksumAddress, PositionTransfer
+from derive_client.data_types.generated_models import (
     InstrumentPublicResponseSchema,
     InstrumentType,
     LegPricedSchema,
     LegUnpricedSchema,
-    PositionTransfer,
     RPCErrorFormatSchema,
 )
-from derive_client.data_types import Address
 
 if TYPE_CHECKING:
     from derive_client._clients.rest.async_http.markets import MarketOperations as AsyncMarketOperations
@@ -56,26 +55,26 @@ def get_default_signature_expiry_sec() -> int:
 
 @dataclass
 class AuthContext:
-    wallet: Address
+    wallet: ChecksumAddress
     w3: Web3 | AsyncWeb3
-    account: Account
+    account: LocalAccount
     config: EnvConfig
 
     @property
-    def signer(self) -> Address:
-        return self.account.address
+    def signer(self) -> ChecksumAddress:
+        return ChecksumAddress(self.account.address)
 
     @property
     def signed_headers(self):
         return sign_rest_auth_header(
-            web3_client=self.w3,
+            web3_client=self.w3,  # type: ignore
             smart_contract_wallet=self.wallet,
-            session_key_or_wallet_private_key=self.account.key,
+            session_key_or_wallet_private_key=HexBytes(self.account.key).to_0x_hex(),
         )
 
     def sign_action(
         self,
-        module_address: Address | str,
+        module_address: ChecksumAddress,
         module_data: ModuleData,
         subaccount_id: int,
         signature_expiry_sec: Optional[int] = None,
@@ -97,7 +96,7 @@ class AuthContext:
             DOMAIN_SEPARATOR=self.config.DOMAIN_SEPARATOR,
             ACTION_TYPEHASH=self.config.ACTION_TYPEHASH,
         )
-        action.sign(self.account.key)
+        action.sign(HexBytes(self.account.key).to_0x_hex())
         return action
 
 
@@ -192,7 +191,7 @@ def fetch_all_pages_of_instrument_type(
             page_size=page_size,
         )
         instruments.extend(result.instruments)
-        if page >= result.pagination.num_pages:
+        if not result.pagination or page >= result.pagination.num_pages:
             break
         page += 1
 
@@ -218,7 +217,7 @@ async def async_fetch_all_pages_of_instrument_type(
             page_size=page_size,
         )
         instruments.extend(result.instruments)
-        if page >= result.pagination.num_pages:
+        if not result.pagination or page >= result.pagination.num_pages:
             break
         page += 1
 

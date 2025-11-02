@@ -19,8 +19,8 @@ from derive_client._clients.rest.http.session import HTTPSession
 from derive_client._clients.rest.http.subaccount import Subaccount
 from derive_client._clients.rest.http.transactions import TransactionOperations
 from derive_client._clients.utils import AuthContext
-from derive_client.constants import CONFIGS
-from derive_client.data_types import Address, Environment
+from derive_client.config import CONFIGS
+from derive_client.data_types import ChecksumAddress, Environment
 from derive_client.exceptions import BridgePrimarySignerRequiredError, NotConnectedError
 from derive_client.utils.logger import get_logger
 
@@ -32,7 +32,7 @@ class HTTPClient:
     def __init__(
         self,
         *,
-        wallet: Address,
+        wallet: ChecksumAddress,
         session_key: str,
         subaccount_id: int,
         env: Environment,
