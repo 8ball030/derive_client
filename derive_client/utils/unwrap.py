@@ -16,8 +16,8 @@ def unwrap_or_raise(result: Result[T, Exception] | IOResult[T, Exception]) -> T:
         case Failure():
             raise result.failure()
         case IOSuccess():
-            return unsafe_perform_io(result).unwrap()
+            return unsafe_perform_io(result.unwrap())
         case IOFailure():
-            raise unsafe_perform_io(result).failure()
+            raise unsafe_perform_io(result.failure())
         case _:
             raise RuntimeError(f"unwrap_or_raise received a non-Result value: {result}")

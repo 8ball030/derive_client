@@ -9,10 +9,10 @@ from typing import Any, Callable
 
 import yaml
 from requests import RequestException
-from web3 import Web3
-from web3.providers.rpc import HTTPProvider
+from web3 import AsyncHTTPProvider, Web3
+from web3.types import RPCEndpoint, RPCResponse
 
-from derive_client.constants import CURRENCY_DECIMALS, DEFAULT_RPC_ENDPOINTS
+from derive_client.config import CURRENCY_DECIMALS, DEFAULT_RPC_ENDPOINTS
 from derive_client.data_types import ChainID, Currency, RPCEndpoints
 from derive_client.exceptions import NoAvailableRPC
 from derive_client.utils.logger import get_logger
@@ -21,7 +21,7 @@ from derive_client.utils.logger import get_logger
 class EndpointState:
     __slots__ = ("provider", "backoff", "next_available")
 
-    def __init__(self, provider: HTTPProvider):
+    def __init__(self, provider: AsyncHTTPProvider):
         self.provider = provider
         self.backoff = 0.0
         self.next_available = 0.0
@@ -34,12 +34,12 @@ class EndpointState:
 
 
 def make_rotating_provider_middleware(
-    endpoints: list[HTTPProvider],
+    endpoints: list[AsyncHTTPProvider],
     *,
     initial_backoff: float = 1.0,
     max_backoff: float = 600.0,
     logger: Logger,
-) -> Callable[[Callable[[str, Any], Any], Web3], Callable[[str, Any], Any]]:
+) -> Callable[[Callable[[RPCEndpoint, Any], RPCResponse], Web3], Callable[[RPCEndpoint, Any], RPCResponse]]:
     """
     v6.11-style middleware:
      - round-robin via a min-heap of `next_available` times
@@ -50,8 +50,11 @@ def make_rotating_provider_middleware(
     heapq.heapify(heap)
     lock = threading.Lock()
 
-    def middleware_factory(make_request: Callable[[str, Any], Any], w3: Web3) -> Callable[[str, Any], Any]:
-        def rotating_backoff(method: str, params: Any) -> Any:
+    def middleware_factory(
+        make_request: Callable[[RPCEndpoint, Any], RPCResponse],
+        w3: Web3,
+    ) -> Callable[[RPCEndpoint, Any], Any]:
+        def rotating_backoff(method: RPCEndpoint, params: Any) -> Any:
             now = time.monotonic()
 
             while True:
@@ -94,10 +97,16 @@ def make_rotating_provider_middleware(
                     logger.debug("Endpoint %s failed: %s", state.provider.endpoint_uri, e)
 
                     # We retry on all exceptions
-                    hdr = (e.response and e.response.headers or {}).get("Retry-After")
-                    try:
-                        backoff = float(hdr)
-                    except (ValueError, TypeError):
+                    retry_after_header = None
+                    if e.response is not None and e.response.headers is not None:
+                        retry_after_header = e.response.headers.get("Retry-After")
+
+                    if retry_after_header is not None and isinstance(retry_after_header, str):
+                        try:
+                            backoff = float(retry_after_header)
+                        except (ValueError, TypeError):
+                            backoff = state.backoff * 2 if state.backoff > 0 else initial_backoff
+                    else:
                         backoff = state.backoff * 2 if state.backoff > 0 else initial_backoff
 
                     # cap backoff and schedule
@@ -134,7 +143,7 @@ def get_w3_connection(
     logger: Logger | None = None,
 ) -> Web3:
     rpc_endpoints = rpc_endpoints or load_rpc_endpoints(DEFAULT_RPC_ENDPOINTS)
-    providers = [HTTPProvider(url) for url in rpc_endpoints[chain_id]]
+    providers = [AsyncHTTPProvider(str(url)) for url in rpc_endpoints[chain_id]]
 
     logger = logger or get_logger()
 
