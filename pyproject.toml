@@ -65,14 +65,9 @@ pythonVersion = "3.11"
 [tool.mypy]
 plugins = ["pydantic.mypy"]
 
-# [tool.mypy-derive_action_signing.module_data]
-# ignore_missing_imports = true
-
-
 [[tool.mypy.overrides]]
 module = "derive_action_signing"
 ignore_missing_imports = true
-
 
 [tool.ruff]
 line-length = 120

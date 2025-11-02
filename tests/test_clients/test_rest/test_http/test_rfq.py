@@ -3,8 +3,7 @@
 import time
 from decimal import Decimal
 
-from derive_client.constants import INT64_MAX
-from derive_client.data.generated.models import (
+from derive_client.data_types.generated_models import (
     Direction,
     InstrumentType,
     LegPricedSchema,
@@ -21,6 +20,8 @@ from derive_client.data.generated.models import (
     PrivateSendRfqResultSchema,
     Result,
 )
+
+from derive_client.config import INT64_MAX
 from tests.conftest import assert_api_calls
 
 
