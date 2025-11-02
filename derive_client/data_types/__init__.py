@@ -3,6 +3,7 @@
 from .enums import (
     BridgeDirection,
     BridgeType,
+    ChainID,
     Currency,
     DeriveJSONRPCErrorCode,
     Environment,
@@ -42,6 +43,7 @@ from .models import (
 
 __all__ = [
     "ChecksumAddress",
+    "ChainID",
     "TxStatus",
     "Direction",
     "BridgeDirection",

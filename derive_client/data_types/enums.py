@@ -3,6 +3,24 @@
 from enum import Enum, IntEnum, StrEnum
 
 
+class ChainID(IntEnum):
+    ETH = 1
+    OPTIMISM = 10
+    DERIVE = LYRA = 957
+    BASE = 8453
+    MODE = 34443
+    ARBITRUM = 42161
+    BLAST = 81457
+
+    @classmethod
+    def _missing_(cls, value):
+        try:
+            int_value = int(value)
+            return next(member for member in cls if member == int_value)
+        except (ValueError, TypeError, StopIteration):
+            return super()._missing_(value)
+
+
 class TxStatus(IntEnum):
     FAILED = 0  # confirmed and status == 0 (on-chain revert)
     SUCCESS = 1  # confirmed and status == 1

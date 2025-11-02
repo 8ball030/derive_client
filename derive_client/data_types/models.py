@@ -15,9 +15,12 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    GetCoreSchemaHandler,
+    GetJsonSchemaHandler,
     HttpUrl,
     RootModel,
 )
+from pydantic_core import core_schema
 from web3 import AsyncWeb3
 from web3.contract.async_contract import AsyncContract, AsyncContractEvent
 from web3.types import ChecksumAddress as ETHChecksumAddress
@@ -26,15 +29,43 @@ from web3.types import Wei as ETHWei
 
 from derive_client.exceptions import TxReceiptMissing
 
-if TYPE_CHECKING:
-    from derive_client.constants import ChainID
+from .enums import (
+    BridgeType,
+    ChainID,
+    Currency,
+    GasPriority,
+    TxStatus,
+)
 
-    from .enums import (
-        BridgeType,
-        Currency,
-        GasPriority,
-        TxStatus,
-    )
+
+class PHexBytes(HexBytes):
+    @classmethod
+    def __get_pydantic_core_schema__(cls, _source: Any, _handler: Any) -> core_schema.CoreSchema:
+        # Allow either HexBytes or bytes/hex strings to be parsed into HexBytes
+        return core_schema.no_info_before_validator_function(
+            cls._validate,
+            core_schema.union_schema(
+                [
+                    core_schema.is_instance_schema(HexBytes),
+                    core_schema.bytes_schema(),
+                    core_schema.str_schema(),
+                ]
+            ),
+        )
+
+    @classmethod
+    def __get_pydantic_json_schema__(cls, _schema: core_schema.CoreSchema, _handler: Any) -> dict:
+        return {"type": "string", "format": "hex"}
+
+    @classmethod
+    def _validate(cls, v: Any) -> HexBytes:
+        if isinstance(v, HexBytes):
+            return v
+        if isinstance(v, (bytes, bytearray)):
+            return HexBytes(v)
+        if isinstance(v, str):
+            return HexBytes(v)
+        raise TypeError(f"Expected HexBytes-compatible type, got {type(v).__name__}")
 
 
 class ChecksumAddress(str):
@@ -44,6 +75,22 @@ class ChecksumAddress(str):
         if not is_address(v):
             raise ValueError(f"Invalid Ethereum address: {v}")
         return cast(ChecksumAddress, to_checksum_address(v))
+
+    @classmethod
+    def __get_pydantic_core_schema__(cls, _source, _handler: GetCoreSchemaHandler) -> core_schema.CoreSchema:
+        return core_schema.no_info_before_validator_function(cls._validate, core_schema.any_schema())
+
+    @classmethod
+    def __get_pydantic_json_schema__(cls, _schema, _handler: GetJsonSchemaHandler) -> dict:
+        return {"type": "string", "format": "ethereum-address"}
+
+    @classmethod
+    def _validate(cls, v) -> ChecksumAddress:
+        if isinstance(v, cls):
+            return v
+        if not isinstance(v, str):
+            raise TypeError(f"Expected str, got {type(v)}")
+        return cls(v)
 
 
 class TxHash(str):
@@ -58,6 +105,24 @@ class TxHash(str):
             raise ValueError(f"Invalid transaction hash: {value}")
         return cast(TxHash, value)
 
+    @classmethod
+    def __get_pydantic_core_schema__(cls, _source, _handler: GetCoreSchemaHandler):
+        return core_schema.no_info_before_validator_function(cls._validate, core_schema.str_schema())
+
+    @classmethod
+    def __get_pydantic_json_schema__(cls, _schema, _handler: GetJsonSchemaHandler):
+        return {"type": "string", "format": "ethereum-tx-hash"}
+
+    @classmethod
+    def _validate(cls, v: str | HexBytes) -> str:
+        if isinstance(v, HexBytes):
+            v = v.to_0x_hex()
+        if not isinstance(v, str):
+            raise TypeError("Expected a string or HexBytes for TxHash")
+        if not is_0x_prefixed(v) or not is_hex(v) or len(v) != 66:
+            raise ValueError(f"Invalid Ethereum transaction hash: {v}")
+        return v
+
 
 class Wei(int):
     """Wei with validation."""
@@ -66,6 +131,22 @@ class Wei(int):
         if isinstance(value, str) and is_hex(value):
             value = int(value, 16)
         return cast(Wei, value)
+
+    @classmethod
+    def __get_pydantic_core_schema__(cls, _source, _handler: GetCoreSchemaHandler) -> core_schema.CoreSchema:
+        return core_schema.no_info_before_validator_function(cls._validate, core_schema.int_schema())
+
+    @classmethod
+    def __get_pydantic_json_schema__(cls, _schema, _handler: GetJsonSchemaHandler) -> dict:
+        return {"type": ["string", "integer"], "title": "Wei"}
+
+    @classmethod
+    def _validate(cls, v: str | int) -> int:
+        if isinstance(v, int):
+            return v
+        if isinstance(v, str) and is_hex(v):
+            return int(v, 16)
+        raise TypeError(f"Invalid type for Wei: {type(v)}")
 
 
 class TypedFilterParams(BaseModel):
@@ -81,13 +162,13 @@ class TypedFilterParams(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     address: ChecksumAddress | list[ChecksumAddress]
-    topics: tuple[HexBytes | None, ...] | None = None
+    topics: tuple[PHexBytes | None, ...] | None = None
 
     # Block range - we use int internally, convert to hex for RPC
     # 'latest' is used as sentinel for open-ended queries
     fromBlock: int | Literal["latest"]
     toBlock: int | Literal["latest"]
-    blockHash: HexBytes | None = None
+    blockHash: PHexBytes | None = None
 
     def to_rpc_params(self) -> FilterParams:
         """Convert to RPC-compatible filter params with hex block numbers."""
@@ -119,13 +200,13 @@ class TypedLogReceipt(BaseModel):
     """Typed log entry from transaction receipt."""
 
     address: ChecksumAddress
-    blockHash: HexBytes
+    blockHash: PHexBytes
     blockNumber: int
-    data: HexBytes
+    data: PHexBytes
     logIndex: int
     removed: bool
-    topics: list[HexBytes]
-    transactionHash: HexBytes
+    topics: list[PHexBytes]
+    transactionHash: PHexBytes
     transactionIndex: int
 
     def to_w3(self) -> LogReceipt:
@@ -153,7 +234,7 @@ class TypedTxReceipt(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    blockHash: HexBytes
+    blockHash: PHexBytes
     blockNumber: int
     contractAddress: ChecksumAddress | None
     cumulativeGasUsed: int
@@ -161,10 +242,10 @@ class TypedTxReceipt(BaseModel):
     from_: ChecksumAddress = Field(alias='from')
     gasUsed: int
     logs: list[TypedLogReceipt]
-    logsBloom: HexBytes
+    logsBloom: PHexBytes
     status: int  # 0 or 1 per EIP-658
     to: ChecksumAddress
-    transactionHash: HexBytes
+    transactionHash: PHexBytes
     transactionIndex: int
     type: int = Field(alias='type')  # Transaction type (0=legacy, 1=EIP-2930, 2=EIP-1559)
 
@@ -205,8 +286,8 @@ class TypedSignedTransaction(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    raw_transaction: HexBytes
-    hash: HexBytes
+    raw_transaction: PHexBytes
+    hash: PHexBytes
     r: int
     s: int
     v: int
@@ -233,15 +314,15 @@ class TypedTransaction(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    blockHash: HexBytes | None
+    blockHash: PHexBytes | None
     blockNumber: int | None  # None if pending
     from_: ChecksumAddress = Field(alias='from')
     gas: int
     gasPrice: int | None = None  # Legacy transactions
     maxFeePerGas: int | None = None  # EIP-1559
     maxPriorityFeePerGas: int | None = None  # EIP-1559
-    hash: HexBytes
-    input: HexBytes
+    hash: PHexBytes
+    input: PHexBytes
     nonce: int
     to: ChecksumAddress | None  # None for contract creation
     transactionIndex: int | None  # None if pending
@@ -249,15 +330,15 @@ class TypedTransaction(BaseModel):
     type: int  # 0=legacy, 1=EIP-2930, 2=EIP-1559
     chainId: int | None = None
     v: int
-    r: HexBytes
-    s: HexBytes
+    r: PHexBytes
+    s: PHexBytes
 
     # EIP-2930 (optional)
     accessList: list[dict[str, Any]] | None = None
 
     # EIP-4844 (optional)
     maxFeePerBlobGas: int | None = None
-    blobVersionedHashes: list[HexBytes] | None = None
+    blobVersionedHashes: list[PHexBytes] | None = None
 
 
 class TokenData(BaseModel):
@@ -317,12 +398,12 @@ class BridgeTxDetails(BaseModel):
         return self.tx["nonce"]
 
     @property
-    def gas(self) -> Wei:
+    def gas(self) -> int:
         """Gas limit"""
         return self.tx["gas"]
 
     @property
-    def max_fee_per_gas(self) -> Wei:
+    def max_fee_per_gas(self) -> int:
         return self.tx["maxFeePerGas"]
 
 
@@ -364,7 +445,7 @@ class PreparedBridgeTx(BaseModel):
         return self.tx_details.nonce
 
     @property
-    def gas(self) -> Wei:
+    def gas(self) -> int:
         return self.tx_details.gas
 
     @property
@@ -480,3 +561,6 @@ class PositionTransfer:
 
     instrument_name: str
     amount: Decimal  # Can be negative (sign indicates long/short)
+
+
+DeriveAddresses.model_rebuild()

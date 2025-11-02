@@ -1139,7 +1139,7 @@ class Period(str, Enum):
 class PublicGetFundingRateHistoryParamsSchema(Struct):
     instrument_name: str
     end_timestamp: int = 9223372036854776000
-    period: Period = Period(3600)
+    period: Period = Period.field_3600
     start_timestamp: int = 0
 
 
