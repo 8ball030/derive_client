@@ -1,7 +1,8 @@
-"""
-Init for the derive client
-"""
+"""Derive client package."""
 
-from .derive import DeriveClient
+from ._clients import AsyncHTTPClient, HTTPClient
 
-DeriveClient
+__all__ = [
+    "HTTPClient",
+    "AsyncHTTPClient",
+]
