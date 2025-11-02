@@ -3,8 +3,8 @@
 import pytest
 from eth_account import Account
 
-from derive_client.constants import INT64_MAX
-from derive_client.data.generated.models import (
+from derive_client.config import INT64_MAX
+from derive_client.data_types.generated_models import (
     PrivateCreateSubaccountResultSchema,
     PrivateEditSessionKeyResultSchema,
     PrivateGetAccountResultSchema,

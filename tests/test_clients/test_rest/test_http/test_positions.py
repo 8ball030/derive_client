@@ -4,7 +4,7 @@ import time
 
 from derive_client._clients.rest.http.subaccount import Subaccount
 from derive_client._clients.utils import PositionTransfer
-from derive_client.data.generated.models import (
+from derive_client.data_types.generated_models import (
     Direction,
     PositionResponseSchema,
     PrivateTransferPositionResultSchema,
