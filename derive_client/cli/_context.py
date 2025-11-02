@@ -9,7 +9,7 @@ import rich_click as click
 from dotenv import load_dotenv
 
 from derive_client._clients.rest.http.client import HTTPClient
-from derive_client.data_types import Environment
+from derive_client.data_types import ChecksumAddress, Environment
 
 
 def create_client(
@@ -23,16 +23,16 @@ def create_client(
     load_dotenv(dotenv_path=dotenv_path)
 
     session_key = session_key_path.read_text().strip() if session_key_path else os.environ.get("DERIVE_SESSION_KEY")
-    wallet = os.environ.get("DERIVE_WALLET")
-    subaccount_id = os.environ.get("DERIVE_SUBACCOUNT_ID")
+    wallet_str = os.environ.get("DERIVE_WALLET")
+    subaccount_id_str = os.environ.get("DERIVE_SUBACCOUNT_ID")
     env = Environment[os.environ.get("DERIVE_ENV", "PROD").upper()]
 
     missing = []
     if not session_key:
         missing.append("DERIVE_SESSION_KEY: Not found in environment variables or via --session-key-path flag")
-    if not wallet:
+    if not wallet_str:
         missing.append("DERIVE_WALLET: Not found in environment variables.")
-    if not subaccount_id:
+    if not subaccount_id_str:
         missing.append("DERIVE_SUBACCOUNT_ID: Not found in environment variables.")
 
     if missing:
@@ -49,6 +49,18 @@ def create_client(
         error_msg += "\n  DERIVE_ENV=PROD  # optional, defaults to PROD"
 
         raise click.ClickException(error_msg)
+
+    assert session_key and wallet_str and subaccount_id_str, "type-checker"
+
+    try:
+        wallet = ChecksumAddress(wallet_str)
+    except ValueError as e:
+        raise click.ClickException(f"Invalid wallet address: {e}")
+
+    try:
+        subaccount_id = int(subaccount_id_str)
+    except ValueError:
+        raise click.ClickException(f"Invalid subaccount ID '{subaccount_id_str}': must be an integer")
 
     return HTTPClient(
         wallet=wallet,

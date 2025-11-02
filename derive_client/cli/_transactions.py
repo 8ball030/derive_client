@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-import pandas as pd
 import rich_click as click
 
 from ._utils import struct_to_series
@@ -29,18 +28,11 @@ def get(ctx, transaction_id: str):
     subaccount = client.active_subaccount
     transaction = subaccount.transactions.get(transaction_id=transaction_id)
 
-    tx_data = dict(
-        subaccount_id=transaction.data.subaccount_id,
-        status=transaction.status.name,
-        asset_name=transaction.data.asset_name,
-        amount=transaction.data.data.amount,
-    )
-    series = pd.Series(tx_data)
-
     print("\n=== Transaction ===")
-    print(series.to_string(index=True))
+    print(f"Status: {transaction.status.name}")
+    print(f"Tx Hash: {transaction.status.name}")
     if transaction.error_log:
-        print(f"\nError: {transaction.error_log.error}")
+        print(f"\nError: {transaction.error_log}")
 
 
 @transaction.command("deposit-to-subaccount")
