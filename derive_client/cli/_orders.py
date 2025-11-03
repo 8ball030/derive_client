@@ -71,10 +71,9 @@ def create(
 
     client = ctx.obj["client"]
     subaccount = client.active_subaccount
-    direction = Direction[direction]
     order = subaccount.orders.create(
         amount=amount,
-        direction=direction,
+        direction=Direction(direction),
         instrument_name=instrument_name,
         limit_price=limit_price,
         order_type=order_type,

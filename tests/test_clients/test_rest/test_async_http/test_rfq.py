@@ -28,7 +28,11 @@ from tests.conftest import assert_api_calls
 
 async def _create_unpriced_legs(client):
     # Derive RPC 10004: Multiple currencies not supported
-    # [data={'subaccount_currency': 'ETH', 'base_asset_currency': 'BTC', 'note': 'sometimes due to risk caching of instruments, local tests will create new currency_id without risk updating cache'}]  # ruff: noqa: E501
+    # [data={
+    #   'subaccount_currency': 'ETH', 'base_asset_currency': 'BTC',
+    #   'note': 'sometimes due to risk caching of instruments local tests
+    #           will create new currency_id without risk updating cache'
+    # }]
     currency = client.active_subaccount._state.currency
     if currency == "all":  # SM
         currency = "ETH"
@@ -168,7 +172,7 @@ async def test_rfq_full_lifecycle(client_admin_wallet, client_owner_wallet):
 
     priced_legs = await _create_priced_legs(maker, rfq)
 
-    # Quote direction
+    # Quote direction:
     # buy means trading each leg at its direction
     # sell means trading each leg in the opposite direction.
     utc_now_s = int(time.time())
