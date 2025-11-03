@@ -307,7 +307,7 @@ class DeriveBridge:
         signed_tx = sign_tx(w3=context.source_w3, tx=tx, private_key=self.private_key)
 
         tx_details = BridgeTxDetails(
-            contract=func.address,
+            contract=ChecksumAddress(func.address),
             fn_name=func.fn_name,
             fn_kwargs=func.kwargs,
             tx=tx,

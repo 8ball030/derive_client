@@ -8,6 +8,7 @@ from typing import Any, Literal, cast
 
 from eth_account.datastructures import SignedTransaction
 from eth_typing import BlockNumber, HexStr
+from eth_typing import ChecksumAddress as ETHChecksumAddress
 from eth_utils.address import is_address, to_checksum_address
 from eth_utils.hexadecimal import is_0x_prefixed, is_hex
 from hexbytes import HexBytes
@@ -23,7 +24,6 @@ from pydantic import (
 from pydantic_core import core_schema
 from web3 import AsyncWeb3
 from web3.contract.async_contract import AsyncContract, AsyncContractEvent
-from web3.types import ChecksumAddress as ETHChecksumAddress
 from web3.types import FilterParams, LogReceipt, TxReceipt
 from web3.types import Wei as ETHWei
 

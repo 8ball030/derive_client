@@ -2,7 +2,8 @@
 Get the volatility of a BTC.
 """
 
-# curl -X GET "https://test.deribit.com/api/v2/public/get_volatility_index_data?currency=BTC&end_timestamp=1599376800000&resolution=60&start_timestamp=1599373800000" \
+# curl -X GET
+# "https://test.deribit.com/api/v2/public/get_volatility_index_data?currency=BTC&end_timestamp=1599376800000&resolution=60&start_timestamp=1599373800000" \  # ruff: noqa: E501
 # -H "Content-Type: application/json"
 
 from datetime import datetime as date

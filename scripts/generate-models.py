@@ -9,7 +9,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 TIMEOUT = 10
-CUSTOM_HEADER = "# ruff: noqa: E741"
+CUSTOM_HEADER = "# ruff: noqa: E741,E501"
 
 
 def make_session_with_retries(
@@ -71,7 +71,7 @@ def generate_models(input_path: Path, output_path: Path):
         output_model_type=DataModelType.MsgspecStruct,
         target_python_version=PythonVersion.PY_311,
         reuse_model=True,
-        use_subclass_enum=True,
+        use_subclass_enum=False,
         strict_nullable=True,
         use_double_quotes=True,
         field_constraints=True,

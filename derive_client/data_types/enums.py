@@ -1,6 +1,7 @@
 """Enums used in the derive_client module."""
 
 from enum import Enum, IntEnum, StrEnum
+from typing import Any
 
 
 class ChainID(IntEnum):
@@ -13,7 +14,7 @@ class ChainID(IntEnum):
     BLAST = 81457
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: Any):
         try:
             int_value = int(value)
             return next(member for member in cls if member == int_value)

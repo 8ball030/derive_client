@@ -41,9 +41,17 @@ jobs:
         run: |
           poetry install -v
 
+      - name: Codegen
+        run: |
+          poetry run make codegen-all
+
       - name: Lint
         run: |
           poetry run make lint
+
+      - name: Typecheck
+        run: |
+          poetry run make typecheck
 
       - name: Tests
         run: |
@@ -52,3 +60,7 @@ jobs:
       - name: Doc Tests
         run: |
           make test-docs
+
+      - name: Check Diff
+        run: |
+          poetry run make check_diff
