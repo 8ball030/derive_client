@@ -89,7 +89,7 @@ generate-sync-bridge-client:
 	poetry run ruff check --fix derive_client/_bridge/client.py
 
 
-codegen-all: generate-models generate-rest-api generate-rest-async-http generate-sync-bridge-client
+codegen-all: generate-models generate-rest-api generate-rest-async-http generate-sync-bridge-client fmt lint
 
 typecheck:
 	poetry run pyright derive_client
