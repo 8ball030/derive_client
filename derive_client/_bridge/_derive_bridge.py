@@ -27,8 +27,8 @@ from derive_client.config import (
     ERC20_ABI_PATH,
     ETH_DEPOSIT_WRAPPER,
     LIGHT_ACCOUNT_ABI_PATH,
+    LYRA_OFT_WITHDRAW_WRAPPER,
     LYRA_OFT_WITHDRAW_WRAPPER_ABI_PATH,
-    LYRA_OFT_WITHDRAW_WRAPPER_ADDRESS,
     MSG_GAS_LIMIT,
     NEW_VAULT_ABI_PATH,
     OLD_VAULT_ABI_PATH,
@@ -504,7 +504,7 @@ class DeriveBridge:
 
     async def _prepare_layerzero_withdrawal(self, amount: int, context: BridgeContext) -> PreparedBridgeTx:
         abi = json.loads(LYRA_OFT_WITHDRAW_WRAPPER_ABI_PATH.read_text())
-        withdraw_wrapper = get_contract(context.source_w3, LYRA_OFT_WITHDRAW_WRAPPER_ADDRESS, abi=abi)
+        withdraw_wrapper = get_contract(context.source_w3, LYRA_OFT_WITHDRAW_WRAPPER, abi=abi)
         destEID = LayerZeroChainIDv2[context.target_chain.name]
 
         fee_in_token = await withdraw_wrapper.functions.getFeeInToken(

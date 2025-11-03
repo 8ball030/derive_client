@@ -5,10 +5,10 @@ Example of bridging funds from Base to a Derive smart contract funding account
 import os
 
 import click
+from derive_client.derive import DeriveClient
 from dotenv import load_dotenv
 
 from derive_client.data_types import Address, ChainID, Currency, Environment
-from derive_client.derive import DeriveClient
 
 ChainChoice = click.Choice([c.name for c in ChainID])
 CurrencyChoice = click.Choice([c.name for c in Currency])

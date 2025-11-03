@@ -7,6 +7,7 @@ Based on the working debug_position_lifecycle patterns.
 
 import time
 
+from derive_client.derive import DeriveClient
 from rich import print
 
 from derive_client.data_types import (
@@ -19,7 +20,6 @@ from derive_client.data_types import (
     TransferPosition,
     UnderlyingCurrency,
 )
-from derive_client.derive import DeriveClient
 
 # Configuration - update these values for your setup
 WALLET = "0xA419f70C696a4b449a4A24F92e955D91482d44e9"

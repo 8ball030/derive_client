@@ -13,7 +13,7 @@ from eth_typing import HexStr
 from requests import RequestException
 from web3 import AsyncHTTPProvider, AsyncWeb3
 from web3.contract.async_contract import AsyncContract, AsyncContractEvent, AsyncContractFunction
-from web3.types import RPCEndpoint, RPCError, RPCResponse
+from web3.types import RPCEndpoint, RPCResponse
 
 from derive_client.config import (
     ABI_DATA_DIR,
@@ -94,7 +94,8 @@ def make_rotating_provider_middleware(
 
                 try:
                     # 3) attempt the request
-                    resp = await state.provider.make_request(method, params)
+                    provider = cast(AsyncHTTPProvider, state.provider)
+                    resp = await provider.make_request(method, params)
 
                     # Json‑RPC error branch
                     if isinstance(resp, dict) and (error := resp.get("error")):

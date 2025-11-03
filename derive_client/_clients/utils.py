@@ -13,8 +13,7 @@ from hexbytes import HexBytes
 from pydantic import BaseModel
 from web3 import AsyncWeb3, Web3
 
-from derive_client.config import EnvConfig
-from derive_client.data_types import ChecksumAddress, PositionTransfer
+from derive_client.data_types import ChecksumAddress, EnvConfig, PositionTransfer
 from derive_client.data_types.generated_models import (
     InstrumentPublicResponseSchema,
     InstrumentType,

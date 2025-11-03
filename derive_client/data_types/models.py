@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import TYPE_CHECKING, Any, Literal, cast
+from typing import Any, Literal, cast
 
 from eth_account.datastructures import SignedTransaction
 from eth_typing import BlockNumber, HexStr
@@ -36,6 +36,36 @@ from .enums import (
     GasPriority,
     TxStatus,
 )
+
+
+class DeriveContractAddresses(BaseModel, frozen=True):
+    ETH_PERP: ChecksumAddress
+    BTC_PERP: ChecksumAddress
+    ETH_OPTION: ChecksumAddress
+    BTC_OPTION: ChecksumAddress
+    TRADE_MODULE: ChecksumAddress
+    RFQ_MODULE: ChecksumAddress
+    STANDARD_RISK_MANAGER: ChecksumAddress
+    BTC_PORTFOLIO_RISK_MANAGER: ChecksumAddress
+    ETH_PORTFOLIO_RISK_MANAGER: ChecksumAddress
+    CASH_ASSET: ChecksumAddress
+    USDC_ASSET: ChecksumAddress
+    DEPOSIT_MODULE: ChecksumAddress
+    WITHDRAWAL_MODULE: ChecksumAddress
+    TRANSFER_MODULE: ChecksumAddress
+
+    def __getitem__(self, key):
+        return getattr(self, key)
+
+
+class EnvConfig(BaseModel, frozen=True):
+    base_url: str
+    ws_address: str
+    rpc_endpoint: str
+    block_explorer: str
+    ACTION_TYPEHASH: str
+    DOMAIN_SEPARATOR: str
+    contracts: DeriveContractAddresses
 
 
 class PHexBytes(HexBytes):

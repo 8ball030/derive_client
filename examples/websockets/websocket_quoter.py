@@ -4,9 +4,6 @@ Simple trading class for the websocket client.
 
 import os
 
-from dotenv import load_dotenv
-from websockets import ConnectionClosedError
-
 from derive_client.clients.ws_client import (
     Orderbook,
     OrderResponseSchema,
@@ -17,6 +14,9 @@ from derive_client.clients.ws_client import (
     WsClient,
 )
 from derive_client.data.generated.models import Direction, OrderStatus
+from dotenv import load_dotenv
+from websockets import ConnectionClosedError
+
 from derive_client.data_types import Environment
 from derive_client.data_types.enums import OrderSide, OrderType
 

@@ -1,50 +1,8 @@
 """Contract addresses and environment configurations."""
 
-from pydantic import BaseModel
-
-from derive_client.data_types import ChecksumAddress, Environment
+from derive_client.data_types import ChecksumAddress, DeriveContractAddresses, EnvConfig, Environment
 
 from .constants import ABI_DATA_DIR
-
-
-class ContractAddresses(BaseModel, frozen=True):
-    ETH_PERP: ChecksumAddress
-    BTC_PERP: ChecksumAddress
-    ETH_OPTION: ChecksumAddress
-    BTC_OPTION: ChecksumAddress
-    TRADE_MODULE: ChecksumAddress
-    RFQ_MODULE: ChecksumAddress
-    STANDARD_RISK_MANAGER: ChecksumAddress
-    BTC_PORTFOLIO_RISK_MANAGER: ChecksumAddress
-    ETH_PORTFOLIO_RISK_MANAGER: ChecksumAddress
-    CASH_ASSET: ChecksumAddress
-    USDC_ASSET: ChecksumAddress
-    DEPOSIT_MODULE: ChecksumAddress
-    WITHDRAWAL_MODULE: ChecksumAddress
-    TRANSFER_MODULE: ChecksumAddress
-
-    def __getitem__(self, key):
-        return getattr(self, key)
-
-
-class EnvConfig(BaseModel, frozen=True):
-    base_url: str
-    ws_address: str
-    rpc_endpoint: str
-    block_explorer: str
-    ACTION_TYPEHASH: str
-    DOMAIN_SEPARATOR: str
-    contracts: ContractAddresses
-
-
-# PKG_ROOT = Path(__file__).parent.parent
-# DATA_DIR = PKG_ROOT / "data"
-# ABI_DATA_DIR = DATA_DIR / "abi"
-
-PUBLIC_HEADERS = {"accept": "application/json", "content-type": "application/json"}
-
-TEST_PRIVATE_KEY = "0xc14f53ee466dd3fc5fa356897ab276acbef4f020486ec253a23b0d1c3f89d4f4"
-DEFAULT_SPOT_QUOTE_TOKEN = "USDC"
 
 CONFIGS: dict[Environment, EnvConfig] = {
     Environment.TEST: EnvConfig(
@@ -54,7 +12,7 @@ CONFIGS: dict[Environment, EnvConfig] = {
         block_explorer="https://explorer-prod-testnet-0eakp60405.t.conduit.xyz",
         ACTION_TYPEHASH="0x4d7a9f27c403ff9c0f19bce61d76d82f9aa29f8d6d4b0c5474607d9770d1af17",
         DOMAIN_SEPARATOR="0x9bcf4dc06df5d8bf23af818d5716491b995020f377d3b7b64c29ed14e3dd1105",
-        contracts=ContractAddresses(
+        contracts=DeriveContractAddresses(
             ETH_PERP="0x010e26422790C6Cb3872330980FAa7628FD20294",
             BTC_PERP="0xAFB6Bb95cd70D5367e2C39e9dbEb422B9815339D",
             ETH_OPTION="0xBcB494059969DAaB460E0B5d4f5c2366aab79aa1",
@@ -78,7 +36,7 @@ CONFIGS: dict[Environment, EnvConfig] = {
         block_explorer="https://explorer.lyra.finance",
         ACTION_TYPEHASH="0x4d7a9f27c403ff9c0f19bce61d76d82f9aa29f8d6d4b0c5474607d9770d1af17",
         DOMAIN_SEPARATOR="0xd96e5f90797da7ec8dc4e276260c7f3f87fedf68775fbe1ef116e996fc60441b",
-        contracts=ContractAddresses(
+        contracts=DeriveContractAddresses(
             ETH_PERP="0xAf65752C4643E25C02F693f9D4FE19cF23a095E3",
             BTC_PERP="0xDBa83C0C654DB1cd914FA2710bA743e925B53086",
             ETH_OPTION="0x4BB4C3CDc7562f08e9910A0C7D8bB7e108861eB4",
@@ -119,8 +77,10 @@ SOCKET_ABI_PATH = ABI_DATA_DIR / "Socket.json"
 CONNECTOR_PLUG = ABI_DATA_DIR / "ConnectorPlug.json"
 
 
-# Contracts used in bridging module
-LYRA_OFT_WITHDRAW_WRAPPER_ADDRESS = ChecksumAddress("0x9400cc156dad38a716047a67c897973A29A06710")
+# ===========================
+# Bridge Contract Addresses
+# ===========================
+LYRA_OFT_WITHDRAW_WRAPPER = ChecksumAddress("0x9400cc156dad38a716047a67c897973A29A06710")
 L1_CHUG_SPLASH_PROXY = ChecksumAddress("0x61e44dc0dae6888b5a301887732217d5725b0bff")
 RESOLVED_DELEGATE_PROXY = ChecksumAddress("0x5456f02c08e9A018E42C39b351328E5AA864174A")
 L2_STANDARD_BRIDGE_PROXY = ChecksumAddress("0x4200000000000000000000000000000000000010")

@@ -16,8 +16,7 @@ from derive_client._clients.rest.async_http.positions import PositionOperations
 from derive_client._clients.rest.async_http.rfq import RFQOperations
 from derive_client._clients.rest.async_http.transactions import TransactionOperations
 from derive_client._clients.utils import AuthContext
-from derive_client.config import EnvConfig
-from derive_client.data_types import ChecksumAddress
+from derive_client.data_types import ChecksumAddress, EnvConfig
 from derive_client.data_types.generated_models import (
     MarginType,
     PrivateGetSubaccountParamsSchema,

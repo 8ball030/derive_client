@@ -9,7 +9,7 @@ from typing import Any, Callable
 
 import yaml
 from requests import RequestException
-from web3 import AsyncHTTPProvider, Web3
+from web3 import AsyncHTTPProvider, HTTPProvider, Web3
 from web3.types import RPCEndpoint, RPCResponse
 
 from derive_client.config import CURRENCY_DECIMALS, DEFAULT_RPC_ENDPOINTS
@@ -21,7 +21,7 @@ from derive_client.utils.logger import get_logger
 class EndpointState:
     __slots__ = ("provider", "backoff", "next_available")
 
-    def __init__(self, provider: AsyncHTTPProvider):
+    def __init__(self, provider: HTTPProvider | AsyncHTTPProvider):
         self.provider = provider
         self.backoff = 0.0
         self.next_available = 0.0
@@ -34,7 +34,7 @@ class EndpointState:
 
 
 def make_rotating_provider_middleware(
-    endpoints: list[AsyncHTTPProvider],
+    endpoints: list[HTTPProvider],
     *,
     initial_backoff: float = 1.0,
     max_backoff: float = 600.0,
@@ -81,9 +81,15 @@ def make_rotating_provider_middleware(
                         state.next_available = now + state.backoff
                         with lock:
                             heapq.heappush(heap, state)
-                        err_msg = error.get("message", "")
-                        msg = "RPC error on %s: %s → backing off %.2fs"
-                        logger.info(msg, state.provider.endpoint_uri, err_msg, state.backoff, extra=resp)
+
+                        if isinstance(error, str):
+                            msg = error
+                        else:
+                            err_msg = error.get("message", "")
+                            err_code = error.get("code", "")
+                            msg = "RPC error on %s: %s (code: %s)→ backing off %.2fs"
+
+                        logger.info(msg, state.provider.endpoint_uri, err_msg, err_code, state.backoff)
                         continue
 
                     # 4) on success, reset its backoff and re-schedule immediately
@@ -143,7 +149,7 @@ def get_w3_connection(
     logger: Logger | None = None,
 ) -> Web3:
     rpc_endpoints = rpc_endpoints or load_rpc_endpoints(DEFAULT_RPC_ENDPOINTS)
-    providers = [AsyncHTTPProvider(str(url)) for url in rpc_endpoints[chain_id]]
+    providers = [HTTPProvider(str(url)) for url in rpc_endpoints[chain_id]]
 
     logger = logger or get_logger()
 

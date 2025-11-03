@@ -41,18 +41,6 @@ class DeriveTokenAddress(Enum):
     DERIVE = ChecksumAddress("0x2EE0fd70756EDC663AcC9676658A1497C247693A")
 
 
-DEFAULT_REFERER = "0x9135BA0f495244dc0A5F029b25CDE95157Db89AD"
-
-GAS_FEE_BUFFER = 1.1  # buffer multiplier to pad maxFeePerGas
-GAS_LIMIT_BUFFER = 1.1  # buffer multiplier to pad gas limit
-MSG_GAS_LIMIT = 200_000
-ASSUMED_BRIDGE_GAS_LIMIT = 1_000_000
-MIN_PRIORITY_FEE = 10_000
-PAYLOAD_SIZE = 161
-TARGET_SPEED = "FAST"
-
-DEFAULT_GAS_FUNDING_AMOUNT = int(0.0001 * 1e18)  # 0.0001 ETH
-
 TOKEN_DECIMALS = {
     UnderlyingCurrency.ETH: 18,
     UnderlyingCurrency.BTC: 8,
