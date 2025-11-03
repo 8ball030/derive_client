@@ -13,6 +13,7 @@ from derive_client._clients.rest.http.client import BridgeClient, HTTPClient
 from derive_client.data_types import (
     ChainID,
     Currency,
+    Environment,
     TxStatus,
 )
 
@@ -66,13 +67,16 @@ def deposit(ctx, chain_id: ChainID, currency: Currency, amount: Decimal):
     """
     Deposit funds via the socket superbridge to a Derive funding account.
 
-    Example:
-        $ cli bridge deposit --chain-id 8453 --currency weETH --amount 0.001
+    Examples:
+        drv bridge deposit -c BASE -t USDC -a 10
+        drv bridge deposit --chain-id BASE --currency weETH --amount 0.001
     """
 
     client: HTTPClient = ctx.obj["client"]
-    bridge: BridgeClient = client.bridge
+    if client._env is not Environment.PROD:
+        raise click.ClickException("Bridge commands are only available in the production environment.")
 
+    bridge: BridgeClient = client.bridge
     prepared_tx = bridge.prepare_deposit_tx(chain_id=chain_id, currency=currency, amount=amount)
 
     print(rich_prepared_tx(prepared_tx))
@@ -109,21 +113,19 @@ def deposit(ctx, chain_id: ChainID, currency: Currency, amount: Decimal):
 )
 @click.pass_context
 def gas(ctx, amount: Decimal, chain_id: ChainID):
-    """Deposit gas (native token) for bridging."""
-    click.echo(f"Deposit gas: chain={chain_id} amount={amount}")
-
     """
     Deposit gas (native token) for bridging via the standard bridge to the owner's EOA.
 
-    Example:
-        $ cli bridge gas --amount 0.001 --chain-id ETH
+    Examples:
+        drv bridge gas --amount 0.001
     """
 
     client: HTTPClient = ctx.obj["client"]
-    bridge: BridgeClient = client.bridge
+    if client._env is not Environment.PROD:
+        raise click.ClickException("Bridge commands are only available in the production environment.")
 
     currency = Currency.ETH
-
+    bridge: BridgeClient = client.bridge
     prepared_tx = bridge.prepare_gas_deposit_tx(amount=amount, chain_id=chain_id)
 
     print(rich_prepared_tx(prepared_tx))
@@ -172,13 +174,16 @@ def withdraw(ctx, chain_id: ChainID, currency: Currency, amount: Decimal):
     """
     Withdraw funds from Derive funding account via the Withdraw Wrapper contract.
 
-    Example:
-        $ cli bridge withdraw --chain-id BASE --currency weETH --amount 0.001
+    Examples:
+        drv bridge withdraw -c BASE -t USDC -a 10
+        drv bridge withdraw --chain-id BASE --currency weETH --amount 0.001
     """
 
     client: HTTPClient = ctx.obj["client"]
-    bridge: BridgeClient = client.bridge
+    if client._env is not Environment.PROD:
+        raise click.ClickException("Bridge commands are only available in the production environment.")
 
+    bridge: BridgeClient = client.bridge
     prepared_tx = bridge.prepare_withdrawal_tx(chain_id=chain_id, currency=currency, amount=amount)
 
     print(rich_prepared_tx(prepared_tx))

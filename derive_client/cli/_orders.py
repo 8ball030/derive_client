@@ -95,7 +95,11 @@ def create(
 )
 @click.pass_context
 def get(ctx, order_id: str):
-    """Get state of an order by order id."""
+    """Get state of an order by order id.
+
+    Examples:
+        drv order get 02379d44-020a-41a1-bcc1-4509344f1796
+    """
 
     client = ctx.obj["client"]
     subaccount = client.active_subaccount
@@ -105,10 +109,14 @@ def get(ctx, order_id: str):
     print(struct_to_series(order).to_string(index=True))
 
 
-@order.command("list_open")
+@order.command("list-open")
 @click.pass_context
 def list_open(ctx):
-    """List all open orders of a subacccount."""
+    """List all open orders of a subacccount.
+
+    Examples:
+        drv order list-open
+    """
 
     client = ctx.obj["client"]
     subaccount = client.active_subaccount
@@ -146,13 +154,13 @@ def cancel(ctx, order_id: str, instrument_name: str):
     print(struct_to_series(cancelled_order).to_string(index=True))
 
 
-@order.command("cancel_all")
+@order.command("cancel-all")
 @click.pass_context
 def cancel_all(ctx):
     """Cancel all orders.
 
     Examples:
-        drv order cancel_all
+        drv order cancel-all
     """
 
     client = ctx.obj["client"]

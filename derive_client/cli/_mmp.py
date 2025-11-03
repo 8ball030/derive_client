@@ -23,7 +23,12 @@ def mmp(ctx):
 )
 @click.pass_context
 def get_config(ctx, currency: str | None):
-    """Get the current mmp config for a subaccount (optionally filtered by currency)."""
+    """Get the current mmp config for a subaccount (optionally filtered by currency).
+
+    Examples:
+        drv mmp get-config
+        drv mmp get-config BTC
+    """
 
     client = ctx.obj["client"]
     subaccount = client.active_subaccount
@@ -39,25 +44,31 @@ def get_config(ctx, currency: str | None):
     required=True,
     help="Currency of this mmp config.",
 )
-@click.argument(
-    "mmp_frozen_time",
+@click.option(
+    "--mmp-frozen-time",
+    "-f",
     type=int,
     required=True,
     help="Time interval in ms setting how long the subaccount is frozen after an mmp trigger, if 0 then a manual reset would be required via private/reset_mmp",  # noqa: E501
 )
-@click.argument(
-    "mmp_interval",
+@click.option(
+    "--mmp-interval",
+    "-i",
     type=int,
     required=True,
     help="Time interval in ms over which the limits are monotored, if 0 then mmp is disabled.",
 )
-@click.argument(
-    "mmp_amount_limit",
+@click.option(
+    "--mmp-amount-limit",
+    "-a",
+    type=Decimal,
     default=Decimal("0"),
     help="Maximum total order amount that can be traded within the mmp_interval across all instruments of the provided currency.",  # noqa: E501
 )
-@click.argument(
-    "mmp_delta_limit",
+@click.option(
+    "--mmp-delta-limit",
+    "-d",
+    type=Decimal,
     default=Decimal("0"),
     help="Maximum total delta that can be traded within the mmp_interval across all instruments of the provided currency.",  # noqa: E501
 )
@@ -70,7 +81,12 @@ def set_config(
     mmp_amount_limit: Decimal,
     mmp_delta_limit: Decimal,
 ):
-    """Set the mmp config for the subaccount and currency."""
+    """Set the mmp config for the subaccount and currency.
+
+    Examples:
+        drv mmp set-config BTC -f 0 -i 10000
+        drv mmp set-config BTC --mmp-frozen-time 0 --mmp-interval 10000
+    """
 
     client = ctx.obj["client"]
     subaccount = client.active_subaccount

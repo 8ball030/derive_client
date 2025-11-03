@@ -30,7 +30,7 @@ def get(ctx, transaction_id: str):
 
     print("\n=== Transaction ===")
     print(f"Status: {transaction.status.name}")
-    print(f"Tx Hash: {transaction.status.name}")
+    print(f"Tx Hash: {transaction.transaction_hash}")
     if transaction.error_log:
         print(f"\nError: {transaction.error_log}")
 
