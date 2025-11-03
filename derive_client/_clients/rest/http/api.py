@@ -1151,6 +1151,22 @@ class PrivateAPI:
         response = try_cast_response(message, PrivateCancelResponseSchema)
         return response
 
+    def cancel_all(
+        self,
+        params: PrivateCancelAllParamsSchema,
+    ) -> PrivateCancelAllResponseSchema:
+        """
+        Cancel all orders for this instrument.
+
+        Required minimum session key permission level is `admin`
+        """
+
+        url = self._endpoints.cancel_all
+        data = encode_json_exclude_none(params)
+        message = self._session._send_request(url, data, headers=self.headers)
+        response = try_cast_response(message, PrivateCancelAllResponseSchema)
+        return response
+
     def cancel_by_label(
         self,
         params: PrivateCancelByLabelParamsSchema,
@@ -1199,22 +1215,6 @@ class PrivateAPI:
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateCancelByInstrumentResponseSchema)
-        return response
-
-    def cancel_all(
-        self,
-        params: PrivateCancelAllParamsSchema,
-    ) -> PrivateCancelAllResponseSchema:
-        """
-        Cancel all orders for this instrument.
-
-        Required minimum session key permission level is `admin`
-        """
-
-        url = self._endpoints.cancel_all
-        data = encode_json_exclude_none(params)
-        message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateCancelAllResponseSchema)
         return response
 
     def cancel_trigger_order(
