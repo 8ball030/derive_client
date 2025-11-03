@@ -6,17 +6,15 @@ import functools
 import json
 from decimal import Decimal
 from logging import Logger
+from typing import TypeGuard, cast
 
-from eth_account import Account
+from eth_account.signers.local import LocalAccount
+from eth_typing import HexStr
 from returns.future import future_safe
-from returns.io import IOResult
 from web3 import AsyncWeb3
-from web3.contract import AsyncContract
-from web3.contract.async_contract import AsyncContractFunction
-from web3.datastructures import AttributeDict
-from web3.types import HexBytes, LogReceipt, TxReceipt
+from web3.contract.async_contract import AsyncContract, AsyncContractEvent, AsyncContractFunction
 
-from derive_client.constants import (
+from derive_client.config import (
     ARBITRUM_DEPOSIT_WRAPPER,
     BASE_DEPOSIT_WRAPPER,
     CONTROLLER_ABI_PATH,
@@ -29,8 +27,8 @@ from derive_client.constants import (
     ERC20_ABI_PATH,
     ETH_DEPOSIT_WRAPPER,
     LIGHT_ACCOUNT_ABI_PATH,
+    LYRA_OFT_WITHDRAW_WRAPPER,
     LYRA_OFT_WITHDRAW_WRAPPER_ABI_PATH,
-    LYRA_OFT_WITHDRAW_WRAPPER_ADDRESS,
     MSG_GAS_LIMIT,
     NEW_VAULT_ABI_PATH,
     OLD_VAULT_ABI_PATH,
@@ -40,23 +38,26 @@ from derive_client.constants import (
     TARGET_SPEED,
     WITHDRAW_WRAPPER_V2,
     WITHDRAW_WRAPPER_V2_ABI_PATH,
+    DeriveTokenAddress,
+    LayerZeroChainIDv2,
+    SocketAddress,
 )
 from derive_client.data_types import (
-    Address,
     BridgeContext,
+    BridgeDirection,
     BridgeTxDetails,
     BridgeTxResult,
     BridgeType,
     ChainID,
+    ChecksumAddress,
     Currency,
-    DeriveTokenAddresses,
-    Direction,
-    LayerZeroChainIDv2,
     MintableTokenData,
     NonMintableTokenData,
     PreparedBridgeTx,
-    SocketAddress,
+    TxHash,
     TxResult,
+    TypedLogReceipt,
+    TypedTxReceipt,
 )
 from derive_client.exceptions import (
     BridgeEventParseError,
@@ -93,21 +94,30 @@ def _load_controller_contract(w3: AsyncWeb3, token_data: MintableTokenData) -> A
 
 
 def _load_deposit_contract(w3: AsyncWeb3, token_data: MintableTokenData) -> AsyncContract:
+    assert token_data.LyraTSAShareHandlerDepositHook is not None, "Expected LyraTSAShareHandlerDepositHook to exist"
     address = token_data.LyraTSAShareHandlerDepositHook
     abi = json.loads(DEPOSIT_HOOK_ABI_PATH.read_text())
     return get_contract(w3=w3, address=address, abi=abi)
 
 
-def _load_light_account(w3: AsyncWeb3, wallet: Address) -> AsyncContract:
+def _load_light_account(w3: AsyncWeb3, wallet: ChecksumAddress) -> AsyncContract:
     abi = json.loads(LIGHT_ACCOUNT_ABI_PATH.read_text())
     return get_contract(w3=w3, address=wallet, abi=abi)
 
 
+def is_mintable(data: MintableTokenData | NonMintableTokenData) -> TypeGuard[MintableTokenData]:
+    return isinstance(data, MintableTokenData)
+
+
+def is_non_mintable(data: MintableTokenData | NonMintableTokenData) -> TypeGuard[NonMintableTokenData]:
+    return isinstance(data, NonMintableTokenData)
+
+
 def _get_min_fees(
     bridge_contract: AsyncContract,
-    connector: Address,
+    connector: ChecksumAddress,
     token_data: NonMintableTokenData | MintableTokenData,
-) -> int:
+) -> AsyncContractFunction:
     params = {
         "connector_": connector,
         "msgGasLimit_": MSG_GAS_LIMIT,
@@ -121,18 +131,18 @@ def _get_min_fees(
 class DeriveBridge:
     """Bridge ERC-20 tokens and Derive's native token (DRV) to and from Derive."""
 
-    def __init__(self, account: Account, wallet: Address, logger: Logger):
+    def __init__(self, account: LocalAccount, wallet: ChecksumAddress, logger: Logger):
         """
         Initialize Derive bridge.
 
         Args:
-            account: Account object containing the private key of the owner of the smart contract funding account
+            account: LocalAccount object containing the private key of the owner of the smart contract funding account
             wallet: Address of the smart contract funding account
             logger: Logger instance for logging
         """
 
         self.account = account
-        self.owner = account.address
+        self.owner = ChecksumAddress(account.address)  # type: ignore[attr-defined]
         self.wallet = wallet
         self.derive_addresses = get_prod_derive_addresses()
         self.w3s = get_w3_connections(logger=logger)
@@ -143,9 +153,9 @@ class DeriveBridge:
         return self.w3s[ChainID.DERIVE]
 
     @property
-    def private_key(self) -> HexBytes:
+    def private_key(self) -> str:
         """Private key of the owner (EOA) of the smart contract funding account."""
-        return self.account._private_key
+        return self.account.key.to_0x_hex()  # type: ignore[attr-defined]
 
     @functools.cached_property
     def light_account(self):
@@ -177,11 +187,11 @@ class DeriveBridge:
     @functools.lru_cache
     def _make_bridge_context(
         self,
-        direction: Direction,
+        direction: BridgeDirection,
         currency: Currency,
         remote_chain_id: ChainID,
     ) -> BridgeContext:
-        is_deposit = direction == Direction.DEPOSIT
+        is_deposit = direction == BridgeDirection.DEPOSIT
 
         if is_deposit:
             src_w3, tgt_w3 = self.w3s[remote_chain_id], self.derive_w3
@@ -191,26 +201,39 @@ class DeriveBridge:
             src_chain, tgt_chain = ChainID.DERIVE, remote_chain_id
 
         if currency is Currency.DRV:
-            src_addr = DeriveTokenAddresses[src_chain.name].value
-            tgt_addr = DeriveTokenAddresses[tgt_chain.name].value
+            src_addr = DeriveTokenAddress[src_chain.name].value
+            tgt_addr = DeriveTokenAddress[tgt_chain.name].value
             derive_abi = json.loads(DERIVE_L2_ABI_PATH.read_text())
             remote_abi_path = DERIVE_ABI_PATH if remote_chain_id == ChainID.ETH else DERIVE_L2_ABI_PATH
             remote_abi = json.loads(remote_abi_path.read_text())
             src_abi, tgt_abi = (remote_abi, derive_abi) if is_deposit else (derive_abi, remote_abi)
-            src = get_contract(src_w3, src_addr, abi=src_abi)
-            tgt = get_contract(tgt_w3, tgt_addr, abi=tgt_abi)
+            src = get_contract(w3=src_w3, address=src_addr, abi=src_abi)
+            tgt = get_contract(w3=tgt_w3, address=tgt_addr, abi=tgt_abi)
             src_event, tgt_event = src.events.OFTSent(), tgt.events.OFTReceived()
-            context = BridgeContext(currency, src_w3, tgt_w3, src, src_event, tgt_event, src_chain, tgt_chain)
-            return context
+
+            return BridgeContext(
+                currency=currency,
+                source_w3=src_w3,
+                target_w3=tgt_w3,
+                source_token=src,
+                source_event=cast(AsyncContractEvent, src_event),
+                target_event=cast(AsyncContractEvent, tgt_event),
+                source_chain=src_chain,
+                target_chain=tgt_chain,
+            )
 
         erc20_abi = json.loads(ERC20_ABI_PATH.read_text())
         socket_abi = json.loads(SOCKET_ABI_PATH.read_text())
 
+        token_data = self.derive_addresses.chains[src_chain][currency]
+
         if is_deposit:
-            token_data: NonMintableTokenData = self.derive_addresses.chains[src_chain][currency]
+            if not isinstance(token_data, NonMintableTokenData):
+                raise TypeError("expected NonMintableTokenData for deposit")
             token_contract = get_contract(src_w3, token_data.NonMintableToken, abi=erc20_abi)
         else:
-            token_data: MintableTokenData = self.derive_addresses.chains[src_chain][currency]
+            if not isinstance(token_data, MintableTokenData):
+                raise TypeError("expected MintableTokenData for withdrawal")
             token_contract = get_contract(src_w3, token_data.MintableToken, abi=erc20_abi)
 
         src_addr = SocketAddress[src_chain.name].value
@@ -218,12 +241,21 @@ class DeriveBridge:
         src_socket = get_contract(src_w3, address=src_addr, abi=socket_abi)
         tgt_socket = get_contract(tgt_w3, address=tgt_addr, abi=socket_abi)
         src_event, tgt_event = src_socket.events.MessageOutbound(), tgt_socket.events.ExecutionSuccess()
-        context = BridgeContext(currency, src_w3, tgt_w3, token_contract, src_event, tgt_event, src_chain, tgt_chain)
-        return context
+
+        return BridgeContext(
+            currency=currency,
+            source_w3=src_w3,
+            target_w3=tgt_w3,
+            source_token=token_contract,
+            source_event=cast(AsyncContractEvent, src_event),
+            target_event=cast(AsyncContractEvent, tgt_event),
+            source_chain=src_chain,
+            target_chain=tgt_chain,
+        )
 
     def _get_context(self, state: PreparedBridgeTx | BridgeTxResult) -> BridgeContext:
-        direction = Direction.WITHDRAW if state.source_chain == ChainID.DERIVE else Direction.DEPOSIT
-        remote_chain_id = state.target_chain if direction == Direction.WITHDRAW else state.source_chain
+        direction = BridgeDirection.WITHDRAW if state.source_chain == ChainID.DERIVE else BridgeDirection.DEPOSIT
+        remote_chain_id = state.target_chain if direction == BridgeDirection.WITHDRAW else state.source_chain
         context = self._make_bridge_context(
             direction=direction,
             currency=state.currency,
@@ -235,7 +267,7 @@ class DeriveBridge:
     def _resolve_socket_route(
         self,
         context: BridgeContext,
-    ) -> tuple[MintableTokenData | NonMintableTokenData, Address]:
+    ) -> tuple[MintableTokenData | NonMintableTokenData, ChecksumAddress]:
         currency = context.currency
         src_chain, tgt_chain = context.source_chain, context.target_chain
 
@@ -253,7 +285,7 @@ class DeriveBridge:
             msg = f"Source chain {src_chain.name} not found in {tgt_chain.name} connectors."
             raise BridgeRouteError(msg)
 
-        return src_token_data, src_token_data.connectors[tgt_chain][TARGET_SPEED]
+        return src_token_data, ChecksumAddress(src_token_data.connectors[tgt_chain][TARGET_SPEED])
 
     async def _prepare_tx(
         self,
@@ -276,8 +308,8 @@ class DeriveBridge:
 
         tx_details = BridgeTxDetails(
             contract=func.address,
-            method=func.fn_name,
-            kwargs=func.kwargs,
+            fn_name=func.fn_name,
+            fn_kwargs=func.kwargs,
             tx=tx,
             signed_tx=signed_tx,
         )
@@ -302,19 +334,19 @@ class DeriveBridge:
         amount: Decimal,
         currency: Currency,
         chain_id: ChainID,
-    ) -> IOResult[PreparedBridgeTx, Exception]:
+    ) -> PreparedBridgeTx:
         if currency is Currency.ETH:
             raise NotImplementedError("ETH deposits are not implemented.")
 
-        amount: int = to_base_units(decimal_amount=amount, currency=currency)
-        direction = Direction.DEPOSIT
+        amount_base_units: int = to_base_units(decimal_amount=amount, currency=currency)
+        direction = BridgeDirection.DEPOSIT
 
         if currency == Currency.DRV:
             context = self._make_bridge_context(direction, currency=currency, remote_chain_id=chain_id)
-            prepared_tx = await self._prepare_layerzero_deposit(amount=amount, context=context)
+            prepared_tx = await self._prepare_layerzero_deposit(amount=amount_base_units, context=context)
         else:
             context = self._make_bridge_context(direction, currency=currency, remote_chain_id=chain_id)
-            prepared_tx = await self._prepare_socket_deposit(amount=amount, context=context)
+            prepared_tx = await self._prepare_socket_deposit(amount=amount_base_units, context=context)
 
         return prepared_tx
 
@@ -324,30 +356,30 @@ class DeriveBridge:
         amount: Decimal,
         currency: Currency,
         chain_id: ChainID,
-    ) -> IOResult[PreparedBridgeTx, Exception]:
+    ) -> PreparedBridgeTx:
         if currency is Currency.ETH:
             raise NotImplementedError("ETH withdrawals are not implemented.")
 
-        amount: int = to_base_units(decimal_amount=amount, currency=currency)
-        direction = Direction.WITHDRAW
+        amount_base_units: int = to_base_units(decimal_amount=amount, currency=currency)
+        direction = BridgeDirection.WITHDRAW
 
         if currency == Currency.DRV:
             context = self._make_bridge_context(direction, currency=currency, remote_chain_id=chain_id)
-            prepared_tx = await self._prepare_layerzero_withdrawal(amount=amount, context=context)
+            prepared_tx = await self._prepare_layerzero_withdrawal(amount=amount_base_units, context=context)
         else:
             context = self._make_bridge_context(direction, currency=currency, remote_chain_id=chain_id)
-            prepared_tx = await self._prepare_socket_withdrawal(amount=amount, context=context)
+            prepared_tx = await self._prepare_socket_withdrawal(amount=amount_base_units, context=context)
 
         return prepared_tx
 
     @future_safe
-    async def submit_bridge_tx(self, prepared_tx: PreparedBridgeTx) -> IOResult[BridgeTxResult, Exception]:
+    async def submit_bridge_tx(self, prepared_tx: PreparedBridgeTx) -> BridgeTxResult:
         tx_result = await self._send_bridge_tx(prepared_tx=prepared_tx)
 
         return tx_result
 
     @future_safe
-    async def poll_bridge_progress(self, tx_result: BridgeTxResult) -> IOResult[BridgeTxResult, Exception]:
+    async def poll_bridge_progress(self, tx_result: BridgeTxResult) -> BridgeTxResult:
         try:
             tx_result.source_tx.tx_receipt = await self._confirm_source_tx(tx_result=tx_result)
             tx_result.target_tx = TxResult(tx_hash=await self._wait_for_target_event(tx_result=tx_result))
@@ -359,14 +391,17 @@ class DeriveBridge:
 
     async def _prepare_socket_deposit(self, amount: int, context: BridgeContext) -> PreparedBridgeTx:
         token_data, _connector = self._resolve_socket_route(context=context)
+        assert is_non_mintable(token_data), "Expected NonMintableTokenData"
 
         spender = token_data.Vault if token_data.isNewBridge else self.get_deposit_helper(context.source_chain).address
+        assert is_non_mintable(token_data), "Expected NonMintableTokenData"
+
         await ensure_token_balance(context.source_token, self.owner, amount=amount)
         await ensure_token_allowance(
             w3=context.source_w3,
             token_contract=context.source_token,
             owner=self.owner,
-            spender=spender,
+            spender=ChecksumAddress(spender),
             amount=amount,
             private_key=self.private_key,
             logger=self.logger,
@@ -384,6 +419,7 @@ class DeriveBridge:
 
     async def _prepare_socket_withdrawal(self, amount: int, context: BridgeContext) -> PreparedBridgeTx:
         token_data, connector = self._resolve_socket_route(context=context)
+        assert is_mintable(token_data), "Expected MintableTokenData"
 
         # Get estimated fee in token for a withdrawal
         fee_in_token = await self.withdraw_wrapper.functions.getFeeInToken(
@@ -430,14 +466,14 @@ class DeriveBridge:
             w3=context.source_w3,
             token_contract=context.source_token,
             owner=self.owner,
-            spender=context.source_token.address,
+            spender=ChecksumAddress(context.source_token.address),
             amount=amount,
             private_key=self.private_key,
             logger=self.logger,
         )
 
         # build the send tx
-        receiver_bytes32 = AsyncWeb3.to_bytes(hexstr=self.wallet).rjust(32, b"\x00")
+        receiver_bytes32 = AsyncWeb3.to_bytes(hexstr=cast(HexStr, self.wallet)).rjust(32, b"\x00")
 
         kwargs = {
             "dstEid": LayerZeroChainIDv2.DERIVE.value,
@@ -468,7 +504,7 @@ class DeriveBridge:
 
     async def _prepare_layerzero_withdrawal(self, amount: int, context: BridgeContext) -> PreparedBridgeTx:
         abi = json.loads(LYRA_OFT_WITHDRAW_WRAPPER_ABI_PATH.read_text())
-        withdraw_wrapper = get_contract(context.source_w3, LYRA_OFT_WITHDRAW_WRAPPER_ADDRESS, abi=abi)
+        withdraw_wrapper = get_contract(context.source_w3, LYRA_OFT_WITHDRAW_WRAPPER, abi=abi)
         destEID = LayerZeroChainIDv2[context.target_chain.name]
 
         fee_in_token = await withdraw_wrapper.functions.getFeeInToken(
@@ -520,7 +556,7 @@ class DeriveBridge:
 
         return tx_result
 
-    async def _confirm_source_tx(self, tx_result: BridgeTxResult) -> TxReceipt:
+    async def _confirm_source_tx(self, tx_result: BridgeTxResult) -> TypedTxReceipt:
         context = self._get_context(tx_result)
         msg = "⏳ Checking source chain [%s] tx receipt for %s"
         self.logger.info(msg, tx_result.source_chain.name, tx_result.source_tx.tx_hash)
@@ -532,7 +568,7 @@ class DeriveBridge:
 
         return tx_receipt
 
-    async def _wait_for_target_event(self, tx_result: BridgeTxResult) -> HexBytes:
+    async def _wait_for_target_event(self, tx_result: BridgeTxResult) -> TxHash:
         bridge_event_fetchers = {
             BridgeType.SOCKET: self._fetch_socket_event_log,
             BridgeType.LAYERZERO: self._fetch_lz_event_log,
@@ -542,12 +578,14 @@ class DeriveBridge:
 
         context = self._get_context(tx_result)
         event_log = await fetch_event(tx_result, context)
-        tx_hash = event_log["transactionHash"]
+        tx_hash = event_log.transactionHash
         self.logger.info(f"Target event tx_hash found: {tx_hash.to_0x_hex()}")
 
-        return tx_hash
+        return TxHash(tx_hash)
 
-    async def _confirm_target_tx(self, tx_result: BridgeTxResult) -> TxReceipt:
+    async def _confirm_target_tx(self, tx_result: BridgeTxResult) -> TypedTxReceipt:
+        assert tx_result.target_tx is not None, "Expected tx_result.target_tx to exist"
+
         context = self._get_context(tx_result)
         msg = "⏳ Checking target chain [%s] tx receipt for %s"
         self.logger.info(msg, tx_result.target_chain.name, tx_result.target_tx.tx_hash)
@@ -559,7 +597,9 @@ class DeriveBridge:
 
         return tx_receipt
 
-    async def _fetch_lz_event_log(self, tx_result: BridgeTxResult, context: BridgeContext) -> LogReceipt:
+    async def _fetch_lz_event_log(self, tx_result: BridgeTxResult, context: BridgeContext) -> TypedLogReceipt:
+        assert tx_result.source_tx.tx_receipt, "Expected source_tx.receipt to exist"
+
         try:
             source_event = context.source_event.process_log(tx_result.source_tx.tx_receipt.logs[-1])
             guid = source_event["args"]["guid"]
@@ -585,7 +625,9 @@ class DeriveBridge:
             logger=self.logger,
         )
 
-    async def _fetch_socket_event_log(self, tx_result: BridgeTxResult, context: BridgeContext) -> LogReceipt:
+    async def _fetch_socket_event_log(self, tx_result: BridgeTxResult, context: BridgeContext) -> TypedLogReceipt:
+        assert tx_result.source_tx.tx_receipt, "Expected source_tx.receipt to exist"
+
         try:
             source_event = context.source_event.process_log(tx_result.source_tx.tx_receipt.logs[-2])
             message_id = source_event["args"]["msgId"]
@@ -598,13 +640,12 @@ class DeriveBridge:
             fromBlock=tx_result.target_from_block, abi=context.target_event.abi
         )
 
-        def matching_message_id(log: AttributeDict) -> bool:
-            decoded = context.target_event.process_log(log)
+        def matching_message_id(log: TypedLogReceipt) -> bool:
+            decoded = context.target_event.process_log(log.to_w3())
             return decoded.get("args", {}).get("msgId") == message_id
 
-        self.logger.info(
-            f"🔍 Listening for ExecutionSuccess on [{tx_result.target_chain.name}] at {context.target_event.address}"
-        )
+        msg = f"🔍 Listening for ExecutionSuccess on [{tx_result.target_chain.name}] at {context.target_event.address}"
+        self.logger.info(msg)
 
         return await wait_for_bridge_event(
             w3=context.target_w3,
@@ -618,7 +659,7 @@ class DeriveBridge:
         token_data: NonMintableTokenData,
         amount: int,
         context: BridgeContext,
-    ) -> tuple[AsyncContractFunction, int]:
+    ) -> tuple[AsyncContractFunction, AsyncContractFunction]:
         vault_contract = _load_vault_contract(w3=self.w3s[context.source_chain], token_data=token_data)
         connector = token_data.connectors[ChainID.DERIVE][TARGET_SPEED]
         fees_func = _get_min_fees(bridge_contract=vault_contract, connector=connector, token_data=token_data)
@@ -638,7 +679,7 @@ class DeriveBridge:
         token_data: NonMintableTokenData,
         amount: int,
         context: BridgeContext,
-    ) -> tuple[AsyncContractFunction, int]:
+    ) -> tuple[AsyncContractFunction, AsyncContractFunction]:
         vault_contract = _load_vault_contract(w3=self.w3s[context.source_chain], token_data=token_data)
         connector = token_data.connectors[ChainID.DERIVE][TARGET_SPEED]
         fees_func = _get_min_fees(bridge_contract=vault_contract, connector=connector, token_data=token_data)
@@ -653,7 +694,7 @@ class DeriveBridge:
 
         return func, fees_func
 
-    async def _check_bridge_funds(self, token_data, connector: Address, amount: int) -> None:
+    async def _check_bridge_funds(self, token_data, connector: ChecksumAddress, amount: int) -> None:
         controller = _load_controller_contract(w3=self.derive_w3, token_data=token_data)
         if token_data.isNewBridge:
             deposit_hook = await controller.functions.hook__().call()
@@ -669,6 +710,5 @@ class DeriveBridge:
             locked = await controller.functions.poolLockedAmounts(pool_id).call()
 
         if amount > locked:
-            raise RuntimeError(
-                f"Insufficient funds locked in pool: has {locked}, want {amount} ({(locked / amount * 100):.2f}%)"
-            )
+            msg = f"Insufficient funds locked in pool: has {locked}, want {amount} ({(locked / amount * 100):.2f}%)"
+            raise RuntimeError(msg)

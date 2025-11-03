@@ -139,20 +139,61 @@ def _ensure_referral_default(node: ast.ClassDef) -> bool:
     ast.fix_missing_locations(node)
 
 
+def update_get_tx_result_schema(node: ast.ClassDef) -> None:
+    """Update fields annotated in OpenAPI spec as "str", but are deserialized into dict."""
+
+    for stmt in node.body:
+        if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
+            field_name = stmt.target.id
+            if field_name == "data":
+                stmt.annotation = ast.Name(id="dict", ctx=ast.Load())
+            elif field_name == "error_log" and isinstance(stmt.annotation, ast.Subscript):
+                stmt.annotation.slice = ast.Name(id="dict", ctx=ast.Load())
+
+
 class OptionalRewriter(ast.NodeTransformer):
     def visit_ClassDef(self, node: ast.ClassDef) -> ast.AST:
         self.generic_visit(node)
+
         if node.name in {"PrivateOrderParamsSchema", "PrivateReplaceParamsSchema"}:
             _ensure_referral_default(node)
+
+        if node.name == "PublicGetTransactionResultSchema":
+            update_get_tx_result_schema(node)
+
+        if node.name == "TriggerPriceType" and self._is_str_enum(node):
+            self._add_type_ignore_to_index(node)
+
         if not is_struct_class(node):
             return node
         node.body = reorder_fields(node.body)
         return node
 
+    def _is_str_enum(self, node: ast.ClassDef) -> bool:
+        """Check if class inherits from both str and Enum."""
+        base_names = {base.id for base in node.bases if isinstance(base, ast.Name)}
+        return 'str' in base_names and 'Enum' in base_names
+
+    def _add_type_ignore_to_index(self, node: ast.ClassDef) -> None:
+        """Add type_comment to index assignment to suppress mypy error."""
+        for stmt in node.body:
+            if isinstance(stmt, ast.Assign):
+                for target in stmt.targets:
+                    if isinstance(target, ast.Name) and target.id == 'index':
+                        # Add type_comment which ast.unparse will render as # type: ignore
+                        stmt.type_comment = 'ignore[assignment]'
+                        return
+
 
 def patch_code(src: str) -> str:
     tree = ast.parse(src)
+    tracker = EnumTracker()
+    tracker.visit(tree)
+
+    fixer = DefaultValueFixer(tracker.enum_types, tracker.custom_types)
+    tree = fixer.visit(tree)
     tree = OptionalRewriter().visit(tree)
+
     ast.fix_missing_locations(tree)
     return ast.unparse(tree)
 
@@ -176,58 +217,70 @@ def is_struct_class(node: ast.ClassDef) -> bool:
     return False
 
 
-def inject_transaction_structs(path: Path, template_path: Path) -> None:
-    """Inject transaction struct definitions and fix PublicGetTransactionResultSchema."""
+class EnumTracker(ast.NodeVisitor):
+    """Track which imported names are Enums."""
 
-    print("Injecting transaction structs via AST")
+    def __init__(self):
+        self.enum_types: set[str] = set()
+        self.custom_types: set[str] = {'Decimal'}  # Known custom types
 
-    template_code = template_path.read_text()
-    template_tree = ast.parse(template_code)
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        # Check if class inherits from Enum or StrEnum
+        for base in node.bases:
+            if isinstance(base, ast.Name) and base.id in {'Enum', 'StrEnum', 'IntEnum'}:
+                self.enum_types.add(node.name)
+                break
+        self.generic_visit(node)
 
-    struct_classes = [node for node in template_tree.body if isinstance(node, ast.ClassDef)]
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
+        # Track Decimal imports
+        if node.module == 'decimal':
+            for alias in node.names:
+                if alias.name == 'Decimal':
+                    self.custom_types.add('Decimal')
 
-    code = path.read_text()
-    tree = ast.parse(code)
 
-    target_class_idx = None
-    target_class = None
-    for idx, node in enumerate(tree.body):
-        if isinstance(node, ast.ClassDef) and node.name == "PublicGetTransactionResultSchema":
-            target_class_idx = idx
-            target_class = node
-            break
+class DefaultValueFixer(ast.NodeTransformer):
+    """Fix default values that need type coercion."""
 
-    if target_class_idx is None:
-        print("Warning: PublicGetTransactionResultSchema not found, skipping injection")
-        return
+    def __init__(self, enum_types: set[str], custom_types: set[str]):
+        self.enum_types = enum_types
+        self.custom_types = custom_types
 
-    for struct_class in reversed(struct_classes):
-        tree.body.insert(target_class_idx, struct_class)
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> ast.AST:
+        if not isinstance(node.target, ast.Name) or node.value is None:
+            return node
 
-    for stmt in target_class.body:
-        if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
-            field_name = stmt.target.id
+        type_name = self._get_type_name(node.annotation)
+        if not type_name or not isinstance(node.value, ast.Constant):
+            return node
 
-            if field_name == "data":
-                stmt.annotation = ast.Name(id="TransactionData", ctx=ast.Load())
+        if node.value.value is None:
+            return node
 
-            elif field_name == "error_log" and isinstance(stmt.annotation, ast.Subscript):
-                stmt.annotation.slice = ast.Name(id="TransactionErrorLog", ctx=ast.Load())
+        # Fix known custom types that need constructor calls
+        if type_name in self.custom_types or type_name in self.enum_types:
+            node.value = ast.Call(func=ast.Name(id=type_name, ctx=ast.Load()), args=[node.value], keywords=[])
 
-    ast.fix_missing_locations(tree)
-    new_code = ast.unparse(tree)
-    path.write_text(CUSTOM_HEADER + "\n" + new_code)
+        return node
+
+    def _get_type_name(self, annotation: ast.expr) -> str | None:
+        """Extract the main type name from an annotation."""
+        if isinstance(annotation, ast.Name):
+            return annotation.id
+        elif isinstance(annotation, ast.Subscript):
+            # Handle Optional[X] -> X
+            return self._get_type_name(annotation.slice)
+        return None
 
 
 if __name__ == "__main__":
     base_url = "https://docs.derive.xyz"
     repo_root = Path(__file__).parent.parent
     input_path = repo_root / "openapi-spec.json"
-    output_path = repo_root / "derive_client" / "data" / "generated" / "models.py"
-    transaction_structs_template = repo_root / "derive_client" / "data" / "templates" / "transaction_structs.py"
+    output_path = repo_root / "derive_client" / "data_types" / "generated_models.py"
 
     generate_models(input_path=input_path, output_path=output_path)
     patch_pagination_to_optional(output_path)
-    inject_transaction_structs(output_path, transaction_structs_template)
     patch_file(output_path)
     print("Done.")

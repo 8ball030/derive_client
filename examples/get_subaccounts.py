@@ -7,8 +7,8 @@ This script is equivalent to the test_fetch_first_subaccount() test in tests/tes
 from pathlib import Path
 
 import click
-
 from derive_client.clients import HttpClient as DeriveClient
+
 from derive_client.data_types import Environment
 
 

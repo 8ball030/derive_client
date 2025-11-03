@@ -5,7 +5,7 @@ import contextlib
 from logging import Logger
 from typing import AsyncGenerator
 
-from pydantic import validate_call
+from pydantic import ConfigDict, validate_call
 from web3 import AsyncWeb3
 
 from derive_client._bridge.async_client import AsyncBridgeClient
@@ -20,8 +20,8 @@ from derive_client._clients.rest.async_http.session import AsyncHTTPSession, _re
 from derive_client._clients.rest.async_http.subaccount import Subaccount
 from derive_client._clients.rest.async_http.transactions import TransactionOperations
 from derive_client._clients.utils import AuthContext
-from derive_client.constants import CONFIGS
-from derive_client.data_types import Address, Environment
+from derive_client.config import CONFIGS
+from derive_client.data_types import ChecksumAddress, Environment
 from derive_client.exceptions import BridgePrimarySignerRequiredError, NotConnectedError
 from derive_client.utils.logger import get_logger
 
@@ -29,11 +29,11 @@ from derive_client.utils.logger import get_logger
 class AsyncHTTPClient:
     """Asynchronous HTTP client"""
 
-    @validate_call(config=dict(arbitrary_types_allowed=True))
+    @validate_call(config=ConfigDict(arbitrary_types_allowed=True))
     def __init__(
         self,
         *,
-        wallet: Address,
+        wallet: ChecksumAddress,
         session_key: str,
         subaccount_id: int,
         env: Environment,
@@ -41,7 +41,7 @@ class AsyncHTTPClient:
         request_timeout: float = 10.0,
     ):
         config = CONFIGS[env]
-        w3 = AsyncWeb3(AsyncWeb3.HTTPProvider(config.rpc_endpoint))
+        w3 = AsyncWeb3(AsyncWeb3.AsyncHTTPProvider(config.rpc_endpoint))
         account = w3.eth.account.from_key(session_key)
 
         auth = AuthContext(
@@ -56,8 +56,8 @@ class AsyncHTTPClient:
         self._config = config
         self._subaccount_id = subaccount_id
 
-        self._session = AsyncHTTPSession(request_timeout=request_timeout)
         self._logger = logger if logger is not None else get_logger()
+        self._session = AsyncHTTPSession(request_timeout=request_timeout, logger=self._logger)
 
         self._public_api = AsyncPublicAPI(session=self._session, config=config)
         self._private_api = AsyncPrivateAPI(session=self._session, config=config, auth=auth)
@@ -103,7 +103,7 @@ class AsyncHTTPClient:
         elif initialize_bridge:
             self._logger.debug("Bridge module unavailable in non-prod environment.")
 
-        subaccount_ids = self._light_account._state.subaccount_ids
+        subaccount_ids = self._light_account.state.subaccount_ids
         if self._subaccount_id not in subaccount_ids:
             self._logger.warning(
                 f"Subaccount {self._subaccount_id} does not exist for wallet {self._light_account.address}. "

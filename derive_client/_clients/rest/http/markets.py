@@ -7,7 +7,7 @@ from typing import Optional
 
 from derive_client._clients.rest.http.api import PublicAPI
 from derive_client._clients.utils import fetch_all_pages_of_instrument_type, infer_instrument_type
-from derive_client.data.generated.models import (
+from derive_client.data_types.generated_models import (
     CurrencyDetailedResponseSchema,
     InstrumentPublicResponseSchema,
     InstrumentType,

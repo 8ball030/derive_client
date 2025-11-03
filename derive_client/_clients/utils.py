@@ -3,33 +3,35 @@ from __future__ import annotations
 import json
 import time
 from dataclasses import dataclass
-from decimal import Decimal
 from enum import StrEnum
-from typing import TYPE_CHECKING, Iterable, Optional, Protocol, TypeVar
+from typing import TYPE_CHECKING, Iterable, Optional, TypeVar
 
 import msgspec
-from derive_action_signing import ModuleData, SignedAction
-from derive_action_signing.utils import sign_rest_auth_header
-from eth_account import Account
+from derive_action_signing import ModuleData, SignedAction, sign_rest_auth_header
+from eth_account.signers.local import LocalAccount
+from hexbytes import HexBytes
 from pydantic import BaseModel
 from web3 import AsyncWeb3, Web3
 
-from derive_client.constants import EnvConfig
-from derive_client.data.generated.models import InstrumentPublicResponseSchema, InstrumentType, RPCErrorFormatSchema
-from derive_client.data_types import Address
+from derive_client.data_types import ChecksumAddress, EnvConfig, PositionTransfer
+from derive_client.data_types.generated_models import (
+    InstrumentPublicResponseSchema,
+    InstrumentType,
+    LegPricedSchema,
+    LegUnpricedSchema,
+    RPCErrorFormatSchema,
+)
 
 if TYPE_CHECKING:
+    from derive_client._clients.rest.async_http.markets import MarketOperations as AsyncMarketOperations
     from derive_client._clients.rest.http.markets import MarketOperations
 
 
-class HasInstrumentName(Protocol):
-    instrument_name: str
+StructT = TypeVar("StructT", bound=msgspec.Struct)
+InstrumentT = TypeVar("InstrumentT", LegUnpricedSchema, LegPricedSchema, PositionTransfer)
 
 
-T = TypeVar("T", bound=HasInstrumentName)
-
-
-def sort_by_instrument_name(items: Iterable[T]) -> list[T]:
+def sort_by_instrument_name(items: Iterable[InstrumentT]) -> list[InstrumentT]:
     """Derive API mandate: 'Legs must be sorted by instrument name'."""
     return sorted(items, key=lambda item: item.instrument_name)
 
@@ -52,32 +54,32 @@ def get_default_signature_expiry_sec() -> int:
 
 @dataclass
 class AuthContext:
-    wallet: Address
+    wallet: ChecksumAddress
     w3: Web3 | AsyncWeb3
-    account: Account
+    account: LocalAccount
     config: EnvConfig
 
     @property
-    def signer(self) -> Address:
-        return self.account.address
+    def signer(self) -> ChecksumAddress:
+        return ChecksumAddress(self.account.address)
 
     @property
     def signed_headers(self):
         return sign_rest_auth_header(
-            web3_client=self.w3,
+            web3_client=self.w3,  # type: ignore
             smart_contract_wallet=self.wallet,
-            session_key_or_wallet_private_key=self.account.key,
+            session_key_or_wallet_private_key=HexBytes(self.account.key).to_0x_hex(),
         )
 
     def sign_action(
         self,
-        module_address: Address,
+        module_address: ChecksumAddress,
         module_data: ModuleData,
         subaccount_id: int,
         signature_expiry_sec: Optional[int] = None,
         nonce: Optional[int] = None,
     ) -> SignedAction:
-        module_address = self.w3.to_checksum_address(module_address)
+        """Sign action using v2-action-signing library."""
 
         nonce = nonce or time.time_ns()
         signature_expiry_sec = signature_expiry_sec or get_default_signature_expiry_sec()
@@ -93,7 +95,7 @@ class AuthContext:
             DOMAIN_SEPARATOR=self.config.DOMAIN_SEPARATOR,
             ACTION_TYPEHASH=self.config.ACTION_TYPEHASH,
         )
-        action.sign(self.account.key)
+        action.sign(HexBytes(self.account.key).to_0x_hex())
         return action
 
 
@@ -110,7 +112,7 @@ class DeriveJSONRPCError(Exception):
         return f"{base}  [data={self.rpc_error.data!r}]" if self.rpc_error.data is not None else base
 
 
-def try_cast_response(response: bytes, response_schema: type[msgspec.Struct]) -> msgspec.Struct:
+def try_cast_response(response: bytes, response_schema: type[StructT]) -> StructT:
     try:
         return msgspec.json.decode(response, type=response_schema)
     except msgspec.ValidationError:
@@ -169,14 +171,6 @@ def encode_json_exclude_none(obj: msgspec.Struct) -> bytes:
     return msgspec.json.encode(filtered)
 
 
-@dataclass
-class PositionTransfer:
-    """Position to transfer between subaccounts."""
-
-    instrument_name: str
-    amount: Decimal  # Can be negative (sign indicates long/short)
-
-
 def fetch_all_pages_of_instrument_type(
     markets: MarketOperations,
     instrument_type: InstrumentType,
@@ -196,7 +190,7 @@ def fetch_all_pages_of_instrument_type(
             page_size=page_size,
         )
         instruments.extend(result.instruments)
-        if page >= result.pagination.num_pages:
+        if not result.pagination or page >= result.pagination.num_pages:
             break
         page += 1
 
@@ -204,7 +198,7 @@ def fetch_all_pages_of_instrument_type(
 
 
 async def async_fetch_all_pages_of_instrument_type(
-    markets: MarketOperations,
+    markets: AsyncMarketOperations,
     instrument_type: InstrumentType,
     expired: bool,
 ) -> list[InstrumentPublicResponseSchema]:
@@ -222,7 +216,7 @@ async def async_fetch_all_pages_of_instrument_type(
             page_size=page_size,
         )
         instruments.extend(result.instruments)
-        if page >= result.pagination.num_pages:
+        if not result.pagination or page >= result.pagination.num_pages:
             break
         page += 1
 

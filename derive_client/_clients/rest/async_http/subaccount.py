@@ -16,13 +16,12 @@ from derive_client._clients.rest.async_http.positions import PositionOperations
 from derive_client._clients.rest.async_http.rfq import RFQOperations
 from derive_client._clients.rest.async_http.transactions import TransactionOperations
 from derive_client._clients.utils import AuthContext
-from derive_client.constants import EnvConfig
-from derive_client.data.generated.models import (
+from derive_client.data_types import ChecksumAddress, EnvConfig
+from derive_client.data_types.generated_models import (
     MarginType,
     PrivateGetSubaccountParamsSchema,
     PrivateGetSubaccountResultSchema,
 )
-from derive_client.data_types import Address
 
 
 @functools.total_ordering
@@ -173,7 +172,7 @@ class Subaccount:
     def sign_action(
         self,
         *,
-        module_address: Address,
+        module_address: ChecksumAddress,
         module_data: ModuleData,
         signature_expiry_sec: Optional[int] = None,
         nonce: Optional[int] | None = None,

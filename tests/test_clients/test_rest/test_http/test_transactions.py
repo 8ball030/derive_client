@@ -2,7 +2,7 @@
 
 from decimal import Decimal
 
-from derive_client.data.generated.models import (
+from derive_client.data_types.generated_models import (
     PrivateDepositResultSchema,
     PrivateWithdrawResultSchema,
     PublicGetTransactionResultSchema,

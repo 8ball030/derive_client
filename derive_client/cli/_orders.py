@@ -6,7 +6,7 @@ from decimal import Decimal
 
 import rich_click as click
 
-from derive_client.data.generated.models import Direction, OrderType
+from derive_client.data_types import Direction, OrderType
 
 from ._columns import ORDER_COLUMNS, TRADE_COLUMNS
 from ._utils import struct_to_series, structs_to_dataframe

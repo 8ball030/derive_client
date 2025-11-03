@@ -3,16 +3,16 @@
 from decimal import Decimal
 from logging import Logger
 
-from eth_account import Account
+from eth_account.signers.local import LocalAccount
 from returns.io import IOResult
 
 from derive_client._bridge._derive_bridge import DeriveBridge
 from derive_client._bridge._standard_bridge import StandardBridge
 from derive_client.data_types import (
-    Address,
     BridgeTxResult,
     BridgeType,
     ChainID,
+    ChecksumAddress,
     Currency,
     Environment,
     PreparedBridgeTx,
@@ -32,7 +32,7 @@ class BridgeClient:
     - Multiple chains: BASE, ARBITRUM, OPTIMISM, ETH
     """
 
-    def __init__(self, env: Environment, account: Account, wallet: Address, logger: Logger):
+    def __init__(self, env: Environment, account: LocalAccount, wallet: ChecksumAddress, logger: Logger):
         self._env = env
         self._account = account
         self._wallet = wallet
@@ -59,10 +59,11 @@ class BridgeClient:
         self._derive_bridge = derive_bridge
         self._standard_bridge = StandardBridge(account=self._account, logger=self._logger)
 
-    def _ensure_bridge_available(self) -> None:
-        if self._derive_bridge and self._standard_bridge:
-            return
-        raise NotConnectedError("BridgeClient not connected. Call await .connect() first.")
+    def _require_bridges(self) -> tuple[DeriveBridge, StandardBridge]:
+        """Return non-None bridges or raise. Keeps attributes private and typed."""
+        if self._derive_bridge is None or self._standard_bridge is None:
+            raise NotConnectedError("BridgeClient not connected. Call await .connect() first.")
+        return self._derive_bridge, self._standard_bridge
 
     # === PUBLIC API (Simple - raises on error) ===
     def prepare_deposit_tx(
@@ -145,12 +146,12 @@ class BridgeClient:
     ) -> IOResult[PreparedBridgeTx, Exception]:
         """Prepare gas deposit with explicit error handling."""
 
-        self._ensure_bridge_available()
-        to = self._account.address
+        _, standard_bridge = self._require_bridges()
+        to = ChecksumAddress(self._account.address)
         target_chain = ChainID.DERIVE
 
         return run_coroutine_sync(
-            self._standard_bridge.prepare_eth_tx(
+            standard_bridge.prepare_eth_tx(
                 amount=amount,
                 to=to,
                 source_chain=chain_id,
@@ -167,9 +168,9 @@ class BridgeClient:
     ) -> IOResult[PreparedBridgeTx, Exception]:
         """Prepare deposit with explicit error handling."""
 
-        self._ensure_bridge_available()
+        derive_bridge, _ = self._require_bridges()
         return run_coroutine_sync(
-            self._derive_bridge.prepare_deposit(
+            derive_bridge.prepare_deposit(
                 amount=amount,
                 currency=currency,
                 chain_id=chain_id,
@@ -185,9 +186,9 @@ class BridgeClient:
     ) -> IOResult[PreparedBridgeTx, Exception]:
         """Prepare withdrawal with explicit error handling."""
 
-        self._ensure_bridge_available()
+        derive_bridge, _ = self._require_bridges()
         return run_coroutine_sync(
-            self._derive_bridge.prepare_withdrawal(
+            derive_bridge.prepare_withdrawal(
                 amount=amount,
                 currency=currency,
                 chain_id=chain_id,
@@ -197,17 +198,17 @@ class BridgeClient:
     def try_submit_tx(self, *, prepared_tx: PreparedBridgeTx) -> IOResult[BridgeTxResult, Exception]:
         """Submit transaction with explicit error handling."""
 
-        self._ensure_bridge_available()
+        derive_bridge, standard_bridge = self._require_bridges()
         if prepared_tx.bridge_type == BridgeType.STANDARD:
-            return run_coroutine_sync(self._standard_bridge.submit_bridge_tx(prepared_tx=prepared_tx))
+            return run_coroutine_sync(standard_bridge.submit_bridge_tx(prepared_tx=prepared_tx))
 
-        return run_coroutine_sync(self._derive_bridge.submit_bridge_tx(prepared_tx=prepared_tx))
+        return run_coroutine_sync(derive_bridge.submit_bridge_tx(prepared_tx=prepared_tx))
 
     def try_poll_tx_progress(self, *, tx_result: BridgeTxResult) -> IOResult[BridgeTxResult, Exception]:
         """Poll progress with explicit error handling."""
 
-        self._ensure_bridge_available()
+        derive_bridge, standard_bridge = self._require_bridges()
         if tx_result.bridge_type == BridgeType.STANDARD:
-            return run_coroutine_sync(self._standard_bridge.poll_bridge_progress(tx_result=tx_result))
+            return run_coroutine_sync(standard_bridge.poll_bridge_progress(tx_result=tx_result))
 
-        return run_coroutine_sync(self._derive_bridge.poll_bridge_progress(tx_result=tx_result))
+        return run_coroutine_sync(derive_bridge.poll_bridge_progress(tx_result=tx_result))

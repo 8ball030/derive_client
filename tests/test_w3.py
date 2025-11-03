@@ -9,7 +9,7 @@ from web3 import Web3
 from web3.exceptions import MethodUnavailable
 from web3.providers import HTTPProvider
 
-from derive_client.constants import DEFAULT_RPC_ENDPOINTS
+from derive_client.config import DEFAULT_RPC_ENDPOINTS
 from derive_client.data_types import ChainID, EthereumJSONRPCErrorCode
 from derive_client.utils import get_logger, load_rpc_endpoints
 from derive_client.utils.w3 import make_rotating_provider_middleware

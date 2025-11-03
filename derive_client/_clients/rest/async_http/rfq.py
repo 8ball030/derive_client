@@ -5,15 +5,15 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 
-from derive_action_signing.module_data import (
+from derive_action_signing import (
     RFQExecuteModuleData,
     RFQQuoteDetails,
     RFQQuoteModuleData,
 )
 
 from derive_client._clients.utils import sort_by_instrument_name
-from derive_client.constants import UINT64_MAX
-from derive_client.data.generated.models import (
+from derive_client.config import UINT64_MAX
+from derive_client.data_types.generated_models import (
     Direction,
     LegPricedSchema,
     LegUnpricedSchema,
@@ -182,7 +182,7 @@ class RFQOperations:
 
             rfq_quote_details = RFQQuoteDetails(
                 instrument_name=leg.instrument_name,
-                direction=leg.direction,
+                direction=leg.direction.value,
                 asset_address=asset_address,
                 sub_id=sub_id,
                 price=leg.price,
@@ -191,7 +191,7 @@ class RFQOperations:
             rfq_legs.append(rfq_quote_details)
 
         module_data = RFQQuoteModuleData(
-            global_direction=direction,
+            global_direction=direction.value,
             max_fee=max_fee,
             legs=rfq_legs,
         )
@@ -322,7 +322,7 @@ class RFQOperations:
 
             rfq_quote_details = RFQQuoteDetails(
                 instrument_name=leg.instrument_name,
-                direction=leg.direction,
+                direction=leg.direction.value,
                 asset_address=asset_address,
                 sub_id=sub_id,
                 price=leg.price,
@@ -331,7 +331,7 @@ class RFQOperations:
             quote_legs.append(rfq_quote_details)
 
         module_data = RFQExecuteModuleData(
-            global_direction=direction,
+            global_direction=direction.value,
             max_fee=max_fee,
             legs=quote_legs,
         )

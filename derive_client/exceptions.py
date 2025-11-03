@@ -5,9 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from web3.types import LogReceipt
-
-    from derive_client.data_types import BridgeTxResult, ChainID, FeeEstimate, Wei
+    from derive_client.data_types import BridgeTxResult, ChainID, FeeEstimate, TypedLogReceipt
 
 
 class NotConnectedError(RuntimeError):
@@ -64,8 +62,8 @@ class InsufficientNativeBalance(Exception):
         message: str,
         *,
         chain_id: ChainID,
-        balance: Wei,
-        assumed_gas_limit: Wei,
+        balance: int,
+        assumed_gas_limit: int,
         fee_estimate: FeeEstimate,
     ):
         super().__init__(message)
@@ -111,7 +109,7 @@ class PartialBridgeResult(Exception):
         self.tx_result = tx_result
 
     @property
-    def cause(self) -> Exception | None:
+    def cause(self) -> BaseException | None:
         """Provides access to the orignal Exception."""
         return self.__cause__
 
@@ -119,6 +117,6 @@ class PartialBridgeResult(Exception):
 class StandardBridgeRelayFailed(Exception):
     """Raised when the L2 messenger emits FailedRelayedMessage."""
 
-    def __init__(self, message: str, *, event_log: LogReceipt):
+    def __init__(self, message: str, *, event_log: TypedLogReceipt):
         super().__init__(message)
         self.event_log = event_log

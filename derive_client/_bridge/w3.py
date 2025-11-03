@@ -4,18 +4,18 @@ import json
 import statistics
 import time
 from logging import Logger
-from typing import Any, Callable, Generator, Literal
+from typing import Any, AsyncGenerator, Callable, Coroutine, Literal, cast
 
-from eth_abi import encode
+from eth_abi.abi import encode
 from eth_account import Account
-from eth_account.datastructures import SignedTransaction
+from eth_account.signers.local import LocalAccount
+from eth_typing import HexStr
 from requests import RequestException
 from web3 import AsyncHTTPProvider, AsyncWeb3
-from web3.contract import Contract
 from web3.contract.async_contract import AsyncContract, AsyncContractEvent, AsyncContractFunction
-from web3.datastructures import AttributeDict
+from web3.types import RPCEndpoint, RPCResponse
 
-from derive_client.constants import (
+from derive_client.config import (
     ABI_DATA_DIR,
     ASSUMED_BRIDGE_GAS_LIMIT,
     DEFAULT_RPC_ENDPOINTS,
@@ -23,14 +23,20 @@ from derive_client.constants import (
     MIN_PRIORITY_FEE,
 )
 from derive_client.data_types import (
-    Address,
     ChainID,
+    ChecksumAddress,
     FeeEstimate,
     FeeEstimates,
     FeeHistory,
     GasPriority,
     RPCEndpoints,
+    TxHash,
     TxStatus,
+    TypedFilterParams,
+    TypedLogReceipt,
+    TypedSignedTransaction,
+    TypedTransaction,
+    TypedTxReceipt,
     Wei,
 )
 from derive_client.exceptions import (
@@ -55,7 +61,7 @@ def make_rotating_provider_middleware(
     initial_backoff: float = 1.0,
     max_backoff: float = 600.0,
     logger: Logger,
-) -> Callable[[Callable[[str, Any], Any], AsyncWeb3], Callable[[str, Any], Any]]:
+) -> Callable[[Callable[[RPCEndpoint, Any], RPCResponse], AsyncWeb3], Any]:
     """
     v6.11-style middleware:
      - round-robin via a min-heap of `next_available` times
@@ -66,8 +72,11 @@ def make_rotating_provider_middleware(
     heapq.heapify(heap)
     lock = asyncio.Lock()
 
-    async def middleware_factory(make_request: Callable[[str, Any], Any], w3: AsyncWeb3) -> Callable[[str, Any], Any]:
-        async def rotating_backoff(method: str, params: Any) -> Any:
+    async def middleware_factory(
+        make_request: Callable[[RPCEndpoint, Any], RPCResponse],
+        w3: AsyncWeb3,
+    ) -> Callable[[RPCEndpoint, Any], Coroutine[Any, Any, RPCResponse]]:
+        async def rotating_backoff(method: RPCEndpoint, params: Any) -> RPCResponse:
             now = time.monotonic()
 
             while True:
@@ -85,7 +94,8 @@ def make_rotating_provider_middleware(
 
                 try:
                     # 3) attempt the request
-                    resp = await state.provider.make_request(method, params)
+                    provider = cast(AsyncHTTPProvider, state.provider)
+                    resp = await provider.make_request(method, params)
 
                     # Json‑RPC error branch
                     if isinstance(resp, dict) and (error := resp.get("error")):
@@ -94,9 +104,14 @@ def make_rotating_provider_middleware(
                         state.next_available = now + state.backoff
                         async with lock:
                             heapq.heappush(heap, state)
-                        err_msg = error.get("message", "")
-                        err_code = error.get("code", "")
-                        msg = "RPC error on %s: %s (code: %s)→ backing off %.2fs"
+
+                        if isinstance(error, str):
+                            msg = error
+                        else:
+                            err_msg = error.get("message", "")
+                            err_code = error.get("code", "")
+                            msg = "RPC error on %s: %s (code: %s)→ backing off %.2fs"
+
                         logger.info(msg, state.provider.endpoint_uri, err_msg, err_code, state.backoff)
                         continue
 
@@ -111,10 +126,10 @@ def make_rotating_provider_middleware(
                     logger.debug("Endpoint %s failed: %s", state.provider.endpoint_uri, e)
 
                     # We retry on all exceptions
-                    hdr = (e.response and e.response.headers or {}).get("Retry-After")
-                    try:
+                    hdr = (e.response.headers if e.response else {}).get("Retry-After")
+                    if hdr is not None:
                         backoff = float(hdr)
-                    except (ValueError, TypeError):
+                    else:
                         backoff = state.backoff * 2 if state.backoff > 0 else initial_backoff
 
                     # cap backoff and schedule
@@ -170,17 +185,22 @@ def get_w3_connections(logger) -> dict[ChainID, AsyncWeb3]:
     return {chain_id: get_w3_connection(chain_id, logger=logger) for chain_id in ChainID}
 
 
-def get_contract(w3: AsyncWeb3, address: str, abi: list) -> AsyncContract:
+def get_contract(w3: AsyncWeb3, address: ChecksumAddress, abi: list) -> AsyncContract:
     return w3.eth.contract(address=AsyncWeb3.to_checksum_address(address), abi=abi)
 
 
-def get_erc20_contract(w3: AsyncWeb3, token_address: str) -> AsyncContract:
+def get_erc20_contract(w3: AsyncWeb3, token_address: ChecksumAddress) -> AsyncContract:
     erc20_abi_path = ABI_DATA_DIR / "erc20.json"
     abi = json.loads(erc20_abi_path.read_text())
     return get_contract(w3=w3, address=token_address, abi=abi)
 
 
-async def ensure_token_balance(token_contract: Contract, owner: Address, amount: int, fee_in_token: int = 0):
+async def ensure_token_balance(
+    token_contract: AsyncContract,
+    owner: ChecksumAddress,
+    amount: int,
+    fee_in_token: int = 0,
+):
     balance = await token_contract.functions.balanceOf(owner).call()
     required = amount + fee_in_token
     if amount > balance:
@@ -192,9 +212,9 @@ async def ensure_token_balance(token_contract: Contract, owner: Address, amount:
 
 async def ensure_token_allowance(
     w3: AsyncWeb3,
-    token_contract: Contract,
-    owner: Address,
-    spender: Address,
+    token_contract: AsyncContract,
+    owner: ChecksumAddress,
+    spender: ChecksumAddress,
     amount: int,
     private_key: str,
     logger: Logger,
@@ -215,9 +235,9 @@ async def ensure_token_allowance(
 
 async def _increase_token_allowance(
     w3: AsyncWeb3,
-    from_account: Account,
-    erc20_contract: Contract,
-    spender: Address,
+    from_account: LocalAccount,
+    erc20_contract: AsyncContract,
+    spender: ChecksumAddress,
     amount: int,
     private_key: str,
     logger: Logger,
@@ -238,7 +258,7 @@ async def estimate_fees(w3, blocks: int = 20) -> FeeEstimates:
     fee_history = FeeHistory(**await w3.eth.fee_history(blocks, "pending", percentiles))
     latest_base_fee = fee_history.base_fee_per_gas[-1]
 
-    percentile_rewards = {p: [] for p in percentiles}
+    percentile_rewards: dict[int, list[Wei]] = {p: [] for p in percentiles}
     for block_rewards in fee_history.reward:
         for percentile, reward in zip(percentiles, block_rewards):
             percentile_rewards[percentile].append(reward)
@@ -251,7 +271,7 @@ async def estimate_fees(w3, blocks: int = 20) -> FeeEstimates:
 
         buffered_base_fee = int(latest_base_fee * GAS_FEE_BUFFER)
         estimated_max_fee = buffered_base_fee + estimated_priority_fee
-        estimates[percentile] = FeeEstimate(estimated_max_fee, estimated_priority_fee)
+        estimates[GasPriority(percentile)] = FeeEstimate(estimated_max_fee, estimated_priority_fee)
 
     return FeeEstimates(estimates)
 
@@ -259,8 +279,8 @@ async def estimate_fees(w3, blocks: int = 20) -> FeeEstimates:
 async def preflight_native_balance_check(
     w3: AsyncWeb3,
     fee_estimate: FeeEstimate,
-    account: Account,
-    value: Wei,
+    account: LocalAccount,
+    value: int,
 ) -> None:
     balance = await w3.eth.get_balance(account.address)
     max_fee_per_gas = fee_estimate.max_fee_per_gas
@@ -285,7 +305,7 @@ async def preflight_native_balance_check(
 @exp_backoff_retry
 async def build_standard_transaction(
     func,
-    account: Account,
+    account: LocalAccount,
     w3: AsyncWeb3,
     logger: Logger,
     value: int = 0,
@@ -333,7 +353,7 @@ async def wait_for_tx_finality(
     finality_blocks: int = 10,
     timeout: float = 300.0,
     poll_interval: float = 1.0,
-) -> AttributeDict:
+) -> TypedTxReceipt:
     """
     Wait until tx is mined and has `finality_blocks` confirmations.
     On timeout this raises one of:
@@ -357,11 +377,13 @@ async def wait_for_tx_finality(
             either wait/poll longer or resubmit (reuse the nonce to prevent duplication).
     """
 
+    block_number = -1
+    tx_hash = cast(HexStr, tx_hash)
     start_time = time.monotonic()
 
     while True:
         try:
-            receipt = AttributeDict(await w3.eth.get_transaction_receipt(tx_hash))
+            receipt = TypedTxReceipt.model_validate(await w3.eth.get_transaction_receipt(tx_hash))
         # receipt can disappear temporarily during reorgs, or if RPC provider is not synced
         except Exception as exc:
             receipt = None
@@ -369,11 +391,10 @@ async def wait_for_tx_finality(
 
         # blockNumber can change as tx gets reorged into different blocks
         try:
-            if (
-                receipt is not None
-                and (block_number := await w3.eth.block_number) >= receipt.blockNumber + finality_blocks
-            ):
-                return receipt
+            if receipt is not None:
+                block_number = await w3.eth.block_number
+                if block_number >= receipt.blockNumber + finality_blocks:
+                    return receipt
         except Exception as exc:
             msg = "Failed to fetch block_number trying to assess finality of tx_hash=%s"
             logger.debug(msg, tx_hash, extra={"exc": exc})
@@ -389,7 +410,7 @@ async def wait_for_tx_finality(
                 )
             # 2) No receipt: check if tx is known to node (mempool) or dropped
             try:
-                tx = AttributeDict(w3.eth.get_transaction(tx_hash))
+                tx = TypedTransaction.model_validate(await w3.eth.get_transaction(tx_hash))
             except Exception as exc:
                 tx = None
                 logger.debug("get_transaction probe failed for tx_hash=%s", tx_hash, extra={"exc": exc})
@@ -421,53 +442,59 @@ async def wait_for_tx_finality(
         await asyncio.sleep(poll_interval)
 
 
-def sign_tx(w3: AsyncWeb3, tx: dict, private_key: str) -> SignedTransaction:
+def sign_tx(w3: AsyncWeb3, tx: dict, private_key: str) -> TypedSignedTransaction:
     signed_tx = w3.eth.account.sign_transaction(tx, private_key=private_key)
-    return signed_tx
+    return TypedSignedTransaction(**signed_tx)
 
 
-async def send_tx(w3: AsyncWeb3, signed_tx: SignedTransaction) -> str:
+async def send_tx(w3: AsyncWeb3, signed_tx: TypedSignedTransaction) -> TxHash:
     tx_hash = await w3.eth.send_raw_transaction(signed_tx.raw_transaction)
-    return tx_hash.to_0x_hex()
+    return TxHash(tx_hash)
 
 
 async def iter_events(
     w3: AsyncWeb3,
-    filter_params: dict,
+    filter_params: TypedFilterParams,
     *,
-    condition: Callable[[AttributeDict], bool] = lambda _: True,
+    condition: Callable[[TypedLogReceipt], bool] = lambda _: True,
     max_block_range: int = 10_000,
     poll_interval: float = 5.0,
     timeout: float | None = None,
     logger: Logger,
-) -> Generator[AttributeDict, None, None]:
+) -> AsyncGenerator[TypedLogReceipt, None]:
     """Stream matching logs over a fixed or live block window. Optionally raises TimeoutError."""
 
-    original_filter_params = filter_params.copy()  # return original in TimeoutError
-    if (cursor := filter_params["fromBlock"]) == "latest":
+    if (cursor := filter_params.fromBlock) == "latest":
         cursor = await w3.eth.block_number
 
     start_block = cursor
-    filter_params["toBlock"] = filter_params.get("toBlock", "latest")
-    fixed_ceiling = None if filter_params["toBlock"] == "latest" else filter_params["toBlock"]
+    fixed_ceiling = None if filter_params.toBlock == "latest" else filter_params.toBlock
 
+    rpc_filter_params = filter_params.to_rpc_params()
     deadline = None if timeout is None else time.monotonic() + timeout
+
     while True:
         if deadline and time.monotonic() > deadline:
             msg = f"Timed out waiting for events after scanning blocks {start_block}-{cursor}"
             logger.warning(msg)
-            raise TimeoutError(f"{msg}: filter_params: {original_filter_params}")
+            raise TimeoutError(f"{msg}: filter_params: {filter_params}")
+
         upper = fixed_ceiling or await w3.eth.block_number
         if cursor <= upper:
             end = min(upper, cursor + max_block_range - 1)
-            filter_params["fromBlock"] = hex(cursor)
-            filter_params["toBlock"] = hex(end)
+
+            # Convert to hex strings for RPC call - some providers require this
+            rpc_filter_params["fromBlock"] = cast(HexStr, hex(cursor))
+            rpc_filter_params["toBlock"] = cast(HexStr, hex(end))
+
             # For example, when rotating providers are out of sync
             retry_get_logs = exp_backoff_retry(w3.eth.get_logs, attempts=EVENT_LOG_RETRIES)
-            logs = await retry_get_logs(filter_params=filter_params)
-            logger.debug(f"Scanned {cursor} - {end}: {len(logs)} logs")
-            for log in filter(condition, logs):
+            logs_raw = await retry_get_logs(filter_params=rpc_filter_params)
+            logger.debug(f"Scanned {cursor} - {end}: {len(logs_raw)} logs")
+
+            for log in filter(condition, map(TypedLogReceipt.model_validate, logs_raw)):
                 yield log
+
             cursor = end + 1  # bounds are inclusive
 
         if fixed_ceiling and cursor > fixed_ceiling:
@@ -478,14 +505,14 @@ async def iter_events(
 
 async def wait_for_bridge_event(
     w3: AsyncWeb3,
-    filter_params: dict,
+    filter_params: TypedFilterParams,
     *,
-    condition: Callable[[AttributeDict], bool] = lambda _: True,
+    condition: Callable[[TypedLogReceipt], bool] = lambda _: True,
     max_block_range: int = 10_000,
     poll_interval: float = 5.0,
     timeout: float = 300.0,
     logger: Logger,
-) -> AttributeDict:
+) -> TypedLogReceipt:
     """Wait for the first matching bridge-related log on the target chain or raise BridgeEventTimeout."""
 
     try:
@@ -498,36 +525,45 @@ def make_filter_params(
     event: AsyncContractEvent,
     from_block: int | Literal["latest"],
     to_block: int | Literal["latest"] = "latest",
-    argument_filters: dict | None = None,
-) -> dict:
+    argument_filters: dict[str, Any] | None = None,
+) -> TypedFilterParams:
     """
     Function to create an eth_getLogs compatible filter_params for this event without using .create_filter.
     event.create_filter uses eth_newFilter (a "push"), which not all RPC endpoints support.
     """
 
     argument_filters = argument_filters or {}
-    filter_params = event._get_event_filter_params(
+
+    filter_params_raw = event._get_event_filter_params(
         fromBlock=from_block,
         toBlock=to_block,
         argument_filters=argument_filters,
         abi=event.abi,
     )
-    filter_params["topics"] = tuple(filter_params["topics"])
-    address = filter_params["address"]
-    if isinstance(address, str):
-        filter_params["address"] = AsyncWeb3.to_checksum_address(address)
-    elif isinstance(address, (list, tuple)) and len(address) == 1:
-        filter_params["address"] = AsyncWeb3.to_checksum_address(address[0])
+
+    address_raw = filter_params_raw["address"]
+    address: ChecksumAddress | list[ChecksumAddress]
+
+    address = filter_params_raw["address"]
+    if isinstance(address_raw, str):
+        address = ChecksumAddress(address_raw)
+    elif isinstance(address_raw, (list, tuple)) and len(address_raw) == 1:
+        address = ChecksumAddress(address_raw[0])
     else:
         raise ValueError(f"Unexpected address filter: {address!r}")
 
-    return filter_params
+    return TypedFilterParams(
+        address=address,
+        topics=tuple(filter_params_raw["topics"]),
+        fromBlock=from_block,
+        toBlock=to_block,
+    )
 
 
 def encode_abi(func: AsyncContractFunction) -> bytes:
     """Get the ABI-encoded data (including 4-byte selector)."""
 
-    types = [arg["internalType"] for arg in func.abi["inputs"]]
+    types = [str(arg.get("internalType")) for arg in func.abi.get("inputs", [])]
     selector = bytes.fromhex(func.selector.removeprefix("0x"))
 
     return selector + encode(types, func.arguments)

@@ -170,7 +170,7 @@ class TimeInForce(str, Enum):
 
 class TriggerPriceType(str, Enum):
     mark = 'mark'
-    index = 'index'
+    index = 'index'  # type: ignore[assignment]
 
 
 class TriggerType(str, Enum):
@@ -290,7 +290,7 @@ class PrivateRegisterScopedSessionKeyParamsSchema(Struct):
     wallet: str
     ip_whitelist: Optional[List[str]] = None
     label: Optional[str] = None
-    scope: Scope = 'read_only'
+    scope: Scope = Scope('read_only')
     signed_raw_tx: Optional[str] = None
 
 
@@ -412,11 +412,11 @@ class PrivateOrderDebugParamsSchema(Struct):
     is_atomic_signing: Optional[bool] = False
     label: str = ''
     mmp: bool = False
-    order_type: OrderType = 'limit'
+    order_type: OrderType = OrderType('limit')
     reduce_only: bool = False
     referral_code: str = ''
     reject_timestamp: int = 9223372036854776000
-    time_in_force: TimeInForce = 'gtc'
+    time_in_force: TimeInForce = TimeInForce('gtc')
     trigger_price: Optional[Decimal] = None
     trigger_price_type: Optional[TriggerPriceType] = None
     trigger_type: Optional[TriggerType] = None
@@ -469,8 +469,8 @@ class MMPConfigResultSchema(Struct):
     mmp_interval: int
     mmp_unfreeze_time: int
     subaccount_id: int
-    mmp_amount_limit: Decimal = '0'
-    mmp_delta_limit: Decimal = '0'
+    mmp_amount_limit: Decimal = Decimal('0')
+    mmp_delta_limit: Decimal = Decimal('0')
 
 
 class PrivateSessionKeysParamsSchema(Struct):
@@ -493,8 +493,8 @@ class PublicGetInstrumentsParamsSchema(Struct):
 
 class ERC20PublicDetailsSchema(Struct):
     decimals: int
-    borrow_index: Decimal = '1'
-    supply_index: Decimal = '1'
+    borrow_index: Decimal = Decimal('1')
+    supply_index: Decimal = Decimal('1')
     underlying_erc20_address: str = ''
 
 
@@ -946,7 +946,7 @@ class Status6(str, Enum):
 class PrivateUpdateNotificationsParamsSchema(Struct):
     notification_ids: List[int]
     subaccount_id: int
-    status: Status6 = 'seen'
+    status: Status6 = Status6('seen')
 
 
 class PrivateUpdateNotificationsResultSchema(Struct):
@@ -1120,8 +1120,8 @@ class PrivateSetMmpConfigParamsSchema(Struct):
     mmp_frozen_time: int
     mmp_interval: int
     subaccount_id: int
-    mmp_amount_limit: Decimal = '0'
-    mmp_delta_limit: Decimal = '0'
+    mmp_amount_limit: Decimal = Decimal('0')
+    mmp_delta_limit: Decimal = Decimal('0')
 
 
 class PrivateSetMmpConfigResultSchema(PrivateSetMmpConfigParamsSchema):
@@ -1139,7 +1139,7 @@ class Period(str, Enum):
 class PublicGetFundingRateHistoryParamsSchema(Struct):
     instrument_name: str
     end_timestamp: int = 9223372036854776000
-    period: Period = 3600
+    period: Period = Period.field_3600
     start_timestamp: int = 0
 
 
@@ -1194,11 +1194,11 @@ class PrivateRfqGetBestQuoteParamsSchema(Struct):
     legs: List[LegUnpricedSchema]
     subaccount_id: int
     counterparties: Optional[List[str]] = None
-    direction: Direction = 'buy'
+    direction: Direction = Direction('buy')
     label: str = ''
     max_total_cost: Optional[Decimal] = None
     min_total_cost: Optional[Decimal] = None
-    partial_fill_step: Decimal = '1'
+    partial_fill_step: Decimal = Decimal('1')
     rfq_id: Optional[str] = None
 
 
@@ -1318,34 +1318,10 @@ class PublicGetTransactionParamsSchema(Struct):
     transaction_id: str
 
 
-class TransactionDataInner(Struct):
-    asset: str
-    amount: str
-    decimals: int
-
-
-class TransactionData(Struct):
-    data: TransactionDataInner
-    nonce: int
-    owner: str
-    expiry: int
-    module: str
-    signer: str
-    asset_id: str
-    signature: str
-    asset_name: str
-    subaccount_id: int
-    is_atomic_signing: bool
-
-
-class TransactionErrorLog(Struct):
-    error: str
-
-
 class PublicGetTransactionResultSchema(Struct):
-    data: TransactionData
+    data: dict
     status: TxStatus
-    error_log: Optional[TransactionErrorLog] = None
+    error_log: Optional[dict] = None
     transaction_hash: Optional[str] = None
 
 
@@ -1379,11 +1355,11 @@ class PrivateReplaceParamsSchema(Struct):
     mmp: bool = False
     nonce_to_cancel: Optional[int] = None
     order_id_to_cancel: Optional[str] = None
-    order_type: OrderType = 'limit'
+    order_type: OrderType = OrderType('limit')
     reduce_only: bool = False
     referral_code: str = '0x9135BA0f495244dc0A5F029b25CDE95157Db89AD'
     reject_timestamp: int = 9223372036854776000
-    time_in_force: TimeInForce = 'gtc'
+    time_in_force: TimeInForce = TimeInForce('gtc')
     trigger_price: Optional[Decimal] = None
     trigger_price_type: Optional[TriggerPriceType] = None
     trigger_type: Optional[TriggerType] = None
@@ -1412,7 +1388,7 @@ class PublicGetTradeHistoryParamsSchema(Struct):
     to_timestamp: int = 18446744073709552000
     trade_id: Optional[str] = None
     tx_hash: Optional[str] = None
-    tx_status: TxStatus5 = 'settled'
+    tx_status: TxStatus5 = TxStatus5('settled')
 
 
 class TradeSettledPublicResponseSchema(Struct):
@@ -1582,7 +1558,7 @@ class SpotFeedDataSchema(Struct):
     price: Decimal
     signatures: OracleSignatureDataSchema
     timestamp: int
-    feed_source_type: FeedSourceType = 'S'
+    feed_source_type: FeedSourceType = FeedSourceType('S')
 
 
 class VolSVIParamDataSchema(Struct):
@@ -1717,7 +1693,7 @@ class PrivateSendRfqParamsSchema(Struct):
     label: str = ''
     max_total_cost: Optional[Decimal] = None
     min_total_cost: Optional[Decimal] = None
-    partial_fill_step: Decimal = '1'
+    partial_fill_step: Decimal = Decimal('1')
 
 
 class PrivateSendRfqResultSchema(RFQResultSchema):

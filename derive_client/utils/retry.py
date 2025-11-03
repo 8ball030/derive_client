@@ -1,14 +1,11 @@
 import asyncio
 import functools
 import time
-from http import HTTPStatus
 from logging import Logger
-from typing import Callable, ParamSpec, Sequence, TypeVar
+from typing import Awaitable, Callable, Optional, ParamSpec, Sequence, TypeVar, overload
 
 import requests
 from requests.adapters import HTTPAdapter
-from requests.exceptions import ConnectionError as ReqConnectionError
-from requests.exceptions import ConnectTimeout, ReadTimeout, RequestException
 from urllib3.util.retry import Retry
 
 from derive_client.utils.logger import get_logger
@@ -16,27 +13,46 @@ from derive_client.utils.logger import get_logger
 P = ParamSpec('P')
 T = TypeVar('T')
 
-RETRY_STATUS_CODES = {HTTPStatus.REQUEST_TIMEOUT, HTTPStatus.TOO_MANY_REQUESTS} | set(range(500, 600))
 
-RETRY_EXCEPTIONS = (
-    ReadTimeout,
-    ConnectTimeout,
-    ReqConnectionError,
-)
+@overload
+def exp_backoff_retry(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]: ...
+
+
+@overload
+def exp_backoff_retry(
+    *,
+    attempts: int = ...,
+    initial_delay: float = ...,
+    exceptions: tuple[type[BaseException], ...] = ...,
+) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]: ...
+
+
+@overload
+def exp_backoff_retry(
+    func: Callable[P, Awaitable[T]],
+    *,
+    attempts: int = ...,
+    initial_delay: float = ...,
+    exceptions: tuple[type[BaseException], ...] = ...,
+) -> Callable[P, Awaitable[T]]: ...
 
 
 def exp_backoff_retry(
-    func: Callable[..., T] | None = None,
+    func: Optional[Callable[P, Awaitable[T]]] = None,
     *,
     attempts: int = 3,
     initial_delay: float = 1.0,
-    exceptions=(Exception,),
-) -> T:
+    exceptions: tuple[type[BaseException], ...] = (Exception,),
+) -> Callable[P, Awaitable[T]] | Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     if func is None:
-        return lambda f: exp_backoff_retry(f, attempts=attempts, initial_delay=initial_delay, exceptions=exceptions)
+
+        def _decorator(f: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
+            return exp_backoff_retry(f, attempts=attempts, initial_delay=initial_delay, exceptions=exceptions)
+
+        return _decorator
 
     @functools.wraps(func)
-    async def wrapper(*args, **kwargs):
+    async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
         delay = initial_delay
         for attempt in range(attempts):
             try:
@@ -46,6 +62,8 @@ def exp_backoff_retry(
                     raise e
                 await asyncio.sleep(delay)
                 delay *= 2
+
+        raise RuntimeError("Should never reach here")
 
     return wrapper
 
@@ -98,13 +116,14 @@ def wait_until(
     retry_exceptions: type[Exception] | tuple[type[Exception], ...] = (ConnectionError, TimeoutError),
     max_retries: int = 3,
     timeout_message: str = "",
+    *args: P.args,
     **kwargs: P.kwargs,
 ) -> T:
     retries = 0
     start_time = time.time()
     while True:
         try:
-            result = func(**kwargs)
+            result = func(*args, **kwargs)
         except retry_exceptions:
             retries += 1
             if retries >= max_retries:
@@ -117,10 +136,3 @@ def wait_until(
             msg = f"Timed out after {timeout}s waiting for condition on {func.__name__} {timeout_message}"
             raise TimeoutError(msg)
         time.sleep(poll_interval)
-
-
-def is_retryable(e: RequestException) -> bool:
-    status = getattr(e.response, "status_code", None)
-    if status in RETRY_STATUS_CODES:
-        return True
-    return bool(isinstance(e, RETRY_EXCEPTIONS))

@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 import rich_click as click
 
-from derive_client.data.generated.models import InstrumentType
+from derive_client.data_types import InstrumentType
 
 from ._columns import CURRENCY_COLUMNS, INSTRUMENT_COLUMNS
 from ._utils import struct_to_series, structs_to_dataframe
