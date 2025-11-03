@@ -63,7 +63,7 @@ release:
 
 .PHONY: generate-models
 generate-models:
-	curl -o openapi-spec.json https://docs.derive.xyz/openapi/rest-api.json
+	curl https://docs.derive.xyz/openapi/rest-api.json | jq > openapi-spec.json
 	python scripts/generate-models.py
 	poetry run ruff format derive_client/data_types/generated_models.py
 	poetry run ruff check --fix derive_client/data_types/generated_models.py
