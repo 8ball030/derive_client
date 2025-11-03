@@ -8112,8 +8112,15 @@
             "description": "Details of the erc20 asset (if applicable)",
             "additionalProperties": {
               "title": "erc20_details",
-              "type": "string",
-              "nullable": true
+              "nullable": true,
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
             },
             "nullable": true
           },
@@ -14393,8 +14400,15 @@
             "description": "Details of the erc20 asset (if applicable)",
             "additionalProperties": {
               "title": "erc20_details",
-              "type": "string",
-              "nullable": true
+              "nullable": true,
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
             },
             "nullable": true
           },
