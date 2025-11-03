@@ -1376,7 +1376,7 @@ class PublicGetCurrencyResultSchema(Struct):
     supply_apy: Decimal
     total_borrow: Decimal
     total_supply: Decimal
-    erc20_details: Optional[Dict[str, Optional[str]]] = None
+    erc20_details: Optional[Dict[str, Union[Optional[str], Optional[int]]]] = None
     spot_price_24h: Optional[Decimal] = None
 
 
