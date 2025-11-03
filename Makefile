@@ -41,12 +41,14 @@ clean-test:
 
 .PHONY: tests
 tests:
-	poetry run pytest tests -vv --reruns 3 --reruns-delay 3
+	poetry run pytest tests -vv --reruns 3 --reruns-delay 10
 
+.PHONY: fmt
 fmt:
 	poetry run ruff format tests derive_client examples scripts
 	poetry run ruff check tests derive_client examples scripts --fix
 
+.PHONY: lint
 lint:
 	poetry run ruff check tests derive_client examples scripts
 
@@ -63,8 +65,9 @@ release:
 
 .PHONY: generate-models
 generate-models:
-	curl -o openapi-spec.json https://docs.derive.xyz/openapi/rest-api.json
-	python scripts/generate-models.py
+	curl https://docs.derive.xyz/openapi/rest-api.json | jq > openapi-spec.json
+	poetry run python scripts/patch_spec.py openapi-spec.json
+	poetry run python scripts/generate-models.py
 	poetry run ruff format derive_client/data_types/generated_models.py
 	poetry run ruff check --fix derive_client/data_types/generated_models.py
 
