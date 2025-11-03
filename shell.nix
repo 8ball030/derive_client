@@ -29,6 +29,9 @@ mkShell {
 
   buildInputs = [
     pkgs.cowsay
+    pkgs.gum
+    pkgs.asciinema
+    pkgs.asciinema-agg
     pkgs.poetry
     pkgs.python311
     pkgs.python311Packages.pip

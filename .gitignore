@@ -3,6 +3,7 @@ ethereum_private_key.txt
 .DS_Store
 .AppleDouble
 .LSOverride
+.ruff_cache/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
