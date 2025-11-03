@@ -53,7 +53,6 @@ fmt:
 lint:
 	poetry run ruff check tests derive_client examples scripts
 
-all: fmt lint tests
 
 test-docs:
 	echo making docs
@@ -90,5 +89,10 @@ generate-sync-bridge-client:
 	poetry run ruff check --fix derive_client/_bridge/client.py
 	poetry run ruff format derive_client/_bridge/client.py
 
+
+codegen-all: generate-models generate-rest-api generate-rest-async-http generate-sync-bridge-client
+
 typecheck:
 	poetry run pyright derive_client
+
+all: codegen-all fmt lint typecheck tests
