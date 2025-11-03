@@ -96,7 +96,6 @@ select = [
   #  "PT",  # flake8-pytest-style (if you use pytest)
   #  "RUF", # Ruff-specific rules
 ]
-ignore = ["E501"]
 
 [tool.ruff.lint.isort]
 split-on-trailing-comma = true

@@ -9,7 +9,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 TIMEOUT = 10
-CUSTOM_HEADER = "# ruff: noqa: E741"
+CUSTOM_HEADER = "# ruff: noqa: E741,E501"
 
 
 def make_session_with_retries(

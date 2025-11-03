@@ -110,7 +110,7 @@ def create(side: str, amount: float, instrument: str, instrument_type: Instrumen
         expiry_time = selected_market['option_details']['expiry']
         current_time = datetime.utcnow().timestamp()
         print(
-            f"Expiry time: {expiry_time}, current time: {current_time}, time to expiry: {(expiry_time - current_time) / 3600:.2f} hours"
+            f"Expiry time: {expiry_time}, current time: {current_time}, time to expiry: {(expiry_time - current_time) / 3600:.2f} hours"  # noqa: E501
         )
     else:
         selected_market = markets[0]
@@ -200,9 +200,8 @@ def create(side: str, amount: float, instrument: str, instrument_type: Instrumen
         while not is_filled:
             polled_quote = client.poll_quotes(quote_id=accepted_quote['quote_id'])
             for quote in polled_quote.get('quotes', []):
-                print(
-                    f"Quote ID: {quote['quote_id']} Status: {quote['status']}, Price: {sum(float(leg['price']) * float(leg['amount']) for leg in quote['legs'])}"
-                )
+                quote_price = sum(float(leg['price']) * float(leg['amount']) for leg in quote['legs'])
+                print(f"Quote ID: {quote['quote_id']} Status: {quote['status']}, Price: {quote_price}")
                 if quote['status'] in ['accepted', 'expired', 'rejected', 'cancelled', "filled"]:
                     print(f"Quote ID: {quote['quote_id']} final status: {quote['status']}")
                     is_filled = quote['status'] == 'filled'
@@ -217,7 +216,7 @@ def create(side: str, amount: float, instrument: str, instrument_type: Instrumen
             for quote in polled_quote.get('quotes', []):
                 tx_hash, tx_status = quote.get('tx_hash'), quote.get('tx_status')
                 print(
-                    f"Quote ID: {quote['quote_id']} Status: {quote['status']}, Tx Hash: {tx_hash}, Tx Status: {tx_status}"
+                    f"Quote ID: {quote['quote_id']} Status: {quote['status']}, Tx Hash: {tx_hash}, Tx Status: {tx_status}"  # noqa: E501
                 )
                 if tx_hash and tx_status in (success_status + failed_status):
                     is_finalised = True
