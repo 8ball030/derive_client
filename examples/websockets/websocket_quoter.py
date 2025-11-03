@@ -222,6 +222,7 @@ def create_client_from_env() -> WsClient:
 
 if __name__ == "__main__":
     ws_client = create_client_from_env()
+    print(ws_client.signer.address)
     quoter = WebsocketQuoterStrategy(ws_client)
     try:
         quoter.run_loop()

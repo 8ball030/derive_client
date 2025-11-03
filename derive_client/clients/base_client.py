@@ -96,6 +96,7 @@ class BaseClient:
         self.logger = logger or get_logger()
         self.web3_client = Web3(Web3.HTTPProvider(self.config.rpc_endpoint))
         self.signer = self.web3_client.eth.account.from_key(private_key)
+        print(self.signer.address)
         self.wallet = wallet
         self._verify_wallet(wallet)
         self.subaccount_ids = self.fetch_subaccounts().get("subaccount_ids", [])
