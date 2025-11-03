@@ -17,7 +17,7 @@ from derive_client.clients.ws_client import (
 )
 from derive_client.data.generated.models import Direction, OrderStatus, PrivateGetPositionsResultSchema, PositionResponseSchema, PrivateGetPositionsResponseSchema
 from derive_client.data_types import Environment
-from derive_client.data_types.enums import OrderSide, OrderType
+from derive_client.data_types.enums import OrderSide, OrderType, InstrumentType
 
 MARKET_1 = "ETH-PERP"
 MAX_POSTION_SIZE = 0.5
@@ -44,7 +44,7 @@ class WebsocketQuoterStrategy:
         if not orderbook.bids or not orderbook.asks:
             return
 
-        if self.current_position is False:
+        if self.current_position is None:
             return
 
         print(orderbook )
@@ -87,7 +87,7 @@ class WebsocketQuoterStrategy:
     def on_position_update(self, positions: PrivateGetPositionsResultSchema):
         self.current_positions = positions
         if not positions.positions:
-            self.current_position = None
+            self.current_position = self.get_empty_position()
             print("No current position")
 
         else:
@@ -97,8 +97,37 @@ class WebsocketQuoterStrategy:
                 pos = self.current_position
                 print(f"Current position: {pos.instrument_name} {pos.amount} @ {pos.average_price}")
             else:
-                self.current_position = None
+                self.current_position = self.get_empty_position()
                 print("No current position")
+
+    def get_empty_position(self) -> PositionResponseSchema:
+        return PositionResponseSchema(
+            amount=0,
+            amount_step=0,
+            average_price=0,
+            average_price_excl_fees=0,
+            creation_timestamp=0,
+            cumulative_funding=0,
+            delta=0,
+            gamma=0,
+            index_price=0,
+            initial_margin=0,
+            instrument_name=MARKET_1,
+            instrument_type=InstrumentType.PERP,
+            maintenance_margin=0,
+            mark_price=0,
+            mark_value=0,
+            net_settlements=0,
+            open_orders_margin=0,
+            pending_funding=0,
+            realized_pnl=0,
+            realized_pnl_excl_fees=0,
+            theta=0,
+            total_fees=0,
+            unrealized_pnl=0,
+            unrealized_pnl_excl_fees=0,
+            vega=0,
+        )
 
 
     def on_order(self, order: OrderResponseSchema):
@@ -146,6 +175,7 @@ class WebsocketQuoterStrategy:
                 if isinstance(parsed_message, TradeResponseSchema):
                     self.on_trade(parsed_message)
                 elif isinstance(parsed_message, PrivateGetPositionsResultSchema):
+                    print("Position update received")
                     self.on_position_update(parsed_message)
                 elif isinstance(parsed_message, PrivateGetOrdersResultSchema):
                     self.on_orders_update(parsed_message)
@@ -162,6 +192,7 @@ class WebsocketQuoterStrategy:
         self.ws_client.connect_ws()
         self.ws_client.login_client()
         # get state data
+        print("Fetching initial state...")
         self.ws_client.get_orders()
         self.ws_client.get_positions()
         # subscribe to updates

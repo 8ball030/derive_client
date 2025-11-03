@@ -71,7 +71,7 @@ class Interval(StrEnum):
     ONE_SECOND = "1000"
 
 
-class WsClient():
+class WsClient(BaseClient):
     """Websocket client class."""
 
     _ws: ClientConnection | None = None
