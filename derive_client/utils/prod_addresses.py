@@ -1,7 +1,8 @@
-import json
-from collections import defaultdict
+from __future__ import annotations
 
-from derive_client.constants import DATA_DIR
+import json
+
+from derive_client.config import DATA_DIR
 from derive_client.data_types import DeriveAddresses
 
 
@@ -9,7 +10,7 @@ def get_prod_derive_addresses() -> DeriveAddresses:
     """Fetch the socket superbridge JSON data."""
     prod_lyra_addresses = DATA_DIR / "prod_lyra_addresses.json"
     old_prod_lyra_addresses = DATA_DIR / "prod_lyra-old_addresses.json"
-    chains = defaultdict(dict, {})
+    chains = {}
     for chain_id, data in json.loads(prod_lyra_addresses.read_text()).items():
         chain_data = {}
         for currency, item in data.items():

@@ -5,7 +5,7 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 
-from derive_client.data.generated.models import (
+from derive_client.data_types.generated_models import (
     MMPConfigResultSchema,
     PrivateGetMmpConfigParamsSchema,
     PrivateResetMmpParamsSchema,

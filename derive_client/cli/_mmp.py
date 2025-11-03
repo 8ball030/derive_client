@@ -43,7 +43,7 @@ def get_config(ctx, currency: str | None):
     "mmp_frozen_time",
     type=int,
     required=True,
-    help="Time interval in ms setting how long the subaccount is frozen after an mmp trigger, if 0 then a manual reset would be required via private/reset_mmp",
+    help="Time interval in ms setting how long the subaccount is frozen after an mmp trigger, if 0 then a manual reset would be required via private/reset_mmp",  # noqa: E501
 )
 @click.argument(
     "mmp_interval",
@@ -54,12 +54,12 @@ def get_config(ctx, currency: str | None):
 @click.argument(
     "mmp_amount_limit",
     default=Decimal("0"),
-    help="Maximum total order amount that can be traded within the mmp_interval across all instruments of the provided currency.",
+    help="Maximum total order amount that can be traded within the mmp_interval across all instruments of the provided currency.",  # noqa: E501
 )
 @click.argument(
     "mmp_delta_limit",
     default=Decimal("0"),
-    help="Maximum total delta that can be traded within the mmp_interval across all instruments of the provided currency.",
+    help="Maximum total delta that can be traded within the mmp_interval across all instruments of the provided currency.",  # noqa: E501
 )
 @click.pass_context
 def set_config(

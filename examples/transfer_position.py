@@ -7,10 +7,10 @@ between subaccounts using the transfer_position method.
 
 import time
 
+from derive_client.derive import DeriveClient
 from rich import print
 
 from derive_client.data_types import Environment, InstrumentType, OrderSide, OrderType, UnderlyingCurrency
-from derive_client.derive import DeriveClient
 
 # Configuration - update these values for your setup
 WALLET = "0xA419f70C696a4b449a4A24F92e955D91482d44e9"

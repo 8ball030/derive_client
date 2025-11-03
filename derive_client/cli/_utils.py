@@ -37,7 +37,7 @@ def rich_prepared_tx(prepared_tx: PreparedBridgeTx):
         fee_human = from_base_units(prepared_tx.fee_in_token, prepared_tx.currency)
         table.add_row(
             "Estimated fee (token)",
-            f"{fmt_sig_up_to(fee_human)} {prepared_tx.currency.name} (base units: {prepared_tx.fee_in_token})",
+            f"{fee_human} {prepared_tx.currency.name} (base units: {prepared_tx.fee_in_token})",
         )
     if prepared_tx.value and prepared_tx.value > 0:
         human_value = prepared_tx.value / 1e18

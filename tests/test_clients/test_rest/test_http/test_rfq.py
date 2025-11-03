@@ -3,8 +3,8 @@
 import time
 from decimal import Decimal
 
-from derive_client.constants import INT64_MAX
-from derive_client.data.generated.models import (
+from derive_client.config import INT64_MAX
+from derive_client.data_types.generated_models import (
     Direction,
     InstrumentType,
     LegPricedSchema,
@@ -26,7 +26,11 @@ from tests.conftest import assert_api_calls
 
 def _create_unpriced_legs(client):
     # Derive RPC 10004: Multiple currencies not supported
-    # [data={'subaccount_currency': 'ETH', 'base_asset_currency': 'BTC', 'note': 'sometimes due to risk caching of instruments, local tests will create new currency_id without risk updating cache'}]
+    # [data={
+    #   'subaccount_currency': 'ETH', 'base_asset_currency': 'BTC',
+    #   'note': 'sometimes due to risk caching of instruments local tests
+    #           will create new currency_id without risk updating cache'
+    # }]
     currency = client.active_subaccount._state.currency
     if currency == "all":  # SM
         currency = "ETH"
@@ -73,7 +77,8 @@ def _create_priced_legs(client, rfq):
 
         price = price.quantize(ticker.tick_size)
         # keep original direction here:
-        # Derive RPC 11103: Quote leg does not match RFQ leg  [data={'RFQ leg direction': 'buy', 'Quote leg direction': 'sell'}]
+        # Derive RPC 11103: Quote leg does not match RFQ leg
+        # [data={'RFQ leg direction': 'buy', 'Quote leg direction': 'sell'}]
         priced_leg = LegPricedSchema(
             price=price,
             amount=unpriced_leg.amount,
@@ -156,7 +161,9 @@ def test_rfq_full_lifecycle(client_admin_wallet, client_owner_wallet):
 
     priced_legs = _create_priced_legs(maker, rfq)
 
-    # Quote direction, buy means trading each leg at its direction, sell means trading each leg in the opposite direction.
+    # Quote direction:
+    # buy means trading each leg at its direction
+    # sell means trading each leg in the opposite direction.
     utc_now_s = int(time.time())
     with assert_api_calls(maker, expected=1):
         sent_quote = maker.rfq.send_quote(

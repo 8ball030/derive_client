@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, List, Optional
 
-from derive_action_signing.module_data import (
+from derive_action_signing import (
     MakerTransferPositionModuleData,
     MakerTransferPositionsModuleData,
     TakerTransferPositionModuleData,
@@ -13,8 +13,9 @@ from derive_action_signing.module_data import (
     TransferPositionsDetails,
 )
 
-from derive_client._clients.utils import PositionTransfer, sort_by_instrument_name
-from derive_client.data.generated.models import (
+from derive_client._clients.utils import sort_by_instrument_name
+from derive_client.data_types import PositionTransfer
+from derive_client.data_types.generated_models import (
     Direction,
     LegPricedSchema,
     PrivateGetPositionsParamsSchema,
@@ -105,7 +106,7 @@ class PositionOperations:
 
         maker_params = TradeModuleParamsSchema(
             amount=abs(amount),
-            direction=maker_module_data.get_direction(),
+            direction=Direction[maker_module_data.get_direction()],
             instrument_name=instrument_name,
             limit_price=limit_price,
             max_fee=max_fee,
@@ -117,7 +118,7 @@ class PositionOperations:
         )
         taker_params = TradeModuleParamsSchema(
             amount=abs(amount),
-            direction=taker_module_data.get_direction(),
+            direction=Direction[taker_module_data.get_direction()],
             instrument_name=instrument_name,
             limit_price=limit_price,
             max_fee=max_fee,
@@ -139,7 +140,7 @@ class PositionOperations:
     def transfer_batch(
         self,
         *,
-        positions: list[PositionTransfer],
+        positions: List[PositionTransfer],
         direction: Direction,
         to_subaccount: int,
         signature_expiry_sec: Optional[int] = None,
@@ -174,7 +175,7 @@ class PositionOperations:
 
             details = TransferPositionsDetails(
                 instrument_name=instrument_name,
-                direction=leg_direction,
+                direction=leg_direction.value,
                 asset_address=asset_address,
                 sub_id=sub_id,
                 price=price,
@@ -188,11 +189,11 @@ class PositionOperations:
         module_address = self._subaccount._config.contracts.RFQ_MODULE
 
         maker_module_data = MakerTransferPositionsModuleData(
-            global_direction=maker_direction,
+            global_direction=maker_direction.value,
             positions=transfer_details,
         )
         taker_module_data = TakerTransferPositionsModuleData(
-            global_direction=taker_direction,
+            global_direction=taker_direction.value,
             positions=transfer_details,
         )
 

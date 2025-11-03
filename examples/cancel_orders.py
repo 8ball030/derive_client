@@ -2,10 +2,10 @@
 Sample for cancelling an order on the derive client.
 """
 
+from derive_client.derive import DeriveClient
 from rich import print
 
 from derive_client.data_types import Environment
-from derive_client.derive import DeriveClient
 from tests.conftest import TEST_PRIVATE_KEY, TEST_WALLET
 
 

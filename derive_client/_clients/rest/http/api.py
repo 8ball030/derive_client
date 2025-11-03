@@ -3,8 +3,9 @@
 from derive_client._clients.rest.endpoints import PrivateEndpoints, PublicEndpoints
 from derive_client._clients.rest.http.session import HTTPSession
 from derive_client._clients.utils import AuthContext, encode_json_exclude_none, try_cast_response
-from derive_client.constants import PUBLIC_HEADERS, EnvConfig
-from derive_client.data.generated.models import (
+from derive_client.config import PUBLIC_HEADERS
+from derive_client.data_types import EnvConfig
+from derive_client.data_types.generated_models import (
     PrivateCancelAllParamsSchema,
     PrivateCancelAllResponseSchema,
     PrivateCancelBatchQuotesParamsSchema,

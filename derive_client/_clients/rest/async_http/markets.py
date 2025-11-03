@@ -7,7 +7,7 @@ from typing import Optional
 
 from derive_client._clients.rest.async_http.api import AsyncPublicAPI
 from derive_client._clients.utils import async_fetch_all_pages_of_instrument_type, infer_instrument_type
-from derive_client.data.generated.models import (
+from derive_client.data_types.generated_models import (
     CurrencyDetailedResponseSchema,
     InstrumentPublicResponseSchema,
     InstrumentType,
@@ -40,6 +40,36 @@ class MarketOperations:
         self._erc20_instruments_cache: dict[str, InstrumentPublicResponseSchema] = {}
         self._perp_instruments_cache: dict[str, InstrumentPublicResponseSchema] = {}
         self._option_instruments_cache: dict[str, InstrumentPublicResponseSchema] = {}
+
+    @property
+    def erc20_instruments_cache(self) -> dict[str, InstrumentPublicResponseSchema]:
+        """Get cached ERC20 instruments."""
+
+        if not self._erc20_instruments_cache:
+            raise RuntimeError(
+                "Call fetch_instruments() or fetch_all_instruments() to create the erc20_instruments_cache."
+            )
+        return self._erc20_instruments_cache
+
+    @property
+    def perp_instruments_cache(self) -> dict[str, InstrumentPublicResponseSchema]:
+        """Get cached perpetual instruments."""
+
+        if not self._perp_instruments_cache:
+            raise RuntimeError(
+                "Call fetch_instruments() or fetch_all_instruments() to create the perp_instruments_cache."
+            )
+        return self._perp_instruments_cache
+
+    @property
+    def option_instruments_cache(self) -> dict[str, InstrumentPublicResponseSchema]:
+        """Get cached option instruments."""
+
+        if not self._option_instruments_cache:
+            raise RuntimeError(
+                "Call fetch_instruments() or fetch_all_instruments() to create the option_instruments_cache."
+            )
+        return self._option_instruments_cache
 
     async def fetch_instruments(
         self,
@@ -107,30 +137,6 @@ class MarketOperations:
                 return self._option_instruments_cache
             case _:
                 raise TypeError(f"Unsupported instrument_type: {instrument_type!r}")
-
-    @property
-    def erc20_instruments_cache(self) -> dict[str, InstrumentPublicResponseSchema]:
-        """Get cached ERC20 instruments."""
-
-        if not self._erc20_instruments_cache:
-            raise RuntimeError("Call fetch_instruments() or fetch_all_instruments() to create the erc20_instruments_cache.")
-        return self._erc20_instruments_cache
-
-    @property
-    def perp_instruments_cache(self) -> dict[str, InstrumentPublicResponseSchema]:
-        """Get cached perpetual instruments."""
-
-        if not self._perp_instruments_cache:
-            raise RuntimeError("Call fetch_instruments() or fetch_all_instruments() to create the perp_instruments_cache.")
-        return self._perp_instruments_cache
-
-    @property
-    def option_instruments_cache(self) -> dict[str, InstrumentPublicResponseSchema]:
-        """Get cached option instruments."""
-
-        if not self._option_instruments_cache:
-            raise RuntimeError("Call fetch_instruments() or fetch_all_instruments() to create the option_instruments_cache.")
-        return self._option_instruments_cache
 
     def _get_cached_instrument(self, *, instrument_name: str) -> InstrumentPublicResponseSchema:
         """Internal helper to retrieve an instrument from cache."""

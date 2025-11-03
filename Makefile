@@ -53,7 +53,6 @@ fmt:
 lint:
 	poetry run ruff check tests derive_client examples scripts
 
-all: fmt lint tests
 
 test-docs:
 	echo making docs
@@ -68,8 +67,8 @@ release:
 .PHONY: generate-models
 generate-models:
 	python scripts/generate-models.py
-	poetry run ruff format derive_client/data/generated/models.py
-	poetry run ruff check --fix derive_client/data/generated/models.py
+	poetry run ruff format derive_client/data_types/generated_models.py
+	poetry run ruff check --fix derive_client/data_types/generated_models.py
 
 .PHONY: generate-rest-api
 generate-rest-api:
@@ -82,3 +81,20 @@ generate-rest-async-http:
 	python scripts/generate-rest-async-http.py
 	poetry run ruff format tests/test_clients/test_rest/test_async_http
 	poetry run ruff check --fix tests/test_clients/test_rest/test_async_http
+
+.PHONY: generate-sync-bridge-client
+generate-sync-bridge-client:
+	python scripts/generate-sync-bridge-client.py
+	poetry run ruff format derive_client/_bridge/client.py
+	poetry run ruff check --fix derive_client/_bridge/client.py
+
+
+codegen-all: generate-models generate-rest-api generate-rest-async-http generate-sync-bridge-client fmt lint
+
+typecheck:
+	poetry run pyright derive_client
+
+check_diff:
+	@git diff --exit-code
+
+all: codegen-all fmt lint typecheck tests

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from enum import Enum
+from typing import Type, TypeVar
 
 import rich_click as click
 from rich import print
@@ -16,6 +18,20 @@ from derive_client.data_types import (
 
 from ._utils import rich_prepared_tx
 
+E = TypeVar("E", bound=Enum)
+
+
+class EnumChoice(click.Choice):
+    """Click choice type that converts to enum."""
+
+    def __init__(self, enum_type: Type[E], case_sensitive: bool = False):
+        self.enum_type = enum_type
+        super().__init__([e.name for e in enum_type], case_sensitive=case_sensitive)
+
+    def convert(self, value, param, ctx):
+        name = super().convert(value, param, ctx)
+        return self.enum_type[name]
+
 
 @click.group("bridge")
 @click.pass_context
@@ -27,14 +43,14 @@ def bridge(ctx):
 @click.option(
     "--chain-id",
     "-c",
-    type=click.Choice([c.name for c in ChainID]),
+    type=EnumChoice(ChainID),
     required=True,
     help="The chain ID to bridge FROM.",
 )
 @click.option(
     "--currency",
     "-t",
-    type=click.Choice([c.name for c in Currency]),
+    type=EnumChoice(Currency),
     required=True,
     help="The token symbol (e.g. weETH) to bridge.",
 )
@@ -46,7 +62,7 @@ def bridge(ctx):
     help="The amount to deposit in decimal units of the selected token (converted to base units internally).",
 )
 @click.pass_context
-def deposit(ctx, chain_id, currency, amount):
+def deposit(ctx, chain_id: ChainID, currency: Currency, amount: Decimal):
     """
     Deposit funds via the socket superbridge to a Derive funding account.
 
@@ -56,9 +72,6 @@ def deposit(ctx, chain_id, currency, amount):
 
     client: HTTPClient = ctx.obj["client"]
     bridge: BridgeClient = client.bridge
-
-    chain_id = ChainID[chain_id]
-    currency = Currency[currency]
 
     prepared_tx = bridge.prepare_deposit_tx(chain_id=chain_id, currency=currency, amount=amount)
 
@@ -89,13 +102,13 @@ def deposit(ctx, chain_id, currency, amount):
 )
 @click.option(
     "--chain-id",
-    type=click.Choice([ChainID.ETH.name]),
-    default=ChainID.ETH.name,
+    type=EnumChoice(ChainID),
+    default=ChainID.ETH,
     show_default=True,
     required=True,
 )
 @click.pass_context
-def gas(ctx, amount, chain_id):
+def gas(ctx, amount: Decimal, chain_id: ChainID):
     """Deposit gas (native token) for bridging."""
     click.echo(f"Deposit gas: chain={chain_id} amount={amount}")
 
@@ -109,7 +122,6 @@ def gas(ctx, amount, chain_id):
     client: HTTPClient = ctx.obj["client"]
     bridge: BridgeClient = client.bridge
 
-    chain_id = ChainID[chain_id]
     currency = Currency.ETH
 
     prepared_tx = bridge.prepare_gas_deposit_tx(amount=amount, chain_id=chain_id)
@@ -156,7 +168,7 @@ def gas(ctx, amount, chain_id):
     help="The amount to withdraw in human units of the selected token (converted to base units internally).",
 )
 @click.pass_context
-def withdraw(ctx, chain_id, currency, amount):
+def withdraw(ctx, chain_id: ChainID, currency: Currency, amount: Decimal):
     """
     Withdraw funds from Derive funding account via the Withdraw Wrapper contract.
 
@@ -166,9 +178,6 @@ def withdraw(ctx, chain_id, currency, amount):
 
     client: HTTPClient = ctx.obj["client"]
     bridge: BridgeClient = client.bridge
-
-    chain_id = ChainID[chain_id]
-    currency = Currency[currency]
 
     prepared_tx = bridge.prepare_withdrawal_tx(chain_id=chain_id, currency=currency, amount=amount)
 

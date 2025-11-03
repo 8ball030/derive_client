@@ -6,7 +6,7 @@ from decimal import Decimal
 
 import rich_click as click
 
-from derive_client.data.generated.models import Direction, OrderType
+from derive_client.data_types import Direction, OrderType
 
 from ._columns import ORDER_COLUMNS, TRADE_COLUMNS
 from ._utils import struct_to_series, structs_to_dataframe
@@ -71,10 +71,9 @@ def create(
 
     client = ctx.obj["client"]
     subaccount = client.active_subaccount
-    direction = Direction[direction]
     order = subaccount.orders.create(
         amount=amount,
-        direction=direction,
+        direction=Direction(direction),
         instrument_name=instrument_name,
         limit_price=limit_price,
         order_type=order_type,
