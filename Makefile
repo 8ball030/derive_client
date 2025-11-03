@@ -98,4 +98,7 @@ typecheck:
 check_diff:
 	@git diff --exit-code
 
+demo:
+	poetry run bash scripts/demos/all.sh
+
 all: codegen-all fmt lint typecheck tests
