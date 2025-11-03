@@ -93,7 +93,7 @@ generate-sync-bridge-client:
 codegen-all: generate-models generate-rest-api generate-rest-async-http generate-sync-bridge-client fmt lint
 
 typecheck:
-	poetry run pyright derive_client
+	poetry run pyright derive_client tests
 
 check_diff:
 	@git diff --exit-code

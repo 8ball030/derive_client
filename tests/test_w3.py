@@ -5,9 +5,12 @@ from http import HTTPStatus
 
 import pytest
 from requests.exceptions import RequestException
-from web3 import Web3
+from web3 import Web3 as BaseWeb3
 from web3.exceptions import MethodUnavailable
-from web3.providers import HTTPProvider
+from web3.providers.rpc import HTTPProvider
+from web3.types import (
+    RPCEndpoint,
+)
 
 from derive_client.config import DEFAULT_RPC_ENDPOINTS
 from derive_client.data_types import ChainID, EthereumJSONRPCErrorCode
@@ -39,6 +42,10 @@ class TrackingHTTPProvider(HTTPProvider):
             self.used.add(self.endpoint_uri)
         # No-op, no call to super(), we only use this to test provider rotation
         return {"result": {}}
+
+
+class Web3(BaseWeb3):
+    provider: HTTPProvider
 
 
 @pytest.mark.flaky(reruns=3, reruns_delay=1)
@@ -98,7 +105,7 @@ def test_rpc_methods_supported(chain, rpc_endpoints):
         for method, params in REQUIRED_METHODS.items():
             try:
                 # use manager.request_blocking to hit exactly that method
-                w3.manager.request_blocking(method, params)
+                w3.manager.request_blocking(RPCEndpoint(method), params)
             except MethodUnavailable:
                 missing.setdefault(url, []).append(method)
             except RequestException as e:
@@ -131,7 +138,7 @@ def test_rotating_middelware(chain, rpc_endpoints):
 
     # 1) Build your list of HTTPProvider, based on your RPCEndpoints
     used = set()
-    providers = [TrackingHTTPProvider(url, used) for url in rpc_endpoints]
+    providers: list[HTTPProvider] = [TrackingHTTPProvider(url, used) for url in rpc_endpoints]
 
     # 2) Create Web3 (initial provider is a no-op once middleware is in place)
     w3 = Web3()

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import argparse
 import json
-import shutil
 import sys
 from pathlib import Path
 from typing import Any, Tuple
@@ -67,19 +66,11 @@ def main():
 
     data, count = patch_node(data)
 
-    # Backup only if overwriting
-    if out == src:
-        backup = src.with_suffix(src.suffix + ".bak")
-        shutil.copy2(src, backup)
-
     with out.open("w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
     print(f"Patched occurrences: {count}")
-    if out == src:
-        print(f"Backup written to: {src}.bak")
-    else:
-        print(f"Written to: {out}")
+    print(f"Written to: {out}")
 
 
 if __name__ == "__main__":
