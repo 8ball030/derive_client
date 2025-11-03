@@ -1,4 +1,4 @@
-# ruff: noqa: E741
+# ruff: noqa: E741, E501
 from __future__ import annotations
 
 from decimal import Decimal

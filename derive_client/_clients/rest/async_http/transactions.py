@@ -68,7 +68,7 @@ class TransactionOperations:
                 managers.append(manager)
 
         if len(managers) != 1:
-            msg = f"Expected exactly one manager for {(self._subaccount.margin_type, self._subaccount.currency)}, found {managers}"
+            msg = f"Expected exactly one manager for {(self._subaccount.margin_type, self._subaccount.currency)}, found {managers}"  # noqa: E501
             raise ValueError(msg)
 
         manager_address = managers[0].address

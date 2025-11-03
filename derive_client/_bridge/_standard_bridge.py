@@ -165,7 +165,7 @@ class StandardBridge:
 
         tx_gas_cost = tx["gas"] * tx["maxFeePerGas"]
         if value < tx_gas_cost:
-            msg = f"⚠️ Bridge tx value {value} is smaller than max gas cost {tx_gas_cost} (~{tx_gas_cost / value:.2f}x value)"
+            msg = f"⚠️ Bridge tx value {value} is smaller than max gas cost {tx_gas_cost} (~{tx_gas_cost / value:.2f}x value)"  # noqa: E501
             self.logger.warning(msg)
 
         signed_tx = sign_tx(w3=w3, tx=tx, private_key=self.private_key)
