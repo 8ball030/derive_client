@@ -1,4 +1,4 @@
-# ruff: noqa: E741, E501
+# ruff: noqa: E741,E501
 from __future__ import annotations
 
 from decimal import Decimal
@@ -24,7 +24,7 @@ class VaultStatisticsResponseSchema(Struct):
     underlying_value: Optional[Decimal] = None
 
 
-class Direction(str, Enum):
+class Direction(Enum):
     buy = 'buy'
     sell = 'sell'
 
@@ -36,7 +36,7 @@ class LegPricedSchema(Struct):
     price: Decimal
 
 
-class CancelReason(str, Enum):
+class CancelReason(Enum):
     field_ = ''
     user_request = 'user_request'
     insufficient_margin = 'insufficient_margin'
@@ -49,19 +49,19 @@ class CancelReason(str, Enum):
     compliance = 'compliance'
 
 
-class LiquidityRole(str, Enum):
+class LiquidityRole(Enum):
     maker = 'maker'
     taker = 'taker'
 
 
-class Status(str, Enum):
+class Status(Enum):
     open = 'open'
     filled = 'filled'
     cancelled = 'cancelled'
     expired = 'expired'
 
 
-class TxStatus(str, Enum):
+class TxStatus(Enum):
     requested = 'requested'
     pending = 'pending'
     settled = 'settled'
@@ -101,7 +101,7 @@ class PrivateResetMmpParamsSchema(Struct):
     currency: Optional[str] = None
 
 
-class Result(str, Enum):
+class Result(Enum):
     ok = 'ok'
 
 
@@ -133,7 +133,7 @@ class TradeModuleParamsSchema(Struct):
     subaccount_id: int
 
 
-class CancelReason1(str, Enum):
+class CancelReason1(Enum):
     field_ = ''
     user_request = 'user_request'
     mmp_trigger = 'mmp_trigger'
@@ -148,7 +148,7 @@ class CancelReason1(str, Enum):
     validation_failed = 'validation_failed'
 
 
-class OrderStatus(str, Enum):
+class OrderStatus(Enum):
     open = 'open'
     filled = 'filled'
     cancelled = 'cancelled'
@@ -156,24 +156,24 @@ class OrderStatus(str, Enum):
     untriggered = 'untriggered'
 
 
-class OrderType(str, Enum):
+class OrderType(Enum):
     limit = 'limit'
     market = 'market'
 
 
-class TimeInForce(str, Enum):
+class TimeInForce(Enum):
     gtc = 'gtc'
     post_only = 'post_only'
     fok = 'fok'
     ioc = 'ioc'
 
 
-class TriggerPriceType(str, Enum):
+class TriggerPriceType(Enum):
     mark = 'mark'
-    index = 'index'  # type: ignore[assignment]
+    index = 'index'
 
 
-class TriggerType(str, Enum):
+class TriggerType(Enum):
     stoploss = 'stoploss'
     takeprofit = 'takeprofit'
 
@@ -278,7 +278,7 @@ class PrivateTransferErc20ResultSchema(Struct):
     transaction_id: str
 
 
-class Scope(str, Enum):
+class Scope(Enum):
     admin = 'admin'
     account = 'account'
     read_only = 'read_only'
@@ -307,13 +307,13 @@ class PublicGetCurrencyParamsSchema(PublicGetOptionSettlementPricesParamsSchema)
     pass
 
 
-class InstrumentType(str, Enum):
+class InstrumentType(Enum):
     erc20 = 'erc20'
     option = 'option'
     perp = 'perp'
 
 
-class MarketType(str, Enum):
+class MarketType(Enum):
     ALL = 'ALL'
     SRM_BASE_ONLY = 'SRM_BASE_ONLY'
     SRM_OPTION_ONLY = 'SRM_OPTION_ONLY'
@@ -327,7 +327,7 @@ class OpenInterestStatsSchema(Struct):
     manager_currency: Optional[str] = None
 
 
-class MarginType(str, Enum):
+class MarginType(Enum):
     PM = 'PM'
     SM = 'SM'
     PM2 = 'PM2'
@@ -498,7 +498,7 @@ class ERC20PublicDetailsSchema(Struct):
     underlying_erc20_address: str = ''
 
 
-class OptionType(str, Enum):
+class OptionType(Enum):
     C = 'C'
     P = 'P'
 
@@ -741,12 +741,12 @@ class PublicGetLiveIncidentsParamsSchema(PublicGetVaultStatisticsParamsSchema):
     pass
 
 
-class MonitorType(str, Enum):
+class MonitorType(Enum):
     manual = 'manual'
     auto = 'auto'
 
 
-class Severity(str, Enum):
+class Severity(Enum):
     low = 'low'
     medium = 'medium'
     high = 'high'
@@ -937,7 +937,7 @@ class PrivateWithdrawResultSchema(PrivateTransferErc20ResultSchema):
     pass
 
 
-class Status6(str, Enum):
+class Status6(Enum):
     unseen = 'unseen'
     seen = 'seen'
     hidden = 'hidden'
@@ -1128,7 +1128,7 @@ class PrivateSetMmpConfigResultSchema(PrivateSetMmpConfigParamsSchema):
     pass
 
 
-class Period(str, Enum):
+class Period(Enum):
     field_900 = 900
     field_3600 = 3600
     field_14400 = 14400
@@ -1139,7 +1139,7 @@ class Period(str, Enum):
 class PublicGetFundingRateHistoryParamsSchema(Struct):
     instrument_name: str
     end_timestamp: int = 9223372036854776000
-    period: Period = Period.field_3600
+    period: Period = Period(3600)
     start_timestamp: int = 0
 
 
@@ -1148,7 +1148,7 @@ class FundingRateSchema(Struct):
     timestamp: int
 
 
-class TypeEnum(str, Enum):
+class TypeEnum(Enum):
     deposit = 'deposit'
     withdraw = 'withdraw'
     transfer = 'transfer'
@@ -1202,7 +1202,7 @@ class PrivateRfqGetBestQuoteParamsSchema(Struct):
     rfq_id: Optional[str] = None
 
 
-class InvalidReason(str, Enum):
+class InvalidReason(Enum):
     Account_is_currently_under_maintenance_margin_requirements__trading_is_frozen_ = (
         'Account is currently under maintenance margin requirements, trading is frozen.'
     )
@@ -1256,7 +1256,7 @@ class PublicGetLiquidationHistoryParamsSchema(Struct):
     subaccount_id: Optional[int] = None
 
 
-class AuctionType(str, Enum):
+class AuctionType(Enum):
     solvent = 'solvent'
     insolvent = 'insolvent'
 
@@ -1371,7 +1371,7 @@ class RPCErrorFormatSchema(Struct):
     data: Optional[str] = None
 
 
-class TxStatus5(str, Enum):
+class TxStatus5(Enum):
     settled = 'settled'
     reverted = 'reverted'
     timed_out = 'timed_out'
@@ -1520,7 +1520,7 @@ class OracleSignatureDataSchema(Struct):
     signers: Optional[List[str]] = None
 
 
-class Type(str, Enum):
+class Type(Enum):
     P = 'P'
     A = 'A'
     B = 'B'
@@ -1546,7 +1546,7 @@ class RateFeedDataSchema(Struct):
     timestamp: int
 
 
-class FeedSourceType(str, Enum):
+class FeedSourceType(Enum):
     S = 'S'
     O = 'O'
 
@@ -1610,7 +1610,7 @@ class PrivateCancelResultSchema(OrderResponseSchema):
     pass
 
 
-class Period1(str, Enum):
+class Period1(Enum):
     field_60 = 60
     field_300 = 300
     field_900 = 900
