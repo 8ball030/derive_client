@@ -94,4 +94,7 @@ codegen-all: generate-models generate-rest-api generate-rest-async-http generate
 typecheck:
 	poetry run pyright derive_client
 
+check_diff:
+	@git diff --exit-code
+
 all: codegen-all fmt lint typecheck tests
