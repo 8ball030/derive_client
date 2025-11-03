@@ -69,8 +69,6 @@ __all__ = [
     "MintableTokenData",
     "NonMintableTokenData",
     "DeriveAddresses",
-    "CreateSubAccountDetails",
-    "CreateSubAccountData",
     "RPCEndpoints",
     "PositionTransfer",
     "BridgeTxDetails",
