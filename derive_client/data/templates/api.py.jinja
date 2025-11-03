@@ -3,7 +3,8 @@
 import msgspec
 
 from derive_client._clients.rest{% if is_async %}.async_http{% else %}.http{% endif %}.session import {% if is_async %}AsyncHTTPSession{% else %}HTTPSession{% endif %}
-from derive_client.config import EnvConfig, PUBLIC_HEADERS
+from derive_client.config import PUBLIC_HEADERS
+from derive_client.data_types import EnvConfig
 from derive_client._clients.utils import try_cast_response, AuthContext, encode_json_exclude_none
 from derive_client._clients.rest.endpoints import PublicEndpoints, PrivateEndpoints
 from derive_client.data_types.generated_models import (
