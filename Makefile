@@ -89,3 +89,6 @@ generate-sync-bridge-client:
 	python scripts/generate-sync-bridge-client.py
 	poetry run ruff check --fix derive_client/_bridge/client.py
 	poetry run ruff format derive_client/_bridge/client.py
+
+typecheck:
+	poetry run pyright derive_client
