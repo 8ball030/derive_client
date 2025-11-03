@@ -64,14 +64,14 @@ sleep $SLEEP_TIME
 clear
 
 cowsay "Let's check if anyone's desperate enough to sell at that price..."
-echo drv order list_open
-drv order list_open
+echo drv order list-open
+drv order list-open
 sleep $SLEEP_TIME
 clear
 
 cowsay "Yeah, thought so. Let's cancel that pipe dream."
-echo drv order cancel_all
-drv order cancel_all
+echo drv order cancel-all
+drv order cancel-all
 sleep $SLEEP_TIME
 clear
 

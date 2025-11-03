@@ -33,7 +33,7 @@ class AsyncHTTPClient:
     def __init__(
         self,
         *,
-        wallet: ChecksumAddress,
+        wallet: ChecksumAddress | str,
         session_key: str,
         subaccount_id: int,
         env: Environment,
@@ -46,7 +46,7 @@ class AsyncHTTPClient:
 
         auth = AuthContext(
             w3=w3,
-            wallet=wallet,
+            wallet=ChecksumAddress(wallet),
             account=account,
             config=config,
         )
