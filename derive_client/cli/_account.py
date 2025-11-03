@@ -27,7 +27,7 @@ def get(ctx):
     print(series.drop("fee_info"))
 
     print("\n=== Fee Info ===")
-    print(struct_to_series(series.fee_info).to_string(iindex=True))
+    print(struct_to_series(series.fee_info).to_string(index=True))
 
 
 @account.command("portfolios")
