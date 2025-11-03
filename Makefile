@@ -39,9 +39,6 @@ clean-test:
 	find . -name 'log.txt' -exec rm -fr {} +
 	find . -name 'log.*.txt' -exec rm -fr {} +
 
-codegen:
-	poetry run python scripts/generate-models.py
-
 .PHONY: tests
 tests:
 	poetry run pytest tests -vv --reruns 3 --reruns-delay 3
@@ -66,6 +63,7 @@ release:
 
 .PHONY: generate-models
 generate-models:
+	curl -o openapi-spec.json https://docs.derive.xyz/openapi/rest-api.json
 	python scripts/generate-models.py
 	poetry run ruff format derive_client/data_types/generated_models.py
 	poetry run ruff check --fix derive_client/data_types/generated_models.py
