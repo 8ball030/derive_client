@@ -6,6 +6,7 @@ import time
 from logging import Logger
 from typing import Any, AsyncGenerator, Callable, Coroutine, Literal, cast
 
+from aiohttp import ClientResponseError
 from eth_abi.abi import encode
 from eth_account import Account
 from eth_account.signers.local import LocalAccount
@@ -123,11 +124,15 @@ def make_rotating_provider_middleware(
                         heapq.heappush(heap, state)
                     return resp
 
-                except RequestException as e:
+                except (ClientResponseError, RequestException) as e:
                     logger.debug("Endpoint %s failed: %s", state.provider.endpoint_uri, e)
 
+                    if isinstance(e, RequestException) and e.response:
+                        hdr = e.response.headers.get("Retry-After")
+                    else:
+                        hdr = None
+
                     # We retry on all exceptions
-                    hdr = (e.response.headers if e.response else {}).get("Retry-After")
                     if hdr is not None:
                         backoff = float(hdr)
                     else:
@@ -141,6 +146,7 @@ def make_rotating_provider_middleware(
                     msg = "Backing off %s for %.2fs"
                     logger.info(msg, state.provider.endpoint_uri, backoff)
                     continue
+
                 except Exception as e:
                     msg = "Unexpected error calling %s %s on %s; backing off %.2fs and continuing"
                     logger.exception(msg, method, params, state.provider.endpoint_uri, max_backoff, exc_info=e)
