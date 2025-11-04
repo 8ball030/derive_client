@@ -10,6 +10,7 @@ import msgspec
 import pandas as pd
 from rich.table import Table
 
+from derive_client._clients.utils import StructT
 from derive_client.data_types import PreparedBridgeTx
 from derive_client.utils import from_base_units
 
