@@ -8,12 +8,12 @@ from pathlib import Path
 import click
 from dotenv import load_dotenv
 
-from derive_client import DeriveClient
+from derive_client import HTTPClient
 from derive_client.data_types import Currency, Environment
 
 directions = {
-    "transfer_from_subaccount_to_funding": "Withdraw from subaccount to funding account",
-    "transfer_from_funding_to_subaccount": "Transfer from funding account to subaccount",
+    "withdraw_from_subaccount": "Withdraw from subaccount to funding account",
+    "deposit_to_subaccount": "Transfer from funding account to subaccount",
 }
 
 
@@ -38,7 +38,7 @@ directions = {
     "--function",
     type=click.Choice(directions.keys()),
     help="Function to execute: transfer_subaccount_to_funding or transfer_funding_to_subaccount",
-    default="transfer_from_subaccount_to_funding",
+    default="withdraw_from_subaccount",
 )
 @click.option(
     "--auto-confirm",
@@ -56,25 +56,27 @@ def main(signer_key_path, derive_sc_wallet, currency: str, amount: float, functi
         return
 
     load_dotenv()
-    subaccount_id = os.environ.get("SUBACCOUNT_ID")
+    subaccount_id = os.environ.get("DERIVE_SUBACCOUNT_ID")
     if not subaccount_id:
         click.echo("SUBACCOUNT_ID not found in environment variables.")
         return
 
+    subaccount_id = int(subaccount_id)
+
     currency = Currency[currency]
-    client = DeriveClient(
-        private_key=key_file.read_text(),
+    client = HTTPClient(
+        session_key=key_file.read_text(),
         wallet=derive_sc_wallet,
         env=Environment.PROD,
         subaccount_id=subaccount_id,
     )
 
-    click.echo(f"Using subaccount ID: {client.subaccount_id}")
+    click.echo(f"Using subaccount ID: {client._subaccount_id}")
     click.echo(f"Using currency: {currency.name}")
     click.echo(f"Using amount: {amount}")
     click.echo(f"Using function: {function}")
 
-    func = getattr(client, function, None)
+    func = getattr(client.transactions, function, None)
     if func is None:
         click.echo(f"Function {function} not found in DeriveClient.")
         return
@@ -90,7 +92,7 @@ def main(signer_key_path, derive_sc_wallet, currency: str, amount: float, functi
         return
     try:
         response = func(
-            subaccount_id=client.subaccount_id,
+            subaccount_id=client._subaccount_id,
             asset_name=currency.name,
             amount=amount,
         )
