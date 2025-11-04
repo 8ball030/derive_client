@@ -1,0 +1,114 @@
+"""Order management operations."""
+
+from __future__ import annotations
+
+from decimal import Decimal
+from typing import TYPE_CHECKING, Optional
+
+from derive_action_signing import TradeModuleData
+
+from derive_client.config import INT64_MAX
+from derive_client.data_types.generated_models import (
+    Direction,
+    InstrumentType,
+    OrderResponseSchema,
+    OrderStatus,
+    OrderType,
+    PrivateCancelAllParamsSchema,
+    PrivateCancelByInstrumentParamsSchema,
+    PrivateCancelByInstrumentResultSchema,
+    PrivateCancelByLabelParamsSchema,
+    PrivateCancelByLabelResultSchema,
+    PrivateCancelByNonceParamsSchema,
+    PrivateCancelByNonceResultSchema,
+    PrivateCancelParamsSchema,
+    PrivateCancelResultSchema,
+    PrivateGetOpenOrdersParamsSchema,
+    PrivateGetOrderParamsSchema,
+    PrivateGetOrderResultSchema,
+    PrivateGetOrdersParamsSchema,
+    PrivateGetTradeHistoryParamsSchema,
+    PrivateGetTradeHistoryResultSchema,
+    PrivateOrderParamsSchema,
+    PrivateReplaceParamsSchema,
+    PrivateReplaceResultSchema,
+    PublicGetTradeHistoryParamsSchema,
+    Result,
+    TimeInForce,
+    TradeResponseSchema,
+    TradeSettledPublicResponseSchema,
+    TriggerPriceType,
+    TriggerType,
+    TxStatus2,
+)
+
+if TYPE_CHECKING:
+    from .subaccount import Subaccount
+
+
+class TradeOperations:
+    """High-level order management operations."""
+
+    def __init__(self, subaccount: Subaccount):
+        """
+        Initialize order operations.
+
+        Args:
+            subaccount: Subaccount instance providing access to auth, config, and APIs
+        """
+        self._subaccount = subaccount
+
+    def list_public(
+        self,
+        currency: str | None = None,
+        from_timestamp: int = 0,
+        instrument_name: str | None = None,
+        instrument_type: InstrumentType | None = None,
+        page: int = 1,
+        page_size: int = 100,
+        subaccount_id: int | None = None,
+        to_timestamp: int = 18446744073709552000,
+        trade_id: str | None = None,
+        tx_hash: str | None = None,
+        tx_status: TxStatus2 = TxStatus2('settled')
+    ) -> list[TradeSettledPublicResponseSchema]:
+        params = PublicGetTradeHistoryParamsSchema(
+            currency=currency,
+            from_timestamp=from_timestamp,
+            instrument_name=instrument_name,
+            instrument_type=instrument_type,
+            page=page,
+            page_size=page_size,
+            subaccount_id=subaccount_id,
+            to_timestamp=to_timestamp,
+            trade_id=trade_id,
+            tx_hash=tx_hash,
+            tx_status=tx_status
+        )
+        response = self._subaccount._public_api.get_trade_history(params)
+        return response.result.trades
+
+    def list_private(
+        self,
+        from_timestamp: int = 0,
+        instrument_name: str | None = None,
+        order_id: str | None = None,
+        page: int = 1,
+        page_size: int = 100,
+        quote_id: str | None = None,
+        to_timestamp: int = 18446744073709552000,
+    ) -> list[TradeResponseSchema]:
+        params = PrivateGetTradeHistoryParamsSchema(
+            from_timestamp=from_timestamp,
+            instrument_name=instrument_name,
+            order_id=order_id,
+            page=page,
+            page_size=page_size,
+            quote_id=quote_id,
+            subaccount_id=self._subaccount.id,
+            to_timestamp=to_timestamp,
+            wallet=self._subaccount._auth.wallet,
+        )
+        response = self._subaccount._private_api.get_trade_history(params)
+        return response.result.trades
+

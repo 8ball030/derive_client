@@ -21,7 +21,7 @@ async def _get_open_positions_for_instrument(
     *instrument_name: str,
 ) -> list[PositionResponseSchema]:
     positions = await subaccount.positions.list()
-    return [p for p in positions.positions if p.instrument_name in instrument_name and p.amount != 0]
+    return [p for p in positions if p.instrument_name in instrument_name and p.amount != 0]
 
 
 async def _wait_for_tx_settlement(
@@ -40,11 +40,11 @@ async def _wait_for_tx_settlement(
 
 
 @pytest.mark.asyncio
-async def test_position_transfer(client_owner_wallet):
+async def test_position_transfer(client_owner_wallet_with_position):
     instrument_name = "ETH-PERP"
 
-    await client_owner_wallet.fetch_subaccounts()
-    subaccount_a, subaccount_b = client_owner_wallet.cached_subaccounts[:2]
+    await client_owner_wallet_with_position.fetch_subaccounts()
+    subaccount_a, subaccount_b = client_owner_wallet_with_position.cached_subaccounts[:2]
 
     positions_a = await _get_open_positions_for_instrument(subaccount_a, instrument_name)
     positions_b = await _get_open_positions_for_instrument(subaccount_b, instrument_name)
@@ -63,7 +63,7 @@ async def test_position_transfer(client_owner_wallet):
             f"Found: subaccount_a={len(positions_a)}, subaccount_b={len(positions_b)}",
         )
 
-    with assert_api_calls(client_owner_wallet, expected=1):
+    with assert_api_calls(client_owner_wallet_with_position, expected=1):
         transfer = await source.positions.transfer(
             amount=initial_position.amount,  # can be negative
             instrument_name=initial_position.instrument_name,
@@ -74,7 +74,7 @@ async def test_position_transfer(client_owner_wallet):
     assert transfer.taker_trade.transaction_id == transfer.maker_trade.transaction_id
 
     _transaction = await _wait_for_tx_settlement(
-        client=client_owner_wallet,
+        client=client_owner_wallet_with_position,
         transaction_id=transfer.taker_trade.transaction_id,
     )
 

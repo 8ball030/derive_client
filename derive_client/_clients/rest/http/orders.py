@@ -10,6 +10,7 @@ from derive_action_signing import TradeModuleData
 from derive_client.config import INT64_MAX
 from derive_client.data_types.generated_models import (
     Direction,
+    OrderResponseSchema,
     OrderStatus,
     OrderType,
     PrivateCancelAllParamsSchema,
@@ -22,13 +23,10 @@ from derive_client.data_types.generated_models import (
     PrivateCancelParamsSchema,
     PrivateCancelResultSchema,
     PrivateGetOpenOrdersParamsSchema,
-    PrivateGetOpenOrdersResultSchema,
     PrivateGetOrderParamsSchema,
     PrivateGetOrderResultSchema,
     PrivateGetOrdersParamsSchema,
-    PrivateGetOrdersResultSchema,
     PrivateOrderParamsSchema,
-    PrivateOrderResultSchema,
     PrivateReplaceParamsSchema,
     PrivateReplaceResultSchema,
     Result,
@@ -73,7 +71,7 @@ class OrderOperations:
         trigger_price: Optional[Decimal] = None,
         trigger_price_type: Optional[TriggerPriceType] = None,
         trigger_type: Optional[TriggerType] = None,
-    ) -> PrivateOrderResultSchema:
+    ) -> OrderResponseSchema:
         """
         Create a new order.
 
@@ -131,7 +129,7 @@ class OrderOperations:
             trigger_type=trigger_type,
         )
         response = self._subaccount._private_api.order(params)
-        return response.result
+        return response.result.order
 
     def get(self, *, order_id: str) -> PrivateGetOrderResultSchema:
         subaccount_id = self._subaccount.id
@@ -150,7 +148,7 @@ class OrderOperations:
         page: int = 1,
         page_size: int = 100,
         status: Optional[OrderStatus] = None,
-    ) -> PrivateGetOrdersResultSchema:
+    ) -> list[OrderResponseSchema]:
         params = PrivateGetOrdersParamsSchema(
             subaccount_id=self._subaccount.id,
             instrument_name=instrument_name,
@@ -160,12 +158,12 @@ class OrderOperations:
             status=status,
         )
         response = self._subaccount._private_api.get_orders(params)
-        return response.result
+        return response.result.orders
 
-    def list_open(self) -> PrivateGetOpenOrdersResultSchema:
+    def list_open(self) -> list[OrderResponseSchema]:
         params = PrivateGetOpenOrdersParamsSchema(subaccount_id=self._subaccount.id)
         response = self._subaccount._private_api.get_open_orders(params)
-        return response.result
+        return response.result.orders
 
     def cancel(
         self,
