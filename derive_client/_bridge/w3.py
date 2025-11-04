@@ -457,7 +457,7 @@ def sign_tx(w3: AsyncWeb3, tx: dict, private_key: str) -> TypedSignedTransaction
 
 async def send_tx(w3: AsyncWeb3, signed_tx: TypedSignedTransaction) -> TxHash:
     tx_hash = await w3.eth.send_raw_transaction(signed_tx.raw_transaction)
-    return TxHash(tx_hash.to_0x_hex())
+    return TxHash(tx_hash)
 
 
 async def iter_events(
