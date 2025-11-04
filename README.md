@@ -24,7 +24,7 @@ Here are the steps:
     This will generate a new private key in the `ethereum_private_key.txt` file.
 
 1. Go to the [Derive Exchange](https://derive.xyz) and create an account.
-2. Go to the API section and create a new [API key](https://.derive.xyz/api-keys/developers).
+2. Go to the API section and create a new [API key](https://app.derive.xyz/developers).
 3. Register a new Session key with the Public Address of the account your signer generated in step 0.
 
 Once you have the API key, you can use it to interact with the Derive Exchange.
