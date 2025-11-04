@@ -190,7 +190,7 @@ class HTTPClient:
     @property
     def mmp(self) -> MMPOperations:
         return self.active_subaccount.mmp
-    
+
     @property
     def trades(self) -> TradeOperations:
         return self.active_subaccount.trades

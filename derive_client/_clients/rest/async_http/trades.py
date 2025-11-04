@@ -29,7 +29,7 @@ class TradeOperations:
         """
         self._subaccount = subaccount
 
-    def list_public(
+    async def list_public(
         self,
         currency: str | None = None,
         from_timestamp: int = 0,
@@ -56,10 +56,10 @@ class TradeOperations:
             tx_hash=tx_hash,
             tx_status=tx_status,
         )
-        response = self._subaccount._public_api.get_trade_history(params)
+        response = await self._subaccount._public_api.get_trade_history(params)
         return response.result.trades
 
-    def list_private(
+    async def list_private(
         self,
         from_timestamp: int = 0,
         instrument_name: str | None = None,
@@ -80,5 +80,5 @@ class TradeOperations:
             to_timestamp=to_timestamp,
             wallet=self._subaccount._auth.wallet,
         )
-        response = self._subaccount._private_api.get_trade_history(params)
+        response = await self._subaccount._private_api.get_trade_history(params)
         return response.result.trades

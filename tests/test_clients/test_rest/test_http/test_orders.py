@@ -10,10 +10,6 @@ from derive_client.data_types.generated_models import (
     PrivateCancelByLabelResultSchema,
     PrivateCancelByNonceResultSchema,
     PrivateCancelResultSchema,
-    PrivateGetOpenOrdersResultSchema,
-    PrivateGetOrderResultSchema,
-    PrivateGetOrdersResultSchema,
-    PrivateOrderResultSchema,
     PrivateReplaceResultSchema,
     Result,
 )

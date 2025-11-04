@@ -14,6 +14,7 @@ from derive_client._clients.rest.async_http.mmp import MMPOperations
 from derive_client._clients.rest.async_http.orders import OrderOperations
 from derive_client._clients.rest.async_http.positions import PositionOperations
 from derive_client._clients.rest.async_http.rfq import RFQOperations
+from derive_client._clients.rest.async_http.trades import TradeOperations
 from derive_client._clients.rest.async_http.transactions import TransactionOperations
 from derive_client._clients.utils import AuthContext
 from derive_client.data_types import ChecksumAddress, EnvConfig
@@ -62,6 +63,7 @@ class Subaccount:
 
         self._transactions = TransactionOperations(subaccount=self)
         self._orders = OrderOperations(subaccount=self)
+        self._trades = TradeOperations(subaccount=self)
         self._positions = PositionOperations(subaccount=self)
         self._rfq = RFQOperations(subaccount=self)
         self._mmp = MMPOperations(subaccount=self)
@@ -164,6 +166,10 @@ class Subaccount:
     @property
     def rfq(self) -> RFQOperations:
         return self._rfq
+
+    @property
+    def trades(self) -> TradeOperations:
+        return self._trades
 
     @property
     def mmp(self) -> MMPOperations:
