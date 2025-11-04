@@ -128,7 +128,7 @@ class TxHash(str):
 
     def __new__(cls, value: str | HexBytes) -> TxHash:
         if isinstance(value, HexBytes):
-            value = value.hex()
+            value = value.to_0x_hex()
         if not isinstance(value, str):
             raise TypeError(f"Expected string or HexBytes, got {type(value)}")
         if not is_0x_prefixed(value) or not is_hex(value) or len(value) != 66:
@@ -219,7 +219,7 @@ class TypedFilterParams(BaseModel):
         }
 
         if self.topics is not None:
-            params["topics"] = list(self.topics)
+            params["topics"] = [topic.to_0x_hex() for topic in self.topics]
         if self.blockHash is not None:
             params["blockHash"] = self.blockHash
 
@@ -280,7 +280,7 @@ class TypedTxReceipt(BaseModel):
     type: int = Field(alias='type')  # Transaction type (0=legacy, 1=EIP-2930, 2=EIP-1559)
 
     # Optional fields (depending on chain/tx type)
-    root: HexStr  # Pre-EIP-658 state root
+    root: HexStr | None = None  # Pre-EIP-658 state root
     # blobGasPrice: int | None = None  # EIP-4844
     # blobGasUsed: int | None = None  # EIP-4844
 
@@ -304,8 +304,6 @@ class TypedTxReceipt(BaseModel):
             'type': self.type,
             'root': self.root,
         }
-
-        # return tx_receipt
 
 
 class TypedSignedTransaction(BaseModel):

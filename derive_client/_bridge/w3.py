@@ -13,6 +13,7 @@ from eth_typing import HexStr
 from requests import RequestException
 from web3 import AsyncHTTPProvider, AsyncWeb3
 from web3.contract.async_contract import AsyncContract, AsyncContractEvent, AsyncContractFunction
+from web3.exceptions import TransactionNotFound
 from web3.types import RPCEndpoint, RPCResponse
 
 from derive_client.config import (
@@ -383,9 +384,10 @@ async def wait_for_tx_finality(
 
     while True:
         try:
-            receipt = TypedTxReceipt.model_validate(await w3.eth.get_transaction_receipt(tx_hash))
+            raw_receipt = await w3.eth.get_transaction_receipt(tx_hash)
+            receipt = TypedTxReceipt.model_validate(raw_receipt)
         # receipt can disappear temporarily during reorgs, or if RPC provider is not synced
-        except Exception as exc:
+        except TransactionNotFound as exc:
             receipt = None
             logger.debug("No tx receipt for tx_hash=%s", tx_hash, extra={"exc": exc})
 
@@ -444,12 +446,12 @@ async def wait_for_tx_finality(
 
 def sign_tx(w3: AsyncWeb3, tx: dict, private_key: str) -> TypedSignedTransaction:
     signed_tx = w3.eth.account.sign_transaction(tx, private_key=private_key)
-    return TypedSignedTransaction(**signed_tx)
+    return TypedSignedTransaction(**signed_tx._asdict())
 
 
 async def send_tx(w3: AsyncWeb3, signed_tx: TypedSignedTransaction) -> TxHash:
     tx_hash = await w3.eth.send_raw_transaction(signed_tx.raw_transaction)
-    return TxHash(tx_hash)
+    return TxHash(tx_hash.to_0x_hex())
 
 
 async def iter_events(
