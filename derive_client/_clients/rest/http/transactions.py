@@ -47,13 +47,14 @@ class TransactionOperations:
         *,
         amount: Decimal,
         asset_name: str,
+        subaccount_id: Optional[int] = None,
         nonce: Optional[int] = None,
         signature_expiry_sec: Optional[int] = None,
         is_atomic_signing: bool = False,
     ) -> PrivateDepositResultSchema:
         """Deposit from LightAccount smart contract wallet into subaccount."""
 
-        subaccount_id = self._subaccount.id
+        subaccount_id = self._subaccount.id if subaccount_id is None else subaccount_id
         module_address = self._subaccount._config.contracts.DEPOSIT_MODULE
 
         currency = self._subaccount.markets.get_currency(currency=asset_name)
@@ -107,13 +108,14 @@ class TransactionOperations:
         *,
         amount: Decimal,
         asset_name: str,
+        subaccount_id: Optional[int] = None,
         nonce: Optional[int] = None,
         signature_expiry_sec: Optional[int] = None,
         is_atomic_signing: bool = False,
     ) -> PrivateWithdrawResultSchema:
         """Deposit from subaccount into LightAccount smart contract wallet."""
 
-        subaccount_id = self._subaccount.id
+        subaccount_id = self._subaccount.id if subaccount_id is None else subaccount_id
         module_address = self._subaccount._config.contracts.WITHDRAWAL_MODULE
 
         currency = self._subaccount.markets.get_currency(currency=asset_name)
