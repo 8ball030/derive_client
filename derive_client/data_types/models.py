@@ -219,7 +219,7 @@ class TypedFilterParams(BaseModel):
         }
 
         if self.topics is not None:
-            params["topics"] = [topic.to_0x_hex() for topic in self.topics]
+            params["topics"] = [cast(HexStr, topic.to_0x_hex()) if topic is not None else None for topic in self.topics]
         if self.blockHash is not None:
             params["blockHash"] = self.blockHash
 
@@ -287,7 +287,7 @@ class TypedTxReceipt(BaseModel):
     def to_w3(self) -> TxReceipt:
         """Convert to web3.py TxReceipt dict."""
 
-        return {
+        tx_receipt = {
             'blockHash': self.blockHash,
             'blockNumber': cast(BlockNumber, self.blockNumber),
             'contractAddress': cast(ETHChecksumAddress, self.contractAddress) if self.contractAddress else None,
@@ -302,8 +302,15 @@ class TypedTxReceipt(BaseModel):
             'transactionHash': self.transactionHash,
             'transactionIndex': self.transactionIndex,
             'type': self.type,
-            'root': self.root,
         }
+        if self.root is not None:
+            tx_receipt["root"] = self.root
+
+        # web3.py's definition is WRONG.
+        # EIP-658 (Byzantium fork, 2017) replaced root with status
+        # Pre-EIP-658 receipts: Have root, don't have status
+        # Post-EIP-658 receipts: Have status, don't have root
+        return cast(TxReceipt, tx_receipt)
 
 
 class TypedSignedTransaction(BaseModel):
