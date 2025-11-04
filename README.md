@@ -67,11 +67,25 @@ make fmt
 make lint
 ```
 
+### Typecheck
+
+```bash
+make typecheck
+```
+
 ### Tests
 
 ```bash
 make tests
 ```
+
+### Codegen
+
+```bash
+make codegen-all
+```
+
+
 
 For convience, all commands can be run with:
 
