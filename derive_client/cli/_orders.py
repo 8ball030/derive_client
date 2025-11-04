@@ -115,13 +115,13 @@ def list_open(ctx):
         drv order list-open
     """
 
-    client = ctx.obj["client"]
+    client: HTTPClient = ctx.obj["client"]
     subaccount = client.active_subaccount
     open_orders = subaccount.orders.list_open()
 
-    print(f"\n=== Open Orders for subaccount {open_orders.subaccount_id} ===")
-    if open_orders.orders:
-        print(structs_to_dataframe(open_orders.orders)[ORDER_COLUMNS])
+    print(f"\n=== Open Orders for subaccount {client.active_subaccount.id} ===")
+    if open_orders:
+        print(structs_to_dataframe(open_orders)[ORDER_COLUMNS])
     else:
         print("No open orders")
 

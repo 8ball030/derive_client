@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from derive_action_signing import TradeModuleData
 
@@ -148,7 +148,7 @@ class OrderOperations:
         page: int = 1,
         page_size: int = 100,
         status: Optional[OrderStatus] = None,
-    ) -> list[OrderResponseSchema]:
+    ) -> List[OrderResponseSchema]:
         params = PrivateGetOrdersParamsSchema(
             subaccount_id=self._subaccount.id,
             instrument_name=instrument_name,
@@ -160,7 +160,7 @@ class OrderOperations:
         response = self._subaccount._private_api.get_orders(params)
         return response.result.orders
 
-    def list_open(self) -> list[OrderResponseSchema]:
+    def list_open(self) -> List[OrderResponseSchema]:
         params = PrivateGetOpenOrdersParamsSchema(subaccount_id=self._subaccount.id)
         response = self._subaccount._private_api.get_open_orders(params)
         return response.result.orders

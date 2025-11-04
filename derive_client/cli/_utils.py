@@ -98,7 +98,7 @@ def struct_to_series(struct: msgspec.Struct) -> pd.Series:
     return series
 
 
-def structs_to_dataframe(structs: list[msgspec.Struct]) -> pd.DataFrame:
+def structs_to_dataframe(structs: list[StructT]) -> pd.DataFrame:
     """Convert a list of msgspec.Structs to a formatted pandas DataFrame.
 
     Automatically handles:
