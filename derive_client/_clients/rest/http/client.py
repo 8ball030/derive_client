@@ -17,6 +17,7 @@ from derive_client._clients.rest.http.positions import PositionOperations
 from derive_client._clients.rest.http.rfq import RFQOperations
 from derive_client._clients.rest.http.session import HTTPSession
 from derive_client._clients.rest.http.subaccount import Subaccount
+from derive_client._clients.rest.http.trades import TradeOperations
 from derive_client._clients.rest.http.transactions import TransactionOperations
 from derive_client._clients.utils import AuthContext
 from derive_client.config import CONFIGS
@@ -189,6 +190,10 @@ class HTTPClient:
     @property
     def mmp(self) -> MMPOperations:
         return self.active_subaccount.mmp
+
+    @property
+    def trades(self) -> TradeOperations:
+        return self.active_subaccount.trades
 
     @contextlib.contextmanager
     def timeout(self, seconds: float) -> Generator[None, None, None]:

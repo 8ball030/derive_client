@@ -18,6 +18,7 @@ from derive_client._clients.rest.async_http.positions import PositionOperations
 from derive_client._clients.rest.async_http.rfq import RFQOperations
 from derive_client._clients.rest.async_http.session import AsyncHTTPSession, _request_timeout_override
 from derive_client._clients.rest.async_http.subaccount import Subaccount
+from derive_client._clients.rest.async_http.trades import TradeOperations
 from derive_client._clients.rest.async_http.transactions import TransactionOperations
 from derive_client._clients.utils import AuthContext
 from derive_client.config import CONFIGS
@@ -195,6 +196,10 @@ class AsyncHTTPClient:
     @property
     def orders(self) -> OrderOperations:
         return self.active_subaccount.orders
+
+    @property
+    def trades(self) -> TradeOperations:
+        return self.active_subaccount.trades
 
     @property
     def positions(self) -> PositionOperations:

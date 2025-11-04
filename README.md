@@ -24,7 +24,7 @@ Here are the steps:
     This will generate a new private key in the `ethereum_private_key.txt` file.
 
 1. Go to the [Derive Exchange](https://derive.xyz) and create an account.
-2. Go to the API section and create a new [API key](https://.derive.xyz/api-keys/developers).
+2. Go to the API section and create a new [API key](https://app.derive.xyz/developers).
 3. Register a new Session key with the Public Address of the account your signer generated in step 0.
 
 Once you have the API key, you can use it to interact with the Derive Exchange.
@@ -42,6 +42,15 @@ derive_client = DeriveClient(
     wallet=TEST_WALLET,
     subaccount_id = 123456
     )
+```
+
+## Orders Operations
+You can filter by status, instrument name, and more.
+```python
+
+orders = derive_client.orders.list(
+    status=OrderStatus.open,
+)
 ```
 
 
@@ -67,11 +76,25 @@ make fmt
 make lint
 ```
 
+### Typecheck
+
+```bash
+make typecheck
+```
+
 ### Tests
 
 ```bash
 make tests
 ```
+
+### Codegen
+
+```bash
+make codegen-all
+```
+
+
 
 For convience, all commands can be run with:
 

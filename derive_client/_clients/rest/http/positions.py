@@ -18,8 +18,8 @@ from derive_client.data_types import PositionTransfer
 from derive_client.data_types.generated_models import (
     Direction,
     LegPricedSchema,
+    PositionResponseSchema,
     PrivateGetPositionsParamsSchema,
-    PrivateGetPositionsResultSchema,
     PrivateTransferPositionParamsSchema,
     PrivateTransferPositionResultSchema,
     PrivateTransferPositionsParamsSchema,
@@ -44,12 +44,16 @@ class PositionOperations:
         """
         self._subaccount = subaccount
 
-    def list(self) -> PrivateGetPositionsResultSchema:
+    def list(self, is_open: Optional[bool] = None) -> list[PositionResponseSchema]:
         """Get all positions"""
 
         params = PrivateGetPositionsParamsSchema(subaccount_id=self._subaccount.id)
         response = self._subaccount._private_api.get_positions(params)
-        return response.result
+        return (
+            response.result.positions
+            if is_open is None
+            else [p for p in response.result.positions if (p.amount != 0) == is_open]
+        )
 
     def transfer(
         self,

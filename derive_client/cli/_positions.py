@@ -25,7 +25,7 @@ def list(ctx):
     client = ctx.obj["client"]
     subaccount = client.active_subaccount
     positions = subaccount.positions.list()
-    df = structs_to_dataframe(positions.positions)
+    df = structs_to_dataframe(positions)
 
     print(f"\n=== Active Positions of subaccount {subaccount.id} ===")
     if not df.empty:
