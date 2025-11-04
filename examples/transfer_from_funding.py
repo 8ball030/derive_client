@@ -3,6 +3,7 @@ Example of how to withdraw USDC from a subaccount to the funding account.
 """
 
 import os
+import traceback
 from pathlib import Path
 
 import click
@@ -98,6 +99,7 @@ def main(signer_key_path, derive_sc_wallet, currency: str, amount: float, functi
         )
         click.echo(f"Transfer response: {response}")
     except Exception as e:
+        click.echo(traceback.format_exc())
         click.echo(f"An error occurred during the transfer: {e}")
 
 

@@ -122,7 +122,8 @@ class TransactionOperations:
         if (asset := currency.protocol_asset_addresses.spot) is None:
             raise ValueError(f"asset '{asset_name}' has no spot address, found: {currency}")
 
-        decimals = CURRENCY_DECIMALS[Currency[currency.currency]]
+        print(currency)
+        decimals = CURRENCY_DECIMALS[Currency[asset_name]]
 
         module_data = WithdrawModuleData(
             amount=amount,
