@@ -22,7 +22,11 @@ def test_order_create(runner, args):
 def test_order_get(runner):
     """Test: `drv order get`"""
 
-    result = runner.invoke(drv, ["order", "get", "692eec49-e315-4ed9-b0ce-7044b42319ca"])
+    order_res = runner.invoke(drv, ["order", "create", "ETH-USDC", "buy", "-a", "10", "-p", "0.99"])
+    assert order_res.exit_code == 0, f"Order creation failed with output:\n{order_res.output}"
+    order_id = [f for f in order_res.output.split("\n") if "order_id" in f].pop().split()[-1]
+
+    result = runner.invoke(drv, ["order", "get", order_id])
     assert result.exit_code == 0, f"Command failed with output:\n{result.output}"
 
 
@@ -37,7 +41,10 @@ def test_order_list_open(runner):
 def test_order_cancel(runner):
     """Test: `drv order cancel`"""
 
-    result = runner.invoke(drv, ["order", "cancel", "02379d44-020a-41a1-bcc1-4509344f1796", "ETH-PERP"])
+    order_res = runner.invoke(drv, ["order", "create", "ETH-USDC", "buy", "-a", "10", "-p", "0.99"])
+    assert order_res.exit_code == 0, f"Order creation failed with output:\n{order_res.output}"
+    order_id = [f for f in order_res.output.split("\n") if "order_id" in f].pop().split()[-1]
+    result = runner.invoke(drv, ["order", "cancel", order_id])
     assert result.exit_code == 0, f"Command failed with output:\n{result.output}"
 
 

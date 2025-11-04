@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
+from derive_client.cli import cli as drv
 from tests.conftest import OWNER_TEST_WALLET, SESSION_KEY_PRIVATE_KEY
 
 DOT_ENV_CONTENT = f"""
@@ -33,3 +34,5 @@ def runner():
         env_path = Path(tmp_dir) / ".env"
         env_path.write_text(DOT_ENV_CONTENT)
         yield runner
+
+    runner.invoke(drv, ["order", "cancel-all"])
