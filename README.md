@@ -44,6 +44,15 @@ derive_client = DeriveClient(
     )
 ```
 
+## Orders Operations
+You can filter by status, instrument name, and more.
+```python
+
+orders = derive_client.orders.list(
+    status=OrderStatus.open,
+)
+```
+
 
 
 

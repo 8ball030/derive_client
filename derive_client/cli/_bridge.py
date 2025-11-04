@@ -151,14 +151,14 @@ def gas(ctx, amount: Decimal, chain_id: ChainID):
 @click.option(
     "--chain-id",
     "-c",
-    type=click.Choice([c.name for c in ChainID]),
+    type=EnumChoice(ChainID),
     required=True,
     help="The chain ID to bridge FROM.",
 )
 @click.option(
     "--currency",
     "-t",
-    type=click.Choice([c.name for c in Currency]),
+    type=EnumChoice(Currency),
     required=True,
     help="The token symbol (e.g. weETH) to bridge.",
 )

@@ -22,7 +22,7 @@ def test_order_create(runner, args):
 def test_order_get(runner):
     """Test: `drv order get`"""
 
-    result = runner.invoke(drv, ["order", "get", "02379d44-020a-41a1-bcc1-4509344f1796"])
+    result = runner.invoke(drv, ["order", "get", "692eec49-e315-4ed9-b0ce-7044b42319ca"])
     assert result.exit_code == 0, f"Command failed with output:\n{result.output}"
 
 

@@ -6,6 +6,7 @@ import time
 from logging import Logger
 from typing import Any, AsyncGenerator, Callable, Coroutine, Literal, cast
 
+from aiohttp import ClientResponseError
 from eth_abi.abi import encode
 from eth_account import Account
 from eth_account.signers.local import LocalAccount
@@ -13,6 +14,7 @@ from eth_typing import HexStr
 from requests import RequestException
 from web3 import AsyncHTTPProvider, AsyncWeb3
 from web3.contract.async_contract import AsyncContract, AsyncContractEvent, AsyncContractFunction
+from web3.exceptions import TransactionNotFound
 from web3.types import RPCEndpoint, RPCResponse
 
 from derive_client.config import (
@@ -122,11 +124,15 @@ def make_rotating_provider_middleware(
                         heapq.heappush(heap, state)
                     return resp
 
-                except RequestException as e:
+                except (ClientResponseError, RequestException) as e:
                     logger.debug("Endpoint %s failed: %s", state.provider.endpoint_uri, e)
 
+                    if isinstance(e, RequestException) and e.response:
+                        hdr = e.response.headers.get("Retry-After")
+                    else:
+                        hdr = None
+
                     # We retry on all exceptions
-                    hdr = (e.response.headers if e.response else {}).get("Retry-After")
                     if hdr is not None:
                         backoff = float(hdr)
                     else:
@@ -140,6 +146,7 @@ def make_rotating_provider_middleware(
                     msg = "Backing off %s for %.2fs"
                     logger.info(msg, state.provider.endpoint_uri, backoff)
                     continue
+
                 except Exception as e:
                     msg = "Unexpected error calling %s %s on %s; backing off %.2fs and continuing"
                     logger.exception(msg, method, params, state.provider.endpoint_uri, max_backoff, exc_info=e)
@@ -383,9 +390,10 @@ async def wait_for_tx_finality(
 
     while True:
         try:
-            receipt = TypedTxReceipt.model_validate(await w3.eth.get_transaction_receipt(tx_hash))
+            raw_receipt = await w3.eth.get_transaction_receipt(tx_hash)
+            receipt = TypedTxReceipt.model_validate(raw_receipt)
         # receipt can disappear temporarily during reorgs, or if RPC provider is not synced
-        except Exception as exc:
+        except TransactionNotFound as exc:
             receipt = None
             logger.debug("No tx receipt for tx_hash=%s", tx_hash, extra={"exc": exc})
 
@@ -444,7 +452,7 @@ async def wait_for_tx_finality(
 
 def sign_tx(w3: AsyncWeb3, tx: dict, private_key: str) -> TypedSignedTransaction:
     signed_tx = w3.eth.account.sign_transaction(tx, private_key=private_key)
-    return TypedSignedTransaction(**signed_tx)
+    return TypedSignedTransaction(**signed_tx._asdict())
 
 
 async def send_tx(w3: AsyncWeb3, signed_tx: TypedSignedTransaction) -> TxHash:

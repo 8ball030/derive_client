@@ -565,7 +565,6 @@ class DeriveBridge:
             tx_hash=tx_result.source_tx.tx_hash,
             logger=self.logger,
         )
-
         return tx_receipt
 
     async def _wait_for_target_event(self, tx_result: BridgeTxResult) -> TxHash:
@@ -601,7 +600,7 @@ class DeriveBridge:
         assert tx_result.source_tx.tx_receipt, "Expected source_tx.receipt to exist"
 
         try:
-            source_event = context.source_event.process_log(tx_result.source_tx.tx_receipt.logs[-1])
+            source_event = context.source_event.process_log(tx_result.source_tx.tx_receipt.logs[-1].to_w3())
             guid = source_event["args"]["guid"]
         except Exception as e:
             raise BridgeEventParseError(f"Could not decode LayerZero OFTSent guid: {e}") from e
@@ -629,15 +628,17 @@ class DeriveBridge:
         assert tx_result.source_tx.tx_receipt, "Expected source_tx.receipt to exist"
 
         try:
-            source_event = context.source_event.process_log(tx_result.source_tx.tx_receipt.logs[-2])
+            source_event = context.source_event.process_log(tx_result.source_tx.tx_receipt.logs[-2].to_w3())
             message_id = source_event["args"]["msgId"]
         except Exception as e:
             raise BridgeEventParseError(f"Could not decode Socket MessageOutbound event: {e}") from e
 
         tx_result.event_id = message_id.hex()
         self.logger.info(f"🔖 Source [{tx_result.source_chain.name}] MessageOutbound msgId: {tx_result.event_id}")
-        filter_params = context.target_event._get_event_filter_params(
-            fromBlock=tx_result.target_from_block, abi=context.target_event.abi
+
+        filter_params = make_filter_params(
+            event=context.target_event,
+            from_block=tx_result.target_from_block,
         )
 
         def matching_message_id(log: TypedLogReceipt) -> bool:

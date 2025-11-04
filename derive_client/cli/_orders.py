@@ -6,9 +6,10 @@ from decimal import Decimal
 
 import rich_click as click
 
+from derive_client._clients.rest.http.client import HTTPClient
 from derive_client.data_types import Direction, OrderType
 
-from ._columns import ORDER_COLUMNS, TRADE_COLUMNS
+from ._columns import ORDER_COLUMNS
 from ._utils import struct_to_series, structs_to_dataframe
 
 
@@ -69,23 +70,19 @@ def create(
         drv order create ETH-PERP buy -a 0.1 -p 2000
     """
 
-    client = ctx.obj["client"]
+    client: HTTPClient = ctx.obj["client"]
     subaccount = client.active_subaccount
     order = subaccount.orders.create(
         amount=amount,
         direction=Direction(direction),
         instrument_name=instrument_name,
         limit_price=limit_price,
-        order_type=order_type,
+        order_type=OrderType(order_type),
         reduce_only=reduce_only,
     )
 
     print("\n=== Order ===")
-    print(struct_to_series(order.order)[ORDER_COLUMNS].to_string(index=True))
-
-    if order.trades:
-        print("\n=== Trades ===")
-        print(structs_to_dataframe(order.trades)[TRADE_COLUMNS])
+    print(struct_to_series(order)[ORDER_COLUMNS].to_string(index=True))
 
 
 @order.command("get")
@@ -118,13 +115,13 @@ def list_open(ctx):
         drv order list-open
     """
 
-    client = ctx.obj["client"]
+    client: HTTPClient = ctx.obj["client"]
     subaccount = client.active_subaccount
     open_orders = subaccount.orders.list_open()
 
-    print(f"\n=== Open Orders for subaccount {open_orders.subaccount_id} ===")
-    if open_orders.orders:
-        print(structs_to_dataframe(open_orders.orders)[ORDER_COLUMNS])
+    print(f"\n=== Open Orders for subaccount {client.active_subaccount.id} ===")
+    if open_orders:
+        print(structs_to_dataframe(open_orders)[ORDER_COLUMNS])
     else:
         print("No open orders")
 

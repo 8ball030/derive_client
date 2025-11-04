@@ -19,7 +19,7 @@ def _get_open_positions_for_instrument(
     *instrument_name: str,
 ) -> list[PositionResponseSchema]:
     positions = subaccount.positions.list()
-    return [p for p in positions.positions if p.instrument_name in instrument_name and p.amount != 0]
+    return [p for p in positions if p.instrument_name in instrument_name and p.amount != 0]
 
 
 def _wait_for_tx_settlement(

@@ -253,7 +253,7 @@ class StandardBridge:
 
         target_w3 = self.w3s[tx_result.target_chain]
         try:
-            source_event_log = source_event.process_log(tx_result.source_tx.tx_receipt.logs[3])
+            source_event_log = source_event.process_log(tx_result.source_tx.tx_receipt.logs[3].to_w3())
             nonce = source_event_log["args"]["messageNonce"]
         except Exception as e:
             raise BridgeEventParseError(f"Could not decode StandardBridge messageNonce: {e}") from e

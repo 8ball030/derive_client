@@ -128,7 +128,7 @@ class TxHash(str):
 
     def __new__(cls, value: str | HexBytes) -> TxHash:
         if isinstance(value, HexBytes):
-            value = value.hex()
+            value = value.to_0x_hex()
         if not isinstance(value, str):
             raise TypeError(f"Expected string or HexBytes, got {type(value)}")
         if not is_0x_prefixed(value) or not is_hex(value) or len(value) != 66:
@@ -219,7 +219,7 @@ class TypedFilterParams(BaseModel):
         }
 
         if self.topics is not None:
-            params["topics"] = list(self.topics)
+            params["topics"] = [cast(HexStr, topic.to_0x_hex()) if topic is not None else None for topic in self.topics]
         if self.blockHash is not None:
             params["blockHash"] = self.blockHash
 
@@ -280,14 +280,14 @@ class TypedTxReceipt(BaseModel):
     type: int = Field(alias='type')  # Transaction type (0=legacy, 1=EIP-2930, 2=EIP-1559)
 
     # Optional fields (depending on chain/tx type)
-    root: HexStr  # Pre-EIP-658 state root
+    root: HexStr | None = None  # Pre-EIP-658 state root
     # blobGasPrice: int | None = None  # EIP-4844
     # blobGasUsed: int | None = None  # EIP-4844
 
     def to_w3(self) -> TxReceipt:
         """Convert to web3.py TxReceipt dict."""
 
-        return {
+        tx_receipt = {
             'blockHash': self.blockHash,
             'blockNumber': cast(BlockNumber, self.blockNumber),
             'contractAddress': cast(ETHChecksumAddress, self.contractAddress) if self.contractAddress else None,
@@ -302,10 +302,15 @@ class TypedTxReceipt(BaseModel):
             'transactionHash': self.transactionHash,
             'transactionIndex': self.transactionIndex,
             'type': self.type,
-            'root': self.root,
         }
+        if self.root is not None:
+            tx_receipt["root"] = self.root
 
-        # return tx_receipt
+        # web3.py's definition is WRONG.
+        # EIP-658 (Byzantium fork, 2017) replaced root with status
+        # Pre-EIP-658 receipts: Have root, don't have status
+        # Post-EIP-658 receipts: Have status, don't have root
+        return cast(TxReceipt, tx_receipt)
 
 
 class TypedSignedTransaction(BaseModel):
