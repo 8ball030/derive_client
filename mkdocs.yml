@@ -92,8 +92,8 @@ plugins:
       lang: en
   - gen-files:
       scripts:
-        - docs/genenerate-ref-pages.py
-        - docs/generate-internal-pages.py
+        - scripts/generate-ref-pages.py
+        - scripts/generate-internal-pages.py
   - literate-nav:
       nav_file: SUMMARY.md
   - mkdocstrings:
