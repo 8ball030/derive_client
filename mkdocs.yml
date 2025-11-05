@@ -18,6 +18,7 @@ nav:
   #   - Trading: examples/trading.md
   #   - Websockets: examples/websockets.md
   - API Reference: reference/
+  - Internal API: internal/
 
 theme:
   name: material
@@ -89,6 +90,10 @@ plugins:
   - mermaid2
   - search:
       lang: en
+  - gen-files:
+      scripts:
+        - docs/genenerate-ref-pages.py
+        - docs/generate-internal-pages.py
   - literate-nav:
       nav_file: SUMMARY.md
   - mkdocstrings:
