@@ -6,7 +6,7 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 
 PACKAGE_DIR = Path(__file__).parent.parent / "derive_client"
-OPENAPI_SPEC = Path("openapi-spec.json")
+OPENAPI_SPEC = Path("specs") / "openapi-spec.json"
 TEMPLATES_DIR = PACKAGE_DIR / "data" / "templates"
 OUTPUT_DIR = PACKAGE_DIR / "_clients"
 

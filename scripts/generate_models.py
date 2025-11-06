@@ -222,7 +222,7 @@ class DefaultValueFixer(ast.NodeTransformer):
 
 if __name__ == "__main__":
     repo_root = Path(__file__).parent.parent
-    input_path = repo_root / "specs"/ "openapi-spec.json"
+    input_path = repo_root / "specs" / "openapi-spec.json"
     output_path = repo_root / "derive_client" / "data_types" / "generated_models.py"
 
     generate_models(input_path=input_path, output_path=output_path)
