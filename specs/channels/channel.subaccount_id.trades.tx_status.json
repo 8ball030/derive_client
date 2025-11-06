@@ -1,0 +1,268 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "SubaccountIdTradesTxStatusChannelSchema": {
+      "type": "object",
+      "properties": {
+        "subaccount_id": {
+          "title": "subaccount_id",
+          "type": "integer",
+          "description": "Subaccount ID"
+        },
+        "tx_status": {
+          "title": "tx_status",
+          "type": "string",
+          "enum": [
+            "settled",
+            "reverted",
+            "timed_out"
+          ],
+          "description": "Transaction status (`settled` or `reverted`)"
+        }
+      },
+      "required": [
+        "subaccount_id",
+        "tx_status"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdTradesTxStatusNotificationSchema": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "title": "method",
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdTradesTxStatusNotificationParamsSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "method",
+        "params"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdTradesTxStatusNotificationParamsSchema": {
+      "type": "object",
+      "properties": {
+        "channel": {
+          "title": "channel",
+          "type": "string",
+          "description": "Subscribed channel name"
+        },
+        "data": {
+          "title": "data",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/TradeResponseSchema",
+            "field_many": true
+          }
+        }
+      },
+      "required": [
+        "channel",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "TradeResponseSchema": {
+      "type": "object",
+      "properties": {
+        "direction": {
+          "title": "direction",
+          "type": "string",
+          "enum": [
+            "buy",
+            "sell"
+          ],
+          "description": "Order direction"
+        },
+        "expected_rebate": {
+          "title": "expected_rebate",
+          "type": "string",
+          "format": "decimal",
+          "description": "Expected rebate for this trade"
+        },
+        "index_price": {
+          "title": "index_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Index price of the underlying at the time of the trade"
+        },
+        "instrument_name": {
+          "title": "instrument_name",
+          "type": "string",
+          "description": "Instrument name"
+        },
+        "is_transfer": {
+          "title": "is_transfer",
+          "type": "boolean",
+          "description": "Whether the trade was generated through `private/transfer_position`"
+        },
+        "label": {
+          "title": "label",
+          "type": "string",
+          "description": "Optional user-defined label for the order"
+        },
+        "liquidity_role": {
+          "title": "liquidity_role",
+          "type": "string",
+          "enum": [
+            "maker",
+            "taker"
+          ],
+          "description": "Role of the user in the trade"
+        },
+        "mark_price": {
+          "title": "mark_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Mark price of the instrument at the time of the trade"
+        },
+        "order_id": {
+          "title": "order_id",
+          "type": "string",
+          "description": "Order ID"
+        },
+        "quote_id": {
+          "title": "quote_id",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid",
+          "default": null,
+          "description": "Quote ID if the trade was executed via RFQ"
+        },
+        "realized_pnl": {
+          "title": "realized_pnl",
+          "type": "string",
+          "format": "decimal",
+          "description": "Realized PnL for this trade"
+        },
+        "realized_pnl_excl_fees": {
+          "title": "realized_pnl_excl_fees",
+          "type": "string",
+          "format": "decimal",
+          "description": "Realized PnL for this trade using cost accounting that excludes fees"
+        },
+        "subaccount_id": {
+          "title": "subaccount_id",
+          "type": "integer",
+          "description": "Subaccount ID"
+        },
+        "timestamp": {
+          "title": "timestamp",
+          "type": "integer",
+          "description": "Trade timestamp (in ms since Unix epoch)"
+        },
+        "trade_amount": {
+          "title": "trade_amount",
+          "type": "string",
+          "format": "decimal",
+          "description": "Amount filled in this trade"
+        },
+        "trade_fee": {
+          "title": "trade_fee",
+          "type": "string",
+          "format": "decimal",
+          "description": "Fee for this trade"
+        },
+        "trade_id": {
+          "title": "trade_id",
+          "type": "string",
+          "description": "Trade ID"
+        },
+        "trade_price": {
+          "title": "trade_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Price at which the trade was filled"
+        },
+        "transaction_id": {
+          "title": "transaction_id",
+          "type": "string",
+          "description": "The transaction id of the related settlement transaction"
+        },
+        "tx_hash": {
+          "title": "tx_hash",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "Blockchain transaction hash"
+        },
+        "tx_status": {
+          "title": "tx_status",
+          "type": "string",
+          "enum": [
+            "requested",
+            "pending",
+            "settled",
+            "reverted",
+            "ignored",
+            "timed_out"
+          ],
+          "description": "Blockchain transaction status"
+        }
+      },
+      "required": [
+        "direction",
+        "expected_rebate",
+        "index_price",
+        "instrument_name",
+        "is_transfer",
+        "label",
+        "liquidity_role",
+        "mark_price",
+        "order_id",
+        "quote_id",
+        "realized_pnl",
+        "realized_pnl_excl_fees",
+        "subaccount_id",
+        "timestamp",
+        "trade_amount",
+        "trade_fee",
+        "trade_id",
+        "trade_price",
+        "transaction_id",
+        "tx_hash",
+        "tx_status"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdTradesTxStatusPubSubSchema": {
+      "type": "object",
+      "properties": {
+        "channel_params": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdTradesTxStatusChannelSchema",
+          "field_many": false
+        },
+        "notification": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdTradesTxStatusNotificationSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "channel_params",
+        "notification"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "title": "{subaccount_id}.trades.{tx_status}",
+  "description": "Subscribe to user's trade settlement for a given subaccount ID.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/SubaccountIdTradesTxStatusPubSubSchema"
+    }
+  ]
+}

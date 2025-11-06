@@ -1,0 +1,153 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "SpotFeedCurrencyChannelSchema": {
+      "type": "object",
+      "properties": {
+        "currency": {
+          "title": "currency",
+          "type": "string",
+          "description": "Currency"
+        }
+      },
+      "required": [
+        "currency"
+      ],
+      "additionalProperties": false
+    },
+    "SpotFeedCurrencyNotificationSchema": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "title": "method",
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "$ref": "#/definitions/SpotFeedCurrencyNotificationParamsSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "method",
+        "params"
+      ],
+      "additionalProperties": false
+    },
+    "SpotFeedCurrencyNotificationParamsSchema": {
+      "type": "object",
+      "properties": {
+        "channel": {
+          "title": "channel",
+          "type": "string",
+          "description": "Subscribed channel name"
+        },
+        "data": {
+          "type": "object",
+          "$ref": "#/definitions/SpotFeedCurrencyPublisherDataSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "channel",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "SpotFeedCurrencyPublisherDataSchema": {
+      "type": "object",
+      "properties": {
+        "feeds": {
+          "title": "feeds",
+          "type": "object",
+          "description": "Spot feed data",
+          "additionalProperties": {
+            "type": "object",
+            "$ref": "#/definitions/SpotFeedSnapshotSchema",
+            "field_many": true
+          }
+        },
+        "timestamp": {
+          "title": "timestamp",
+          "type": "integer",
+          "description": "Timestamp of the spot feed snapshot"
+        }
+      },
+      "required": [
+        "feeds",
+        "timestamp"
+      ],
+      "additionalProperties": false
+    },
+    "SpotFeedSnapshotSchema": {
+      "type": "object",
+      "properties": {
+        "confidence": {
+          "title": "confidence",
+          "type": "string",
+          "format": "decimal",
+          "description": "Confidence levels of the price"
+        },
+        "confidence_prev_daily": {
+          "title": "confidence_prev_daily",
+          "type": "string",
+          "format": "decimal",
+          "description": "Confidence levels of the price 24 hours ago"
+        },
+        "price": {
+          "title": "price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Price of the currency"
+        },
+        "price_prev_daily": {
+          "title": "price_prev_daily",
+          "type": "string",
+          "format": "decimal",
+          "description": "Price of the currency 24 hours ago"
+        },
+        "timestamp_prev_daily": {
+          "title": "timestamp_prev_daily",
+          "type": "integer",
+          "description": "Unix timestamp of the price 24 hours ago"
+        }
+      },
+      "required": [
+        "confidence",
+        "confidence_prev_daily",
+        "price",
+        "price_prev_daily",
+        "timestamp_prev_daily"
+      ],
+      "additionalProperties": false
+    },
+    "SpotFeedCurrencyPubSubSchema": {
+      "type": "object",
+      "properties": {
+        "channel_params": {
+          "type": "object",
+          "$ref": "#/definitions/SpotFeedCurrencyChannelSchema",
+          "field_many": false
+        },
+        "notification": {
+          "type": "object",
+          "$ref": "#/definitions/SpotFeedCurrencyNotificationSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "channel_params",
+        "notification"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "title": "spot_feed.{currency}",
+  "description": "Periodically publishes spot index price by currency.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/SpotFeedCurrencyPubSubSchema"
+    }
+  ]
+}

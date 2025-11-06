@@ -1,0 +1,165 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "TradesInstrumentNameChannelSchema": {
+      "type": "object",
+      "properties": {
+        "instrument_name": {
+          "title": "instrument_name",
+          "type": "string",
+          "description": "Instrument name"
+        }
+      },
+      "required": [
+        "instrument_name"
+      ],
+      "additionalProperties": false
+    },
+    "TradesInstrumentNameNotificationSchema": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "title": "method",
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "$ref": "#/definitions/TradesInstrumentNameNotificationParamsSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "method",
+        "params"
+      ],
+      "additionalProperties": false
+    },
+    "TradesInstrumentNameNotificationParamsSchema": {
+      "type": "object",
+      "properties": {
+        "channel": {
+          "title": "channel",
+          "type": "string",
+          "description": "Subscribed channel name"
+        },
+        "data": {
+          "title": "data",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/TradePublicResponseSchema",
+            "field_many": true
+          }
+        }
+      },
+      "required": [
+        "channel",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "TradePublicResponseSchema": {
+      "type": "object",
+      "properties": {
+        "direction": {
+          "title": "direction",
+          "type": "string",
+          "enum": [
+            "buy",
+            "sell"
+          ],
+          "description": "Direction of the taker order"
+        },
+        "index_price": {
+          "title": "index_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Index price of the underlying at the time of the trade"
+        },
+        "instrument_name": {
+          "title": "instrument_name",
+          "type": "string",
+          "description": "Instrument name"
+        },
+        "mark_price": {
+          "title": "mark_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Mark price of the instrument at the time of the trade"
+        },
+        "quote_id": {
+          "title": "quote_id",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid",
+          "default": null,
+          "description": "Quote ID if the trade was executed via RFQ"
+        },
+        "timestamp": {
+          "title": "timestamp",
+          "type": "integer",
+          "description": "Trade timestamp (in ms since Unix epoch)"
+        },
+        "trade_amount": {
+          "title": "trade_amount",
+          "type": "string",
+          "format": "decimal",
+          "description": "Amount filled in this trade"
+        },
+        "trade_id": {
+          "title": "trade_id",
+          "type": "string",
+          "description": "Trade ID"
+        },
+        "trade_price": {
+          "title": "trade_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Price at which the trade was filled"
+        }
+      },
+      "required": [
+        "direction",
+        "index_price",
+        "instrument_name",
+        "mark_price",
+        "quote_id",
+        "timestamp",
+        "trade_amount",
+        "trade_id",
+        "trade_price"
+      ],
+      "additionalProperties": false
+    },
+    "TradesInstrumentNamePubSubSchema": {
+      "type": "object",
+      "properties": {
+        "channel_params": {
+          "type": "object",
+          "$ref": "#/definitions/TradesInstrumentNameChannelSchema",
+          "field_many": false
+        },
+        "notification": {
+          "type": "object",
+          "$ref": "#/definitions/TradesInstrumentNameNotificationSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "channel_params",
+        "notification"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "title": "trades.{instrument_name}",
+  "description": "Subscribe to trades (order executions) for a given instrument name.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/TradesInstrumentNamePubSubSchema"
+    }
+  ]
+}
