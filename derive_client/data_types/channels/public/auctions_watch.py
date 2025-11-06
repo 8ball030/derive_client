@@ -5,7 +5,8 @@ from typing import Dict, List, Optional
 
 from msgspec import Struct
 
-from derive_client.data_types.channels.enums import MarginType, State
+from derive_client.data_types.channels.enums import State
+from derive_client.data_types.generated_models import MarginType
 
 
 class AuctionsWatchChannelSchema(Struct):

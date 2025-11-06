@@ -5,8 +5,9 @@ from typing import List, Optional
 
 from msgspec import Struct
 
-from derive_client.data_types.channels.enums import FilledDirection, Status
 from derive_client.data_types.generated_models import CancelReason1 as CancelReason
+from derive_client.data_types.generated_models import Direction as FilledDirection
+from derive_client.data_types.generated_models import Status
 
 
 class WalletRfqsChannelSchema(Struct):

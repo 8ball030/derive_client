@@ -5,8 +5,8 @@ from typing import List, Optional
 
 from msgspec import Struct
 
-from derive_client.data_types.channels.enums import Direction, InvalidReason, LiquidityRole, Status
 from derive_client.data_types.generated_models import CancelReason1 as CancelReason
+from derive_client.data_types.generated_models import Direction, InvalidReason, LiquidityRole, Status
 from derive_client.data_types.generated_models import TxStatus as TxStatus
 
 

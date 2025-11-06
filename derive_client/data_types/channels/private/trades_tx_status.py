@@ -5,7 +5,8 @@ from typing import List, Optional
 
 from msgspec import Struct
 
-from derive_client.data_types.channels.enums import Direction, LiquidityRole, TxStatus1
+from derive_client.data_types.generated_models import Direction, LiquidityRole
+from derive_client.data_types.generated_models import TxStatus as TxStatus1
 from derive_client.data_types.generated_models import TxStatus2 as TxStatus
 
 

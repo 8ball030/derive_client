@@ -11,7 +11,10 @@ CUSTOM_HEADER = "# ruff: noqa: E741,E501"
 CHANNEL_ENUM_TO_OPENAPI_ALIAS_OVERRIDE = {
     "TxStatus": ["TxStatus2", "TxStatus"],
     "TxStatus2": ["TxStatus2", "TxStatus"],
+    "TxStatus1": ["TxStatus2", "TxStatus"],
     "CancelReason": ["CancelReason1", "CancelReason"],
+    "AssetType": ["InstrumentType"],
+    "FilledDirection": ["Direction"],
 }
 
 
@@ -136,6 +139,17 @@ if __name__ == "__main__":
                 else:
                     continue
 
+            # check if its already generated in openapi models
+            if enum_name in open_api_enums:
+                openapi_enum = open_api_enums[enum_name]
+                open_enum = ast.unparse(openapi_enum)
+                new_enum = ast.unparse(enums[enum_name])
+                if open_enum != new_enum:
+                    conflicting_openapi_enums.append({enum_name: (open_enum, new_enum)})
+                    raise ValueError(f"Conflicting enum {enum_name} found between channel models and openapi models.")
+                else:
+                    open_api_imports.append(f"from derive_client.data_types.generated_models import {enum_name}")
+                    continue
             # simple direct matches
             if enum_name in channel_enums:
                 current_enum = ast.unparse(channel_enums[enum_name])

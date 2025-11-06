@@ -5,7 +5,8 @@ from typing import Dict, List, Optional
 
 from msgspec import Struct
 
-from derive_client.data_types.channels.enums import InstrumentType, Interval, OptionType
+from derive_client.data_types.channels.enums import Interval
+from derive_client.data_types.generated_models import InstrumentType, OptionType
 
 
 class TickerInstrumentNameIntervalChannelSchema(Struct):

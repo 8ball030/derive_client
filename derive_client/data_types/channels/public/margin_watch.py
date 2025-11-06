@@ -5,7 +5,8 @@ from typing import List, Optional
 
 from msgspec import Struct
 
-from derive_client.data_types.channels.enums import AssetType, MarginType
+from derive_client.data_types.generated_models import InstrumentType as AssetType
+from derive_client.data_types.generated_models import MarginType
 
 
 class MarginWatchChannelSchema(Struct):

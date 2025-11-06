@@ -5,7 +5,8 @@ from typing import List, Optional
 
 from msgspec import Struct
 
-from derive_client.data_types.channels.enums import (
+from derive_client.data_types.generated_models import CancelReason as CancelReason
+from derive_client.data_types.generated_models import (
     Direction,
     OrderStatus,
     OrderType,
@@ -13,7 +14,6 @@ from derive_client.data_types.channels.enums import (
     TriggerPriceType,
     TriggerType,
 )
-from derive_client.data_types.generated_models import CancelReason as CancelReason
 
 
 class SubaccountIdOrdersChannelSchema(Struct):
