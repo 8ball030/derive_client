@@ -8,23 +8,69 @@ REPO_ROOT = Path(__file__).parent.parent
 PACKAGE_DIR = REPO_ROOT / "derive_client"
 
 
-def build_nav_and_files():
-    nav = mkdocs_gen_files.Nav()
+def generate_client_docs(nav: mkdocs_gen_files.Nav):
+    """Generate docs for HTTP/Async clients - show public interface only."""
 
-    # Core client classes
-    core_modules = {
+    clients = {
         "HTTPClient": "derive_client._clients.rest.http.client",
         "AsyncHTTPClient": "derive_client._clients.rest.async_http.client",
     }
 
-    # Account classes
-    account_modules = {
+    for display_name, module_path in clients.items():
+        doc_path = Path("clients", f"{display_name.lower()}.md")
+        full_doc_path = Path("reference", doc_path)
+
+        nav[("Clients", display_name)] = doc_path.as_posix()
+
+        with mkdocs_gen_files.open(full_doc_path, "w") as fd:
+            fd.write(f"# {display_name}\n\n")
+            fd.write(f"::: {module_path}\n")
+            fd.write("    options:\n")
+            fd.write("      show_root_heading: false\n")
+            fd.write("      heading_level: 2\n")
+            fd.write("      members_order: source\n")
+            fd.write("      filters:\n")
+            fd.write("        - '!^_'\n")  # Hide private methods
+            fd.write("      show_bases: false\n")
+            fd.write("      show_source: false\n")
+            fd.write("      members: true\n")
+            fd.write("      inherited_members: false\n")
+            fd.write("      show_signature_annotations: true\n")
+
+
+def generate_account_docs(nav: mkdocs_gen_files.Nav):
+    """Generate docs for account classes - show public methods only."""
+
+    accounts = {
         "LightAccount": "derive_client._clients.rest.http.account",
         "Subaccount": "derive_client._clients.rest.http.subaccount",
     }
 
-    # Operation classes (sync)
-    operation_modules = {
+    for display_name, module_path in accounts.items():
+        doc_path = Path("accounts", f"{display_name.lower()}.md")
+        full_doc_path = Path("reference", doc_path)
+
+        nav[("Accounts", display_name)] = doc_path.as_posix()
+
+        with mkdocs_gen_files.open(full_doc_path, "w") as fd:
+            fd.write(f"# {display_name}\n\n")
+            fd.write(f"::: {module_path}\n")
+            fd.write("    options:\n")
+            fd.write("      show_root_heading: false\n")
+            fd.write("      heading_level: 2\n")
+            fd.write("      members_order: source\n")
+            fd.write("      filters:\n")
+            fd.write("        - '!^_'\n")
+            fd.write("      show_bases: false\n")
+            fd.write("      show_source: false\n")
+            fd.write("      members: true\n")
+            fd.write("      inherited_members: false\n")
+
+
+def generate_operation_docs(nav: mkdocs_gen_files.Nav):
+    """Generate docs for operation classes - show all public methods."""
+
+    operations = {
         "MarketOperations": "derive_client._clients.rest.http.markets",
         "OrderOperations": "derive_client._clients.rest.http.orders",
         "PositionOperations": "derive_client._clients.rest.http.positions",
@@ -34,43 +80,99 @@ def build_nav_and_files():
         "TransactionOperations": "derive_client._clients.rest.http.transactions",
     }
 
-    # Data types and utilities
-    other_modules = {
-        "Exceptions": "derive_client.exceptions",
-        "Enums": "derive_client.data_types.enums",
-        "Models": "derive_client.data_types.models",
-    }
+    for display_name, module_path in operations.items():
+        doc_path = Path("operations", f"{display_name.lower()}.md")
+        full_doc_path = Path("reference", doc_path)
 
-    # Generate organized structure
-    sections = [
-        ("Clients", core_modules),
-        ("Accounts", account_modules),
-        ("Operations", operation_modules),
-        ("Data Types", other_modules),
-    ]
+        nav[("Operations", display_name)] = doc_path.as_posix()
 
-    for section_name, modules in sections:
-        for display_name, module_path in modules.items():
-            # Create a clean path: reference/clients/http_client.md
-            section_slug = section_name.lower().replace(" ", "_")
-            file_slug = display_name.lower().replace(" ", "_")
-            doc_path = Path(section_slug, f"{file_slug}.md")
-            full_doc_path = Path("reference", doc_path)
+        with mkdocs_gen_files.open(full_doc_path, "w") as fd:
+            fd.write(f"# {display_name}\n\n")
+            fd.write("!!! info\n")
+            fd.write(f"    Access via `client.{display_name.lower().replace('operations', '')}` property.\n\n")
+            fd.write(f"::: {module_path}\n")
+            fd.write("    options:\n")
+            fd.write("      show_root_heading: false\n")
+            fd.write("      heading_level: 2\n")
+            fd.write("      members_order: source\n")
+            fd.write("      filters:\n")
+            fd.write("        - '!^_'\n")
+            fd.write("      show_bases: false\n")
+            fd.write("      show_source: false\n")
+            fd.write("      members: true\n")
+            fd.write("      inherited_members: false\n")
 
-            # Navigation structure
-            nav_parts = (section_name, display_name)
-            nav[nav_parts] = doc_path.as_posix()
 
-            with mkdocs_gen_files.open(full_doc_path, "w") as fd:
-                fd.write(f"# {display_name}\n\n")
-                fd.write(f"::: {module_path}\n")
-                fd.write("    options:\n")
-                fd.write("      show_root_heading: false\n")
-                fd.write("      heading_level: 2\n")
-                fd.write("      filters:\n")
-                fd.write("        - '!^_'\n")
-                fd.write("      members_order: source\n")
+def generate_datatype_docs(nav: mkdocs_gen_files.Nav):
+    """Generate docs for data types with specialized settings per type."""
 
+    # Enums - show all members
+    doc_path = Path("data_types", "enums.md")
+    full_doc_path = Path("reference", doc_path)
+    nav[("Data Types", "Enums")] = doc_path.as_posix()
+
+    with mkdocs_gen_files.open(full_doc_path, "w") as fd:
+        fd.write("# Enums\n\n")
+        fd.write("::: derive_client.data_types.enums\n")
+        fd.write("    options:\n")
+        fd.write("      show_root_heading: false\n")
+        fd.write("      heading_level: 2\n")
+        fd.write("      members_order: source\n")
+        fd.write("      show_bases: true\n")
+        fd.write("      members: true\n")  # Show enum values!
+        fd.write("      show_source: false\n")
+        fd.write("      filters:\n")
+        fd.write("        - '!^_'\n")
+        fd.write("      show_if_no_docstring: true\n")  # Show enums even without docstrings
+
+    # Models - show all fields and methods
+    doc_path = Path("data_types", "models.md")
+    full_doc_path = Path("reference", doc_path)
+    nav[("Data Types", "Models")] = doc_path.as_posix()
+
+    with mkdocs_gen_files.open(full_doc_path, "w") as fd:
+        fd.write("# Models\n\n")
+        fd.write("::: derive_client.data_types.models\n")
+        fd.write("    options:\n")
+        fd.write("      show_root_heading: false\n")
+        fd.write("      heading_level: 2\n")
+        fd.write("      members_order: source\n")
+        fd.write("      show_bases: true\n")
+        fd.write("      members: true\n")  # Show Pydantic fields
+        fd.write("      show_source: false\n")
+        fd.write("      filters:\n")
+        fd.write("        - '!^_'\n")
+        fd.write("        - '!^model_'\n")  # Hide Pydantic internals
+        fd.write("      show_signature_annotations: true\n")
+        fd.write("      separate_signature: true\n")
+
+    doc_path = Path("data_types", "exceptions.md")
+    full_doc_path = Path("reference", doc_path)
+    nav[("Data Types", "Exceptions")] = doc_path.as_posix()
+
+    with mkdocs_gen_files.open(full_doc_path, "w") as fd:
+        fd.write("# Exceptions\n\n")
+        fd.write("::: derive_client.exceptions\n")
+        fd.write("    options:\n")
+        fd.write("      show_root_heading: false\n")
+        fd.write("      heading_level: 2\n")
+        fd.write("      members_order: source\n")
+        fd.write("      show_bases: true\n")
+        fd.write("      show_source: false\n")
+        fd.write("      members: false\n")  # Exceptions don't need member details
+
+
+def build_nav_and_files():
+    """Build complete navigation and documentation files."""
+    nav = mkdocs_gen_files.Nav()
+
+    # Generate each section with appropriate settings
+    generate_client_docs(nav)
+    generate_account_docs(nav)
+    generate_operation_docs(nav)
+    generate_datatype_docs(nav)
+
+    # Write navigation
     with mkdocs_gen_files.open("reference/SUMMARY.md", "w") as nav_file:
         nav_file.writelines(nav.build_literate_nav())
 
