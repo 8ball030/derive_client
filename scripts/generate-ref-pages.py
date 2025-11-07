@@ -68,7 +68,47 @@ def generate_account_docs(nav: mkdocs_gen_files.Nav):
         "Subaccount": "derive_client._clients.rest.http.subaccount",
     }
 
-    for display_name, module_path in accounts.items():
+    lightaccount_public_members = [
+        "__init__",
+        "from_api",
+        "state",
+        "address",
+        "refresh",
+        "build_register_session_key_tx",
+        "register_session_key",
+        "deregister_session_key",
+        "register_scoped_session_key",
+        "session_keys",
+        "edit_session_key",
+        "get_all_portfolios",
+        "create_subaccount",
+        "get_subaccounts",
+        "get",
+        "__repr__",
+    ]
+
+    subaccount_public_members = [
+        "__init__",
+        "from_api",
+        "refresh",
+        "state",
+        "margin_type",
+        "currency",
+        "id",
+        "markets",
+        "transactions",
+        "orders",
+        "positions",
+        "rfq",
+        "trades",
+        "mmp",
+        "sign_action",
+        "__repr__",
+        "__lt__",
+    ]
+    public = lightaccount_public_members, subaccount_public_members
+
+    for public_members, (display_name, module_path) in zip(public, accounts.items()):
         doc_path = Path("accounts", f"{display_name.lower()}.md")
         full_doc_path = Path("reference", doc_path)
 
@@ -81,12 +121,11 @@ def generate_account_docs(nav: mkdocs_gen_files.Nav):
             fd.write("      show_root_heading: false\n")
             fd.write("      heading_level: 2\n")
             fd.write("      members_order: source\n")
-            fd.write("      filters:\n")
-            fd.write("        - '!^_'\n")
+            fd.write(f"      members: {public_members}\n")
             fd.write("      show_bases: false\n")
             fd.write("      show_source: false\n")
-            fd.write("      members: true\n")
             fd.write("      inherited_members: false\n")
+            fd.write("      show_signature_annotations: true\n")
 
 
 def generate_operation_docs(nav: mkdocs_gen_files.Nav):
