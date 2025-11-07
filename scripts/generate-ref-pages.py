@@ -76,7 +76,7 @@ def generate_account_docs(nav: mkdocs_gen_files.Nav):
 
         with mkdocs_gen_files.open(full_doc_path, "w") as fd:
             fd.write(f"# {display_name}\n\n")
-            fd.write(f"::: {module_path}\n")
+            fd.write(f"::: {module_path}.{display_name}\n")
             fd.write("    options:\n")
             fd.write("      show_root_heading: false\n")
             fd.write("      heading_level: 2\n")
@@ -112,7 +112,7 @@ def generate_operation_docs(nav: mkdocs_gen_files.Nav):
             fd.write(f"# {display_name}\n\n")
             fd.write("!!! info\n")
             fd.write(f"    Access via `client.{display_name.lower().replace('operations', '')}` property.\n\n")
-            fd.write(f"::: {module_path}\n")
+            fd.write(f"::: {module_path}.{display_name}\n")
             fd.write("    options:\n")
             fd.write("      show_root_heading: false\n")
             fd.write("      heading_level: 2\n")
