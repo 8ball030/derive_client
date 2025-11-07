@@ -1,5 +1,6 @@
 """Generate the code reference pages and navigation."""
 
+import inspect
 from pathlib import Path
 
 import mkdocs_gen_files
@@ -16,6 +17,29 @@ def generate_client_docs(nav: mkdocs_gen_files.Nav):
         "AsyncHTTPClient": "derive_client._clients.rest.async_http.client",
     }
 
+    # Public members we want to document
+    public_members = [
+        "__init__",
+        "connect",
+        "disconnect",
+        "account",
+        "active_subaccount",
+        "bridge",
+        "fetch_subaccount",
+        "fetch_subaccounts",
+        "cached_subaccounts",
+        "markets",
+        "transactions",
+        "orders",
+        "positions",
+        "rfq",
+        "mmp",
+        "trades",
+        "timeout",
+        "__enter__",
+        "__exit__",
+    ]
+
     for display_name, module_path in clients.items():
         doc_path = Path("clients", f"{display_name.lower()}.md")
         full_doc_path = Path("reference", doc_path)
@@ -24,16 +48,14 @@ def generate_client_docs(nav: mkdocs_gen_files.Nav):
 
         with mkdocs_gen_files.open(full_doc_path, "w") as fd:
             fd.write(f"# {display_name}\n\n")
-            fd.write(f"::: {module_path}\n")
+            fd.write(f"::: {module_path}.{display_name}\n")
             fd.write("    options:\n")
             fd.write("      show_root_heading: false\n")
             fd.write("      heading_level: 2\n")
             fd.write("      members_order: source\n")
-            fd.write("      filters:\n")
-            fd.write("        - '!^_'\n")  # Hide private methods
+            fd.write(f"      members: {public_members}\n")
             fd.write("      show_bases: false\n")
             fd.write("      show_source: false\n")
-            fd.write("      members: true\n")
             fd.write("      inherited_members: false\n")
             fd.write("      show_signature_annotations: true\n")
 
