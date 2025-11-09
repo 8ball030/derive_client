@@ -172,19 +172,33 @@ def generate_datatype_docs(nav: mkdocs_gen_files.Nav):
     full_doc_path = Path("reference", doc_path)
     nav[("Data Types", "Enums")] = doc_path.as_posix()
 
-    with mkdocs_gen_files.open(full_doc_path, "w") as fd:
-        fd.write("# Enums\n\n")
-        fd.write("::: derive_client.data_types.enums\n")
-        fd.write("    options:\n")
-        fd.write("      show_root_heading: false\n")
-        fd.write("      heading_level: 2\n")
-        fd.write("      members_order: source\n")
-        fd.write("      show_bases: true\n")
-        fd.write("      members: true\n")  # Show enum values!
-        fd.write("      show_source: false\n")
-        fd.write("      filters:\n")
-        fd.write("        - '!^_'\n")
-        fd.write("      show_if_no_docstring: true\n")  # Show enums even without docstrings
+    # Enums - document each enum class
+    enums = [
+        "ChainID",
+        "TxStatus",
+        "BridgeDirection",
+        "BridgeType",
+        "GasPriority",
+        "UnderlyingCurrency",
+        "Currency",
+        "Environment",
+        "EthereumJSONRPCErrorCode",
+        "DeriveJSONRPCErrorCode",
+    ]
+
+    for enum_name in enums:
+        doc_path = Path("data_types", "enums", f"{enum_name.lower()}.md")
+        full_doc_path = Path("reference", doc_path)
+        nav[("Data Types", "Enums", enum_name)] = doc_path.as_posix()
+
+        with mkdocs_gen_files.open(full_doc_path, "w") as fd:
+            fd.write(f"# {enum_name}\n\n")
+            fd.write(f"::: derive_client.data_types.enums.{enum_name}\n")
+            fd.write("    options:\n")
+            fd.write("      show_root_heading: false\n")
+            fd.write("      heading_level: 2\n")
+            fd.write("      show_source: true\n")
+            fd.write("      members: true\n")  # Show enum values
 
     # Models - show all fields and methods
     doc_path = Path("data_types", "models.md")
@@ -199,11 +213,8 @@ def generate_datatype_docs(nav: mkdocs_gen_files.Nav):
         fd.write("      heading_level: 2\n")
         fd.write("      members_order: source\n")
         fd.write("      show_bases: true\n")
-        fd.write("      members: true\n")  # Show Pydantic fields
-        fd.write("      show_source: false\n")
-        fd.write("      filters:\n")
-        fd.write("        - '!^_'\n")
-        fd.write("        - '!^model_'\n")  # Hide Pydantic internals
+        fd.write("      members: true\n")
+        fd.write("      show_source: true\n")  # Show source to see fields
         fd.write("      show_signature_annotations: true\n")
         fd.write("      separate_signature: true\n")
 
