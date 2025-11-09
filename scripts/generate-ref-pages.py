@@ -205,18 +205,35 @@ def generate_datatype_docs(nav: mkdocs_gen_files.Nav):
     full_doc_path = Path("reference", doc_path)
     nav[("Data Types", "Models")] = doc_path.as_posix()
 
-    with mkdocs_gen_files.open(full_doc_path, "w") as fd:
-        fd.write("# Models\n\n")
-        fd.write("::: derive_client.data_types.models\n")
-        fd.write("    options:\n")
-        fd.write("      show_root_heading: false\n")
-        fd.write("      heading_level: 2\n")
-        fd.write("      members_order: source\n")
-        fd.write("      show_bases: true\n")
-        fd.write("      members: true\n")
-        fd.write("      show_source: true\n")  # Show source to see fields
-        fd.write("      show_signature_annotations: true\n")
-        fd.write("      separate_signature: true\n")
+    models = [
+        "ChecksumAddress",
+        "TxHash",
+        "Wei",
+        "TypedFilterParams",
+        "TypedLogReceipt",
+        "TypedTxReceipt",
+        "TypedSignedTransaction",
+        "TypedTransaction",
+        "BridgeTxDetails",
+        "PreparedBridgeTx",
+        "TxResult",
+        "BridgeTxResult",
+        # ...
+    ]
+
+    for model_name in models:
+        doc_path = Path("data_types", "models", f"{model_name.lower()}.md")
+        full_doc_path = Path("reference", doc_path)
+        nav[("Data Types", "Models", model_name)] = doc_path.as_posix()
+
+        with mkdocs_gen_files.open(full_doc_path, "w") as fd:
+            fd.write(f"# {model_name}\n\n")
+            fd.write(f"::: derive_client.data_types.models.{model_name}\n")
+            fd.write("    options:\n")
+            fd.write("      show_root_heading: false\n")
+            fd.write("      heading_level: 2\n")
+            fd.write("      show_source: true\n")  # Show fields in source
+            fd.write("      members: true\n")  # Show methods/properties
 
     doc_path = Path("data_types", "exceptions.md")
     full_doc_path = Path("reference", doc_path)
