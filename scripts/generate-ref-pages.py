@@ -1,12 +1,34 @@
 """Generate the code reference pages and navigation."""
 
 import inspect
+import importlib
 from pathlib import Path
 
 import mkdocs_gen_files
 
 REPO_ROOT = Path(__file__).parent.parent
 PACKAGE_DIR = REPO_ROOT / "derive_client"
+
+
+def get_public_members(module_path: str, class_name: str) -> list[str]:
+    """Extract all public (non-private) members from a class.
+
+    Args:
+        module_path: Full module path, e.g., "derive_client._clients.rest.http.orders"
+        class_name: Class name, e.g., "OrderOperations"
+
+    Returns:
+        List of public member names
+    """
+
+    # Import the module and get the class
+    module = importlib.import_module(module_path)
+    cls = getattr(module, class_name)
+
+    # Get all members, filter out private ones
+    public_members = [name for name, _ in inspect.getmembers(cls) if not name.startswith('_') or name in ('__init__',)]
+
+    return public_members
 
 
 def generate_client_docs(nav: mkdocs_gen_files.Nav):
@@ -147,6 +169,8 @@ def generate_operation_docs(nav: mkdocs_gen_files.Nav):
 
         nav[("Operations", display_name)] = doc_path.as_posix()
 
+        public_members = get_public_members(module_path, display_name)
+
         with mkdocs_gen_files.open(full_doc_path, "w") as fd:
             fd.write(f"# {display_name}\n\n")
             fd.write("!!! info\n")
@@ -156,11 +180,9 @@ def generate_operation_docs(nav: mkdocs_gen_files.Nav):
             fd.write("      show_root_heading: false\n")
             fd.write("      heading_level: 2\n")
             fd.write("      members_order: source\n")
-            fd.write("      filters:\n")
-            fd.write("        - '!^_'\n")
+            fd.write(f"      members: {public_members}\n")
             fd.write("      show_bases: false\n")
             fd.write("      show_source: false\n")
-            fd.write("      members: true\n")
             fd.write("      inherited_members: false\n")
 
 
