@@ -206,19 +206,31 @@ def generate_datatype_docs(nav: mkdocs_gen_files.Nav):
     nav[("Data Types", "Models")] = doc_path.as_posix()
 
     models = [
+        # "DeriveContractAddresses",
+        "EnvConfig",
+        # "PHexBytes",
         "ChecksumAddress",
-        "TxHash",
-        "Wei",
-        "TypedFilterParams",
-        "TypedLogReceipt",
-        "TypedTxReceipt",
-        "TypedSignedTransaction",
-        "TypedTransaction",
+        # "TxHash",
+        # "Wei",
+        # "TypedFilterParams",
+        # "TypedLogReceipt",
+        # "TypedTxReceipt",
+        # "TypedSignedTransaction",
+        # "TypedTransaction",
+        # "TokenData",
+        # "MintableTokenData",
+        # "NonMintableTokenData",
+        # "DeriveAddresses",
+        # "BridgeContext",
         "BridgeTxDetails",
         "PreparedBridgeTx",
-        "TxResult",
+        # "TxResult",
         "BridgeTxResult",
-        # ...
+        # "RPCEndpoints",
+        # "FeeHistory",
+        # "FeeEstimate",
+        # "FeeEstimates",
+        "PositionTransfer",
     ]
 
     for model_name in models:
@@ -232,23 +244,45 @@ def generate_datatype_docs(nav: mkdocs_gen_files.Nav):
             fd.write("    options:\n")
             fd.write("      show_root_heading: false\n")
             fd.write("      heading_level: 2\n")
-            fd.write("      show_source: true\n")  # Show fields in source
-            fd.write("      members: true\n")  # Show methods/properties
+            fd.write("      show_source: true\n")
+            fd.write("      members: true\n")
 
     doc_path = Path("data_types", "exceptions.md")
     full_doc_path = Path("reference", doc_path)
     nav[("Data Types", "Exceptions")] = doc_path.as_posix()
 
+    exceptions = [
+        "NotConnectedError",
+        "ApiException",
+        "EthereumJSONRPCException",
+        "DeriveJSONRPCException",
+        "BridgeEventParseError",
+        "BridgeRouteError",
+        "NoAvailableRPC",
+        "InsufficientNativeBalance",
+        "InsufficientTokenBalance",
+        "BridgePrimarySignerRequiredError",
+        "TxReceiptMissing",
+        "FinalityTimeout",
+        "TxPendingTimeout",
+        "TransactionDropped",
+        "BridgeEventTimeout",
+        "PartialBridgeResult",
+        "StandardBridgeRelayFailed",
+    ]
+
     with mkdocs_gen_files.open(full_doc_path, "w") as fd:
         fd.write("# Exceptions\n\n")
-        fd.write("::: derive_client.exceptions\n")
-        fd.write("    options:\n")
-        fd.write("      show_root_heading: false\n")
-        fd.write("      heading_level: 2\n")
-        fd.write("      members_order: source\n")
-        fd.write("      show_bases: true\n")
-        fd.write("      show_source: false\n")
-        fd.write("      members: false\n")  # Exceptions don't need member details
+
+        for exc_name in exceptions:
+            fd.write(f"## {exc_name}\n\n")
+            fd.write(f"::: derive_client.exceptions.{exc_name}\n")
+            fd.write("    options:\n")
+            fd.write("      show_root_heading: false\n")
+            fd.write("      heading_level: 3\n")
+            fd.write("      show_bases: true\n")
+            fd.write("      show_source: true\n")
+            fd.write("      members: false\n\n")
 
 
 def build_nav_and_files():
