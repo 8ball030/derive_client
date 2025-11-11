@@ -72,7 +72,7 @@ class AsyncBridgeClient:
         currency: Currency,
         chain_id: ChainID,
     ) -> PreparedBridgeTx:
-        """Prepare deposit to your Derive LightAccount wallet."""
+        """Prepare deposit to your Derive LightAccount wallet from the owner's EOA on an external chain."""
 
         result = await self.try_prepare_deposit_tx(
             amount=amount,
@@ -88,7 +88,7 @@ class AsyncBridgeClient:
         currency: Currency,
         chain_id: ChainID,
     ) -> PreparedBridgeTx:
-        """Prepare withdrawal from your Derive trading account."""
+        """Prepare withdrawal from your Derive LightAccount wallet to the owner's EOA on an external chain."""
 
         result = await self.try_prepare_withdrawal_tx(
             amount=amount,
