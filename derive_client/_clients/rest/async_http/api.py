@@ -8,6 +8,8 @@ from derive_client.data_types import EnvConfig
 from derive_client.data_types.generated_models import (
     PrivateCancelAllParamsSchema,
     PrivateCancelAllResponseSchema,
+    PrivateCancelAllTriggerOrdersParamsSchema,
+    PrivateCancelAllTriggerOrdersResponseSchema,
     PrivateCancelBatchQuotesParamsSchema,
     PrivateCancelBatchQuotesResponseSchema,
     PrivateCancelBatchRfqsParamsSchema,
@@ -1231,6 +1233,24 @@ class AsyncPrivateAPI:
         data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateCancelTriggerOrderResponseSchema)
+        return response
+
+    async def cancel_all_trigger_orders(
+        self,
+        params: PrivateCancelAllTriggerOrdersParamsSchema,
+    ) -> PrivateCancelAllTriggerOrdersResponseSchema:
+        """
+        Cancel all trigger orders for this subaccount.
+
+        Also used by cancel_all in WS.
+
+        Required minimum session key permission level is `admin`
+        """
+
+        url = self._endpoints.cancel_all_trigger_orders
+        data = encode_json_exclude_none(params)
+        message = await self._session._send_request(url, data, headers=self.headers)
+        response = try_cast_response(message, PrivateCancelAllTriggerOrdersResponseSchema)
         return response
 
     async def get_order_history(
