@@ -39,34 +39,12 @@ def generate_client_docs(nav: mkdocs_gen_files.Nav):
         "AsyncHTTPClient": "derive_client._clients.rest.async_http.client",
     }
 
-    # Public members we want to document
-    public_members = [
-        "__init__",
-        "connect",
-        "disconnect",
-        "account",
-        "active_subaccount",
-        "bridge",
-        "fetch_subaccount",
-        "fetch_subaccounts",
-        "cached_subaccounts",
-        "markets",
-        "transactions",
-        "orders",
-        "positions",
-        "rfq",
-        "mmp",
-        "trades",
-        "timeout",
-        "__enter__",
-        "__exit__",
-    ]
-
     for display_name, module_path in clients.items():
         doc_path = Path("clients", f"{display_name.lower()}.md")
         full_doc_path = Path("reference", doc_path)
 
         nav[("Clients", display_name)] = doc_path.as_posix()
+        public_members = get_public_members(module_path, display_name)
 
         with mkdocs_gen_files.open(full_doc_path, "w") as fd:
             fd.write(f"# {display_name}\n\n")
@@ -90,51 +68,41 @@ def generate_account_docs(nav: mkdocs_gen_files.Nav):
         "Subaccount": "derive_client._clients.rest.http.subaccount",
     }
 
-    lightaccount_public_members = [
-        "__init__",
-        "from_api",
-        "state",
-        "address",
-        "refresh",
-        "build_register_session_key_tx",
-        "register_session_key",
-        "deregister_session_key",
-        "register_scoped_session_key",
-        "session_keys",
-        "edit_session_key",
-        "get_all_portfolios",
-        "create_subaccount",
-        "get_subaccounts",
-        "get",
-        "__repr__",
-    ]
-
-    subaccount_public_members = [
-        "__init__",
-        "from_api",
-        "refresh",
-        "state",
-        "margin_type",
-        "currency",
-        "id",
-        "markets",
-        "transactions",
-        "orders",
-        "positions",
-        "rfq",
-        "trades",
-        "mmp",
-        "sign_action",
-        "__repr__",
-        "__lt__",
-    ]
-    public = lightaccount_public_members, subaccount_public_members
-
-    for public_members, (display_name, module_path) in zip(public, accounts.items()):
+    for display_name, module_path in accounts.items():
         doc_path = Path("accounts", f"{display_name.lower()}.md")
         full_doc_path = Path("reference", doc_path)
 
         nav[("Accounts", display_name)] = doc_path.as_posix()
+        public_members = get_public_members(module_path, display_name)
+
+        with mkdocs_gen_files.open(full_doc_path, "w") as fd:
+            fd.write(f"# {display_name}\n\n")
+            fd.write(f"::: {module_path}.{display_name}\n")
+            fd.write("    options:\n")
+            fd.write("      show_root_heading: false\n")
+            fd.write("      heading_level: 2\n")
+            fd.write("      members_order: source\n")
+            fd.write(f"      members: {public_members}\n")
+            fd.write("      show_bases: false\n")
+            fd.write("      show_source: false\n")
+            fd.write("      inherited_members: false\n")
+            fd.write("      show_signature_annotations: true\n")
+
+
+def generate_bridge_docs(nav: mkdocs_gen_files.Nav):
+    """Generate docs for HTTP/Async bridge clients - show public interface only."""
+
+    clients = {
+        "BridgeClient": "derive_client._bridge.client",
+        "AsyncBridgeClient": "derive_client._bridge.async_client",
+    }
+
+    for display_name, module_path in clients.items():
+        doc_path = Path("bridge", f"{display_name.lower()}.md")
+        full_doc_path = Path("reference", doc_path)
+        nav[("Bridge", display_name)] = doc_path.as_posix()
+
+        public_members = get_public_members(display_name, module_path)
 
         with mkdocs_gen_files.open(full_doc_path, "w") as fd:
             fd.write(f"# {display_name}\n\n")
@@ -168,7 +136,6 @@ def generate_operation_docs(nav: mkdocs_gen_files.Nav):
         full_doc_path = Path("reference", doc_path)
 
         nav[("Operations", display_name)] = doc_path.as_posix()
-
         public_members = get_public_members(module_path, display_name)
 
         with mkdocs_gen_files.open(full_doc_path, "w") as fd:
@@ -286,50 +253,6 @@ def generate_datatype_docs(nav: mkdocs_gen_files.Nav):
             fd.write("      show_bases: true\n")
             fd.write("      show_source: true\n")
             fd.write("      members: false\n\n")
-
-
-def generate_bridge_docs(nav: mkdocs_gen_files.Nav):
-    """Generate docs for HTTP/Async bridge clients - show public interface only."""
-
-    clients = {
-        "BridgeClient": "derive_client._bridge.client",
-        "AsyncBridgeClient": "derive_client._bridge.async_client",
-    }
-
-    # Public members we want to document
-    public_members = [
-        "__init__",
-        "connect",
-        "prepare_deposit_tx",
-        "prepare_withdrawal_tx",
-        "prepare_gas_deposit_tx",
-        "submit_tx",
-        "poll_tx_progress",
-        "try_prepare_gas_deposit_tx",
-        "try_prepare_deposit_tx",
-        "try_prepare_withdrawal_tx",
-        "try_submit_tx",
-        "try_poll_tx_progress",
-    ]
-
-    for display_name, module_path in clients.items():
-        doc_path = Path("bridge", f"{display_name.lower()}.md")
-        full_doc_path = Path("reference", doc_path)
-
-        nav[("Bridge", display_name)] = doc_path.as_posix()
-
-        with mkdocs_gen_files.open(full_doc_path, "w") as fd:
-            fd.write(f"# {display_name}\n\n")
-            fd.write(f"::: {module_path}.{display_name}\n")
-            fd.write("    options:\n")
-            fd.write("      show_root_heading: false\n")
-            fd.write("      heading_level: 2\n")
-            fd.write("      members_order: source\n")
-            fd.write(f"      members: {public_members}\n")
-            fd.write("      show_bases: false\n")
-            fd.write("      show_source: false\n")
-            fd.write("      inherited_members: false\n")
-            fd.write("      show_signature_annotations: true\n")
 
 
 def build_nav_and_files():
