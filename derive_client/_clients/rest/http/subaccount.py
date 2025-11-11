@@ -53,6 +53,7 @@ class Subaccount:
             private_api: Private API interface for authenticated requests
             _state: Initial state (internal use only)
         """
+
         self._id = subaccount_id
         self._auth = auth
         self._config = config
@@ -102,6 +103,7 @@ class Subaccount:
         Raises:
             APIError: If subaccount does not exist or API call fails
         """
+
         params = PrivateGetSubaccountParamsSchema(subaccount_id=subaccount_id)
         response = private_api.get_subaccount(params)
         state = response.result
@@ -120,6 +122,7 @@ class Subaccount:
 
     def refresh(self) -> Subaccount:
         """Refresh mutable state from API."""
+
         params = PrivateGetSubaccountParamsSchema(subaccount_id=self.id)
         response = self._private_api.get_subaccount(params)
         self._state = response.result
@@ -128,6 +131,7 @@ class Subaccount:
     @property
     def state(self) -> PrivateGetSubaccountResultSchema:
         """Current mutable state (positions, orders, collateral, etc)."""
+
         if not self._state:
             raise RuntimeError(
                 "Subaccount state not loaded. Use Subaccount.from_api() to create "
@@ -137,42 +141,62 @@ class Subaccount:
 
     @property
     def margin_type(self) -> MarginType:
+        """Margin type of subaccount (PM (Portfolio Margin), PM2 (Portfolio Margin 2), or SM (Standard Margin))"""
+
         return self.state.margin_type
 
     @property
     def currency(self) -> str:
+        """Currency of subaccount."""
+
         return self.state.currency
 
     @property
     def id(self) -> int:
+        """Subaccount ID."""
+
         return self._id
 
     @property
     def markets(self) -> MarketOperations:
+        """Access market data and instruments."""
+
         return self._markets
 
     @property
     def transactions(self) -> TransactionOperations:
+        """Manage account account to/from subaccount transactions."""
+
         return self._transactions
 
     @property
     def orders(self) -> OrderOperations:
+        """Place and manage orders."""
+
         return self._orders
 
     @property
     def positions(self) -> PositionOperations:
+        """View and manage positions."""
+
         return self._positions
 
     @property
     def rfq(self) -> RFQOperations:
+        """Request for quote operations."""
+
         return self._rfq
 
     @property
     def trades(self) -> TradeOperations:
+        """View trade history."""
+
         return self._trades
 
     @property
     def mmp(self) -> MMPOperations:
+        """Market maker protection settings."""
+
         return self._mmp
 
     def sign_action(
