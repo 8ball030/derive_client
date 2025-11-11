@@ -232,8 +232,10 @@ class LightAccount:
         """
         Registered session keys, including details (expiry, scope, IP whitelist)
 
-        A session key is simply an Ethereum wallet. Account owners can give other Ethereum wallets temporary access to their accounts via session keys.
+        A session key is simply an Ethereum wallet.
+        Account owners can give other Ethereum wallets temporary access to their accounts via session keys.
         """
+
         params = PrivateSessionKeysParamsSchema(wallet=self.address)
         response = self._private_api.session_keys(params)
         return response.result
