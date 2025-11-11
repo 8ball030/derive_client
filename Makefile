@@ -57,6 +57,7 @@ lint:
 docs:
 	poetry run python scripts/generate-internal-pages.py
 	poetry run python scripts/generate-ref-pages.py
+	poetry run mkdocs build --site-dir site
 		
 
 release:
