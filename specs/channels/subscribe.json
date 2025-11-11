@@ -1,0 +1,145 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "SubscribeRequestSchema": {
+      "type": "object",
+      "properties": {
+        "httpMethod": {
+          "title": "httpMethod",
+          "type": "string",
+          "const": null
+        },
+        "id": {
+          "oneOf": [
+            {
+              "title": "",
+              "type": "string"
+            },
+            {
+              "title": "",
+              "type": "integer"
+            }
+          ]
+        },
+        "method": {
+          "title": "method",
+          "type": "string",
+          "const": "subscribe"
+        },
+        "params": {
+          "type": "object",
+          "$ref": "#/definitions/SubscribeParamsSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "httpMethod",
+        "method",
+        "params"
+      ],
+      "additionalProperties": false
+    },
+    "SubscribeParamsSchema": {
+      "type": "object",
+      "properties": {
+        "channels": {
+          "title": "channels",
+          "type": "array",
+          "description": "A list of channels names to subscribe to",
+          "items": {
+            "title": "channels",
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "channels"
+      ],
+      "additionalProperties": false
+    },
+    "SubscribeResponseSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "oneOf": [
+            {
+              "title": "",
+              "type": "string"
+            },
+            {
+              "title": "",
+              "type": "integer"
+            }
+          ]
+        },
+        "result": {
+          "type": "object",
+          "$ref": "#/definitions/SubscribeResultSchema",
+          "field_many": false,
+          "description": ""
+        }
+      },
+      "required": [
+        "id",
+        "result"
+      ],
+      "additionalProperties": false
+    },
+    "SubscribeResultSchema": {
+      "type": "object",
+      "properties": {
+        "current_subscriptions": {
+          "title": "current_subscriptions",
+          "type": "array",
+          "description": "A list of channels subscribed to after the subscribe operation.",
+          "items": {
+            "title": "current_subscriptions",
+            "type": "string"
+          }
+        },
+        "status": {
+          "title": "status",
+          "type": "object",
+          "description": "A mapping of `channel`&nbsp;&#11106;&nbsp;`status`.<br />Successful subscriptions will have status `ok`.<br />Failed subscriptions will contain an error message.",
+          "additionalProperties": {
+            "title": "status",
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "current_subscriptions",
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "SubscribeJSONRPCSchema": {
+      "type": "object",
+      "properties": {
+        "request": {
+          "type": "object",
+          "$ref": "#/definitions/SubscribeRequestSchema",
+          "field_many": false
+        },
+        "response": {
+          "type": "object",
+          "$ref": "#/definitions/SubscribeResponseSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "request",
+        "response"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "title": "subscribe",
+  "description": "Subscribe to a list of channels.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/SubscribeJSONRPCSchema"
+    }
+  ]
+}

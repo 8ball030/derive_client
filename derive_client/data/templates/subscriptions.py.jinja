@@ -1,0 +1,6 @@
+
+from derive_client.data_types.generated_models import (
+{% for schema in schema_imports -%}
+    {{ schema }},
+{% endfor %}
+)
