@@ -70,6 +70,8 @@ class RFQOperations:
         min_total_cost: Optional[Decimal] = None,
         partial_fill_step: Decimal = Decimal("1"),
     ) -> PrivateSendRfqResultSchema:
+        """Requests two-sided quotes from participating market makers."""
+
         subaccount_id = self._subaccount.id
         legs = sort_by_instrument_name(legs)
 
@@ -95,6 +97,10 @@ class RFQOperations:
         from_timestamp: int = 0,
         to_timestamp: int = UINT64_MAX,
     ) -> PrivateGetRfqsResultSchema:
+        """Retrieves a list of RFQs matching filter criteria.
+
+        Takers can use this to get their open RFQs, RFQ history, etc."""
+
         subaccount_id = self._subaccount.id
         params = PrivateGetRfqsParamsSchema(
             subaccount_id=subaccount_id,
@@ -109,6 +115,8 @@ class RFQOperations:
         return response.result
 
     def cancel_rfq(self, *, rfq_id: str) -> Result:
+        """Cancels a single RFQ by id."""
+
         subaccount_id = self._subaccount.id
         params = PrivateCancelRfqParamsSchema(rfq_id=rfq_id, subaccount_id=subaccount_id)
         response = self._subaccount._private_api.cancel_rfq(params)
@@ -121,6 +129,14 @@ class RFQOperations:
         nonce: Optional[int] = None,
         rfq_id: Optional[str] = None,
     ) -> PrivateCancelBatchRfqsResultSchema:
+        """Cancels RFQs given optional filters.
+
+        If no filters are provided, all RFQs for the subaccount are cancelled.
+
+        All filters are combined using `AND` logic, so mutually exclusive filters will
+        result in no RFQs being cancelled.
+        """
+
         subaccount_id = self._subaccount.id
         params = PrivateCancelBatchRfqsParamsSchema(
             subaccount_id=subaccount_id,
@@ -142,6 +158,11 @@ class RFQOperations:
         status: Optional[Status] = None,
         to_timestamp: int = UINT64_MAX,
     ) -> PrivatePollRfqsResultSchema:
+        """Retrieves a list of RFQs matching filter criteria.
+
+        Market makers can use this to poll RFQs directed to them.
+        """
+
         # requires authorization: Unauthorized as RFQ maker
         subaccount_id = self._subaccount.id
         params = PrivatePollRfqsParamsSchema(
@@ -169,6 +190,11 @@ class RFQOperations:
         label: str = "",
         mmp: bool = False,
     ) -> PrivateSendQuoteResultSchema:
+        """Sends a quote in response to an RFQ request.
+
+        The legs supplied in the parameters must exactly match those in the RFQ.
+        """
+
         subaccount_id = self._subaccount.id
         legs = sort_by_instrument_name(legs)
 
@@ -220,6 +246,8 @@ class RFQOperations:
         return response.result
 
     def cancel_quote(self, quote_id: str) -> PrivateCancelQuoteResultSchema:
+        """Cancels an open quote."""
+
         subaccount_id = self._subaccount.id
         params = PrivateCancelQuoteParamsSchema(
             quote_id=quote_id,
@@ -236,6 +264,13 @@ class RFQOperations:
         quote_id: Optional[str] = None,
         rfq_id: Optional[str] = None,
     ) -> PrivateCancelBatchQuotesResultSchema:
+        """Cancels quotes given optional filters. If no filters are provided, all quotes by
+        the subaccount are cancelled.
+
+        All filters are combined using `AND` logic, so mutually exclusive filters will
+        result in no quotes being cancelled.
+        """
+
         subaccount_id = self._subaccount.id
         params = PrivateCancelBatchQuotesParamsSchema(
             subaccount_id=subaccount_id,
@@ -258,6 +293,11 @@ class RFQOperations:
         status: Optional[Status] = None,
         to_timestamp: int = UINT64_MAX,
     ) -> PrivateGetQuotesResultSchema:
+        """Retrieves a list of quotes matching filter criteria.
+
+        Market makers can use this to get their open quotes, quote history, etc.
+        """
+
         subaccount_id = self._subaccount.id
         params = PrivateGetQuotesParamsSchema(
             subaccount_id=subaccount_id,
@@ -283,6 +323,12 @@ class RFQOperations:
         status: Optional[Status] = None,
         to_timestamp: int = UINT64_MAX,
     ) -> PrivatePollQuotesResultSchema:
+        """Retrieves a list of quotes matching filter criteria.
+
+        Takers can use this to poll open quotes that they can fill against their open
+        RFQs.
+        """
+
         subaccount_id = self._subaccount.id
         params = PrivatePollQuotesParamsSchema(
             subaccount_id=subaccount_id,
@@ -309,6 +355,8 @@ class RFQOperations:
         signature_expiry_sec: Optional[int] = None,
         nonce: Optional[int] = None,
     ) -> PrivateExecuteQuoteResultSchema:
+        """Executes a quote."""
+
         subaccount_id = self._subaccount.id
         legs = sort_by_instrument_name(legs)
 
@@ -370,6 +418,13 @@ class RFQOperations:
         min_total_cost: Optional[Decimal] = None,
         partial_fill_step: Decimal = Decimal("1"),
     ) -> PrivateRfqGetBestQuoteResultSchema:
+        """Performs a "dry run" on an RFQ, returning the estimated fee and whether the
+        trade is expected to pass.
+
+        Should any exception be raised in the process of evaluating the trade, a
+        standard RPC error will be returned with the error details.
+        """
+
         subaccount_id = self._subaccount.id
         legs = sort_by_instrument_name(legs)
 

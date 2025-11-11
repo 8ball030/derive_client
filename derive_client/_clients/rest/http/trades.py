@@ -43,6 +43,8 @@ class TradeOperations:
         tx_hash: str | None = None,
         tx_status: TxStatus2 = TxStatus2('settled'),
     ) -> list[TradeSettledPublicResponseSchema]:
+        """Get trade history for a subaccount, with filter parameters."""
+
         params = PublicGetTradeHistoryParamsSchema(
             currency=currency,
             from_timestamp=from_timestamp,
@@ -69,6 +71,8 @@ class TradeOperations:
         quote_id: str | None = None,
         to_timestamp: int = 18446744073709552000,
     ) -> list[TradeResponseSchema]:
+        """Get trade history for a subaccount, with filter parameters."""
+
         params = PrivateGetTradeHistoryParamsSchema(
             from_timestamp=from_timestamp,
             instrument_name=instrument_name,

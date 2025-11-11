@@ -52,7 +52,7 @@ class TransactionOperations:
         signature_expiry_sec: Optional[int] = None,
         is_atomic_signing: bool = False,
     ) -> PrivateDepositResultSchema:
-        """Deposit from LightAccount smart contract wallet into subaccount."""
+        """Deposit an asset to a subaccount from the LightAccount wallet."""
 
         subaccount_id = self._subaccount.id if subaccount_id is None else subaccount_id
         module_address = self._subaccount._config.contracts.DEPOSIT_MODULE
@@ -113,7 +113,7 @@ class TransactionOperations:
         signature_expiry_sec: Optional[int] = None,
         is_atomic_signing: bool = False,
     ) -> PrivateWithdrawResultSchema:
-        """Deposit from subaccount into LightAccount smart contract wallet."""
+        """Withdraw an asset from a subaccount to the LightAccount wallet."""
 
         subaccount_id = self._subaccount.id if subaccount_id is None else subaccount_id
         module_address = self._subaccount._config.contracts.WITHDRAWAL_MODULE
@@ -122,7 +122,6 @@ class TransactionOperations:
         if (asset := currency.protocol_asset_addresses.spot) is None:
             raise ValueError(f"asset '{asset_name}' has no spot address, found: {currency}")
 
-        print(currency)
         decimals = CURRENCY_DECIMALS[Currency[asset_name]]
 
         module_data = WithdrawModuleData(

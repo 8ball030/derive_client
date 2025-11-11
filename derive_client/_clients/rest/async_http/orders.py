@@ -132,6 +132,8 @@ class OrderOperations:
         return response.result.order
 
     async def get(self, *, order_id: str) -> PrivateGetOrderResultSchema:
+        """Get state of an order by order id."""
+
         subaccount_id = self._subaccount.id
         params = PrivateGetOrderParamsSchema(
             order_id=order_id,
@@ -149,6 +151,8 @@ class OrderOperations:
         page_size: int = 100,
         status: Optional[OrderStatus] = None,
     ) -> List[OrderResponseSchema]:
+        """Get orders for a subaccount, with optional filtering."""
+
         params = PrivateGetOrdersParamsSchema(
             subaccount_id=self._subaccount.id,
             instrument_name=instrument_name,
@@ -161,6 +165,8 @@ class OrderOperations:
         return response.result.orders
 
     async def list_open(self) -> List[OrderResponseSchema]:
+        """Get all open orders of a subacccount."""
+
         params = PrivateGetOpenOrdersParamsSchema(subaccount_id=self._subaccount.id)
         response = await self._subaccount._private_api.get_open_orders(params)
         return response.result.orders
@@ -171,6 +177,8 @@ class OrderOperations:
         instrument_name: str,
         order_id: str,
     ) -> PrivateCancelResultSchema:
+        """Cancel a single order."""
+
         params = PrivateCancelParamsSchema(
             instrument_name=instrument_name,
             order_id=order_id,
@@ -185,6 +193,12 @@ class OrderOperations:
         label: str,
         instrument_name: Optional[str] = None,
     ) -> PrivateCancelByLabelResultSchema:
+        """
+        Cancel all open orders for a given subaccount and a given label.
+
+        If instrument_name is provided, only orders for that instrument will be cancelled.
+        """
+
         params = PrivateCancelByLabelParamsSchema(
             label=label,
             instrument_name=instrument_name,
@@ -199,6 +213,9 @@ class OrderOperations:
         instrument_name: str,
         nonce: int,
     ) -> PrivateCancelByNonceResultSchema:
+        """Cancel a single order by nonce. Uses up that nonce if the order does not exist,
+        so any future orders with that nonce will fail."""
+
         params = PrivateCancelByNonceParamsSchema(
             nonce=nonce,
             instrument_name=instrument_name,
@@ -209,6 +226,8 @@ class OrderOperations:
         return response.result
 
     async def cancel_by_instrument(self, *, instrument_name: str) -> PrivateCancelByInstrumentResultSchema:
+        """Cancel all orders for this instrument."""
+
         params = PrivateCancelByInstrumentParamsSchema(
             instrument_name=instrument_name,
             subaccount_id=self._subaccount.id,
@@ -217,6 +236,8 @@ class OrderOperations:
         return response.result
 
     async def cancel_all(self) -> Result:
+        """Cancel all orders for this instrument."""
+
         params = PrivateCancelAllParamsSchema(subaccount_id=self._subaccount.id)
         response = await self._subaccount._private_api.cancel_all(params)
         return response.result
@@ -246,7 +267,13 @@ class OrderOperations:
         trigger_type: Optional[TriggerType] = None,
     ) -> PrivateReplaceResultSchema:
         """
-        Replace an existing order.
+        Cancel an existing order with nonce or order_id and create new order with
+        different order_id in a single RPC call.
+
+        If the cancel fails, the new order will not be created.
+
+        If the cancel succeeds but the new order fails, the old order will still be
+        cancelled.
 
         Amount and limit_price are automatically quantized to match instrument specifications.
         """
