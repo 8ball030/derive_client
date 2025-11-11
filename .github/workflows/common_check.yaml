@@ -59,7 +59,7 @@ jobs:
 
       - name: Doc Tests
         run: |
-          make test-docs
+          make docs
 
       - name: Check Diff
         run: |

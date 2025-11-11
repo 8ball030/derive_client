@@ -91,12 +91,12 @@ For active trading you should not use your owner key. Instead, delegate to **ses
 
 ## Summary
 
-| Component        | Address      | Purpose                    | Pays Gas     | Can Bridge |
-| ---------------- | ------------ | -------------------------- | ------------ | ---------- |
-| **Your EOA**     | `0x742d...`  | Owner, ultimate control    | ✅ Yes       | ✅ Yes     |
-| **LightAccount** | `0x8f5B...`  | Holds trading capital      | ❌ Sponsored | ❌ No      |
-| **Subaccount**   | ID: `123456` | Individual trading account | ❌ Sponsored | ❌ No      |
-| **Session Key**  | `0x9A8B...`  | Delegated trading access   | ❌ Sponsored | ❌ No      |
+| Component        | Address      | Purpose                    | Pays Gas      | Can Bridge |
+| ---------------- | ------------ | -------------------------- | ------------- | ---------- |
+| **Your EOA**     | `0x742d...`  | Owner, ultimate control    | 💰 EOA (self) | ✅ Yes     |
+| **LightAccount** | `0x8f5B...`  | Holds trading capital      | 🪙 Paymaster  | ❌ No      |
+| **Subaccount**   | ID: `123456` | Individual trading account | 🪙 Paymaster  | ❌ No      |
+| **Session Key**  | `0x9A8B...`  | Delegated trading access   | 🪙 Paymaster  | ❌ No      |
 
 ---
 
