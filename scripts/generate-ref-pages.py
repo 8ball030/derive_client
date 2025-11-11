@@ -1,7 +1,7 @@
 """Generate the code reference pages and navigation."""
 
-import inspect
 import importlib
+import inspect
 from pathlib import Path
 
 import mkdocs_gen_files
@@ -228,30 +228,11 @@ def generate_datatype_docs(nav: mkdocs_gen_files.Nav):
     nav[("Data Types", "Models")] = doc_path.as_posix()
 
     models = [
-        # "DeriveContractAddresses",
         "EnvConfig",
-        # "PHexBytes",
         "ChecksumAddress",
-        # "TxHash",
-        # "Wei",
-        # "TypedFilterParams",
-        # "TypedLogReceipt",
-        # "TypedTxReceipt",
-        # "TypedSignedTransaction",
-        # "TypedTransaction",
-        # "TokenData",
-        # "MintableTokenData",
-        # "NonMintableTokenData",
-        # "DeriveAddresses",
-        # "BridgeContext",
         "BridgeTxDetails",
         "PreparedBridgeTx",
-        # "TxResult",
         "BridgeTxResult",
-        # "RPCEndpoints",
-        # "FeeHistory",
-        # "FeeEstimate",
-        # "FeeEstimates",
         "PositionTransfer",
     ]
 
@@ -307,6 +288,50 @@ def generate_datatype_docs(nav: mkdocs_gen_files.Nav):
             fd.write("      members: false\n\n")
 
 
+def generate_bridge_docs(nav: mkdocs_gen_files.Nav):
+    """Generate docs for HTTP/Async bridge clients - show public interface only."""
+
+    clients = {
+        "BridgeClient": "derive_client._bridge.client",
+        "AsyncBridgeClient": "derive_client._bridge.async_client",
+    }
+
+    # Public members we want to document
+    public_members = [
+        "__init__",
+        "connect",
+        "prepare_deposit_tx",
+        "prepare_withdrawal_tx",
+        "prepare_gas_deposit_tx",
+        "submit_tx",
+        "poll_tx_progress",
+        "try_prepare_gas_deposit_tx",
+        "try_prepare_deposit_tx",
+        "try_prepare_withdrawal_tx",
+        "try_submit_tx",
+        "try_poll_tx_progress",
+    ]
+
+    for display_name, module_path in clients.items():
+        doc_path = Path("bridge", f"{display_name.lower()}.md")
+        full_doc_path = Path("reference", doc_path)
+
+        nav[("Bridge", display_name)] = doc_path.as_posix()
+
+        with mkdocs_gen_files.open(full_doc_path, "w") as fd:
+            fd.write(f"# {display_name}\n\n")
+            fd.write(f"::: {module_path}.{display_name}\n")
+            fd.write("    options:\n")
+            fd.write("      show_root_heading: false\n")
+            fd.write("      heading_level: 2\n")
+            fd.write("      members_order: source\n")
+            fd.write(f"      members: {public_members}\n")
+            fd.write("      show_bases: false\n")
+            fd.write("      show_source: false\n")
+            fd.write("      inherited_members: false\n")
+            fd.write("      show_signature_annotations: true\n")
+
+
 def build_nav_and_files():
     """Build complete navigation and documentation files."""
     nav = mkdocs_gen_files.Nav()
@@ -314,6 +339,7 @@ def build_nav_and_files():
     # Generate each section with appropriate settings
     generate_client_docs(nav)
     generate_account_docs(nav)
+    generate_bridge_docs(nav)
     generate_operation_docs(nav)
     generate_datatype_docs(nav)
 
