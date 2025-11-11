@@ -53,8 +53,12 @@ lint:
 	poetry run ruff check tests derive_client examples scripts
 
 
-test-docs:
-	echo making docs
+.PHONY: docs
+docs:
+	poetry run python scripts/generate-internal-pages.py
+	poetry run python scripts/generate-ref-pages.py
+	poetry run mkdocs build --site-dir site
+		
 
 release:
 	$(eval current_version := $(shell poetry run tbump current-version))
@@ -102,3 +106,5 @@ demo:
 	poetry run bash scripts/demos/all.sh
 
 all: codegen-all fmt lint typecheck tests
+
+

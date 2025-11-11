@@ -102,7 +102,7 @@ def generate_bridge_docs(nav: mkdocs_gen_files.Nav):
         full_doc_path = Path("reference", doc_path)
         nav[("Bridge", display_name)] = doc_path.as_posix()
 
-        public_members = get_public_members(display_name, module_path)
+        public_members = get_public_members(module_path, display_name)
 
         with mkdocs_gen_files.open(full_doc_path, "w") as fd:
             fd.write(f"# {display_name}\n\n")
