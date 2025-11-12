@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 from logging import Logger
+from pathlib import Path
 from typing import AsyncGenerator
 
 from pydantic import ConfigDict, validate_call
@@ -20,7 +21,7 @@ from derive_client._clients.rest.async_http.session import AsyncHTTPSession, _re
 from derive_client._clients.rest.async_http.subaccount import Subaccount
 from derive_client._clients.rest.async_http.trades import TradeOperations
 from derive_client._clients.rest.async_http.transactions import TransactionOperations
-from derive_client._clients.utils import AuthContext
+from derive_client._clients.utils import AuthContext, load_client_config
 from derive_client.config import CONFIGS
 from derive_client.data_types import ChecksumAddress, Environment
 from derive_client.exceptions import BridgePrimarySignerRequiredError, NotConnectedError
@@ -69,6 +70,18 @@ class AsyncHTTPClient:
         self._subaccounts: dict[int, Subaccount] = {}
 
         self._bridge_client: AsyncBridgeClient | None = None
+
+    @classmethod
+    def from_env(
+        cls,
+        session_key_path: Path | None,
+        env_file: Path | None,
+    ) -> AsyncHTTPClient:
+        """Create the AsyncHTTPClient instance."""
+
+        config = load_client_config(session_key_path=session_key_path, env_file=env_file)
+
+        return cls(**config.model_dump())
 
     async def connect(self, initialize_bridge: bool = True) -> None:
         """

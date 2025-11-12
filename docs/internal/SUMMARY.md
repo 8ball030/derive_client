@@ -39,7 +39,6 @@
         * [\_account](derive_client/cli/_account.md)
         * [\_bridge](derive_client/cli/_bridge.md)
         * [\_columns](derive_client/cli/_columns.md)
-        * [\_context](derive_client/cli/_context.md)
         * [\_markets](derive_client/cli/_markets.md)
         * [\_mmp](derive_client/cli/_mmp.md)
         * [\_orders](derive_client/cli/_orders.md)
