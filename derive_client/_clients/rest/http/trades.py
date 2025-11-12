@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from derive_client.config import INT64_MAX
 from derive_client.data_types.generated_models import (
     InstrumentType,
     PrivateGetTradeHistoryParamsSchema,
@@ -38,7 +39,7 @@ class TradeOperations:
         page: int = 1,
         page_size: int = 100,
         subaccount_id: int | None = None,
-        to_timestamp: int = 18446744073709552000,
+        to_timestamp: int = INT64_MAX,
         trade_id: str | None = None,
         tx_hash: str | None = None,
         tx_status: TxStatus2 = TxStatus2('settled'),
@@ -67,7 +68,7 @@ class TradeOperations:
         page: int = 1,
         page_size: int = 100,
         quote_id: str | None = None,
-        to_timestamp: int = 18446744073709552000,
+        to_timestamp: int = INT64_MAX,
     ) -> list[TradeResponseSchema]:
         params = PrivateGetTradeHistoryParamsSchema(
             from_timestamp=from_timestamp,
