@@ -11,6 +11,7 @@ from web3 import AsyncWeb3
 from derive_client._bridge.async_client import AsyncBridgeClient
 from derive_client._clients.rest.async_http.account import LightAccount
 from derive_client._clients.rest.async_http.api import AsyncPrivateAPI, AsyncPublicAPI
+from derive_client._clients.rest.async_http.collateral import CollateralOperations
 from derive_client._clients.rest.async_http.markets import MarketOperations
 from derive_client._clients.rest.async_http.mmp import MMPOperations
 from derive_client._clients.rest.async_http.orders import OrderOperations
@@ -20,7 +21,6 @@ from derive_client._clients.rest.async_http.session import AsyncHTTPSession, _re
 from derive_client._clients.rest.async_http.subaccount import Subaccount
 from derive_client._clients.rest.async_http.trades import TradeOperations
 from derive_client._clients.rest.async_http.transactions import TransactionOperations
-from derive_client._clients.rest.http.collateral import CollateralOperations
 from derive_client._clients.utils import AuthContext
 from derive_client.config import CONFIGS
 from derive_client.data_types import ChecksumAddress, Environment
