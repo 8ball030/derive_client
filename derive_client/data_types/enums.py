@@ -80,6 +80,16 @@ class Currency(Enum):
     USDCE = "USDC.E"
     SNX = "SNX"
 
+    @classmethod
+    def _missing_(cls, value: str):
+        """Enable case-insensitive lookup for Pydantic and general use."""
+
+        value_upper = value.upper()
+        if (member := next((m for m in cls if m.value == value_upper), None)) is not None:
+            return member
+
+        return super()._missing_(value)
+
 
 class Environment(Enum):
     """Environment."""
