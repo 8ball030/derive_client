@@ -15,8 +15,12 @@ from derive_client.data_types.generated_models import (
     PrivateDepositResultSchema,
     PrivateGetCollateralsParamsSchema,
     PrivateGetCollateralsResultSchema,
+    PrivateGetMarginParamsSchema,
+    PrivateGetMarginResultSchema,
     PrivateWithdrawParamsSchema,
     PrivateWithdrawResultSchema,
+    SimulatedCollateralSchema,
+    SimulatedPositionSchema,
 )
 
 if TYPE_CHECKING:
@@ -41,6 +45,26 @@ class CollateralOperations:
         subaccount_id = self._subaccount.id
         params = PrivateGetCollateralsParamsSchema(subaccount_id=subaccount_id)
         response = self._subaccount._private_api.get_collaterals(params)
+        return response.result
+
+    def get_margin(
+        self,
+        simulated_collateral_changes: Optional[list[SimulatedCollateralSchema]] = None,
+        simulated_position_changes: Optional[list[SimulatedPositionSchema]] = None,
+    ) -> PrivateGetMarginResultSchema:
+        """
+        Calculates margin for a given subaccount and (optionally) a simulated state change.
+
+        Does not take into account open orders margin requirements.
+        """
+
+        subaccount_id = self._subaccount.id
+        params = PrivateGetMarginParamsSchema(
+            subaccount_id=subaccount_id,
+            simulated_collateral_changes=simulated_collateral_changes,
+            simulated_position_changes=simulated_position_changes,
+        )
+        response = self._subaccount._private_api.get_margin(params)
         return response.result
 
     def deposit_to_subaccount(

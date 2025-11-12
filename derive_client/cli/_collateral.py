@@ -28,6 +28,22 @@ def get(ctx):
     print(structs_to_dataframe(collateral.collaterals))
 
 
+@collateral.command("get-margin")
+@click.pass_context
+def get_margin(ctx):
+    """
+    Calculates margin for a given subaccount.
+    Does not take into account open orders margin requirements.
+    """
+
+    client = ctx.obj["client"]
+    subaccount = client.active_subaccount
+    margin = subaccount.collateral.get_margin()
+
+    print(f"\n=== Margin of subaccount {subaccount.id} ===")
+    print(struct_to_series(margin).to_string(index=True))
+
+
 @collateral.command("deposit-to-subaccount")
 @click.argument(
     "amount",
