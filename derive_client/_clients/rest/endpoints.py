@@ -100,6 +100,7 @@ class PrivateEndpoints:
     cancel_by_nonce = Endpoint("private", "cancel_by_nonce")
     cancel_by_instrument = Endpoint("private", "cancel_by_instrument")
     cancel_trigger_order = Endpoint("private", "cancel_trigger_order")
+    cancel_all_trigger_orders = Endpoint("private", "cancel_all_trigger_orders")
     get_order_history = Endpoint("private", "get_order_history")
     get_trade_history = Endpoint("private", "get_trade_history")
     get_deposit_history = Endpoint("private", "get_deposit_history")

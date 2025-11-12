@@ -410,6 +410,19 @@ class PrivateTransferErc20ResultSchema(Struct):
     transaction_id: str
 
 
+class PrivateCancelAllTriggerOrdersParamsSchema(PrivateGetOpenOrdersParamsSchema):
+    pass
+
+
+class Result(Enum):
+    ok = 'ok'
+
+
+class PrivateCancelAllTriggerOrdersResponseSchema(Struct):
+    id: Union[str, int]
+    result: Result
+
+
 class PrivateCancelByNonceParamsSchema(Struct):
     instrument_name: str
     nonce: int
@@ -1384,13 +1397,8 @@ class PrivateResetMmpParamsSchema(PrivateGetMmpConfigParamsSchema):
     pass
 
 
-class Result(Enum):
-    ok = 'ok'
-
-
-class PrivateResetMmpResponseSchema(Struct):
-    id: Union[str, int]
-    result: Result
+class PrivateResetMmpResponseSchema(PrivateCancelAllTriggerOrdersResponseSchema):
+    pass
 
 
 class PublicGetInterestRateHistoryParamsSchema(Struct):
@@ -1522,11 +1530,12 @@ class ExpiryResponseSchema(Struct):
     price: Optional[Decimal] = None
 
 
-class PrivateCancelAllParamsSchema(PrivateGetOpenOrdersParamsSchema):
-    pass
+class PrivateCancelAllParamsSchema(Struct):
+    subaccount_id: int
+    cancel_trigger_orders: bool = False
 
 
-class PrivateCancelAllResponseSchema(PrivateResetMmpResponseSchema):
+class PrivateCancelAllResponseSchema(PrivateCancelAllTriggerOrdersResponseSchema):
     pass
 
 
@@ -1760,7 +1769,7 @@ class PrivateSetCancelOnDisconnectParamsSchema(Struct):
     wallet: str
 
 
-class PrivateSetCancelOnDisconnectResponseSchema(PrivateResetMmpResponseSchema):
+class PrivateSetCancelOnDisconnectResponseSchema(PrivateCancelAllTriggerOrdersResponseSchema):
     pass
 
 
@@ -1769,7 +1778,7 @@ class PrivateCancelRfqParamsSchema(Struct):
     subaccount_id: int
 
 
-class PrivateCancelRfqResponseSchema(PrivateResetMmpResponseSchema):
+class PrivateCancelRfqResponseSchema(PrivateCancelAllTriggerOrdersResponseSchema):
     pass
 
 

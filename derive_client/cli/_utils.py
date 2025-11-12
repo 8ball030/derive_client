@@ -10,6 +10,7 @@ import msgspec
 import pandas as pd
 from rich.table import Table
 
+from derive_client._clients.utils import StructT
 from derive_client.data_types import PreparedBridgeTx
 from derive_client.utils import from_base_units
 
@@ -98,7 +99,7 @@ def struct_to_series(struct: msgspec.Struct) -> pd.Series:
     return series
 
 
-def structs_to_dataframe(structs: list[msgspec.Struct]) -> pd.DataFrame:
+def structs_to_dataframe(structs: list[StructT]) -> pd.DataFrame:
     """Convert a list of msgspec.Structs to a formatted pandas DataFrame.
 
     Automatically handles:
