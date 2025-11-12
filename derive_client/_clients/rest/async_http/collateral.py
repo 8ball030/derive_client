@@ -13,6 +13,8 @@ from derive_client.data_types.generated_models import (
     MarginType,
     PrivateDepositParamsSchema,
     PrivateDepositResultSchema,
+    PrivateGetCollateralsParamsSchema,
+    PrivateGetCollateralsResultSchema,
     PrivateWithdrawParamsSchema,
     PrivateWithdrawResultSchema,
 )
@@ -32,6 +34,14 @@ class CollateralOperations:
             subaccount: Subaccount instance providing access to auth, config, and APIs
         """
         self._subaccount = subaccount
+
+    async def get(self) -> PrivateGetCollateralsResultSchema:
+        """Get collaterals of a subaccount."""
+
+        subaccount_id = self._subaccount.id
+        params = PrivateGetCollateralsParamsSchema(subaccount_id=subaccount_id)
+        response = await self._subaccount._private_api.get_collaterals(params)
+        return response.result
 
     async def deposit_to_subaccount(
         self,
