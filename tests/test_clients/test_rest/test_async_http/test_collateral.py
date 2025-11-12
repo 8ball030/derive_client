@@ -7,14 +7,21 @@ import pytest
 from derive_client.data_types.generated_models import (
     PrivateDepositResultSchema,
     PrivateGetCollateralsResultSchema,
+    PrivateGetMarginResultSchema,
     PrivateWithdrawResultSchema,
 )
 
 
 @pytest.mark.asyncio
 async def test_collateral_get(client_admin_wallet):
-    deposit = await client_admin_wallet.collateral.get()
-    assert isinstance(deposit, PrivateGetCollateralsResultSchema)
+    colateral = await client_admin_wallet.collateral.get()
+    assert isinstance(colateral, PrivateGetCollateralsResultSchema)
+
+
+@pytest.mark.asyncio
+async def test_collateral_get_margin(client_admin_wallet):
+    margin = await client_admin_wallet.collateral.get_margin()
+    assert isinstance(margin, PrivateGetMarginResultSchema)
 
 
 @pytest.mark.asyncio
