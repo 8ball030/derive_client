@@ -1,3 +1,16 @@
+.PHONY: install
+install:
+	@echo "📦 Installing dependencies..."
+	poetry install
+	@$(MAKE) -s hooks
+	@echo "✅ Installation complete!"
+
+.PHONY: hooks
+hooks:
+	@mkdir -p .git/hooks
+	@cp scripts/hooks/* .git/hooks/ 2>/dev/null || true
+	@chmod +x .git/hooks/*
+
 .PHONY: clean
 clean: clean-build clean-pyc clean-test clean-docs
 
