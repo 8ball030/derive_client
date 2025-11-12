@@ -10,6 +10,13 @@ def test_collateral_get(runner):
     assert result.exit_code == 0, f"Command failed with output:\n{result.output}"
 
 
+def test_collateral_get_margin(runner):
+    """Test: `drv collateral get-margin`"""
+
+    result = runner.invoke(drv, ["collateral", "get-margin"])
+    assert result.exit_code == 0, f"Command failed with output:\n{result.output}"
+
+
 def test_collateral_deposit_to_subaccount(runner):
     """Test: `drv collateral deposit-to-subaccount`"""
 

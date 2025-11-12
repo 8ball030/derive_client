@@ -5,13 +5,19 @@ from decimal import Decimal
 from derive_client.data_types.generated_models import (
     PrivateDepositResultSchema,
     PrivateGetCollateralsResultSchema,
+    PrivateGetMarginResultSchema,
     PrivateWithdrawResultSchema,
 )
 
 
 def test_collateral_get(client_admin_wallet):
-    deposit = client_admin_wallet.collateral.get()
-    assert isinstance(deposit, PrivateGetCollateralsResultSchema)
+    colateral = client_admin_wallet.collateral.get()
+    assert isinstance(colateral, PrivateGetCollateralsResultSchema)
+
+
+def test_collateral_get_margin(client_admin_wallet):
+    margin = client_admin_wallet.collateral.get_margin()
+    assert isinstance(margin, PrivateGetMarginResultSchema)
 
 
 def test_collateral_deposit_to_subaccount(client_admin_wallet):
