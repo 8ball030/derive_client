@@ -40,6 +40,7 @@
     * [cli](derive_client/cli/index.md)
         * [\_account](derive_client/cli/_account.md)
         * [\_bridge](derive_client/cli/_bridge.md)
+        * [\_collateral](derive_client/cli/_collateral.md)
         * [\_columns](derive_client/cli/_columns.md)
         * [\_context](derive_client/cli/_context.md)
         * [\_markets](derive_client/cli/_markets.md)

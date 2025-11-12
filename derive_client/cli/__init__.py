@@ -8,6 +8,7 @@ import rich_click as click
 
 from ._account import account
 from ._bridge import bridge
+from ._collateral import collateral
 from ._context import create_client
 from ._markets import market
 from ._mmp import mmp
@@ -44,6 +45,7 @@ def cli(ctx, session_key_path: Path | None, env_file: Path | None):
 
 cli.add_command(account)
 cli.add_command(bridge)
+cli.add_command(collateral)
 cli.add_command(market)
 cli.add_command(mmp)
 cli.add_command(order)
