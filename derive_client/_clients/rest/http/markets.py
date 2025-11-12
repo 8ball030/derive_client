@@ -151,16 +151,22 @@ class MarketOperations:
         return instrument
 
     def get_currency(self, *, currency: str) -> PublicGetCurrencyResultSchema:
+        """Get currency related risk params, spot price 24hrs ago and lending details for a specific currency."""
+
         params = PublicGetCurrencyParamsSchema(currency=currency)
         response = self._public_api.get_currency(params)
         return response.result
 
     def get_all_currencies(self) -> list[CurrencyDetailedResponseSchema]:
+        """Get all active currencies with their spot price, spot price 24hrs ago."""
+
         params = PublicGetAllCurrenciesParamsSchema()
         response = self._public_api.get_all_currencies(params)
         return response.result
 
     def get_instrument(self, *, instrument_name: str) -> PublicGetInstrumentResultSchema:
+        """Get single instrument by asset name."""
+
         params = PublicGetInstrumentParamsSchema(instrument_name=instrument_name)
         response = self._public_api.get_instrument(params)
         return response.result
@@ -172,6 +178,8 @@ class MarketOperations:
         expired: bool,
         instrument_type: InstrumentType,
     ) -> list[InstrumentPublicResponseSchema]:
+        """Get all active instruments for a given `currency` and `type`."""
+
         params = PublicGetInstrumentsParamsSchema(
             currency=currency,
             expired=expired,
@@ -189,6 +197,8 @@ class MarketOperations:
         page: int = 1,
         page_size: int = 100,
     ) -> PublicGetAllInstrumentsResultSchema:
+        """Get a paginated history of all instruments."""
+
         params = PublicGetAllInstrumentsParamsSchema(
             expired=expired,
             instrument_type=instrument_type,
@@ -200,6 +210,8 @@ class MarketOperations:
         return response.result
 
     def get_ticker(self, *, instrument_name: str) -> PublicGetTickerResultSchema:
+        """Get ticker information (best bid / ask, instrument contraints, fees info, etc.) for a single instrument."""
+
         params = PublicGetTickerParamsSchema(instrument_name=instrument_name)
         response = self._public_api.get_ticker(params)
         return response.result
