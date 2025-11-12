@@ -18,7 +18,9 @@ clean-build:
 
 .PHONY: clean-docs
 clean-docs:
-	rm -fr site/
+	rm -fr site
+	rm -rf docs/reference
+	rm -rf docs/internal
 
 .PHONY: clean-pyc
 clean-pyc:
@@ -54,7 +56,7 @@ lint:
 
 
 .PHONY: docs
-docs:
+docs: clean-docs
 	poetry run python scripts/generate-internal-pages.py
 	poetry run python scripts/generate-ref-pages.py
 	poetry run mkdocs build --site-dir site

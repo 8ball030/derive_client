@@ -22,7 +22,6 @@
         * [BridgeDirection](data_types/enums/bridgedirection.md)
         * [BridgeType](data_types/enums/bridgetype.md)
         * [GasPriority](data_types/enums/gaspriority.md)
-        * [UnderlyingCurrency](data_types/enums/underlyingcurrency.md)
         * [Currency](data_types/enums/currency.md)
         * [Environment](data_types/enums/environment.md)
         * [EthereumJSONRPCErrorCode](data_types/enums/ethereumjsonrpcerrorcode.md)
