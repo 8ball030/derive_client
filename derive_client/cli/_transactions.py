@@ -2,17 +2,13 @@
 
 from __future__ import annotations
 
-from decimal import Decimal
-
 import rich_click as click
-
-from ._utils import struct_to_series
 
 
 @click.group("transaction")
 @click.pass_context
 def transaction(ctx):
-    """Move funds between wallet and subaccount."""
+    """Query transaction status and details."""
 
 
 @transaction.command("get")
@@ -33,53 +29,3 @@ def get(ctx, transaction_id: str):
     print(f"Tx Hash: {transaction.transaction_hash}")
     if transaction.error_log:
         print(f"\nError: {transaction.error_log}")
-
-
-@transaction.command("deposit-to-subaccount")
-@click.argument(
-    "amount",
-    type=Decimal,
-    required=True,
-)
-@click.argument(
-    "asset_name",
-    required=True,
-)
-@click.pass_context
-def deposit_to_subaccount(ctx, amount: Decimal, asset_name: str):
-    """Deposit an asset to a subaccount."""
-
-    client = ctx.obj["client"]
-    subaccount = client.active_subaccount
-    deposit = subaccount.transactions.deposit_to_subaccount(
-        amount=amount,
-        asset_name=asset_name,
-    )
-
-    print(f"\n=== Deposit to subaccount {subaccount.id} ===")
-    print(struct_to_series(deposit).to_string(index=True))
-
-
-@transaction.command("withdraw-from-subaccount")
-@click.argument(
-    "amount",
-    type=Decimal,
-    required=True,
-)
-@click.argument(
-    "asset_name",
-    required=True,
-)
-@click.pass_context
-def withdraw_from_subaccount(ctx, amount: Decimal, asset_name: str):
-    """Withdraw an asset to wallet."""
-
-    client = ctx.obj["client"]
-    subaccount = client.active_subaccount
-    withdrawal = subaccount.transactions.withdraw_from_subaccount(
-        amount=amount,
-        asset_name=asset_name,
-    )
-
-    print(f"\n=== Withdrawal from subaccount {subaccount.id} ===")
-    print(struct_to_series(withdrawal).to_string(index=True))
