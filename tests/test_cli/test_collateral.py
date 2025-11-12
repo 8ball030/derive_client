@@ -3,6 +3,13 @@
 from derive_client.cli import cli as drv
 
 
+def test_collateral_get(runner):
+    """Test: `drv collateral get`"""
+
+    result = runner.invoke(drv, ["collateral", "get"])
+    assert result.exit_code == 0, f"Command failed with output:\n{result.output}"
+
+
 def test_collateral_deposit_to_subaccount(runner):
     """Test: `drv collateral deposit-to-subaccount`"""
 
