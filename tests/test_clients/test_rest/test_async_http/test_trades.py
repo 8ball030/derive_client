@@ -1,4 +1,4 @@
-"""Tests for Orders module."""
+"""Tests for Trades module."""
 
 import pytest
 

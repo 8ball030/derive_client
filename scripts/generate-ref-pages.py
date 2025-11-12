@@ -168,7 +168,6 @@ def generate_datatype_docs(nav: mkdocs_gen_files.Nav):
         "BridgeDirection",
         "BridgeType",
         "GasPriority",
-        "UnderlyingCurrency",
         "Currency",
         "Environment",
         "EthereumJSONRPCErrorCode",

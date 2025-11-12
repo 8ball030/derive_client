@@ -10,7 +10,6 @@ from .enums import (
     EthereumJSONRPCErrorCode,
     GasPriority,
     TxStatus,
-    UnderlyingCurrency,
 )
 from .generated_models import (
     Direction,
@@ -59,7 +58,6 @@ __all__ = [
     "EthereumJSONRPCErrorCode",
     "DeriveJSONRPCErrorCode",
     "DeriveContractAddresses",
-    "UnderlyingCurrency",
     "OrderType",
     "Environment",
     "GasPriority",

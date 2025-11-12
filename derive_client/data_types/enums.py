@@ -45,57 +45,50 @@ class GasPriority(IntEnum):
     FAST = 75
 
 
-class UnderlyingCurrency(Enum):
-    """Underlying currencies."""
-
-    ETH = "eth"
-    BTC = "btc"
-    USDC = "usdc"
-    LBTC = "lbtc"
-    WEETH = "weeth"
-    OP = "op"
-    DRV = "drv"
-    rswETH = "rseeth"
-    rsETH = "rseth"
-    DAI = "dai"
-    USDT = "usdt"
-    OLAS = "olas"
-
-
 class Currency(Enum):
     """Depositable currencies"""
 
     ETH = "ETH"
 
-    weETH = "weETH"
-    rswETH = "rswETH"
-    rsETH = "rsETH"
-    USDe = "USDe"
-    deUSD = "deUSD"
+    WEETH = "WEETH"
+    RSWETH = "RSWETH"
+    RSETH = "RSETH"
+    USDE = "USDE"
+    DEUSD = "DEUSD"
     PYUSD = "PYUSD"
-    sUSDe = "sUSDe"
-    SolvBTC = "SolvBTC"
-    SolvBTCBBN = "SolvBTCBBN"
+    SUSDE = "SUSDE"
+    SOLVBTC = "SOLVBTC"
+    SOLVBTCBBN = "SOLVBTCBBN"
     LBTC = "LBTC"
     OP = "OP"
     DAI = "DAI"
-    sDAI = "sDAI"
-    cbBTC = "cbBTC"
-    eBTC = "eBTC"
+    SDAI = "SDAI"
+    CBBTC = "CBBTC"
+    EBTC = "EBTC"
     AAVE = "AAVE"
     OLAS = "OLAS"
 
-    # not in prod_lyra_addresses.json
+    # NOT IN PROD_LYRA_ADDRESSES.JSON
     DRV = "DRV"
 
-    # old style deposits
+    # OLD STYLE DEPOSITS
     WBTC = "WBTC"
     WETH = "WETH"
     USDC = "USDC"
     USDT = "USDT"
-    wstETH = "wstETH"
-    USDCe = "USDC.e"
+    WSTETH = "WSTETH"
+    USDCE = "USDC.E"
     SNX = "SNX"
+
+    @classmethod
+    def _missing_(cls, value: str):
+        """Enable case-insensitive lookup for Pydantic and general use."""
+
+        value_upper = value.upper()
+        if (member := next((m for m in cls if m.value == value_upper), None)) is not None:
+            return member
+
+        return super()._missing_(value)
 
 
 class Environment(Enum):
