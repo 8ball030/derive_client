@@ -20,6 +20,7 @@ from derive_client._clients.rest.async_http.session import AsyncHTTPSession, _re
 from derive_client._clients.rest.async_http.subaccount import Subaccount
 from derive_client._clients.rest.async_http.trades import TradeOperations
 from derive_client._clients.rest.async_http.transactions import TransactionOperations
+from derive_client._clients.rest.http.collateral import CollateralOperations
 from derive_client._clients.utils import AuthContext
 from derive_client.config import CONFIGS
 from derive_client.data_types import ChecksumAddress, Environment
@@ -64,6 +65,7 @@ class AsyncHTTPClient:
         self._private_api = AsyncPrivateAPI(session=self._session, config=config, auth=auth)
 
         self._markets = MarketOperations(public_api=self._public_api, logger=self._logger)
+        self._transactions = TransactionOperations(public_api=self._public_api, logger=self._logger)
 
         self._light_account: LightAccount | None = None
         self._subaccounts: dict[int, Subaccount] = {}
@@ -132,6 +134,7 @@ class AsyncHTTPClient:
             config=self._config,
             logger=self._logger,
             markets=self._markets,
+            transactions=self._transactions,
             public_api=self._public_api,
             private_api=self._private_api,
         )
@@ -203,9 +206,15 @@ class AsyncHTTPClient:
 
     @property
     def transactions(self) -> TransactionOperations:
-        """Manage account account to/from subaccount transactions."""
+        """Query transaction status and details."""
 
-        return self.active_subaccount.transactions
+        return self._transactions
+
+    @property
+    def collateral(self) -> CollateralOperations:
+        """Manage collateral and margin."""
+
+        return self.active_subaccount.collateral
 
     @property
     def orders(self) -> OrderOperations:
