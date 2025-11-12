@@ -6,13 +6,42 @@ from decimal import Decimal
 
 import rich_click as click
 
-from ._utils import struct_to_series
+from ._utils import struct_to_series, structs_to_dataframe
 
 
 @click.group("collateral")
 @click.pass_context
 def collateral(ctx):
     """Manage collateral and margin."""
+
+
+@collateral.command("get")
+@click.pass_context
+def get(ctx):
+    """Get subaccount collaterals."""
+
+    client = ctx.obj["client"]
+    subaccount = client.active_subaccount
+    collateral = subaccount.collateral.get()
+
+    print(f"\n=== Collaterals of subaccount {subaccount.id} ===")
+    print(structs_to_dataframe(collateral.collaterals))
+
+
+@collateral.command("get-margin")
+@click.pass_context
+def get_margin(ctx):
+    """
+    Calculates margin for a given subaccount.
+    Does not take into account open orders margin requirements.
+    """
+
+    client = ctx.obj["client"]
+    subaccount = client.active_subaccount
+    margin = subaccount.collateral.get_margin()
+
+    print(f"\n=== Margin of subaccount {subaccount.id} ===")
+    print(struct_to_series(margin).to_string(index=True))
 
 
 @collateral.command("deposit-to-subaccount")
