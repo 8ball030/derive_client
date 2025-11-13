@@ -75,8 +75,8 @@ class HTTPClient:
     @classmethod
     def from_env(
         cls,
-        session_key_path: Path | None,
-        env_file: Path | None,
+        session_key_path: Path | None = None,
+        env_file: Path | None = None,
     ) -> HTTPClient:
         """Create the HTTPClient instance."""
 

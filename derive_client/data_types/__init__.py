@@ -42,8 +42,10 @@ from .models import (
     TypedTxReceipt,
     Wei,
 )
+from .utils import D
 
 __all__ = [
+    "D",
     "ChecksumAddress",
     "ChainID",
     "TxStatus",
