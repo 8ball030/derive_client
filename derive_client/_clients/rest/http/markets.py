@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from logging import Logger
 from typing import Optional
 
@@ -212,7 +213,17 @@ class MarketOperations:
         return response.result
 
     def get_ticker(self, *, instrument_name: str) -> PublicGetTickerResultSchema:
-        """Get ticker information (best bid / ask, instrument contraints, fees info, etc.) for a single instrument."""
+        """
+        Get ticker information (best bid / ask, instrument contraints, fees info, etc.) for a single instrument
+
+        DEPRECATION NOTICE: This RPC is deprecated in favor of `get_tickers` on Dec 1, 2025.
+        """
+
+        warnings.warn(
+            "get_ticker is deprecated and will be removed on Dec 1, 2025. Use get_tickers instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
         params = PublicGetTickerParamsSchema(instrument_name=instrument_name)
         response = self._public_api.get_ticker(params)
