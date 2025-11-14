@@ -21,6 +21,8 @@ from derive_client.data_types.generated_models import (
     PublicGetInstrumentsParamsSchema,
     PublicGetTickerParamsSchema,
     PublicGetTickerResultSchema,
+    PublicGetTickersParamsSchema,
+    PublicGetTickersResultSchema,
 )
 
 
@@ -216,15 +218,19 @@ class MarketOperations:
         response = self._public_api.get_ticker(params)
         return response.result
 
-    def get_all_tickers(
+    def get_tickers(
         self,
         *,
         currency: str,
-        expired: bool,
         instrument_type: InstrumentType,
-    ) -> list[PublicGetTickerResultSchema]:
-        """Collect tickers by calling get_ticker for each instrument. May issue many HTTP requests; use with care."""
+        expiry_date: Optional[str] = None,
+    ) -> PublicGetTickersResultSchema:
+        """Get tickers information (best bid / ask, stats, etc.) for a multiple instruments."""
 
-        instruments = self.get_instruments(currency=currency, expired=expired, instrument_type=instrument_type)
-        tickers = [self.get_ticker(instrument_name=instrument.instrument_name) for instrument in instruments]
-        return tickers
+        params = PublicGetTickersParamsSchema(
+            currency=currency,
+            instrument_type=instrument_type,
+            expiry_date=expiry_date,
+        )
+        response = self._public_api.get_tickers(params)
+        return response.result
