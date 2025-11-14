@@ -176,6 +176,8 @@ from derive_client.data_types.generated_models import (
     PublicGetSpotFeedHistoryResponseSchema,
     PublicGetTickerParamsSchema,
     PublicGetTickerResponseSchema,
+    PublicGetTickersParamsSchema,
+    PublicGetTickersResponseSchema,
     PublicGetTimeParamsSchema,
     PublicGetTimeResponseSchema,
     PublicGetTradeHistoryParamsSchema,
@@ -373,12 +375,33 @@ class AsyncPublicAPI:
         """
         Get ticker information (best bid / ask, instrument contraints, fees info, etc.)
         for a single instrument
+
+        DEPRECATION NOTICE: This RPC is deprecated in favor of `get_tickers` on Dec 1,
+        2025.
         """
 
         url = self._endpoints.get_ticker
         data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetTickerResponseSchema)
+        return response
+
+    async def get_tickers(
+        self,
+        params: PublicGetTickersParamsSchema,
+    ) -> PublicGetTickersResponseSchema:
+        """
+        Get tickers information (best bid / ask, stats, etc.) for a multiple
+        instruments.
+
+        For most up to date stream of tickers, use the
+        `ticker.<instrument_name>.<interval>` channels.
+        """
+
+        url = self._endpoints.get_tickers
+        data = encode_json_exclude_none(params)
+        message = await self._session._send_request(url, data, headers=self.headers)
+        response = try_cast_response(message, PublicGetTickersResponseSchema)
         return response
 
     async def get_latest_signed_feeds(

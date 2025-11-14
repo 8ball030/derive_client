@@ -8,6 +8,7 @@ from derive_client.data_types.generated_models import (
     PublicGetCurrencyResultSchema,
     PublicGetInstrumentResultSchema,
     PublicGetTickerResultSchema,
+    PublicGetTickersResultSchema,
 )
 
 
@@ -60,14 +61,21 @@ def test_markets_get_ticker(client_admin_wallet):
     assert isinstance(ticker, PublicGetTickerResultSchema)
 
 
-def test_markets_get_all_tickers(client_admin_wallet):
+def test_markets_get_tickers(client_admin_wallet):
     currency = "ETH"
     expired = False
-    instrument_type = InstrumentType.perp
-    tickers = client_admin_wallet.markets.get_all_tickers(
+    instrument_type = InstrumentType.option
+    instruments = client_admin_wallet.markets.get_instruments(
         currency=currency,
         expired=expired,
         instrument_type=instrument_type,
     )
-    assert isinstance(tickers, list)
-    assert all(isinstance(item, PublicGetTickerResultSchema) for item in tickers)
+
+    _, expiry_date, _, _ = instruments[0].instrument_name.split("-")
+    tickers = client_admin_wallet.markets.get_tickers(
+        currency=currency,
+        expiry_date=expiry_date,
+        instrument_type=instrument_type,
+    )
+
+    assert isinstance(tickers, PublicGetTickersResultSchema)

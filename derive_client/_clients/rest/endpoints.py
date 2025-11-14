@@ -44,6 +44,7 @@ class PublicEndpoints:
     get_all_instruments = Endpoint("public", "get_all_instruments")
     get_instruments = Endpoint("public", "get_instruments")
     get_ticker = Endpoint("public", "get_ticker")
+    get_tickers = Endpoint("public", "get_tickers")
     get_latest_signed_feeds = Endpoint("public", "get_latest_signed_feeds")
     get_option_settlement_prices = Endpoint("public", "get_option_settlement_prices")
     get_spot_feed_history = Endpoint("public", "get_spot_feed_history")

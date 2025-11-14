@@ -1308,6 +1308,37 @@ class RPCErrorFormatSchema(Struct):
     data: Optional[str] = None
 
 
+class PublicGetTickersParamsSchema(Struct):
+    currency: str
+    instrument_type: InstrumentType
+    expiry_date: Optional[str] = None
+
+
+class OptionPricingSlimSchema(Struct):
+    ai: Decimal
+    bi: Decimal
+    d: Decimal
+    df: Decimal
+    f: Decimal
+    g: Decimal
+    i: Decimal
+    m: Decimal
+    r: Decimal
+    t: Decimal
+    v: Decimal
+
+
+class AggregateTradingStatsSlimSchema(Struct):
+    c: Decimal
+    h: Decimal
+    l: Decimal
+    n: int
+    oi: Decimal
+    p: Decimal
+    pr: Decimal
+    v: Decimal
+
+
 class PrivateDepositParamsSchema(Struct):
     amount: Decimal
     asset_name: str
@@ -2263,6 +2294,21 @@ class PrivateReplaceResultSchema(Struct):
     trades: Optional[List[TradeResponseSchema]] = None
 
 
+class TickerSlimSchema(Struct):
+    A: Decimal
+    B: Decimal
+    I: Decimal
+    M: Decimal
+    a: Decimal
+    b: Decimal
+    maxp: Decimal
+    minp: Decimal
+    stats: AggregateTradingStatsSlimSchema
+    t: int
+    f: Optional[Decimal] = None
+    option_pricing: Optional[OptionPricingSlimSchema] = None
+
+
 class PrivateDepositResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateDepositResultSchema
@@ -2584,6 +2630,10 @@ class PrivateReplaceResponseSchema(Struct):
     result: PrivateReplaceResultSchema
 
 
+class PublicGetTickersResultSchema(Struct):
+    tickers: Dict[str, TickerSlimSchema]
+
+
 class PublicGetInterestRateHistoryResponseSchema(Struct):
     id: Union[str, int]
     result: PublicGetInterestRateHistoryResultSchema
@@ -2637,3 +2687,8 @@ class PublicGetLatestSignedFeedsResponseSchema(Struct):
 class PrivateOrderDebugResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateOrderDebugResultSchema
+
+
+class PublicGetTickersResponseSchema(Struct):
+    id: Union[str, int]
+    result: PublicGetTickersResultSchema
