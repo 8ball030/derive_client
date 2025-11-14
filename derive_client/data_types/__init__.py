@@ -21,6 +21,7 @@ from .models import (
     BridgeTxDetails,
     BridgeTxResult,
     ChecksumAddress,
+    ClientConfig,
     DeriveAddresses,
     DeriveContractAddresses,
     EnvConfig,
@@ -41,8 +42,10 @@ from .models import (
     TypedTxReceipt,
     Wei,
 )
+from .utils import D
 
 __all__ = [
+    "D",
     "ChecksumAddress",
     "ChainID",
     "TxStatus",
@@ -60,6 +63,7 @@ __all__ = [
     "DeriveContractAddresses",
     "OrderType",
     "Environment",
+    "ClientConfig",
     "GasPriority",
     "FeeHistory",
     "FeeEstimate",

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 from logging import Logger
+from pathlib import Path
 from typing import Generator
 
 from pydantic import ConfigDict, validate_call
@@ -20,7 +21,7 @@ from derive_client._clients.rest.http.session import HTTPSession
 from derive_client._clients.rest.http.subaccount import Subaccount
 from derive_client._clients.rest.http.trades import TradeOperations
 from derive_client._clients.rest.http.transactions import TransactionOperations
-from derive_client._clients.utils import AuthContext
+from derive_client._clients.utils import AuthContext, load_client_config
 from derive_client.config import CONFIGS
 from derive_client.data_types import ChecksumAddress, Environment
 from derive_client.exceptions import BridgePrimarySignerRequiredError, NotConnectedError
@@ -70,6 +71,18 @@ class HTTPClient:
         self._subaccounts: dict[int, Subaccount] = {}
 
         self._bridge_client: BridgeClient | None = None
+
+    @classmethod
+    def from_env(
+        cls,
+        session_key_path: Path | None = None,
+        env_file: Path | None = None,
+    ) -> HTTPClient:
+        """Create the HTTPClient instance."""
+
+        config = load_client_config(session_key_path=session_key_path, env_file=env_file)
+
+        return cls(**config.model_dump())
 
     def connect(self) -> None:
         """Connect to Derive and validate credentials, fetch and cache market instruments."""

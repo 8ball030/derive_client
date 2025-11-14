@@ -42,7 +42,6 @@
         * [\_bridge](derive_client/cli/_bridge.md)
         * [\_collateral](derive_client/cli/_collateral.md)
         * [\_columns](derive_client/cli/_columns.md)
-        * [\_context](derive_client/cli/_context.md)
         * [\_markets](derive_client/cli/_markets.md)
         * [\_mmp](derive_client/cli/_mmp.md)
         * [\_orders](derive_client/cli/_orders.md)

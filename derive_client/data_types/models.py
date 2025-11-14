@@ -33,6 +33,7 @@ from .enums import (
     BridgeType,
     ChainID,
     Currency,
+    Environment,
     GasPriority,
     TxStatus,
 )
@@ -66,6 +67,13 @@ class EnvConfig(BaseModel, frozen=True):
     ACTION_TYPEHASH: str
     DOMAIN_SEPARATOR: str
     contracts: DeriveContractAddresses
+
+
+class ClientConfig(BaseModel):
+    session_key: str
+    wallet: ChecksumAddress
+    subaccount_id: int
+    env: Environment
 
 
 class PHexBytes(HexBytes):
