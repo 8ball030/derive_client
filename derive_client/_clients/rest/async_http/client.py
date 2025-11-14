@@ -76,8 +76,8 @@ class AsyncHTTPClient:
     @classmethod
     def from_env(
         cls,
-        session_key_path: Path | None,
-        env_file: Path | None,
+        session_key_path: Path | None = None,
+        env_file: Path | None = None,
     ) -> AsyncHTTPClient:
         """Create the AsyncHTTPClient instance."""
 
