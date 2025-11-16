@@ -6,6 +6,8 @@ from pathlib import Path
 
 import mkdocs_gen_files
 
+from derive_client.cli._tree import command_tree
+
 REPO_ROOT = Path(__file__).parent.parent
 PACKAGE_DIR = REPO_ROOT / "derive_client"
 
@@ -268,6 +270,33 @@ def generate_exceptions_docs(nav: mkdocs_gen_files.Nav):
             fd.write("      members: false\n\n")
 
 
+def generate_cli_docs(nav: mkdocs_gen_files.Nav):
+    """Generate CLI documentation."""
+    from derive_client.cli import cli  # or wherever your Click group lives
+
+    cli_path = Path("cli.md")
+
+    with mkdocs_gen_files.open(cli_path, "w") as fd:
+        fd.write("# CLI Reference\n\n")
+        fd.write("The `drv` command-line tool provides access to Derive functionality from your terminal.\n\n")
+
+        fd.write("## Getting Help\n\n")
+        fd.write("Run any command with `--help` to see detailed usage:\n\n")
+        fd.write("```bash\n")
+        fd.write("drv --help              # Show all commands\n")
+        fd.write("drv bridge --help       # Show bridge command options\n")
+        fd.write("```\n\n")
+
+        fd.write("## Command Tree\n\n")
+        fd.write("```\n")
+        for line in command_tree(cli, verbose=True, use_rich=False):
+            fd.write(line + "\n")
+        fd.write("```\n\n")
+
+        fd.write("## Demo\n\n")
+        fd.write("![CLI Demo](cli_demo.gif)\n\n")
+
+
 def build_nav_and_files():
     """Build complete navigation and documentation files."""
     nav = mkdocs_gen_files.Nav()
@@ -279,6 +308,7 @@ def build_nav_and_files():
     generate_operation_docs(nav)
     generate_datatype_docs(nav)
     generate_exceptions_docs(nav)
+    generate_cli_docs(nav)
 
     # Write navigation
     with mkdocs_gen_files.open("reference/SUMMARY.md", "w") as nav_file:
