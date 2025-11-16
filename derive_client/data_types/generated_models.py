@@ -838,6 +838,32 @@ class AggregateTradingStatsSchema(Struct):
     usd_change: Decimal
 
 
+class PrivateReplaceQuoteParamsSchema(Struct):
+    direction: Direction
+    legs: List[LegPricedSchema]
+    max_fee: Decimal
+    nonce: int
+    rfq_id: str
+    signature: str
+    signature_expiry_sec: int
+    signer: str
+    subaccount_id: int
+    label: str = ''
+    mmp: bool = False
+    nonce_to_cancel: Optional[int] = None
+    quote_id_to_cancel: Optional[str] = None
+
+
+class QuoteResultSchema(PrivateSendQuoteResultSchema):
+    pass
+
+
+class RPCErrorFormatSchema(Struct):
+    code: int
+    message: str
+    data: Optional[str] = None
+
+
 class PrivateGetAllPortfoliosParamsSchema(PrivateGetSubaccountsParamsSchema):
     pass
 
@@ -896,8 +922,9 @@ class PrivateGetQuotesParamsSchema(PrivatePollQuotesParamsSchema):
     pass
 
 
-class QuoteResultSchema(PrivateSendQuoteResultSchema):
-    pass
+class PrivateGetQuotesResultSchema(Struct):
+    quotes: List[QuoteResultSchema]
+    pagination: PaginationInfoSchema | None = None
 
 
 class PublicGetVaultShareParamsSchema(Struct):
@@ -1302,10 +1329,11 @@ class PrivateReplaceParamsSchema(Struct):
     trigger_type: Optional[TriggerType] = None
 
 
-class RPCErrorFormatSchema(Struct):
-    code: int
-    message: str
-    data: Optional[str] = None
+class PrivateReplaceResultSchema(Struct):
+    cancelled_order: OrderResponseSchema
+    create_order_error: Optional[RPCErrorFormatSchema] = None
+    order: Optional[OrderResponseSchema] = None
+    trades: Optional[List[TradeResponseSchema]] = None
 
 
 class PublicGetTickersParamsSchema(Struct):
@@ -2123,6 +2151,12 @@ class PublicGetTickerResultSchema(Struct):
     mark_price_fee_rate_cap: Optional[Decimal] = None
 
 
+class PrivateReplaceQuoteResultSchema(Struct):
+    cancelled_quote: QuoteResultSchema
+    create_quote_error: Optional[RPCErrorFormatSchema] = None
+    quote: Optional[QuoteResultSchema] = None
+
+
 class PrivateGetSubaccountResultSchema(Struct):
     collaterals: List[CollateralResponseSchema]
     collaterals_initial_margin: Decimal
@@ -2154,9 +2188,9 @@ class PrivateExpiredAndCancelledHistoryResponseSchema(Struct):
     result: PrivateExpiredAndCancelledHistoryResultSchema
 
 
-class PrivateGetQuotesResultSchema(Struct):
-    quotes: List[QuoteResultSchema]
-    pagination: PaginationInfoSchema | None = None
+class PrivateGetQuotesResponseSchema(Struct):
+    id: Union[str, int]
+    result: PrivateGetQuotesResultSchema
 
 
 class PublicGetVaultShareResultSchema(Struct):
@@ -2287,11 +2321,9 @@ class SignedTradeOrderSchema(Struct):
     subaccount_id: int
 
 
-class PrivateReplaceResultSchema(Struct):
-    cancelled_order: OrderResponseSchema
-    create_order_error: Optional[RPCErrorFormatSchema] = None
-    order: Optional[OrderResponseSchema] = None
-    trades: Optional[List[TradeResponseSchema]] = None
+class PrivateReplaceResponseSchema(Struct):
+    id: Union[str, int]
+    result: PrivateReplaceResultSchema
 
 
 class TickerSlimSchema(Struct):
@@ -2552,6 +2584,11 @@ class PublicGetTickerResponseSchema(Struct):
     result: PublicGetTickerResultSchema
 
 
+class PrivateReplaceQuoteResponseSchema(Struct):
+    id: Union[str, int]
+    result: PrivateReplaceQuoteResultSchema
+
+
 class PrivateGetAllPortfoliosResponseSchema(Struct):
     id: Union[str, int]
     result: List[PrivateGetSubaccountResultSchema]
@@ -2560,11 +2597,6 @@ class PrivateGetAllPortfoliosResponseSchema(Struct):
 class PrivateSessionKeysResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateSessionKeysResultSchema
-
-
-class PrivateGetQuotesResponseSchema(Struct):
-    id: Union[str, int]
-    result: PrivateGetQuotesResultSchema
 
 
 class PublicGetVaultShareResponseSchema(Struct):
@@ -2623,11 +2655,6 @@ class PrivateOrderDebugResultSchema(Struct):
     encoded_data_hashed: str
     raw_data: SignedTradeOrderSchema
     typed_data_hash: str
-
-
-class PrivateReplaceResponseSchema(Struct):
-    id: Union[str, int]
-    result: PrivateReplaceResultSchema
 
 
 class PublicGetTickersResultSchema(Struct):
