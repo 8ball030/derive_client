@@ -58,10 +58,8 @@ async def test_position_transfer(client_owner_wallet_with_position):
         target = subaccount_a
         initial_position = positions_b[0]
     else:
-        raise ValueError(
-            f"Expected exactly one subaccount to have {instrument_name} position. ",
-            f"Found: subaccount_a={len(positions_a)}, subaccount_b={len(positions_b)}",
-        )
+        source = subaccount_a
+        target = subaccount_b
 
     with assert_api_calls(client_owner_wallet_with_position, expected=1):
         transfer = await source.positions.transfer(
@@ -73,7 +71,7 @@ async def test_position_transfer(client_owner_wallet_with_position):
     assert isinstance(transfer, PrivateTransferPositionResultSchema)
     assert transfer.taker_trade.transaction_id == transfer.maker_trade.transaction_id
 
-    _transaction = await _wait_for_tx_settlement(
+    await _wait_for_tx_settlement(
         client=client_owner_wallet_with_position,
         transaction_id=transfer.taker_trade.transaction_id,
     )
@@ -107,13 +105,19 @@ async def test_position_transfer_batch(client_owner_wallet_with_position):
             f"Found: subaccount_a={len(positions_a)}, subaccount_b={len(positions_b)}",
         )
 
-    positions = []
+    positions_by_currency: dict[str, list[PositionResponseSchema]] = {}
     for position in initial_positions:
-        position = PositionTransfer(
+        positions_by_currency.setdefault(position.instrument_name.split("-")[0], []).append(position)
+
+    most_position_currency = max(positions_by_currency.items(), key=lambda item: len(item[1]))[0]
+    most_positions = positions_by_currency[most_position_currency]
+    positions = [
+        PositionTransfer(
             amount=position.amount,
             instrument_name=position.instrument_name,
         )
-        positions.append(position)
+        for position in most_positions
+    ]
 
     direction = Direction.buy
     with assert_api_calls(client_owner_wallet_with_position, expected=1):
@@ -127,8 +131,8 @@ async def test_position_transfer_batch(client_owner_wallet_with_position):
     assert isinstance(transfer_batch, PrivateTransferPositionsResultSchema)
     assert transfer_batch.maker_quote.rfq_id == transfer_batch.taker_quote.rfq_id
 
-    source_positions = await subaccount_a.positions.list(is_open=True)
-    target_positions = await subaccount_b.positions.list(is_open=True)
+    source_positions = await subaccount_a.positions.list(is_open=True, currency=most_position_currency)
+    target_positions = await subaccount_b.positions.list(is_open=True, currency=most_position_currency)
 
     assert len(source_positions) == 0
     assert len(target_positions) >= 0

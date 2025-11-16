@@ -44,16 +44,19 @@ class PositionOperations:
         """
         self._subaccount = subaccount
 
-    async def list(self, is_open: Optional[bool] = None) -> list[PositionResponseSchema]:
+    async def list(self, is_open: Optional[bool] = None, currency: str | None = None) -> list[PositionResponseSchema]:
         """Get all positions"""
 
         params = PrivateGetPositionsParamsSchema(subaccount_id=self._subaccount.id)
         response = await self._subaccount._private_api.get_positions(params)
-        return (
+        intermediate = (
             response.result.positions
             if is_open is None
             else [p for p in response.result.positions if (p.amount != 0) == is_open]
         )
+        if currency:
+            intermediate = [p for p in intermediate if p.instrument_name.startswith(currency)]
+        return intermediate
 
     async def transfer(
         self,
