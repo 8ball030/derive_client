@@ -37,7 +37,7 @@ class EnumChoice(click.Choice):
 @click.group("bridge")
 @click.pass_context
 def bridge(ctx):
-    """Bridge assets to/from Derive (ETH, ERC-20, DRV)."""
+    """Bridge assets to/from Derive (ETH, ERC20, DRV)."""
 
 
 @bridge.command("deposit")
@@ -64,8 +64,7 @@ def bridge(ctx):
 )
 @click.pass_context
 def deposit(ctx, chain_id: ChainID, currency: Currency, amount: Decimal):
-    """
-    Deposit funds via the socket superbridge to a Derive funding account.
+    """Deposit funds via the socket superbridge to a Derive funding account.
 
     Examples:
         drv bridge deposit -c BASE -t USDC -a 10
@@ -113,8 +112,7 @@ def deposit(ctx, chain_id: ChainID, currency: Currency, amount: Decimal):
 )
 @click.pass_context
 def gas(ctx, amount: Decimal, chain_id: ChainID):
-    """
-    Deposit gas (native token) for bridging via the standard bridge to the owner's EOA.
+    """Deposit gas (native token) for bridging via the standard bridge to the owner's EOA.
 
     Examples:
         drv bridge gas --amount 0.001
@@ -171,8 +169,7 @@ def gas(ctx, amount: Decimal, chain_id: ChainID):
 )
 @click.pass_context
 def withdraw(ctx, chain_id: ChainID, currency: Currency, amount: Decimal):
-    """
-    Withdraw funds from Derive funding account via the Withdraw Wrapper contract.
+    """Withdraw funds from Derive funding account via the Withdraw Wrapper contract.
 
     Examples:
         drv bridge withdraw -c BASE -t USDC -a 10

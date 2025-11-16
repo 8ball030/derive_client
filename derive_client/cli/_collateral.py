@@ -31,8 +31,8 @@ def get(ctx):
 @collateral.command("get-margin")
 @click.pass_context
 def get_margin(ctx):
-    """
-    Calculates margin for a given subaccount.
+    """Calculates margin for a given subaccount.
+
     Does not take into account open orders margin requirements.
     """
 
