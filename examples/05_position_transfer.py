@@ -236,11 +236,12 @@ if batch_source_sub and batch_currency:
         # Build transfer list
         transfers = []
         for pos in positions_to_batch[:3]:  # Max 3 for demo
-            transfer_pct = D("0.25")  # Transfer 25% of each
+            if abs(pos.amount) < D(0.1):
+                continue
             transfers.append(
                 PositionTransfer(
                     instrument_name=pos.instrument_name,
-                    amount=pos.amount * transfer_pct,
+                    amount=pos.amount,
                 )
             )
 
