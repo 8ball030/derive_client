@@ -13,6 +13,7 @@ nav:
       - Authentication: concepts/authentication.md
       - Bridging: concepts/bridging.md
       - Clients: concepts/clients.md
+  - CLI Reference: cli.md
   - API Reference: reference/
   - Internal API: internal/
 

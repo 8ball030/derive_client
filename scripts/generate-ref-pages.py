@@ -6,6 +6,8 @@ from pathlib import Path
 
 import mkdocs_gen_files
 
+from derive_client.cli._tree import command_tree
+
 REPO_ROOT = Path(__file__).parent.parent
 PACKAGE_DIR = REPO_ROOT / "derive_client"
 
@@ -157,8 +159,8 @@ def generate_datatype_docs(nav: mkdocs_gen_files.Nav):
     """Generate docs for data types with specialized settings per type."""
 
     # Enums - show all members
-    enums_parent_path = Path("reference", "data_types", "enums.md")  # Full path for opening
-    nav[("Data Types", "Enums")] = Path("data_types", "enums.md").as_posix()  # Relative path for nav
+    enums_parent_path = Path("reference", "data_types", "enums.md")
+    nav[("Data Types", "Enums")] = Path("data_types", "enums.md").as_posix()
 
     # Enums - document each enum class
     enums = [
@@ -173,8 +175,7 @@ def generate_datatype_docs(nav: mkdocs_gen_files.Nav):
         "DeriveJSONRPCErrorCode",
     ]
 
-    # Write the parent enums.md page
-    with mkdocs_gen_files.open(enums_parent_path, "w") as fd:  # Use full path here
+    with mkdocs_gen_files.open(enums_parent_path, "w") as fd:
         fd.write("# Enums\n\n")
         fd.write("This section contains all enumeration types used in the derive_client.\n\n")
         fd.write("## Available Enums\n\n")
@@ -182,12 +183,10 @@ def generate_datatype_docs(nav: mkdocs_gen_files.Nav):
             fd.write(f"- [{enum}](enums/{enum.lower()}.md)\n")
 
     for enum_name in enums:
-        full_doc_path = Path("reference", "data_types", "enums", f"{enum_name.lower()}.md")  # Full path for opening
-        nav[("Data Types", "Enums", enum_name)] = Path(
-            "data_types", "enums", f"{enum_name.lower()}.md"
-        ).as_posix()  # Relative path for nav
+        full_doc_path = Path("reference", "data_types", "enums", f"{enum_name.lower()}.md")
+        nav[("Data Types", "Enums", enum_name)] = Path("data_types", "enums", f"{enum_name.lower()}.md").as_posix()
 
-        with mkdocs_gen_files.open(full_doc_path, "w") as fd:  # Use full path here
+        with mkdocs_gen_files.open(full_doc_path, "w") as fd:
             fd.write(f"# {enum_name}\n\n")
             fd.write(f"::: derive_client.data_types.enums.{enum_name}\n")
             fd.write("    options:\n")
@@ -210,8 +209,7 @@ def generate_datatype_docs(nav: mkdocs_gen_files.Nav):
         "PositionTransfer",
     ]
 
-    # Write the parent enums.md page
-    with mkdocs_gen_files.open(full_models_parent_path, "w") as fd:  # Use full path here
+    with mkdocs_gen_files.open(full_models_parent_path, "w") as fd:
         fd.write("# Models\n\n")
         fd.write("This section contains all data model classes used in the derive_client.\n\n")
         fd.write("## Available Models\n\n")
@@ -232,9 +230,11 @@ def generate_datatype_docs(nav: mkdocs_gen_files.Nav):
             fd.write("      show_source: true\n")
             fd.write("      members: true\n")
 
-    doc_path = Path("data_types", "exceptions.md")
+
+def generate_exceptions_docs(nav: mkdocs_gen_files.Nav):
+    doc_path = Path("exceptions.md")
     full_doc_path = Path("reference", doc_path)
-    nav[("Data Types", "Exceptions")] = doc_path.as_posix()
+    nav[("Exceptions",)] = doc_path.as_posix()
 
     exceptions = [
         "NotConnectedError",
@@ -270,6 +270,33 @@ def generate_datatype_docs(nav: mkdocs_gen_files.Nav):
             fd.write("      members: false\n\n")
 
 
+def generate_cli_docs(nav: mkdocs_gen_files.Nav):
+    """Generate CLI documentation."""
+    from derive_client.cli import cli  # or wherever your Click group lives
+
+    cli_path = Path("cli.md")
+
+    with mkdocs_gen_files.open(cli_path, "w") as fd:
+        fd.write("# CLI Reference\n\n")
+        fd.write("The `drv` command-line tool provides access to Derive functionality from your terminal.\n\n")
+
+        fd.write("## Getting Help\n\n")
+        fd.write("Run any command with `--help` to see detailed usage:\n\n")
+        fd.write("```bash\n")
+        fd.write("drv --help              # Show all commands\n")
+        fd.write("drv bridge --help       # Show bridge command options\n")
+        fd.write("```\n\n")
+
+        fd.write("## Command Tree\n\n")
+        fd.write("```\n")
+        for line in command_tree(cli, verbose=True, use_rich=False):
+            fd.write(line + "\n")
+        fd.write("```\n\n")
+
+        fd.write("## Demo\n\n")
+        fd.write("![CLI Demo](cli_demo.gif)\n\n")
+
+
 def build_nav_and_files():
     """Build complete navigation and documentation files."""
     nav = mkdocs_gen_files.Nav()
@@ -280,6 +307,8 @@ def build_nav_and_files():
     generate_bridge_docs(nav)
     generate_operation_docs(nav)
     generate_datatype_docs(nav)
+    generate_exceptions_docs(nav)
+    generate_cli_docs(nav)
 
     # Write navigation
     with mkdocs_gen_files.open("reference/SUMMARY.md", "w") as nav_file:

@@ -47,6 +47,7 @@
         * [\_orders](derive_client/cli/_orders.md)
         * [\_positions](derive_client/cli/_positions.md)
         * [\_transactions](derive_client/cli/_transactions.md)
+        * [\_tree](derive_client/cli/_tree.md)
         * [\_utils](derive_client/cli/_utils.md)
     * [config](derive_client/config/index.md)
         * [constants](derive_client/config/constants.md)

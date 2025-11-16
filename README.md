@@ -8,7 +8,7 @@ Trade options, perpetuals, and spot with full self-custody through smart contrac
 
 Here is a quick demonstration of the CLI functionality:
 
-![Demo of CLI tools](derive_demo.gif)
+![Demo of CLI tools](docs/cli_demo.gif)
 
 ## Installation from PyPI
 

@@ -16,6 +16,7 @@ from ._mmp import mmp
 from ._orders import order
 from ._positions import position
 from ._transactions import transaction
+from ._tree import print_tree
 
 click.rich_click.USE_RICH_MARKUP = True
 
@@ -52,3 +53,10 @@ cli.add_command(mmp)
 cli.add_command(order)
 cli.add_command(position)
 cli.add_command(transaction)
+
+
+@cli.command()
+@click.option('--verbose', '-v', is_flag=True, help='Show command descriptions')
+def tree(verbose: bool):
+    '''Print the command tree structure.'''
+    print_tree(cli, verbose=verbose)
