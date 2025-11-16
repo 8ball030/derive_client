@@ -64,36 +64,28 @@ if margin.post_maintenance_margin > 0:
         print("  ✅ Good margin health")
 
 print("\n" + "=" * 60)
-print("3. DEPOSIT TO SUBACCOUNT")
+print("3. WITHDRAW FROM SUBACCOUNT")
 print("=" * 60)
 
-# Check LightAccount balance before deposit
-# account_state = client.account.get()
-# usdc_in_wallet = next((b.amount for b in account_state.balances if b.currency == "USDC"), Decimal(0))
-# print(f"\nLightAccount USDC balance: {usdc_in_wallet}")
+# Withdraw back to LightAccount wallet
+withdraw_amount = Decimal("15.0")
+print(f"\nWithdrawing ${withdraw_amount} USDC from subaccount...")
 
-# Get initial USDC in subaccount
-collaterals = client.collateral.get()
-usdc_before = next((c.amount for c in collaterals.collaterals if c.asset_name == "USDC"), Decimal(0))
-print(f"Subaccount USDC balance: {usdc_before}")
-
-# Deposit USDC to subaccount
-deposit_amount = Decimal("10.0")
-print(f"\nDepositing ${deposit_amount} USDC to subaccount...")
-
-deposit_result = client.collateral.deposit_to_subaccount(
-    amount=deposit_amount,
+withdrawal_result = client.collateral.withdraw_from_subaccount(
+    amount=withdraw_amount,
     asset_name="USDC",
 )
 
-print("✅ Deposit submitted")
-print(f"   Transaction ID: {deposit_result.transaction_id}")
+print("✅ Withdrawal submitted")
+print(f"   Transaction ID: {withdrawal_result.transaction_id}")
 
-# Check updated subaccount collateral
-collaterals_after = client.collateral.get()
-usdc_after = next((c.amount for c in collaterals_after.collaterals if c.asset_name == "USDC"), Decimal(0))
-print(f"\nSubaccount USDC after deposit: {usdc_after}")
-print(f"Change: +{usdc_after - usdc_before}")
+# Verify final balances
+collaterals_final = client.collateral.get()
+usdc_final = next((c.amount for c in collaterals_final.collaterals if c.asset_name == "USDC"), Decimal(0))
+
+print(f"\nFinal subaccount USDC: {usdc_final}")
+
+print("\n" + "=" * 60)
 
 # TODO: Feedback from Ksett / Josh
 # print("\n" + "=" * 60)
@@ -153,28 +145,36 @@ else:
     print("  ✅ Safe to withdraw")
 
 print("\n" + "=" * 60)
-print("5. WITHDRAW FROM SUBACCOUNT")
+print("5. DEPOSIT TO SUBACCOUNT")
 print("=" * 60)
 
-# Withdraw back to LightAccount wallet
-withdraw_amount = Decimal("5.0")
-print(f"\nWithdrawing ${withdraw_amount} USDC from subaccount...")
+# Check LightAccount balance before deposit
+# account_state = client.account.get()
+# usdc_in_wallet = next((b.amount for b in account_state.balances if b.currency == "USDC"), Decimal(0))
+# print(f"\nLightAccount USDC balance: {usdc_in_wallet}")
 
-withdrawal_result = client.collateral.withdraw_from_subaccount(
-    amount=withdraw_amount,
+# Get initial USDC in subaccount
+collaterals = client.collateral.get()
+usdc_before = next((c.amount for c in collaterals.collaterals if c.asset_name == "USDC"), Decimal(0))
+print(f"Subaccount USDC balance: {usdc_before}")
+
+# Deposit USDC to subaccount
+deposit_amount = Decimal("10.0")
+print(f"\nDepositing ${deposit_amount} USDC to subaccount...")
+
+deposit_result = client.collateral.deposit_to_subaccount(
+    amount=deposit_amount,
     asset_name="USDC",
 )
 
-print("✅ Withdrawal submitted")
-print(f"   Transaction ID: {withdrawal_result.transaction_id}")
+print("✅ Deposit submitted")
+print(f"   Transaction ID: {deposit_result.transaction_id}")
 
-# Verify final balances
-collaterals_final = client.collateral.get()
-usdc_final = next((c.amount for c in collaterals_final.collaterals if c.asset_name == "USDC"), Decimal(0))
-
-print(f"\nFinal subaccount USDC: {usdc_final}")
-print(f"Net change from start: {usdc_final - usdc_before:+.2f}")
-
+# Check updated subaccount collateral
+collaterals_after = client.collateral.get()
+usdc_after = next((c.amount for c in collaterals_after.collaterals if c.asset_name == "USDC"), Decimal(0))
+print(f"\nSubaccount USDC after deposit: {usdc_after}")
+print(f"Change: +{usdc_after - usdc_before}")
 print("\n" + "=" * 60)
 print("6. FINAL SUMMARY")
 print("=" * 60)

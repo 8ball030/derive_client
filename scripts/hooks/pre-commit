@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+# Git pre-commit hook to run format and lint checks
+# Save this file as scripts/hooks/pre-commit
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+echo -e "${BLUE}🎨 Running pre-commit checks...${NC}\n"
+
+# Track failures
+FAILED=0
+
+# Function to run a check
+run_check() {
+    local name=$1
+    local command=$2
+    
+    echo -e "${YELLOW}▶ Running $name...${NC}"
+    if eval "$command"; then
+        echo -e "${GREEN}✓ $name passed${NC}\n"
+    else
+        echo -e "${RED}✗ $name failed${NC}\n"
+        FAILED=1
+        return 1
+    fi
+}
+
+# Run format and lint (fast checks)
+run_check "Format" "poetry run make fmt" || true
+run_check "Lint" "poetry run make lint" || true
+
+# Summary
+echo -e "${BLUE}================================${NC}"
+if [ $FAILED -eq 0 ]; then
+    echo -e "${GREEN}✓ All checks passed! Proceeding with commit...${NC}"
+    exit 0
+else
+    echo -e "${RED}✗ Some checks failed. Commit aborted.${NC}"
+    echo -e "${YELLOW}Fix the issues above or use 'git commit --no-verify' to skip checks.${NC}"
+    exit 1
+fi

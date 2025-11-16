@@ -1,0 +1,12 @@
+#! /usr/bin/env bash
+
+set -euo pipefail
+
+cat .github/workflows/common_check.yaml \
+  | yq -r '.jobs.check.steps[].run' \
+  | grep -v '^null$' \
+  | tail -n +2 \
+  | while IFS= read -r cmd; do
+      echo "Running: $cmd"
+      eval "$cmd"
+    done
