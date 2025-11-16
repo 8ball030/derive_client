@@ -76,6 +76,46 @@ def client_owner_wallet_with_position(client_owner_wallet: HTTPClient):
 
     current_positions = client_owner_wallet.positions.list(is_open=True)
 
+    if market_perp_instrument in [p.instrument_name for p in current_positions]:
+        # we already have the position we must make sure it is large enough
+        position = [p for p in current_positions if p.instrument_name == market_perp_instrument][0]
+        if abs(position.amount) < D("0.1"):
+            # we need to increase the position size
+            additional_amount = D("0.1") - abs(position.amount)
+            direction = Direction.buy if position.amount > 0 else Direction.sell
+            # check if we can take liquidity
+            ticker = client_owner_wallet.markets.get_ticker(instrument_name=market_perp_instrument)
+            bid_diff = (D(ticker.best_bid_price) - D(ticker.index_price)) / D(ticker.index_price)
+            ask_diff = (D(ticker.index_price) - D(ticker.best_ask_price)) / D(ticker.index_price)
+            if (direction == Direction.buy and ask_diff >= D("0.05")) or (
+                direction == Direction.sell and bid_diff >= D("0.05")
+            ):
+                # we know that we are able to take liquidity
+                client_owner_wallet.orders.create(
+                    instrument_name=market_perp_instrument,
+                    amount=additional_amount,
+                    direction=direction,
+                    order_type=OrderType.market,
+                    limit_price=D(ticker.index_price) * D("1.05" if direction == Direction.buy else "0.95"),
+                )
+            else:
+                # we need to use the maker to increase the position
+                opposite_direction = Direction.sell if direction == Direction.buy else Direction.buy
+                maker_client.orders.create(
+                    instrument_name=market_perp_instrument,
+                    amount=additional_amount,
+                    direction=opposite_direction,
+                    order_type=OrderType.limit,
+                    limit_price=D(ticker.index_price),
+                )
+                client_owner_wallet.orders.create(
+                    instrument_name=market_perp_instrument,
+                    amount=additional_amount,
+                    direction=direction,
+                    order_type=OrderType.market,
+                    limit_price=D(ticker.index_price) * D("1.05" if direction == Direction.buy else "0.95"),
+                )
+
     if market_perp_instrument not in [p.instrument_name for p in current_positions]:
         # we check if liqudity exists for us to take else we use the maker role
         ticker = maker_client.markets.get_ticker(instrument_name=market_perp_instrument)
