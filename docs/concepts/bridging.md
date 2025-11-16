@@ -84,7 +84,7 @@ You only need to call the high-level methods exposed on the `HTTPClient`.
 
 The client exposes bridging via high-level methods on `HTTPClient.bridge`.
 
-- Refer to [Quickstart](quickstart.md) or [Examples](examples/) for usage patterns and sample code.
+- Refer to [Quickstart](../quickstart.md) or [Examples](../examples.md) for usage patterns and sample code.
 
 ---
 
