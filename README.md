@@ -4,6 +4,8 @@
 
 Trade options, perpetuals, and spot with full self-custody through smart contract wallets.
 
+[Full Documentation](https://8ball030.github.io/derive_client/)
+
 ## CLI Tool Demo
 
 Here is a quick demonstration of the CLI functionality:
