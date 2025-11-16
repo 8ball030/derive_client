@@ -38,17 +38,16 @@ jobs:
           installer-parallel: true
 
       - name: Install Packages
-        run: |
-          poetry install -v
+        run: poetry install -v
+
+      - name: Format
+        run:  poetry run make fmt
 
       - name: Lint
-        run: |
-          poetry run make lint
+        run:  poetry run make lint
 
       - name: Tests
-        run: |
-          poetry run make tests
+        run:  poetry run make tests
 
       - name: Doc Tests
-        run: |
-          make test-docs
+        run:  poetry run make test-docs

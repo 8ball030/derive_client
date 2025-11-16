@@ -15,9 +15,15 @@ from derive_client.clients.ws_client import (
     TradeResponseSchema,
     WsClient,
 )
-from derive_client.data.generated.models import Direction, OrderStatus, PrivateGetPositionsResultSchema, PositionResponseSchema, PrivateGetPositionsResponseSchema
+from derive_client.data.generated.models import (
+    Direction,
+    OrderStatus,
+    PositionResponseSchema,
+    PrivateGetPositionsResponseSchema,
+    PrivateGetPositionsResultSchema,
+)
 from derive_client.data_types import Environment
-from derive_client.data_types.enums import OrderSide, OrderType, InstrumentType
+from derive_client.data_types.enums import InstrumentType, OrderSide, OrderType
 
 MARKET_1 = "ETH-PERP"
 MAX_POSTION_SIZE = 0.5
@@ -29,8 +35,8 @@ SELL_OFFSET = 1.01
 class WebsocketQuoterStrategy:
     def __init__(self, ws_client: WsClient):
         self.ws_client = ws_client
-        self.current_positions: PrivateGetPositionsResponseSchema| None = None
-        self.current_position: PositionResponseSchema| None | bool = False
+        self.current_positions: PrivateGetPositionsResponseSchema | None = None
+        self.current_position: PositionResponseSchema | None | bool = False
         self.orders = {
             Direction.buy: {},
             Direction.sell: {},
@@ -47,7 +53,7 @@ class WebsocketQuoterStrategy:
         if self.current_position is None:
             return
 
-        print(orderbook )
+        print(orderbook)
 
         bid_price = orderbook.bids[0][0] * BUY_OFFSET
         ask_price = orderbook.asks[0][0] * SELL_OFFSET
@@ -129,7 +135,6 @@ class WebsocketQuoterStrategy:
             vega=0,
         )
 
-
     def on_order(self, order: OrderResponseSchema):
         print(f"Order update: {order.nonce} {order.order_status} {order.direction} {order.limit_price} {order.amount}")
         self.ws_client.get_positions()
@@ -185,7 +190,7 @@ class WebsocketQuoterStrategy:
                     self.on_orderbook_update(parsed_message)
                 else:
                     print(f"Received unhandled message: {parsed_message}")
-            except Exception as e:
+            except Exception:
                 print(f"Error processing message {parsed_message}: {traceback.format_exc()}")
 
     def setup_session(self):

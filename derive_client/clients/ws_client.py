@@ -52,7 +52,6 @@ class Orderbook:
         )
 
 
-
 class Depth(StrEnum):
     DEPTH_1 = "1"
     DEPTH_10 = "10"
@@ -283,7 +282,6 @@ class WsClient(BaseClient):
         Parse an orders message.
         """
         return msgspec.convert(json_message['result'], PrivateGetOrdersResultSchema)
-
 
     def _parse_positions_response(self, json_message):
         """
