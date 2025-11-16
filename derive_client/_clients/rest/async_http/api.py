@@ -103,6 +103,8 @@ from derive_client.data_types.generated_models import (
     PrivateRegisterScopedSessionKeyParamsSchema,
     PrivateRegisterScopedSessionKeyResponseSchema,
     PrivateReplaceParamsSchema,
+    PrivateReplaceQuoteParamsSchema,
+    PrivateReplaceQuoteResponseSchema,
     PrivateReplaceResponseSchema,
     PrivateResetMmpParamsSchema,
     PrivateResetMmpResponseSchema,
@@ -1115,7 +1117,8 @@ class AsyncPrivateAPI:
         params: PrivateGetOrderParamsSchema,
     ) -> PrivateGetOrderResponseSchema:
         """
-        Get state of an order by order id
+        Get state of an order by order id.  If the order is an MMP order, it will not
+        show up if cancelled/expired.
 
         Required minimum session key permission level is `read_only`
         """
@@ -1443,6 +1446,28 @@ class AsyncPrivateAPI:
         data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateSendQuoteResponseSchema)
+        return response
+
+    async def replace_quote(
+        self,
+        params: PrivateReplaceQuoteParamsSchema,
+    ) -> PrivateReplaceQuoteResponseSchema:
+        """
+        Cancel an existing quote with nonce or quote_id and create new quote with
+        different quote_id in a single RPC call.
+
+        If the cancel fails, the new quote will not be created.
+
+        If the cancel succeeds but the new quote fails, the old quote will still be
+        cancelled.
+
+        Required minimum session key permission level is `admin`
+        """
+
+        url = self._endpoints.replace_quote
+        data = encode_json_exclude_none(params)
+        message = await self._session._send_request(url, data, headers=self.headers)
+        response = try_cast_response(message, PrivateReplaceQuoteResponseSchema)
         return response
 
     async def cancel_quote(
