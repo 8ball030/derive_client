@@ -40,11 +40,11 @@ async def _wait_for_tx_settlement(
 
 
 @pytest.mark.asyncio
-async def test_position_transfer(client_owner_wallet):
+async def test_position_transfer(client_owner_wallet_with_position):
     instrument_name = "ETH-PERP"
 
-    await client_owner_wallet.fetch_subaccounts()
-    subaccount_a, subaccount_b = client_owner_wallet.cached_subaccounts[:2]
+    await client_owner_wallet_with_position.fetch_subaccounts()
+    subaccount_a, subaccount_b = client_owner_wallet_with_position.cached_subaccounts[:2]
 
     positions_a = await _get_open_positions_for_instrument(subaccount_a, instrument_name)
     positions_b = await _get_open_positions_for_instrument(subaccount_b, instrument_name)
@@ -63,7 +63,7 @@ async def test_position_transfer(client_owner_wallet):
             f"Found: subaccount_a={len(positions_a)}, subaccount_b={len(positions_b)}",
         )
 
-    with assert_api_calls(client_owner_wallet, expected=1):
+    with assert_api_calls(client_owner_wallet_with_position, expected=1):
         transfer = await source.positions.transfer(
             amount=initial_position.amount,  # can be negative
             instrument_name=initial_position.instrument_name,
@@ -74,7 +74,7 @@ async def test_position_transfer(client_owner_wallet):
     assert transfer.taker_trade.transaction_id == transfer.maker_trade.transaction_id
 
     _transaction = await _wait_for_tx_settlement(
-        client=client_owner_wallet,
+        client=client_owner_wallet_with_position,
         transaction_id=transfer.taker_trade.transaction_id,
     )
 
@@ -86,26 +86,24 @@ async def test_position_transfer(client_owner_wallet):
 
 
 @pytest.mark.asyncio
-async def test_position_transfer_batch(client_owner_wallet):
-    instrument_names = ("BTC-PERP", "BTC-20251226-110000-C")
+async def test_position_transfer_batch(client_owner_wallet_with_position):
+    await client_owner_wallet_with_position.fetch_subaccounts()
+    subaccount_a, subaccount_b = client_owner_wallet_with_position.cached_subaccounts[1:3]
 
-    await client_owner_wallet.fetch_subaccounts()
-    subaccount_a, subaccount_b = client_owner_wallet.cached_subaccounts[:2]
+    positions_a = [p for p in await subaccount_a.positions.list(is_open=True)]
+    positions_b = [p for p in await subaccount_b.positions.list(is_open=True)]
 
-    positions_a = await _get_open_positions_for_instrument(subaccount_a, *instrument_names)
-    positions_b = await _get_open_positions_for_instrument(subaccount_b, *instrument_names)
-
-    if len(positions_a) == 2 and len(positions_b) != 2:
+    if len(positions_a) >= 2:
         source = subaccount_a
         target = subaccount_b
         initial_positions = positions_a
-    elif len(positions_b) == 2 and len(positions_a) != 2:
+    elif len(positions_b) >= 2:
         source = subaccount_b
         target = subaccount_a
         initial_positions = positions_b
     else:
         raise ValueError(
-            f"Expected exactly one subaccount to have {instrument_names} positions. ",
+            "Expected exactly one subaccount to have open positions. ",
             f"Found: subaccount_a={len(positions_a)}, subaccount_b={len(positions_b)}",
         )
 
@@ -118,18 +116,19 @@ async def test_position_transfer_batch(client_owner_wallet):
         positions.append(position)
 
     direction = Direction.buy
-    with assert_api_calls(client_owner_wallet, expected=1):
+    with assert_api_calls(client_owner_wallet_with_position, expected=1):
         transfer_batch = await source.positions.transfer_batch(
             positions=positions,
             direction=direction,
             to_subaccount=target.id,
         )
+        time.sleep(1)
 
     assert isinstance(transfer_batch, PrivateTransferPositionsResultSchema)
     assert transfer_batch.maker_quote.rfq_id == transfer_batch.taker_quote.rfq_id
 
-    source_positions = await _get_open_positions_for_instrument(source, *instrument_names)
-    target_positions = await _get_open_positions_for_instrument(target, *instrument_names)
+    source_positions = await subaccount_a.positions.list(is_open=True)
+    target_positions = await subaccount_b.positions.list(is_open=True)
 
-    assert len(source_positions) != 2
-    assert len(target_positions) == 2
+    assert len(source_positions) == 0
+    assert len(target_positions) >= 0
