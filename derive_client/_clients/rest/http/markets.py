@@ -23,7 +23,7 @@ from derive_client.data_types.generated_models import (
     PublicGetTickerParamsSchema,
     PublicGetTickerResultSchema,
     PublicGetTickersParamsSchema,
-    PublicGetTickersResultSchema,
+    TickerSlimSchema,
 )
 
 
@@ -235,8 +235,8 @@ class MarketOperations:
         currency: str,
         instrument_type: InstrumentType,
         expiry_date: Optional[str] = None,
-    ) -> PublicGetTickersResultSchema:
-        """Get tickers information (best bid / ask, stats, etc.) for a multiple instruments."""
+    ) -> dict[str, TickerSlimSchema]:
+        """Get tickers information (best bid / ask, stats, etc.) for multiple instruments."""
 
         params = PublicGetTickersParamsSchema(
             currency=currency,
@@ -244,4 +244,4 @@ class MarketOperations:
             expiry_date=expiry_date,
         )
         response = self._public_api.get_tickers(params)
-        return response.result
+        return response.result.tickers

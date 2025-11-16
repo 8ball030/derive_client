@@ -112,6 +112,7 @@ class PrivateEndpoints:
     get_rfqs = Endpoint("private", "get_rfqs")
     poll_rfqs = Endpoint("private", "poll_rfqs")
     send_quote = Endpoint("private", "send_quote")
+    replace_quote = Endpoint("private", "replace_quote")
     cancel_quote = Endpoint("private", "cancel_quote")
     cancel_batch_quotes = Endpoint("private", "cancel_batch_quotes")
     get_quotes = Endpoint("private", "get_quotes")

@@ -10,7 +10,7 @@ from derive_client.data_types.generated_models import (
     PublicGetCurrencyResultSchema,
     PublicGetInstrumentResultSchema,
     PublicGetTickerResultSchema,
-    PublicGetTickersResultSchema,
+    TickerSlimSchema,
 )
 
 
@@ -87,4 +87,5 @@ async def test_markets_get_tickers(client_admin_wallet):
         instrument_type=instrument_type,
     )
 
-    assert isinstance(tickers, PublicGetTickersResultSchema)
+    assert isinstance(tickers, dict)
+    assert all(isinstance(ticker, TickerSlimSchema) for ticker in tickers.values())
