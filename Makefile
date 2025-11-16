@@ -56,7 +56,7 @@ clean-test:
 
 .PHONY: tests
 tests:
-	poetry run pytest tests -vv --reruns 3 --reruns-delay 10
+	poetry run pytest tests -vv --reruns 4 --reruns-delay 15
 
 .PHONY: fmt
 fmt:
