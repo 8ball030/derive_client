@@ -1,24 +1,24 @@
 site_name: Derive Client
 site_description:
 docs_dir: docs
-# site_url: ...
+site_url: https://8ball030.github.io/derive_client/
 repo_url: https://github.com/8ball030/derive_client
 
 nav:
   - Home: index.md
-  - Getting Started:
-      - Installation: getting-started/installation.md
-      - Account Model: getting-started/account-model.md
-      - Authentication: getting-started/authentication.md
-      - Clients: getting-started/clients.md
-      - Bridging & Funding: getting-started/bridging.md
-      - Quick Start: getting-started/quickstart.md
-  # - Examples:
-  #   - Funding: examples/funding.md
-  #   - Trading: examples/trading.md
-  #   - Websockets: examples/websockets.md
+  - Quickstart: quickstart.md
+  - Examples: examples.md
+  - Concepts:
+      - Account Model: concepts/account-model.md
+      - Authentication: concepts/authentication.md
+      - Bridging: concepts/bridging.md
+      - Clients: concepts/clients.md
   - API Reference: reference/
   - Internal API: internal/
+
+validation:
+  nav:
+    omitted_files: info
 
 theme:
   name: material
