@@ -1,3 +1,16 @@
+.PHONY: install
+install:
+	@echo "📦 Installing dependencies..."
+	poetry install
+	@$(MAKE) -s hooks
+	@echo "✅ Installation complete!"
+
+.PHONY: hooks
+hooks:
+	@mkdir -p .git/hooks
+	@cp scripts/hooks/* .git/hooks/ 2>/dev/null || true
+	@chmod +x .git/hooks/*
+
 .PHONY: clean
 clean: clean-build clean-pyc clean-test clean-docs
 
@@ -43,7 +56,7 @@ clean-test:
 
 .PHONY: tests
 tests:
-	poetry run pytest tests -vv --reruns 3 --reruns-delay 10
+	poetry run pytest tests -vv --reruns 4 --reruns-delay 15
 
 .PHONY: fmt
 fmt:

@@ -33,8 +33,8 @@ print("=" * 60)
 print("1. SURVEY YOUR SUBACCOUNTS")
 print("=" * 60)
 
-# Fetch all subaccounts
-subaccounts = client.fetch_subaccounts()
+# Fetch first 2 subaccounts
+subaccounts = client.fetch_subaccounts()[:2]
 print(f"\nTotal subaccounts: {len(subaccounts)}")
 
 if len(subaccounts) < 2:
@@ -104,8 +104,8 @@ if not source_positions:
     order = source_sub.orders.create(
         instrument_name="ETH-PERP",
         amount=D("0.01"),
-        direction=Direction.BUY,
-        order_type=OrderType.MARKET,
+        direction=Direction.buy,
+        order_type=OrderType.market,
     )
     print(f"✅ Position created: {order.order.order_id}")
     source_positions = source_sub.positions.list(is_open=True)
