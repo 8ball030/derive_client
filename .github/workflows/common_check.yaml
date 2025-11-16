@@ -41,7 +41,7 @@ jobs:
         run: poetry install -v
 
       - name: Codegen
-        run: poetry run codegen-all
+        run: poetry run make codegen-all
 
       - name: Format
         run:  poetry run make fmt
