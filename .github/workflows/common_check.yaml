@@ -49,5 +49,5 @@ jobs:
       - name: Tests
         run:  poetry run make tests
 
-      - name: Doc Tests
-        run:  poetry run make test-docs
+      - name: Diff Check
+        run:  poetry run make check_diff
