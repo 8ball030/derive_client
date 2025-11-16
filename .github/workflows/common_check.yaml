@@ -40,6 +40,9 @@ jobs:
       - name: Install Packages
         run: poetry install -v
 
+      - name: Codegen
+        run: poetry run make codegen-all
+
       - name: Format
         run:  poetry run make fmt
 
@@ -49,5 +52,5 @@ jobs:
       - name: Tests
         run:  poetry run make tests
 
-      - name: Doc Tests
-        run:  poetry run make test-docs
+      - name: Diff Check
+        run:  poetry run make check_diff
