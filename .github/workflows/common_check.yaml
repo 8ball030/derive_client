@@ -40,6 +40,9 @@ jobs:
       - name: Install Packages
         run: poetry install -v
 
+      - name: Codegen
+        run: poetry run codegen-all
+
       - name: Format
         run:  poetry run make fmt
 
