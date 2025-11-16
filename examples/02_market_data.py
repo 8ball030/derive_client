@@ -85,7 +85,7 @@ print("=" * 60)
 # Compare 24h performance
 print("\n24h Performance:")
 for curr in currencies[:5]:
-    change = curr.spot_price - curr.spot_price_24h
+    change = curr.spot_price - curr.spot_price_24h  # type: ignore
     change_pct = (change / curr.spot_price_24h) * 100 if curr.spot_price_24h else Decimal("0")
     arrow = "📈" if change_pct > 0 else "📉"
     print(f"  {arrow} {curr.currency}: {change_pct:+.2f}% (${curr.spot_price:.2f})")
@@ -108,12 +108,12 @@ print(f"  Max trade size: {eth_perp.maximum_amount}")
 print("\n  Current state:")
 print(f"    Mark price: ${ticker.mark_price:.2f}")
 print(f"    Index price: ${ticker.index_price}")
-print(f"    Funding rate: {ticker.perp_details.funding_rate * 100:.4f}%")
+print(f"    Funding rate: {ticker.perp_details.funding_rate * 100:.4f}%")  # type: ignore
 print(f"    24h volume: ${ticker.stats.contract_volume:,.0f}")
 print(f"    Open interest: {ticker.stats.open_interest:.4f}")
 
 # Check if funding is favorable
-funding_rate = Decimal(ticker.perp_details.funding_rate)
+funding_rate = Decimal(ticker.perp_details.funding_rate)  # type: ignore
 if funding_rate > 0:
     print(f"\n  💡 Funding: Longs pay shorts ({funding_rate * 100:.4f}%)")
     print("     → Consider shorting for positive carry")
@@ -132,7 +132,7 @@ if eth_options:
     # Group by expiry
     expiries = {}
     for opt in eth_options:
-        expiry = opt.option_details.expiry
+        expiry = opt.option_details.expiry  # type: ignore
         if expiry not in expiries:
             expiries[expiry] = []
         expiries[expiry].append(opt)
@@ -147,9 +147,9 @@ if eth_options:
     # Show sample option
     sample = eth_options[0]
     print(f"\nSample option: {sample.instrument_name}")
-    print(f"  Strike: ${sample.option_details.strike}")
+    print(f"  Strike: ${sample.option_details.strike}")  # type: ignore
     print(f"  Type: {'Call' if 'C' in sample.instrument_name else 'Put'}")
-    print(f"  Expiry: {sample.option_details.expiry}")
+    print(f"  Expiry: {sample.option_details.expiry}")   # type: ignore
 
 print("\n" + "=" * 60)
 print("6. CACHING FOR PERFORMANCE")
