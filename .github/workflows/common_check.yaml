@@ -43,14 +43,18 @@ jobs:
       - name: Codegen
         run: poetry run make codegen-all
 
+      - name: Docs
+        run: poetry run make docs
+
       - name: Format
         run:  poetry run make fmt
 
       - name: Lint
         run:  poetry run make lint
 
+      - name: Diff Check
+        run:  poetry run make check_diff
+
       - name: Tests
         run:  poetry run make tests
 
-      - name: Diff Check
-        run:  poetry run make check_diff
