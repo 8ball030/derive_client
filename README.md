@@ -110,11 +110,8 @@ See [authentication.md](docs/concepts/authentication.md) for a more detailed exp
 git clone git@github.com:8ball030/derive_client.git
 cd derive_client
 
-# Option A: Install editable with pip
-pip install -e .
-
-# Option B: Use Poetry (recommended for development)
-poetry install
+# Install and spawn the virtual environment
+make install
 poetry shell
 ```
 
