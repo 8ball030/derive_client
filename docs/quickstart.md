@@ -1,21 +1,3 @@
-# Derive Client
-
-> Python client for [Derive Protocol](https://derive.xyz) - a decentralized derivatives trading platform on its own Ethereum L2
-
-Trade options, perpetuals, and spot with full self-custody through smart contract wallets.
-
-## CLI Tool Demo
-
-Here is a quick demonstration of the CLI functionality:
-
-![Demo of CLI tools](derive_demo.gif)
-
-## Installation from PyPI
-
-```bash
-pip install derive-client
-```
-
 ## Quickstart
 
 Create .env file
@@ -51,7 +33,7 @@ order_result = client.orders.create(
 
 ### Examples
 
-The fastest way to learn is by running the [examples](/examples/):
+The fastest way to learn is by running the [examples](examples.md):
 
 ```bash
 # Clone the repo (examples are not included in the package)
@@ -92,66 +74,4 @@ DERIVE_SUBACCOUNT_ID=1        # Your subaccount ID
 DERIVE_ENV=PROD               # TEST or PROD
 ```
 
-See [authentication.md](docs/concepts/authentication.md) for a more detailed explanation.
-
-## Documentation
-
-📖 **[Full Documentation](https://8ball030.github.io/derive_client/)**
-
-- **[Concepts](docs/concepts/)** - Account model, authentication, bridging, clients
-- **[API Reference](docs/reference/)** - Public API documentation
-- **[Internal API](docs/internal/)** - Internal API documentation
-
-## Development
-
-### From Source (for development)
-
-```bash
-git clone git@github.com:8ball030/derive_client.git
-cd derive_client
-
-# Option A: Install editable with pip
-pip install -e .
-
-# Option B: Use Poetry (recommended for development)
-poetry install
-poetry shell
-```
-
-### Quick Commands
-
-```bash
-make fmt        # Format code
-make lint       # Run linters
-make typecheck  # Type checking
-make tests      # Run tests
-```
-
-### Code Generation
-
-```bash
-make codegen-all
-```
-
-### API Docs Generation
-
-```bash
-make docs
-```
-
-Or, run all the above make commands sequentially using simply:
-
-```bash
-make all
-```
-
-### Releasing
-
-Bump version and create release:
-
-```bash
-export new_version=0.1.5
-tbump $new_version
-```
-
-The release workflow will automatically create a GitHub release and publish to PyPI.
+See [authentication.md](concepts/authentication.md) for a more detailed explanation.

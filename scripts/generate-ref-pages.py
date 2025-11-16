@@ -157,9 +157,8 @@ def generate_datatype_docs(nav: mkdocs_gen_files.Nav):
     """Generate docs for data types with specialized settings per type."""
 
     # Enums - show all members
-    doc_path = Path("data_types", "enums.md")
-    full_doc_path = Path("reference", doc_path)
-    nav[("Data Types", "Enums")] = doc_path.as_posix()
+    enums_parent_path = Path("reference", "data_types", "enums.md")  # Full path for opening
+    nav[("Data Types", "Enums")] = Path("data_types", "enums.md").as_posix()  # Relative path for nav
 
     # Enums - document each enum class
     enums = [
@@ -174,24 +173,33 @@ def generate_datatype_docs(nav: mkdocs_gen_files.Nav):
         "DeriveJSONRPCErrorCode",
     ]
 
-    for enum_name in enums:
-        doc_path = Path("data_types", "enums", f"{enum_name.lower()}.md")
-        full_doc_path = Path("reference", doc_path)
-        nav[("Data Types", "Enums", enum_name)] = doc_path.as_posix()
+    # Write the parent enums.md page
+    with mkdocs_gen_files.open(enums_parent_path, "w") as fd:  # Use full path here
+        fd.write("# Enums\n\n")
+        fd.write("This section contains all enumeration types used in the derive_client.\n\n")
+        fd.write("## Available Enums\n\n")
+        for enum in enums:
+            fd.write(f"- [{enum}](enums/{enum.lower()}.md)\n")
 
-        with mkdocs_gen_files.open(full_doc_path, "w") as fd:
+    for enum_name in enums:
+        full_doc_path = Path("reference", "data_types", "enums", f"{enum_name.lower()}.md")  # Full path for opening
+        nav[("Data Types", "Enums", enum_name)] = Path(
+            "data_types", "enums", f"{enum_name.lower()}.md"
+        ).as_posix()  # Relative path for nav
+
+        with mkdocs_gen_files.open(full_doc_path, "w") as fd:  # Use full path here
             fd.write(f"# {enum_name}\n\n")
             fd.write(f"::: derive_client.data_types.enums.{enum_name}\n")
             fd.write("    options:\n")
             fd.write("      show_root_heading: false\n")
             fd.write("      heading_level: 2\n")
             fd.write("      show_source: true\n")
-            fd.write("      members: true\n")  # Show enum values
+            fd.write("      members: true\n")
 
     # Models - show all fields and methods
-    doc_path = Path("data_types", "models.md")
-    full_doc_path = Path("reference", doc_path)
-    nav[("Data Types", "Models")] = doc_path.as_posix()
+    models_parent_path = Path("data_types", "models.md")
+    full_models_parent_path = Path("reference", models_parent_path)
+    nav[("Data Types", "Models")] = models_parent_path.as_posix()
 
     models = [
         "EnvConfig",
@@ -201,6 +209,14 @@ def generate_datatype_docs(nav: mkdocs_gen_files.Nav):
         "BridgeTxResult",
         "PositionTransfer",
     ]
+
+    # Write the parent enums.md page
+    with mkdocs_gen_files.open(full_models_parent_path, "w") as fd:  # Use full path here
+        fd.write("# Models\n\n")
+        fd.write("This section contains all data model classes used in the derive_client.\n\n")
+        fd.write("## Available Models\n\n")
+        for model in models:
+            fd.write(f"- [{model}](models/{model.lower()}.md)\n")
 
     for model_name in models:
         doc_path = Path("data_types", "models", f"{model_name.lower()}.md")

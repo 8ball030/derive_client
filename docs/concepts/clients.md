@@ -45,4 +45,4 @@ All clients have identical trading and bridging APIs - choose based on your perf
 
 ---
 
-Next: **[Quick Start](quickstart.md)** — Connect, fund, and start trading.
+Next: To complete the cycle, we refer back to the **[Quickstart](../quickstart.md)** — Connect, fund, and start trading.

@@ -6,7 +6,6 @@ This example demonstrates:
 2. Finding trading opportunities (bid-ask spreads)
 3. Monitoring market conditions across assets
 4. Comparing perpetual vs option markets
-5. Using cached vs fresh data
 
 Prerequisites:
 - None! Market data is public and doesn't require authentication
@@ -162,5 +161,4 @@ print("\n✅ Market data exploration complete!")
 print("\nKey insights:")
 print("  • Check spreads before large orders (tight = better)")
 print("  • Monitor funding rates for carry opportunities")
-print("  • Use caching to reduce API calls and improve performance")
 print("  • 24h price changes help identify momentum")
