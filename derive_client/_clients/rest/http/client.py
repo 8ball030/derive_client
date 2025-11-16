@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 from logging import Logger
+from pathlib import Path
 from typing import Generator
 
 from pydantic import ConfigDict, validate_call
@@ -10,6 +11,7 @@ from web3 import Web3
 from derive_client._bridge.client import BridgeClient
 from derive_client._clients.rest.http.account import LightAccount
 from derive_client._clients.rest.http.api import PrivateAPI, PublicAPI
+from derive_client._clients.rest.http.collateral import CollateralOperations
 from derive_client._clients.rest.http.markets import MarketOperations
 from derive_client._clients.rest.http.mmp import MMPOperations
 from derive_client._clients.rest.http.orders import OrderOperations
@@ -19,7 +21,7 @@ from derive_client._clients.rest.http.session import HTTPSession
 from derive_client._clients.rest.http.subaccount import Subaccount
 from derive_client._clients.rest.http.trades import TradeOperations
 from derive_client._clients.rest.http.transactions import TransactionOperations
-from derive_client._clients.utils import AuthContext
+from derive_client._clients.utils import AuthContext, load_client_config
 from derive_client.config import CONFIGS
 from derive_client.data_types import ChecksumAddress, Environment
 from derive_client.exceptions import BridgePrimarySignerRequiredError, NotConnectedError
@@ -63,11 +65,24 @@ class HTTPClient:
         self._private_api = PrivateAPI(session=self._session, config=config, auth=auth)
 
         self._markets = MarketOperations(public_api=self._public_api, logger=self._logger)
+        self._transactions = TransactionOperations(public_api=self._public_api, logger=self._logger)
 
         self._light_account: LightAccount | None = None
         self._subaccounts: dict[int, Subaccount] = {}
 
         self._bridge_client: BridgeClient | None = None
+
+    @classmethod
+    def from_env(
+        cls,
+        session_key_path: Path | None = None,
+        env_file: Path | None = None,
+    ) -> HTTPClient:
+        """Create the HTTPClient instance."""
+
+        config = load_client_config(session_key_path=session_key_path, env_file=env_file)
+
+        return cls(**config.model_dump())
 
     def connect(self) -> None:
         """Connect to Derive and validate credentials, fetch and cache market instruments."""
@@ -114,6 +129,7 @@ class HTTPClient:
             config=self._config,
             logger=self._logger,
             markets=self._markets,
+            transactions=self._transactions,
             public_api=self._public_api,
             private_api=self._private_api,
         )
@@ -185,9 +201,15 @@ class HTTPClient:
 
     @property
     def transactions(self) -> TransactionOperations:
-        """Manage account account to/from subaccount transactions."""
+        """Query transaction status and details."""
 
-        return self.active_subaccount.transactions
+        return self._transactions
+
+    @property
+    def collateral(self) -> CollateralOperations:
+        """Manage collateral and margin."""
+
+        return self.active_subaccount.collateral
 
     @property
     def orders(self) -> OrderOperations:

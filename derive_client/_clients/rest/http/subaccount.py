@@ -9,6 +9,7 @@ from typing import Optional
 from derive_action_signing import ModuleData, SignedAction
 
 from derive_client._clients.rest.http.api import PrivateAPI, PublicAPI
+from derive_client._clients.rest.http.collateral import CollateralOperations
 from derive_client._clients.rest.http.markets import MarketOperations
 from derive_client._clients.rest.http.mmp import MMPOperations
 from derive_client._clients.rest.http.orders import OrderOperations
@@ -37,6 +38,7 @@ class Subaccount:
         config: EnvConfig,
         logger: Logger,
         markets: MarketOperations,
+        transactions: TransactionOperations,
         public_api: PublicAPI,
         private_api: PrivateAPI,
         _state: PrivateGetSubaccountResultSchema | None = None,
@@ -49,6 +51,7 @@ class Subaccount:
             auth: Authentication context for signing operations
             config: Environment configuration
             markets: Market operations interface
+            transactions: Transaction operations interface
             public_api: Public API interface
             private_api: Private API interface for authenticated requests
             _state: Initial state (internal use only)
@@ -57,12 +60,14 @@ class Subaccount:
         self._id = subaccount_id
         self._auth = auth
         self._config = config
-        self._markets = markets
         self._logger = logger
         self._public_api = public_api
         self._private_api = private_api
 
-        self._transactions = TransactionOperations(subaccount=self)
+        self._markets = markets
+        self._transactions = transactions
+
+        self._collateral = CollateralOperations(subaccount=self)
         self._orders = OrderOperations(subaccount=self)
         self._trades = TradeOperations(subaccount=self)
         self._positions = PositionOperations(subaccount=self)
@@ -80,6 +85,7 @@ class Subaccount:
         config: EnvConfig,
         logger: Logger,
         markets: MarketOperations,
+        transactions: TransactionOperations,
         public_api: PublicAPI,
         private_api: PrivateAPI,
     ) -> Subaccount:
@@ -94,6 +100,7 @@ class Subaccount:
             auth: Authentication context for signing operations
             config: Environment configuration
             markets: Market operations interface
+            transactions: Transaction operations interface
             public_api: Public API interface
             private_api: Private API interface for authenticated requests
 
@@ -115,6 +122,7 @@ class Subaccount:
             config=config,
             logger=logger,
             markets=markets,
+            transactions=transactions,
             public_api=public_api,
             private_api=private_api,
             _state=state,
@@ -165,9 +173,15 @@ class Subaccount:
 
     @property
     def transactions(self) -> TransactionOperations:
-        """Manage account account to/from subaccount transactions."""
+        """Query transaction status and details."""
 
         return self._transactions
+
+    @property
+    def collateral(self) -> CollateralOperations:
+        """Manage collateral and margin."""
+
+        return self._collateral
 
     @property
     def orders(self) -> OrderOperations:

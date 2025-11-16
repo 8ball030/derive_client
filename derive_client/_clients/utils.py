@@ -1,19 +1,22 @@
 from __future__ import annotations
 
 import json
+import os
 import time
 from dataclasses import dataclass
 from enum import StrEnum
+from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, Optional, TypeVar
 
 import msgspec
 from derive_action_signing import ModuleData, SignedAction, sign_rest_auth_header
+from dotenv import load_dotenv
 from eth_account.signers.local import LocalAccount
 from hexbytes import HexBytes
 from pydantic import BaseModel
 from web3 import AsyncWeb3, Web3
 
-from derive_client.data_types import ChecksumAddress, EnvConfig, PositionTransfer
+from derive_client.data_types import ChecksumAddress, ClientConfig, EnvConfig, Environment, PositionTransfer
 from derive_client.data_types.generated_models import (
     InstrumentPublicResponseSchema,
     InstrumentType,
@@ -238,3 +241,57 @@ def infer_instrument_type(*, instrument_name: str) -> InstrumentType:
         return InstrumentType.option
     else:
         return InstrumentType.erc20
+
+
+def load_client_config(session_key_path: Optional[Path] = None, env_file: Optional[Path] = None) -> ClientConfig:
+    """
+    Load and validate client config from .env and optional session-key file.
+
+    Raises:
+      ValueError on missing/invalid config.
+    """
+
+    dotenv_path = env_file or Path.cwd() / ".env"
+    load_dotenv(dotenv_path=dotenv_path)
+
+    session_key = session_key_path.read_text().strip() if session_key_path else os.environ.get("DERIVE_SESSION_KEY")
+    wallet_str = os.environ.get("DERIVE_WALLET")
+    subaccount_id_str = os.environ.get("DERIVE_SUBACCOUNT_ID")
+    env_name = os.environ.get("DERIVE_ENV", "PROD").upper()
+
+    missing = []
+    if not session_key:
+        missing.append("DERIVE_SESSION_KEY")
+    if not wallet_str:
+        missing.append("DERIVE_WALLET")
+    if not subaccount_id_str:
+        missing.append("DERIVE_SUBACCOUNT_ID")
+
+    if missing:
+        msg = "Missing required configuration: " + ", ".join(missing)
+        msg += f"\nSearched for .env at: {dotenv_path.absolute()}"
+        raise ValueError(msg)
+
+    assert session_key and wallet_str and subaccount_id_str, "type-checker"
+
+    try:
+        wallet_checksum = ChecksumAddress(wallet_str)
+    except Exception as e:
+        raise ValueError(f"Invalid wallet address: {e}")
+
+    try:
+        subaccount_id = int(subaccount_id_str)
+    except Exception:
+        raise ValueError(f"Invalid subaccount ID '{subaccount_id_str}': must be an integer")
+
+    try:
+        env = Environment[env_name]
+    except Exception:
+        raise ValueError(f"Invalid DERIVE_ENV '{env_name}': expected one of {[e.name for e in Environment]}")
+
+    return ClientConfig(
+        session_key=session_key,
+        wallet=wallet_checksum,
+        subaccount_id=subaccount_id,
+        env=env,
+    )

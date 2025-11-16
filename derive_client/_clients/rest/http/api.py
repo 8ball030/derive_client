@@ -103,6 +103,8 @@ from derive_client.data_types.generated_models import (
     PrivateRegisterScopedSessionKeyParamsSchema,
     PrivateRegisterScopedSessionKeyResponseSchema,
     PrivateReplaceParamsSchema,
+    PrivateReplaceQuoteParamsSchema,
+    PrivateReplaceQuoteResponseSchema,
     PrivateReplaceResponseSchema,
     PrivateResetMmpParamsSchema,
     PrivateResetMmpResponseSchema,
@@ -176,6 +178,8 @@ from derive_client.data_types.generated_models import (
     PublicGetSpotFeedHistoryResponseSchema,
     PublicGetTickerParamsSchema,
     PublicGetTickerResponseSchema,
+    PublicGetTickersParamsSchema,
+    PublicGetTickersResponseSchema,
     PublicGetTimeParamsSchema,
     PublicGetTimeResponseSchema,
     PublicGetTradeHistoryParamsSchema,
@@ -373,12 +377,33 @@ class PublicAPI:
         """
         Get ticker information (best bid / ask, instrument contraints, fees info, etc.)
         for a single instrument
+
+        DEPRECATION NOTICE: This RPC is deprecated in favor of `get_tickers` on Dec 1,
+        2025.
         """
 
         url = self._endpoints.get_ticker
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetTickerResponseSchema)
+        return response
+
+    def get_tickers(
+        self,
+        params: PublicGetTickersParamsSchema,
+    ) -> PublicGetTickersResponseSchema:
+        """
+        Get tickers information (best bid / ask, stats, etc.) for a multiple
+        instruments.
+
+        For most up to date stream of tickers, use the
+        `ticker.<instrument_name>.<interval>` channels.
+        """
+
+        url = self._endpoints.get_tickers
+        data = encode_json_exclude_none(params)
+        message = self._session._send_request(url, data, headers=self.headers)
+        response = try_cast_response(message, PublicGetTickersResponseSchema)
         return response
 
     def get_latest_signed_feeds(
@@ -1092,7 +1117,8 @@ class PrivateAPI:
         params: PrivateGetOrderParamsSchema,
     ) -> PrivateGetOrderResponseSchema:
         """
-        Get state of an order by order id
+        Get state of an order by order id.  If the order is an MMP order, it will not
+        show up if cancelled/expired.
 
         Required minimum session key permission level is `read_only`
         """
@@ -1420,6 +1446,28 @@ class PrivateAPI:
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateSendQuoteResponseSchema)
+        return response
+
+    def replace_quote(
+        self,
+        params: PrivateReplaceQuoteParamsSchema,
+    ) -> PrivateReplaceQuoteResponseSchema:
+        """
+        Cancel an existing quote with nonce or quote_id and create new quote with
+        different quote_id in a single RPC call.
+
+        If the cancel fails, the new quote will not be created.
+
+        If the cancel succeeds but the new quote fails, the old quote will still be
+        cancelled.
+
+        Required minimum session key permission level is `admin`
+        """
+
+        url = self._endpoints.replace_quote
+        data = encode_json_exclude_none(params)
+        message = self._session._send_request(url, data, headers=self.headers)
+        response = try_cast_response(message, PrivateReplaceQuoteResponseSchema)
         return response
 
     def cancel_quote(

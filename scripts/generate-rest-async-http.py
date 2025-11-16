@@ -11,6 +11,7 @@ PACKAGE_DIR = Path(__file__).parent.parent / "derive_client"
 ASYNC_OPERATION_MODULES = {
     "account",
     "markets",
+    "collateral",
     "orders",
     "positions",
     "transactions",
