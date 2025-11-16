@@ -33,4 +33,4 @@
         * [PreparedBridgeTx](data_types/models/preparedbridgetx.md)
         * [BridgeTxResult](data_types/models/bridgetxresult.md)
         * [PositionTransfer](data_types/models/positiontransfer.md)
-    * [Exceptions](data_types/exceptions.md)
+* [Exceptions](exceptions.md)
