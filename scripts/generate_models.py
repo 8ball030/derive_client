@@ -1,18 +1,45 @@
 import ast
 import re
+from dataclasses import dataclass
 from pathlib import Path
 
+import libcst as cst
 from datamodel_code_generator import DataModelType, InputFileType, PythonVersion, generate
+from libcst import matchers as m
 
 TIMEOUT = 10
 CUSTOM_HEADER = "# ruff: noqa: E741,E501"
 
 
-def generate_models(input_path: Path, output_path: Path):
+@dataclass
+class ModelDefinition:
+    """Represents a model or enum definition."""
+
+    name: str
+    type: str  # 'enum', 'struct', 'class'
+    content_hash: str  # Normalized content for comparison
+    original_code: str
+
+
+@dataclass
+class DeduplicationStrategy:
+    """Strategy for handling a duplicate model."""
+
+    target_name: str
+    source_name: str
+    action: str  # 'remove', 'inherit', 'keep'
+    model_type: str  # 'enum', 'struct'
+
+
+def generate_models(
+    input_path: Path,
+    output_path: Path,
+    input_file_type: InputFileType,
+):
     print(f"Generating models from {input_path.name} -> {output_path}")
     generate(
         input_=input_path,
-        input_file_type=InputFileType.OpenAPI,
+        input_file_type=input_file_type,
         output=output_path,
         output_model_type=DataModelType.MsgspecStruct,
         target_python_version=PythonVersion.PY_311,
@@ -220,12 +247,332 @@ class DefaultValueFixer(ast.NodeTransformer):
         return None
 
 
+def normalize_class_def(node: ast.ClassDef) -> str:
+    """
+    Create a normalized representation of a class for content comparison.
+    Ignores the class name itself, focuses on structure and values.
+    """
+    parts = []
+
+    # Get base classes
+    bases = [ast.unparse(base) for base in node.bases]
+    parts.append(f"bases:{','.join(sorted(bases))}")
+
+    # Get all attributes/fields
+    for item in node.body:
+        if isinstance(item, ast.AnnAssign) and isinstance(item.target, ast.Name):
+            # Struct field: name: type = default
+            field_name = item.target.id
+            field_type = ast.unparse(item.annotation)
+            field_default = ast.unparse(item.value) if item.value else "NODEFAULT"
+            parts.append(f"field:{field_name}:{field_type}:{field_default}")
+
+        elif isinstance(item, ast.Assign):
+            # Enum member: name = value
+            for target in item.targets:
+                if isinstance(target, ast.Name):
+                    member_name = target.id
+                    member_value = ast.unparse(item.value)
+                    parts.append(f"member:{member_name}:{member_value}")
+
+    return "|".join(sorted(parts))
+
+
+def extract_models_from_file(file_path: Path) -> dict[str, ModelDefinition]:
+    """Extract all model definitions from a Python file."""
+    code = file_path.read_text()
+    tree = ast.parse(code)
+
+    models = {}
+
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.ClassDef):
+            continue
+
+        # Determine type
+        base_names = {base.id for base in node.bases if isinstance(base, ast.Name)}
+        base_attrs = {base.attr for base in node.bases if isinstance(base, ast.Attribute)}
+
+        if 'Enum' in base_names or 'StrEnum' in base_names or 'IntEnum' in base_names:
+            model_type = 'enum'
+        elif 'Struct' in base_names or 'Struct' in base_attrs:
+            model_type = 'struct'
+        else:
+            model_type = 'class'
+
+        # Create normalized hash
+        content_hash = normalize_class_def(node)
+
+        # Store definition
+        models[node.name] = ModelDefinition(
+            name=node.name, type=model_type, content_hash=content_hash, original_code=ast.unparse(node)
+        )
+
+    return models
+
+
+def find_duplicates(
+    source_models: dict[str, ModelDefinition], target_models: dict[str, ModelDefinition]
+) -> list[DeduplicationStrategy]:
+    """
+    Find models in target that are identical to models in source.
+    Returns list of deduplication strategies.
+    """
+    # Build reverse index: content_hash -> source_name
+    source_by_hash: dict[str, tuple[str, str]] = {}  # hash -> (name, type)
+    for name, model in source_models.items():
+        if model.content_hash in source_by_hash:
+            # Multiple source models with same content - use first one
+            continue
+        source_by_hash[model.content_hash] = (name, model.type)
+
+    # Find matches and determine strategy
+    strategies = []
+    for target_name, target_model in target_models.items():
+        if target_model.content_hash in source_by_hash:
+            source_name, source_type = source_by_hash[target_model.content_hash]
+
+            # Determine action based on model type and name
+            if target_model.type == 'enum':
+                # Enums: always remove and import
+                action = 'remove'
+                print(f"  ✓ {target_name} → {source_name} (enum, remove)")
+            elif target_name == source_name:
+                # Same name: remove and import
+                action = 'remove'
+                print(f"  ✓ {target_name} → {source_name} (same name, remove)")
+            else:
+                # Different name: inherit
+                action = 'inherit'
+                print(f"  ✓ {target_name} → {source_name} (inherit)")
+
+            strategies.append(
+                DeduplicationStrategy(
+                    target_name=target_name, source_name=source_name, action=action, model_type=target_model.type
+                )
+            )
+
+    return strategies
+
+
+class ModelDeduplicator(cst.CSTTransformer):
+    """
+    Deduplicate class definitions based on strategies.
+    """
+
+    def __init__(self, strategies: list[DeduplicationStrategy]):
+        """
+        Args:
+            strategies: List of deduplication strategies
+        """
+        self.strategies_by_name = {s.target_name: s for s in strategies}
+        self.removed_classes: set[str] = set()
+        self.inherited_classes: set[str] = set()
+
+    def leave_ClassDef(
+        self,
+        original_node: cst.ClassDef,
+        updated_node: cst.ClassDef,
+    ) -> cst.ClassDef | cst.RemovalSentinel:
+        """Handle duplicate class definitions based on strategy."""
+        class_name = updated_node.name.value
+
+        if class_name not in self.strategies_by_name:
+            return updated_node
+
+        strategy = self.strategies_by_name[class_name]
+
+        if strategy.action == 'remove':
+            # Remove entirely
+            self.removed_classes.add(class_name)
+            return cst.RemovalSentinel.REMOVE
+
+        elif strategy.action == 'inherit':
+            # Replace with inheritance from source model
+            self.inherited_classes.add(class_name)
+
+            # Create new class that inherits from source
+            new_class = updated_node.with_changes(
+                bases=[cst.Arg(value=cst.Name(strategy.source_name))],
+                body=cst.IndentedBlock(body=[cst.SimpleStatementLine(body=[cst.Pass()])]),
+            )
+            return new_class
+
+        return updated_node
+
+    def leave_Name(self, original_node: cst.Name, updated_node: cst.Name) -> cst.Name:
+        """Rewrite references to removed duplicates."""
+        name = updated_node.value
+
+        if name in self.strategies_by_name:
+            strategy = self.strategies_by_name[name]
+
+            # Only rewrite if we removed the class entirely
+            if strategy.action == 'remove':
+                return updated_node.with_changes(value=strategy.source_name)
+
+        return updated_node
+
+
+def add_imports(module: cst.Module, imports_to_add: set[str]) -> cst.Module:
+    """
+    Add imports at the top of the file.
+
+    Args:
+        module: The CST module
+        imports_to_add: Set of names to import
+    """
+    if not imports_to_add:
+        return module
+
+    # Create import statement
+    import_names = [cst.ImportAlias(name=cst.Name(name)) for name in sorted(imports_to_add)]
+
+    new_import = cst.SimpleStatementLine(
+        body=[
+            cst.ImportFrom(
+                module=cst.Attribute(
+                    value=cst.Attribute(value=cst.Name("derive_client"), attr=cst.Name("data_types")),
+                    attr=cst.Name("generated_models"),
+                ),
+                names=import_names,
+            )
+        ]
+    )
+
+    # Find where to insert (after existing imports)
+    body = list(module.body)
+    insert_pos = 0
+
+    for i, stmt in enumerate(body):
+        if m.matches(stmt, m.SimpleStatementLine(body=[m.Import() | m.ImportFrom()])):
+            insert_pos = i + 1
+        elif not m.matches(stmt, m.EmptyLine() | m.SimpleStatementLine(body=[m.Expr(value=m.SimpleString())])):
+            # Stop at first non-import, non-docstring statement
+            break
+
+    # Insert new import
+    body.insert(insert_pos, new_import)
+
+    return module.with_changes(body=body)
+
+
+def remove_redefined_classes(module: cst.Module, imported_names: set[str]) -> cst.Module:
+    """
+    Remove any class definitions that are already imported.
+    This handles cases where classes weren't caught in the first deduplication pass.
+    """
+
+    class RedefinitionRemover(cst.CSTTransformer):
+        def __init__(self, imported: set[str]):
+            self.imported = imported
+            self.removed = []
+
+        def leave_ClassDef(
+            self, original_node: cst.ClassDef, updated_node: cst.ClassDef
+        ) -> cst.ClassDef | cst.RemovalSentinel:
+            class_name = updated_node.name.value
+            if class_name in self.imported:
+                self.removed.append(class_name)
+                return cst.RemovalSentinel.REMOVE
+            return updated_node
+
+    remover = RedefinitionRemover(imported_names)
+    updated = module.visit(remover)
+
+    if remover.removed:
+        print(f"  Removed {len(remover.removed)} redefined classes: {', '.join(remover.removed)}")
+
+    return updated
+
+
+def deduplicate_websocket_models(
+    generated_models_path: Path, websocket_models_path: Path, output_path: Path | None = None
+) -> None:
+    """
+    Main deduplication function.
+
+    Args:
+        generated_models_path: Path to generated_models.py (OpenAPI)
+        websocket_models_path: Path to websocket_models.py
+        output_path: Optional output path (defaults to overwriting websocket_models_path)
+    """
+    if output_path is None:
+        output_path = websocket_models_path
+
+    print("Extracting models from generated_models.py...")
+    source_models = extract_models_from_file(generated_models_path)
+    print(f"  Found {len(source_models)} models")
+
+    print("\nExtracting models from websocket_models.py...")
+    target_models = extract_models_from_file(websocket_models_path)
+    print(f"  Found {len(target_models)} models")
+
+    print("\nFinding duplicates...")
+    strategies = find_duplicates(source_models, target_models)
+    print(f"  Found {len(strategies)} duplicates to deduplicate")
+
+    if not strategies:
+        print("\n✓ No duplicates found, nothing to do!")
+        return
+
+    print("\nRewriting websocket_models.py...")
+    code = websocket_models_path.read_text()
+    module = cst.parse_module(code)
+
+    deduplicator = ModelDeduplicator(strategies)
+    updated_module = module.visit(deduplicator)
+
+    imports_to_add = set()
+    for strategy in strategies:
+        imports_to_add.add(strategy.source_name)
+
+    updated_module = add_imports(updated_module, imports_to_add)
+    updated_module = remove_redefined_classes(updated_module, imports_to_add)
+    output_path.write_text(updated_module.code)
+
+    print("\n✓ Deduplicated websocket_models.py")
+    print(f"  Removed {len(deduplicator.removed_classes)} duplicate classes")
+    print(f"  Converted {len(deduplicator.inherited_classes)} classes to inheritance")
+    print(f"  Added imports for {len(imports_to_add)} models from generated_models.py")
+    print(f"  Output written to: {output_path}")
+
+    # Summary
+    print("\n" + "=" * 60)
+    print("Deduplication Summary:")
+    print("=" * 60)
+
+    removed = [s for s in strategies if s.action == 'remove']
+    inherited = [s for s in strategies if s.action == 'inherit']
+
+    if removed:
+        print("\nRemoved (imported from generated_models):")
+        for strategy in sorted(removed, key=lambda s: s.target_name):
+            print(f"  {strategy.target_name:40s} → {strategy.source_name}")
+
+    if inherited:
+        print("\nConverted to inheritance:")
+        for strategy in sorted(inherited, key=lambda s: s.target_name):
+            print(f"  class {strategy.target_name}({strategy.source_name}): pass")
+
+
 if __name__ == "__main__":
     repo_root = Path(__file__).parent.parent
     input_path = repo_root / "specs" / "openapi-spec.json"
     output_path = repo_root / "derive_client" / "data_types" / "generated_models.py"
 
-    generate_models(input_path=input_path, output_path=output_path)
+    generate_models(
+        input_path=input_path,
+        output_path=output_path,
+        input_file_type=InputFileType.OpenAPI,
+    )
     patch_pagination_to_optional(output_path)
     patch_file(output_path)
+
+    ws_input = repo_root / "specs" / "websocket-channels.json"
+    ws_output = repo_root / "derive_client" / "data_types" / "websocket_models.py"
+    generate_models(input_path=ws_input, output_path=ws_output, input_file_type=InputFileType.JsonSchema)
+    deduplicate_websocket_models(generated_models_path=output_path, websocket_models_path=ws_output)
+    patch_file(ws_output)
+
     print("Done.")
