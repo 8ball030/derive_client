@@ -1,0 +1,3822 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Derive WebSocket Channel Schemas",
+  "description": "Merged schemas for all WebSocket channels",
+  "definitions": {
+    "AuctionsWatchChannelSchema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "AuctionsWatchNotificationSchema": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "title": "method",
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "$ref": "#/definitions/AuctionsWatchNotificationParamsSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "method",
+        "params"
+      ],
+      "additionalProperties": false
+    },
+    "AuctionsWatchNotificationParamsSchema": {
+      "type": "object",
+      "properties": {
+        "channel": {
+          "title": "channel",
+          "type": "string",
+          "description": "Subscribed channel name"
+        },
+        "data": {
+          "title": "data",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/AuctionResultSchema",
+            "field_many": true
+          }
+        }
+      },
+      "required": [
+        "channel",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "AuctionResultSchema": {
+      "type": "object",
+      "properties": {
+        "details": {
+          "oneOf": [
+            {
+              "type": "object",
+              "$ref": "#/definitions/AuctionDetailsSchema",
+              "field_many": false,
+              "description": "Details of the auction, if ongoing.",
+              "default": {
+                "currency": null
+              }
+            },
+            {
+              "type": "null",
+              "title": ""
+            }
+          ],
+          "description": "Details of the auction, if ongoing."
+        },
+        "state": {
+          "title": "state",
+          "type": "string",
+          "enum": [
+            "ongoing",
+            "ended"
+          ],
+          "description": "State of the auction."
+        },
+        "subaccount_id": {
+          "title": "subaccount_id",
+          "type": "integer",
+          "description": "Subaccount ID being auctioned off."
+        },
+        "timestamp": {
+          "title": "timestamp",
+          "type": "integer",
+          "description": "Timestamp of the auction result (in milliseconds since epoch)."
+        }
+      },
+      "required": [
+        "details",
+        "state",
+        "subaccount_id",
+        "timestamp"
+      ],
+      "additionalProperties": false
+    },
+    "AuctionDetailsSchema": {
+      "type": "object",
+      "properties": {
+        "currency": {
+          "title": "currency",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "Currency of subaccount (for PM margin type)."
+        },
+        "estimated_bid_price": {
+          "title": "estimated_bid_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Estimated bid price for this liquidation. This value is not scaled by the bid percent, and instead represents the discounted mark value of the whole subaccount. This value will be negative for insolvent auctions."
+        },
+        "estimated_discount_pnl": {
+          "title": "estimated_discount_pnl",
+          "type": "string",
+          "format": "decimal",
+          "description": "Estimated profit relative to `estimated_mtm` if the liquidation is successful, assuming execution at `estimated_percent_bid` and `estimated_bid_price`."
+        },
+        "estimated_mtm": {
+          "title": "estimated_mtm",
+          "type": "string",
+          "format": "decimal",
+          "description": "Estimated mark-to-market value of the subaccount being auctioned off. This value is not scaled by the bid percent, and instead represents the un-discounted mark value of the whole subaccount."
+        },
+        "estimated_percent_bid": {
+          "title": "estimated_percent_bid",
+          "type": "string",
+          "format": "decimal",
+          "description": "An estimate for the maximum percent of the subaccount that can be liquidated."
+        },
+        "last_seen_trade_id": {
+          "title": "last_seen_trade_id",
+          "type": "integer",
+          "description": "Last trade ID for the account being auctioned off (to use in the `private/liquidate` endpoint). This value is used to ensure that the state of balances reported in `subaccount_balances` is in sync. A trade ID error from `private/liquidate` indicates that the channel is currently out of sync with the on-chain state of the subaccount due to a pending bid."
+        },
+        "margin_type": {
+          "title": "margin_type",
+          "type": "string",
+          "enum": [
+            "PM",
+            "SM",
+            "PM2"
+          ],
+          "description": "Margin type of the subaccount being auctioned off. It is recommended to bid on subaccounts using the same margin type and currency as to not run into unsupported currency errors or maximum account size limits."
+        },
+        "min_cash_transfer": {
+          "title": "min_cash_transfer",
+          "type": "string",
+          "format": "decimal",
+          "description": "Suggested minimum amount of cash to transfer to a newly created subaccount for bidding (to use in the `private/liquidate` endpoint). Any unused cash will get returned back to the original subaccount. If the bidder plans to bid less than the `estimated_percent_bid`, they may scale this value down accordingly."
+        },
+        "min_price_limit": {
+          "title": "min_price_limit",
+          "type": "string",
+          "format": "decimal",
+          "description": "Estimated minimum `price_limit` (to use in the `private/liquidate` endpoint). This is the minimum amount of cash that would be required to buy out the percent of the subaccount. If the bidder plans to bid less than the `estimated_percent_bid`, they may scale this value down accordingly."
+        },
+        "subaccount_balances": {
+          "title": "subaccount_balances",
+          "type": "object",
+          "description": "Current balances of the subaccount being auctioned off. The bidder should expect to receive a percentage of these balances proportional to the `estimated_percent_bid`, and pay `estimated_bid_price * estimated_percent_bid` for them. These balances already include any pending perp settlements and funding payments into the USDC balance.",
+          "additionalProperties": {
+            "title": "subaccount_balances",
+            "type": "string",
+            "format": "decimal"
+          }
+        }
+      },
+      "required": [
+        "currency",
+        "estimated_bid_price",
+        "estimated_discount_pnl",
+        "estimated_mtm",
+        "estimated_percent_bid",
+        "last_seen_trade_id",
+        "margin_type",
+        "min_cash_transfer",
+        "min_price_limit",
+        "subaccount_balances"
+      ],
+      "additionalProperties": false
+    },
+    "AuctionsWatchPubSubSchema": {
+      "type": "object",
+      "properties": {
+        "channel_params": {
+          "type": "object",
+          "$ref": "#/definitions/AuctionsWatchChannelSchema",
+          "field_many": false
+        },
+        "notification": {
+          "type": "object",
+          "$ref": "#/definitions/AuctionsWatchNotificationSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "channel_params",
+        "notification"
+      ],
+      "additionalProperties": false
+    },
+    "MarginWatchChannelSchema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "MarginWatchNotificationSchema": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "title": "method",
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "$ref": "#/definitions/MarginWatchNotificationParamsSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "method",
+        "params"
+      ],
+      "additionalProperties": false
+    },
+    "MarginWatchNotificationParamsSchema": {
+      "type": "object",
+      "properties": {
+        "channel": {
+          "title": "channel",
+          "type": "string",
+          "description": "Subscribed channel name"
+        },
+        "data": {
+          "title": "data",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/MarginWatchResultSchema",
+            "field_many": true
+          }
+        }
+      },
+      "required": [
+        "channel",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "MarginWatchResultSchema": {
+      "type": "object",
+      "properties": {
+        "collaterals": {
+          "title": "collaterals",
+          "type": "array",
+          "description": "All collaterals that count towards margin of subaccount",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/CollateralPublicResponseSchema",
+            "field_many": true
+          }
+        },
+        "currency": {
+          "title": "currency",
+          "type": "string",
+          "description": "Currency of subaccount"
+        },
+        "initial_margin": {
+          "title": "initial_margin",
+          "type": "string",
+          "format": "decimal",
+          "description": "Total initial margin requirement of all positions and collaterals."
+        },
+        "maintenance_margin": {
+          "title": "maintenance_margin",
+          "type": "string",
+          "format": "decimal",
+          "description": "Total maintenance margin requirement of all positions and collaterals.If this value falls below zero, the subaccount will be flagged for liquidation."
+        },
+        "margin_type": {
+          "title": "margin_type",
+          "type": "string",
+          "enum": [
+            "PM",
+            "SM",
+            "PM2"
+          ],
+          "description": "Margin type of subaccount (`PM` (Portfolio Margin), `PM2` (Portfolio Margin 2), or `SM` (Standard Margin))"
+        },
+        "positions": {
+          "title": "positions",
+          "type": "array",
+          "description": "All active positions of subaccount",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/PositionPublicResponseSchema",
+            "field_many": true
+          }
+        },
+        "subaccount_id": {
+          "title": "subaccount_id",
+          "type": "integer",
+          "description": "Subaccount_id"
+        },
+        "subaccount_value": {
+          "title": "subaccount_value",
+          "type": "string",
+          "format": "decimal",
+          "description": "Total mark-to-market value of all positions and collaterals"
+        },
+        "valuation_timestamp": {
+          "title": "valuation_timestamp",
+          "type": "integer",
+          "description": "Timestamp (in seconds since epoch) of when margin and MtM were computed."
+        }
+      },
+      "required": [
+        "collaterals",
+        "currency",
+        "initial_margin",
+        "maintenance_margin",
+        "margin_type",
+        "positions",
+        "subaccount_id",
+        "subaccount_value",
+        "valuation_timestamp"
+      ],
+      "additionalProperties": false
+    },
+    "CollateralPublicResponseSchema": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "title": "amount",
+          "type": "string",
+          "format": "decimal",
+          "description": "Asset amount of given collateral"
+        },
+        "asset_name": {
+          "title": "asset_name",
+          "type": "string",
+          "description": "Asset name"
+        },
+        "asset_type": {
+          "title": "asset_type",
+          "type": "string",
+          "enum": [
+            "erc20",
+            "option",
+            "perp"
+          ],
+          "description": "Type of asset collateral (currently always `erc20`)"
+        },
+        "initial_margin": {
+          "title": "initial_margin",
+          "type": "string",
+          "format": "decimal",
+          "description": "USD value of collateral that contributes to initial margin"
+        },
+        "maintenance_margin": {
+          "title": "maintenance_margin",
+          "type": "string",
+          "format": "decimal",
+          "description": "USD value of collateral that contributes to maintenance margin"
+        },
+        "mark_price": {
+          "title": "mark_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Current mark price of the asset"
+        },
+        "mark_value": {
+          "title": "mark_value",
+          "type": "string",
+          "format": "decimal",
+          "description": "USD value of the collateral (amount * mark price)"
+        }
+      },
+      "required": [
+        "amount",
+        "asset_name",
+        "asset_type",
+        "initial_margin",
+        "maintenance_margin",
+        "mark_price",
+        "mark_value"
+      ],
+      "additionalProperties": false
+    },
+    "PositionPublicResponseSchema": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "title": "amount",
+          "type": "string",
+          "format": "decimal",
+          "description": "Position amount held by subaccount"
+        },
+        "delta": {
+          "title": "delta",
+          "type": "string",
+          "format": "decimal",
+          "description": "Asset delta (w.r.t. forward price for options, `1.0` for perps)"
+        },
+        "gamma": {
+          "title": "gamma",
+          "type": "string",
+          "format": "decimal",
+          "description": "Asset gamma (zero for non-options)"
+        },
+        "index_price": {
+          "title": "index_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Current index (oracle) price for position's currency"
+        },
+        "initial_margin": {
+          "title": "initial_margin",
+          "type": "string",
+          "format": "decimal",
+          "description": "USD initial margin requirement for this position"
+        },
+        "instrument_name": {
+          "title": "instrument_name",
+          "type": "string",
+          "description": "Instrument name (same as the base Asset name)"
+        },
+        "instrument_type": {
+          "title": "instrument_type",
+          "type": "string",
+          "enum": [
+            "erc20",
+            "option",
+            "perp"
+          ],
+          "description": "`erc20`, `option`, or `perp`"
+        },
+        "liquidation_price": {
+          "title": "liquidation_price",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "decimal",
+          "default": null,
+          "description": "Index price at which position will be liquidated"
+        },
+        "maintenance_margin": {
+          "title": "maintenance_margin",
+          "type": "string",
+          "format": "decimal",
+          "description": "USD maintenance margin requirement for this position"
+        },
+        "mark_price": {
+          "title": "mark_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Current mark price for position's instrument"
+        },
+        "mark_value": {
+          "title": "mark_value",
+          "type": "string",
+          "format": "decimal",
+          "description": "USD value of the position; this represents how much USD can be recieved by fully closing the position at the current oracle price"
+        },
+        "theta": {
+          "title": "theta",
+          "type": "string",
+          "format": "decimal",
+          "description": "Asset theta (zero for non-options)"
+        },
+        "vega": {
+          "title": "vega",
+          "type": "string",
+          "format": "decimal",
+          "description": "Asset vega (zero for non-options)"
+        }
+      },
+      "required": [
+        "amount",
+        "delta",
+        "gamma",
+        "index_price",
+        "initial_margin",
+        "instrument_name",
+        "instrument_type",
+        "liquidation_price",
+        "maintenance_margin",
+        "mark_price",
+        "mark_value",
+        "theta",
+        "vega"
+      ],
+      "additionalProperties": false
+    },
+    "MarginWatchPubSubSchema": {
+      "type": "object",
+      "properties": {
+        "channel_params": {
+          "type": "object",
+          "$ref": "#/definitions/MarginWatchChannelSchema",
+          "field_many": false
+        },
+        "notification": {
+          "type": "object",
+          "$ref": "#/definitions/MarginWatchNotificationSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "channel_params",
+        "notification"
+      ],
+      "additionalProperties": false
+    },
+    "OrderbookInstrumentNameGroupDepthChannelSchema": {
+      "type": "object",
+      "properties": {
+        "depth": {
+          "title": "depth",
+          "type": "string",
+          "enum": [
+            "1",
+            "10",
+            "20",
+            "100"
+          ],
+          "description": "Number of price levels returned"
+        },
+        "group": {
+          "title": "group",
+          "type": "string",
+          "enum": [
+            "1",
+            "10",
+            "100"
+          ],
+          "description": "Price grouping (rounding)"
+        },
+        "instrument_name": {
+          "title": "instrument_name",
+          "type": "string",
+          "description": "Instrument name"
+        }
+      },
+      "required": [
+        "depth",
+        "group",
+        "instrument_name"
+      ],
+      "additionalProperties": false
+    },
+    "OrderbookInstrumentNameGroupDepthNotificationSchema": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "title": "method",
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "$ref": "#/definitions/OrderbookInstrumentNameGroupDepthNotificationParamsSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "method",
+        "params"
+      ],
+      "additionalProperties": false
+    },
+    "OrderbookInstrumentNameGroupDepthNotificationParamsSchema": {
+      "type": "object",
+      "properties": {
+        "channel": {
+          "title": "channel",
+          "type": "string",
+          "description": "Subscribed channel name"
+        },
+        "data": {
+          "type": "object",
+          "$ref": "#/definitions/OrderbookInstrumentNameGroupDepthPublisherDataSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "channel",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "OrderbookInstrumentNameGroupDepthPublisherDataSchema": {
+      "type": "object",
+      "properties": {
+        "asks": {
+          "title": "asks",
+          "type": "array",
+          "description": "List of asks as [price, amount] tuples optionally grouped into price buckets",
+          "items": {
+            "title": "asks",
+            "type": "array",
+            "items": {
+              "title": "asks",
+              "type": "string",
+              "format": "decimal"
+            }
+          }
+        },
+        "bids": {
+          "title": "bids",
+          "type": "array",
+          "description": "List of bids as [price, amount] tuples optionally grouped into price buckets",
+          "items": {
+            "title": "bids",
+            "type": "array",
+            "items": {
+              "title": "bids",
+              "type": "string",
+              "format": "decimal"
+            }
+          }
+        },
+        "instrument_name": {
+          "title": "instrument_name",
+          "type": "string",
+          "description": "Instrument name"
+        },
+        "publish_id": {
+          "title": "publish_id",
+          "type": "integer",
+          "description": "Publish ID, incremented for each publish"
+        },
+        "timestamp": {
+          "title": "timestamp",
+          "type": "integer",
+          "description": "Timestamp of the orderbook snapshot"
+        }
+      },
+      "required": [
+        "asks",
+        "bids",
+        "instrument_name",
+        "publish_id",
+        "timestamp"
+      ],
+      "additionalProperties": false
+    },
+    "OrderbookInstrumentNameGroupDepthPubSubSchema": {
+      "type": "object",
+      "properties": {
+        "channel_params": {
+          "type": "object",
+          "$ref": "#/definitions/OrderbookInstrumentNameGroupDepthChannelSchema",
+          "field_many": false
+        },
+        "notification": {
+          "type": "object",
+          "$ref": "#/definitions/OrderbookInstrumentNameGroupDepthNotificationSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "channel_params",
+        "notification"
+      ],
+      "additionalProperties": false
+    },
+    "SpotFeedCurrencyChannelSchema": {
+      "type": "object",
+      "properties": {
+        "currency": {
+          "title": "currency",
+          "type": "string",
+          "description": "Currency"
+        }
+      },
+      "required": [
+        "currency"
+      ],
+      "additionalProperties": false
+    },
+    "SpotFeedCurrencyNotificationSchema": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "title": "method",
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "$ref": "#/definitions/SpotFeedCurrencyNotificationParamsSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "method",
+        "params"
+      ],
+      "additionalProperties": false
+    },
+    "SpotFeedCurrencyNotificationParamsSchema": {
+      "type": "object",
+      "properties": {
+        "channel": {
+          "title": "channel",
+          "type": "string",
+          "description": "Subscribed channel name"
+        },
+        "data": {
+          "type": "object",
+          "$ref": "#/definitions/SpotFeedCurrencyPublisherDataSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "channel",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "SpotFeedCurrencyPublisherDataSchema": {
+      "type": "object",
+      "properties": {
+        "feeds": {
+          "title": "feeds",
+          "type": "object",
+          "description": "Spot feed data",
+          "additionalProperties": {
+            "type": "object",
+            "$ref": "#/definitions/SpotFeedSnapshotSchema",
+            "field_many": true
+          }
+        },
+        "timestamp": {
+          "title": "timestamp",
+          "type": "integer",
+          "description": "Timestamp of the spot feed snapshot"
+        }
+      },
+      "required": [
+        "feeds",
+        "timestamp"
+      ],
+      "additionalProperties": false
+    },
+    "SpotFeedSnapshotSchema": {
+      "type": "object",
+      "properties": {
+        "confidence": {
+          "title": "confidence",
+          "type": "string",
+          "format": "decimal",
+          "description": "Confidence levels of the price"
+        },
+        "confidence_prev_daily": {
+          "title": "confidence_prev_daily",
+          "type": "string",
+          "format": "decimal",
+          "description": "Confidence levels of the price 24 hours ago"
+        },
+        "price": {
+          "title": "price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Price of the currency"
+        },
+        "price_prev_daily": {
+          "title": "price_prev_daily",
+          "type": "string",
+          "format": "decimal",
+          "description": "Price of the currency 24 hours ago"
+        },
+        "timestamp_prev_daily": {
+          "title": "timestamp_prev_daily",
+          "type": "integer",
+          "description": "Unix timestamp of the price 24 hours ago"
+        }
+      },
+      "required": [
+        "confidence",
+        "confidence_prev_daily",
+        "price",
+        "price_prev_daily",
+        "timestamp_prev_daily"
+      ],
+      "additionalProperties": false
+    },
+    "SpotFeedCurrencyPubSubSchema": {
+      "type": "object",
+      "properties": {
+        "channel_params": {
+          "type": "object",
+          "$ref": "#/definitions/SpotFeedCurrencyChannelSchema",
+          "field_many": false
+        },
+        "notification": {
+          "type": "object",
+          "$ref": "#/definitions/SpotFeedCurrencyNotificationSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "channel_params",
+        "notification"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdBalancesChannelSchema": {
+      "type": "object",
+      "properties": {
+        "subaccount_id": {
+          "title": "subaccount_id",
+          "type": "integer",
+          "description": "Subaccount ID"
+        }
+      },
+      "required": [
+        "subaccount_id"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdBalancesNotificationSchema": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "title": "method",
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdBalancesNotificationParamsSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "method",
+        "params"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdBalancesNotificationParamsSchema": {
+      "type": "object",
+      "properties": {
+        "channel": {
+          "title": "channel",
+          "type": "string",
+          "description": "Subscribed channel name"
+        },
+        "data": {
+          "title": "data",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/BalanceUpdateSchema",
+            "field_many": true
+          }
+        }
+      },
+      "required": [
+        "channel",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "BalanceUpdateSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "name",
+          "type": "string",
+          "description": "Name of colletaral asset or instrument"
+        },
+        "new_balance": {
+          "title": "new_balance",
+          "type": "string",
+          "format": "decimal",
+          "description": "Balance after update"
+        },
+        "previous_balance": {
+          "title": "previous_balance",
+          "type": "string",
+          "format": "decimal",
+          "description": "Balance before update"
+        },
+        "update_type": {
+          "title": "update_type",
+          "type": "string",
+          "enum": [
+            "trade",
+            "asset_deposit",
+            "asset_withdrawal",
+            "transfer",
+            "subaccount_deposit",
+            "subaccount_withdrawal",
+            "liquidation",
+            "liquidator",
+            "onchain_drift_fix",
+            "perp_settlement",
+            "option_settlement",
+            "interest_accrual",
+            "onchain_revert",
+            "double_revert"
+          ],
+          "description": "Type of transaction"
+        }
+      },
+      "required": [
+        "name",
+        "new_balance",
+        "previous_balance",
+        "update_type"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdBalancesPubSubSchema": {
+      "type": "object",
+      "properties": {
+        "channel_params": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdBalancesChannelSchema",
+          "field_many": false
+        },
+        "notification": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdBalancesNotificationSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "channel_params",
+        "notification"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdBestQuotesChannelSchema": {
+      "type": "object",
+      "properties": {
+        "subaccount_id": {
+          "title": "subaccount_id",
+          "type": "integer",
+          "description": "Subaccount ID to get best quote state updates for"
+        }
+      },
+      "required": [
+        "subaccount_id"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdBestQuotesNotificationSchema": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "title": "method",
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdBestQuotesNotificationParamsSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "method",
+        "params"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdBestQuotesNotificationParamsSchema": {
+      "type": "object",
+      "properties": {
+        "channel": {
+          "title": "channel",
+          "type": "string",
+          "description": "Subscribed channel name"
+        },
+        "data": {
+          "title": "data",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/BestQuoteChannelResultSchema",
+            "field_many": true
+          }
+        }
+      },
+      "required": [
+        "channel",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "BestQuoteChannelResultSchema": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "oneOf": [
+            {
+              "type": "object",
+              "$ref": "#/definitions/RPCErrorFormatSchema",
+              "field_many": false,
+              "description": "Error if the the `rfq_get_best_quote` RPC call failed",
+              "default": {
+                "data": null
+              }
+            },
+            {
+              "type": "null",
+              "title": ""
+            }
+          ],
+          "description": "Error if the the `rfq_get_best_quote` RPC call failed"
+        },
+        "result": {
+          "oneOf": [
+            {
+              "type": "object",
+              "$ref": "#/definitions/RFQGetBestQuoteResultSchema",
+              "field_many": false,
+              "description": "Best quote result for the RFQ, if not an error",
+              "default": {
+                "post_liquidation_price": null,
+                "orderbook_total_cost": null,
+                "down_liquidation_price": null,
+                "best_quote": null,
+                "up_liquidation_price": null,
+                "invalid_reason": null
+              }
+            },
+            {
+              "type": "null",
+              "title": ""
+            }
+          ],
+          "description": "Best quote result for the RFQ, if not an error"
+        },
+        "rfq_id": {
+          "title": "rfq_id",
+          "type": "string",
+          "format": "uuid",
+          "description": "RFQ ID for which the best quote is being published"
+        }
+      },
+      "required": [
+        "rfq_id"
+      ],
+      "additionalProperties": false
+    },
+    "RPCErrorFormatSchema": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "title": "code",
+          "type": "integer"
+        },
+        "data": {
+          "title": "data",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "message": {
+          "title": "message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "additionalProperties": false
+    },
+    "RFQGetBestQuoteResultSchema": {
+      "type": "object",
+      "properties": {
+        "best_quote": {
+          "oneOf": [
+            {
+              "type": "object",
+              "$ref": "#/definitions/QuoteResultPublicSchema",
+              "field_many": false,
+              "description": "Best quote for the RFQ (or null if RFQ is not created yet or quotes do not exist). This object should be used to sign a taker quote and call into `execute_quote` RPC.",
+              "default": {
+                "tx_status": null,
+                "tx_hash": null
+              }
+            },
+            {
+              "type": "null",
+              "title": ""
+            }
+          ],
+          "description": "Best quote for the RFQ (or null if RFQ is not created yet or quotes do not exist). This object should be used to sign a taker quote and call into `execute_quote` RPC."
+        },
+        "direction": {
+          "title": "direction",
+          "type": "string",
+          "enum": [
+            "buy",
+            "sell"
+          ],
+          "description": "RFQ direction."
+        },
+        "down_liquidation_price": {
+          "title": "down_liquidation_price",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "decimal",
+          "default": null,
+          "description": "Liquidation price if the trade were to be filled and the market moves down."
+        },
+        "estimated_fee": {
+          "title": "estimated_fee",
+          "type": "string",
+          "format": "decimal",
+          "description": "An estimate for how much the user will pay in fees ($ for the whole trade)."
+        },
+        "estimated_realized_pnl": {
+          "title": "estimated_realized_pnl",
+          "type": "string",
+          "format": "decimal",
+          "description": "An estimate for the realized PnL of the trade."
+        },
+        "estimated_realized_pnl_excl_fees": {
+          "title": "estimated_realized_pnl_excl_fees",
+          "type": "string",
+          "format": "decimal",
+          "description": "An estimate for the realized PnL of the trade. with cost basis calculated without considering fees."
+        },
+        "estimated_total_cost": {
+          "title": "estimated_total_cost",
+          "type": "string",
+          "format": "decimal",
+          "description": "An estimate for the total $ cost of the trade."
+        },
+        "filled_pct": {
+          "title": "filled_pct",
+          "type": "string",
+          "format": "decimal",
+          "description": "Percentage of the RFQ that has already been filled, from 0 to 1."
+        },
+        "invalid_reason": {
+          "title": "invalid_reason",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "enum": [
+            "Account is currently under maintenance margin requirements, trading is frozen.",
+            "This order would cause account to fall under maintenance margin requirements.",
+            "Insufficient buying power, only a single risk-reducing open order is allowed.",
+            "Insufficient buying power, consider reducing order size.",
+            "Insufficient buying power, consider reducing order size or canceling other orders.",
+            "Consider canceling other limit orders or using IOC, FOK, or market orders. This order is risk-reducing, but if filled with other open orders, buying power might be insufficient.",
+            "Insufficient buying power."
+          ],
+          "description": "Reason for the RFQ being invalid, if any."
+        },
+        "is_valid": {
+          "title": "is_valid",
+          "type": "boolean",
+          "description": "`True` if RFQ is expected to pass margin requirements."
+        },
+        "orderbook_total_cost": {
+          "title": "orderbook_total_cost",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "decimal",
+          "default": null,
+          "description": "Total cost of  the RFQ if it were to be filled at current orderbook prices (same direction as the RFQ). If lower than `estimated_total_cost`, the user may want to use the orderbook instead of RFQs for this order. Will return null if any of the legs do not have orderbook data or enough liquidity for the full fill."
+        },
+        "post_initial_margin": {
+          "title": "post_initial_margin",
+          "type": "string",
+          "format": "decimal",
+          "description": "User's hypothetical margin balance if the trade were to get executed."
+        },
+        "post_liquidation_price": {
+          "title": "post_liquidation_price",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "decimal",
+          "default": null,
+          "description": "Liquidation price if the trade were to be filled. If both upside and downside liquidation prices exist, returns the closest one to the current index price."
+        },
+        "pre_initial_margin": {
+          "title": "pre_initial_margin",
+          "type": "string",
+          "format": "decimal",
+          "description": "User's initial margin balance before the trade."
+        },
+        "suggested_max_fee": {
+          "title": "suggested_max_fee",
+          "type": "string",
+          "format": "decimal",
+          "description": "Recommended value for `max_fee` of the trade."
+        },
+        "up_liquidation_price": {
+          "title": "up_liquidation_price",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "decimal",
+          "default": null,
+          "description": "Liquidation price if the trade were to be filled and the market moves up."
+        }
+      },
+      "required": [
+        "best_quote",
+        "direction",
+        "down_liquidation_price",
+        "estimated_fee",
+        "estimated_realized_pnl",
+        "estimated_realized_pnl_excl_fees",
+        "estimated_total_cost",
+        "filled_pct",
+        "invalid_reason",
+        "is_valid",
+        "orderbook_total_cost",
+        "post_initial_margin",
+        "post_liquidation_price",
+        "pre_initial_margin",
+        "suggested_max_fee",
+        "up_liquidation_price"
+      ],
+      "additionalProperties": false
+    },
+    "QuoteResultPublicSchema": {
+      "type": "object",
+      "properties": {
+        "cancel_reason": {
+          "title": "cancel_reason",
+          "type": "string",
+          "enum": [
+            "",
+            "user_request",
+            "insufficient_margin",
+            "signed_max_fee_too_low",
+            "mmp_trigger",
+            "cancel_on_disconnect",
+            "session_key_deregistered",
+            "subaccount_withdrawn",
+            "rfq_no_longer_open",
+            "compliance"
+          ],
+          "description": "Cancel reason, if any"
+        },
+        "creation_timestamp": {
+          "title": "creation_timestamp",
+          "type": "integer",
+          "description": "Creation timestamp in ms since Unix epoch"
+        },
+        "direction": {
+          "title": "direction",
+          "type": "string",
+          "enum": [
+            "buy",
+            "sell"
+          ],
+          "description": "Quote direction"
+        },
+        "fill_pct": {
+          "title": "fill_pct",
+          "type": "string",
+          "format": "decimal",
+          "description": "Percentage of the RFQ that this quote would fill, from 0 to 1."
+        },
+        "last_update_timestamp": {
+          "title": "last_update_timestamp",
+          "type": "integer",
+          "description": "Last update timestamp in ms since Unix epoch"
+        },
+        "legs": {
+          "title": "legs",
+          "type": "array",
+          "description": "Quote legs",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/LegPricedSchema",
+            "field_many": true
+          }
+        },
+        "legs_hash": {
+          "title": "legs_hash",
+          "type": "string",
+          "description": "Hash of the legs of the best quote to be signed by the taker."
+        },
+        "liquidity_role": {
+          "title": "liquidity_role",
+          "type": "string",
+          "enum": [
+            "maker",
+            "taker"
+          ],
+          "description": "Liquidity role"
+        },
+        "quote_id": {
+          "title": "quote_id",
+          "type": "string",
+          "format": "uuid",
+          "description": "Quote ID"
+        },
+        "rfq_id": {
+          "title": "rfq_id",
+          "type": "string",
+          "format": "uuid",
+          "description": "RFQ ID"
+        },
+        "status": {
+          "title": "status",
+          "type": "string",
+          "enum": [
+            "open",
+            "filled",
+            "cancelled",
+            "expired"
+          ],
+          "description": "Status"
+        },
+        "subaccount_id": {
+          "title": "subaccount_id",
+          "type": "integer",
+          "description": "Subaccount ID"
+        },
+        "tx_hash": {
+          "title": "tx_hash",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "Blockchain transaction hash (only for executed quotes)"
+        },
+        "tx_status": {
+          "title": "tx_status",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "enum": [
+            "requested",
+            "pending",
+            "settled",
+            "reverted",
+            "ignored",
+            "timed_out"
+          ],
+          "description": "Blockchain transaction status (only for executed quotes)"
+        },
+        "wallet": {
+          "title": "wallet",
+          "type": "string",
+          "description": "Wallet address of the quote sender"
+        }
+      },
+      "required": [
+        "cancel_reason",
+        "creation_timestamp",
+        "direction",
+        "fill_pct",
+        "last_update_timestamp",
+        "legs",
+        "legs_hash",
+        "liquidity_role",
+        "quote_id",
+        "rfq_id",
+        "status",
+        "subaccount_id",
+        "tx_hash",
+        "tx_status",
+        "wallet"
+      ],
+      "additionalProperties": false
+    },
+    "LegPricedSchema": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "title": "amount",
+          "type": "string",
+          "format": "decimal",
+          "description": "Amount in units of the base"
+        },
+        "direction": {
+          "title": "direction",
+          "type": "string",
+          "enum": [
+            "buy",
+            "sell"
+          ],
+          "description": "Leg direction"
+        },
+        "instrument_name": {
+          "title": "instrument_name",
+          "type": "string",
+          "description": "Instrument name"
+        },
+        "price": {
+          "title": "price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Leg price"
+        }
+      },
+      "required": [
+        "amount",
+        "direction",
+        "instrument_name",
+        "price"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdBestQuotesPubSubSchema": {
+      "type": "object",
+      "properties": {
+        "channel_params": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdBestQuotesChannelSchema",
+          "field_many": false
+        },
+        "notification": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdBestQuotesNotificationSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "channel_params",
+        "notification"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdOrdersChannelSchema": {
+      "type": "object",
+      "properties": {
+        "subaccount_id": {
+          "title": "subaccount_id",
+          "type": "integer",
+          "description": "Subaccount ID"
+        }
+      },
+      "required": [
+        "subaccount_id"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdOrdersNotificationSchema": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "title": "method",
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdOrdersNotificationParamsSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "method",
+        "params"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdOrdersNotificationParamsSchema": {
+      "type": "object",
+      "properties": {
+        "channel": {
+          "title": "channel",
+          "type": "string",
+          "description": "Subscribed channel name"
+        },
+        "data": {
+          "title": "data",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/OrderResponseSchema",
+            "field_many": true
+          }
+        }
+      },
+      "required": [
+        "channel",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "OrderResponseSchema": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "title": "amount",
+          "type": "string",
+          "format": "decimal",
+          "description": "Order amount in units of the base"
+        },
+        "average_price": {
+          "title": "average_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Average fill price"
+        },
+        "cancel_reason": {
+          "title": "cancel_reason",
+          "type": "string",
+          "enum": [
+            "",
+            "user_request",
+            "mmp_trigger",
+            "insufficient_margin",
+            "signed_max_fee_too_low",
+            "cancel_on_disconnect",
+            "ioc_or_market_partial_fill",
+            "session_key_deregistered",
+            "subaccount_withdrawn",
+            "compliance",
+            "trigger_failed",
+            "validation_failed"
+          ],
+          "description": "If cancelled, reason behind order cancellation"
+        },
+        "creation_timestamp": {
+          "title": "creation_timestamp",
+          "type": "integer",
+          "description": "Creation timestamp (in ms since Unix epoch)"
+        },
+        "direction": {
+          "title": "direction",
+          "type": "string",
+          "enum": [
+            "buy",
+            "sell"
+          ],
+          "description": "Order direction"
+        },
+        "filled_amount": {
+          "title": "filled_amount",
+          "type": "string",
+          "format": "decimal",
+          "description": "Total filled amount for the order"
+        },
+        "instrument_name": {
+          "title": "instrument_name",
+          "type": "string",
+          "description": "Instrument name"
+        },
+        "is_transfer": {
+          "title": "is_transfer",
+          "type": "boolean",
+          "description": "Whether the order was generated through `private/transfer_position`"
+        },
+        "label": {
+          "title": "label",
+          "type": "string",
+          "description": "Optional user-defined label for the order"
+        },
+        "last_update_timestamp": {
+          "title": "last_update_timestamp",
+          "type": "integer",
+          "description": "Last update timestamp (in ms since Unix epoch)"
+        },
+        "limit_price": {
+          "title": "limit_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Limit price in quote currency"
+        },
+        "max_fee": {
+          "title": "max_fee",
+          "type": "string",
+          "format": "decimal",
+          "description": "Max fee in units of the quote currency"
+        },
+        "mmp": {
+          "title": "mmp",
+          "type": "boolean",
+          "description": "Whether the order is tagged for market maker protections"
+        },
+        "nonce": {
+          "title": "nonce",
+          "type": "integer",
+          "description": "Unique nonce defined as (UTC_timestamp in ms)(random_number_up_to_3_digits) (e.g. 1695836058725001, where 001 is the random number)"
+        },
+        "order_fee": {
+          "title": "order_fee",
+          "type": "string",
+          "format": "decimal",
+          "description": "Total order fee paid so far"
+        },
+        "order_id": {
+          "title": "order_id",
+          "type": "string",
+          "description": "Order ID"
+        },
+        "order_status": {
+          "title": "order_status",
+          "type": "string",
+          "enum": [
+            "open",
+            "filled",
+            "cancelled",
+            "expired",
+            "untriggered"
+          ],
+          "description": "Order status"
+        },
+        "order_type": {
+          "title": "order_type",
+          "type": "string",
+          "enum": [
+            "limit",
+            "market"
+          ],
+          "description": "Order type"
+        },
+        "quote_id": {
+          "title": "quote_id",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid",
+          "default": null,
+          "description": "Quote ID if the trade was executed via RFQ"
+        },
+        "replaced_order_id": {
+          "title": "replaced_order_id",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid",
+          "default": null,
+          "description": "If replaced, ID of the order that was replaced"
+        },
+        "signature": {
+          "title": "signature",
+          "type": "string",
+          "description": "Ethereum signature of the order"
+        },
+        "signature_expiry_sec": {
+          "title": "signature_expiry_sec",
+          "type": "integer",
+          "description": "Signature expiry timestamp"
+        },
+        "signer": {
+          "title": "signer",
+          "type": "string",
+          "description": "Owner wallet address or registered session key that signed order"
+        },
+        "subaccount_id": {
+          "title": "subaccount_id",
+          "type": "integer",
+          "description": "Subaccount ID"
+        },
+        "time_in_force": {
+          "title": "time_in_force",
+          "type": "string",
+          "enum": [
+            "gtc",
+            "post_only",
+            "fok",
+            "ioc"
+          ],
+          "description": "Time in force"
+        },
+        "trigger_price": {
+          "title": "trigger_price",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "decimal",
+          "default": null,
+          "description": "(Required for trigger orders) Index or Market price to trigger order at"
+        },
+        "trigger_price_type": {
+          "title": "trigger_price_type",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "enum": [
+            "mark",
+            "index"
+          ],
+          "description": "(Required for trigger orders) Trigger with Index or Mark Price"
+        },
+        "trigger_reject_message": {
+          "title": "trigger_reject_message",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "(Required for trigger orders) Error message if error occured during trigger"
+        },
+        "trigger_type": {
+          "title": "trigger_type",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "enum": [
+            "stoploss",
+            "takeprofit"
+          ],
+          "description": "(Required for trigger orders) Stop-loss or Take-profit."
+        }
+      },
+      "required": [
+        "amount",
+        "average_price",
+        "cancel_reason",
+        "creation_timestamp",
+        "direction",
+        "filled_amount",
+        "instrument_name",
+        "is_transfer",
+        "label",
+        "last_update_timestamp",
+        "limit_price",
+        "max_fee",
+        "mmp",
+        "nonce",
+        "order_fee",
+        "order_id",
+        "order_status",
+        "order_type",
+        "quote_id",
+        "signature",
+        "signature_expiry_sec",
+        "signer",
+        "subaccount_id",
+        "time_in_force"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdOrdersPubSubSchema": {
+      "type": "object",
+      "properties": {
+        "channel_params": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdOrdersChannelSchema",
+          "field_many": false
+        },
+        "notification": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdOrdersNotificationSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "channel_params",
+        "notification"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdQuotesChannelSchema": {
+      "type": "object",
+      "properties": {
+        "subaccount_id": {
+          "title": "subaccount_id",
+          "type": "integer",
+          "description": "Subaccount ID to get quote state updates for"
+        }
+      },
+      "required": [
+        "subaccount_id"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdQuotesNotificationSchema": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "title": "method",
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdQuotesNotificationParamsSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "method",
+        "params"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdQuotesNotificationParamsSchema": {
+      "type": "object",
+      "properties": {
+        "channel": {
+          "title": "channel",
+          "type": "string",
+          "description": "Subscribed channel name"
+        },
+        "data": {
+          "title": "data",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/QuoteResultSchema",
+            "field_many": true
+          }
+        }
+      },
+      "required": [
+        "channel",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "QuoteResultSchema": {
+      "type": "object",
+      "properties": {
+        "cancel_reason": {
+          "title": "cancel_reason",
+          "type": "string",
+          "enum": [
+            "",
+            "user_request",
+            "insufficient_margin",
+            "signed_max_fee_too_low",
+            "mmp_trigger",
+            "cancel_on_disconnect",
+            "session_key_deregistered",
+            "subaccount_withdrawn",
+            "rfq_no_longer_open",
+            "compliance"
+          ],
+          "description": "Cancel reason, if any"
+        },
+        "creation_timestamp": {
+          "title": "creation_timestamp",
+          "type": "integer",
+          "description": "Creation timestamp in ms since Unix epoch"
+        },
+        "direction": {
+          "title": "direction",
+          "type": "string",
+          "enum": [
+            "buy",
+            "sell"
+          ],
+          "description": "Quote direction"
+        },
+        "fee": {
+          "title": "fee",
+          "type": "string",
+          "format": "decimal",
+          "description": "Fee paid for this quote (if executed)"
+        },
+        "fill_pct": {
+          "title": "fill_pct",
+          "type": "string",
+          "format": "decimal",
+          "description": "Percentage of the RFQ that this quote would fill, from 0 to 1."
+        },
+        "is_transfer": {
+          "title": "is_transfer",
+          "type": "boolean",
+          "description": "Whether the order was generated through `private/transfer_position`"
+        },
+        "label": {
+          "title": "label",
+          "type": "string",
+          "description": "User-defined label, if any"
+        },
+        "last_update_timestamp": {
+          "title": "last_update_timestamp",
+          "type": "integer",
+          "description": "Last update timestamp in ms since Unix epoch"
+        },
+        "legs": {
+          "title": "legs",
+          "type": "array",
+          "description": "Quote legs",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/LegPricedSchema",
+            "field_many": true
+          }
+        },
+        "legs_hash": {
+          "title": "legs_hash",
+          "type": "string",
+          "description": "Hash of the legs of the best quote to be signed by the taker."
+        },
+        "liquidity_role": {
+          "title": "liquidity_role",
+          "type": "string",
+          "enum": [
+            "maker",
+            "taker"
+          ],
+          "description": "Liquidity role"
+        },
+        "max_fee": {
+          "title": "max_fee",
+          "type": "string",
+          "format": "decimal",
+          "description": "Signed max fee"
+        },
+        "mmp": {
+          "title": "mmp",
+          "type": "boolean",
+          "description": "Whether the quote is tagged for market maker protections (default false)"
+        },
+        "nonce": {
+          "title": "nonce",
+          "type": "integer",
+          "description": "Nonce"
+        },
+        "quote_id": {
+          "title": "quote_id",
+          "type": "string",
+          "format": "uuid",
+          "description": "Quote ID"
+        },
+        "rfq_id": {
+          "title": "rfq_id",
+          "type": "string",
+          "format": "uuid",
+          "description": "RFQ ID"
+        },
+        "signature": {
+          "title": "signature",
+          "type": "string",
+          "description": "Ethereum signature of the quote"
+        },
+        "signature_expiry_sec": {
+          "title": "signature_expiry_sec",
+          "type": "integer",
+          "description": "Unix timestamp in seconds"
+        },
+        "signer": {
+          "title": "signer",
+          "type": "string",
+          "description": "Owner wallet address or registered session key that signed the quote"
+        },
+        "status": {
+          "title": "status",
+          "type": "string",
+          "enum": [
+            "open",
+            "filled",
+            "cancelled",
+            "expired"
+          ],
+          "description": "Status"
+        },
+        "subaccount_id": {
+          "title": "subaccount_id",
+          "type": "integer",
+          "description": "Subaccount ID"
+        },
+        "tx_hash": {
+          "title": "tx_hash",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "Blockchain transaction hash (only for executed quotes)"
+        },
+        "tx_status": {
+          "title": "tx_status",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "enum": [
+            "requested",
+            "pending",
+            "settled",
+            "reverted",
+            "ignored",
+            "timed_out"
+          ],
+          "description": "Blockchain transaction status (only for executed quotes)"
+        }
+      },
+      "required": [
+        "cancel_reason",
+        "creation_timestamp",
+        "direction",
+        "fee",
+        "fill_pct",
+        "is_transfer",
+        "label",
+        "last_update_timestamp",
+        "legs",
+        "legs_hash",
+        "liquidity_role",
+        "max_fee",
+        "mmp",
+        "nonce",
+        "quote_id",
+        "rfq_id",
+        "signature",
+        "signature_expiry_sec",
+        "signer",
+        "status",
+        "subaccount_id",
+        "tx_hash",
+        "tx_status"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdQuotesPubSubSchema": {
+      "type": "object",
+      "properties": {
+        "channel_params": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdQuotesChannelSchema",
+          "field_many": false
+        },
+        "notification": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdQuotesNotificationSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "channel_params",
+        "notification"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdTradesChannelSchema": {
+      "type": "object",
+      "properties": {
+        "subaccount_id": {
+          "title": "subaccount_id",
+          "type": "integer",
+          "description": "Subaccount ID"
+        }
+      },
+      "required": [
+        "subaccount_id"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdTradesNotificationSchema": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "title": "method",
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdTradesNotificationParamsSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "method",
+        "params"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdTradesNotificationParamsSchema": {
+      "type": "object",
+      "properties": {
+        "channel": {
+          "title": "channel",
+          "type": "string",
+          "description": "Subscribed channel name"
+        },
+        "data": {
+          "title": "data",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/TradeResponseSchema",
+            "field_many": true
+          }
+        }
+      },
+      "required": [
+        "channel",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "TradeResponseSchema": {
+      "type": "object",
+      "properties": {
+        "direction": {
+          "title": "direction",
+          "type": "string",
+          "enum": [
+            "buy",
+            "sell"
+          ],
+          "description": "Order direction"
+        },
+        "expected_rebate": {
+          "title": "expected_rebate",
+          "type": "string",
+          "format": "decimal",
+          "description": "Expected rebate for this trade"
+        },
+        "index_price": {
+          "title": "index_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Index price of the underlying at the time of the trade"
+        },
+        "instrument_name": {
+          "title": "instrument_name",
+          "type": "string",
+          "description": "Instrument name"
+        },
+        "is_transfer": {
+          "title": "is_transfer",
+          "type": "boolean",
+          "description": "Whether the trade was generated through `private/transfer_position`"
+        },
+        "label": {
+          "title": "label",
+          "type": "string",
+          "description": "Optional user-defined label for the order"
+        },
+        "liquidity_role": {
+          "title": "liquidity_role",
+          "type": "string",
+          "enum": [
+            "maker",
+            "taker"
+          ],
+          "description": "Role of the user in the trade"
+        },
+        "mark_price": {
+          "title": "mark_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Mark price of the instrument at the time of the trade"
+        },
+        "order_id": {
+          "title": "order_id",
+          "type": "string",
+          "description": "Order ID"
+        },
+        "quote_id": {
+          "title": "quote_id",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid",
+          "default": null,
+          "description": "Quote ID if the trade was executed via RFQ"
+        },
+        "realized_pnl": {
+          "title": "realized_pnl",
+          "type": "string",
+          "format": "decimal",
+          "description": "Realized PnL for this trade"
+        },
+        "realized_pnl_excl_fees": {
+          "title": "realized_pnl_excl_fees",
+          "type": "string",
+          "format": "decimal",
+          "description": "Realized PnL for this trade using cost accounting that excludes fees"
+        },
+        "subaccount_id": {
+          "title": "subaccount_id",
+          "type": "integer",
+          "description": "Subaccount ID"
+        },
+        "timestamp": {
+          "title": "timestamp",
+          "type": "integer",
+          "description": "Trade timestamp (in ms since Unix epoch)"
+        },
+        "trade_amount": {
+          "title": "trade_amount",
+          "type": "string",
+          "format": "decimal",
+          "description": "Amount filled in this trade"
+        },
+        "trade_fee": {
+          "title": "trade_fee",
+          "type": "string",
+          "format": "decimal",
+          "description": "Fee for this trade"
+        },
+        "trade_id": {
+          "title": "trade_id",
+          "type": "string",
+          "description": "Trade ID"
+        },
+        "trade_price": {
+          "title": "trade_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Price at which the trade was filled"
+        },
+        "transaction_id": {
+          "title": "transaction_id",
+          "type": "string",
+          "description": "The transaction id of the related settlement transaction"
+        },
+        "tx_hash": {
+          "title": "tx_hash",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "Blockchain transaction hash"
+        },
+        "tx_status": {
+          "title": "tx_status",
+          "type": "string",
+          "enum": [
+            "requested",
+            "pending",
+            "settled",
+            "reverted",
+            "ignored",
+            "timed_out"
+          ],
+          "description": "Blockchain transaction status"
+        }
+      },
+      "required": [
+        "direction",
+        "expected_rebate",
+        "index_price",
+        "instrument_name",
+        "is_transfer",
+        "label",
+        "liquidity_role",
+        "mark_price",
+        "order_id",
+        "quote_id",
+        "realized_pnl",
+        "realized_pnl_excl_fees",
+        "subaccount_id",
+        "timestamp",
+        "trade_amount",
+        "trade_fee",
+        "trade_id",
+        "trade_price",
+        "transaction_id",
+        "tx_hash",
+        "tx_status"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdTradesPubSubSchema": {
+      "type": "object",
+      "properties": {
+        "channel_params": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdTradesChannelSchema",
+          "field_many": false
+        },
+        "notification": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdTradesNotificationSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "channel_params",
+        "notification"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdTradesTxStatusChannelSchema": {
+      "type": "object",
+      "properties": {
+        "subaccount_id": {
+          "title": "subaccount_id",
+          "type": "integer",
+          "description": "Subaccount ID"
+        },
+        "tx_status": {
+          "title": "tx_status",
+          "type": "string",
+          "enum": [
+            "settled",
+            "reverted",
+            "timed_out"
+          ],
+          "description": "Transaction status (`settled` or `reverted`)"
+        }
+      },
+      "required": [
+        "subaccount_id",
+        "tx_status"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdTradesTxStatusNotificationSchema": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "title": "method",
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdTradesTxStatusNotificationParamsSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "method",
+        "params"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdTradesTxStatusNotificationParamsSchema": {
+      "type": "object",
+      "properties": {
+        "channel": {
+          "title": "channel",
+          "type": "string",
+          "description": "Subscribed channel name"
+        },
+        "data": {
+          "title": "data",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/TradeResponseSchema",
+            "field_many": true
+          }
+        }
+      },
+      "required": [
+        "channel",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdTradesTxStatusPubSubSchema": {
+      "type": "object",
+      "properties": {
+        "channel_params": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdTradesTxStatusChannelSchema",
+          "field_many": false
+        },
+        "notification": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdTradesTxStatusNotificationSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "channel_params",
+        "notification"
+      ],
+      "additionalProperties": false
+    },
+    "TickerInstrumentNameIntervalChannelSchema": {
+      "type": "object",
+      "properties": {
+        "instrument_name": {
+          "title": "instrument_name",
+          "type": "string",
+          "description": "Instrument name"
+        },
+        "interval": {
+          "title": "interval",
+          "type": "string",
+          "enum": [
+            "100",
+            "1000"
+          ],
+          "description": "Interval in milliseconds"
+        }
+      },
+      "required": [
+        "instrument_name",
+        "interval"
+      ],
+      "additionalProperties": false
+    },
+    "TickerInstrumentNameIntervalNotificationSchema": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "title": "method",
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "$ref": "#/definitions/TickerInstrumentNameIntervalNotificationParamsSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "method",
+        "params"
+      ],
+      "additionalProperties": false
+    },
+    "TickerInstrumentNameIntervalNotificationParamsSchema": {
+      "type": "object",
+      "properties": {
+        "channel": {
+          "title": "channel",
+          "type": "string",
+          "description": "Subscribed channel name"
+        },
+        "data": {
+          "type": "object",
+          "$ref": "#/definitions/TickerInstrumentNameIntervalPublisherDataSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "channel",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "TickerInstrumentNameIntervalPublisherDataSchema": {
+      "type": "object",
+      "properties": {
+        "instrument_ticker": {
+          "type": "object",
+          "$ref": "#/definitions/InstrumentTickerSchema",
+          "field_many": false,
+          "description": "Instrument of the ticker feed snapshot"
+        },
+        "timestamp": {
+          "title": "timestamp",
+          "type": "integer",
+          "description": "Timestamp of the ticker feed snapshot"
+        }
+      },
+      "required": [
+        "instrument_ticker",
+        "timestamp"
+      ],
+      "additionalProperties": false
+    },
+    "InstrumentTickerSchema": {
+      "type": "object",
+      "properties": {
+        "amount_step": {
+          "title": "amount_step",
+          "type": "string",
+          "format": "decimal",
+          "description": "Minimum valid increment of order amount"
+        },
+        "base_asset_address": {
+          "title": "base_asset_address",
+          "type": "string",
+          "description": "Blockchain address of the base asset"
+        },
+        "base_asset_sub_id": {
+          "title": "base_asset_sub_id",
+          "type": "string",
+          "description": "Sub ID of the specific base asset as defined in Asset.sol"
+        },
+        "base_currency": {
+          "title": "base_currency",
+          "type": "string",
+          "description": "Underlying currency of base asset (`ETH`, `BTC`, etc)"
+        },
+        "base_fee": {
+          "title": "base_fee",
+          "type": "string",
+          "format": "decimal",
+          "description": "$ base fee added to every taker order"
+        },
+        "best_ask_amount": {
+          "title": "best_ask_amount",
+          "type": "string",
+          "format": "decimal",
+          "description": "Amount of contracts / tokens available at best ask price"
+        },
+        "best_ask_price": {
+          "title": "best_ask_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Best ask price"
+        },
+        "best_bid_amount": {
+          "title": "best_bid_amount",
+          "type": "string",
+          "format": "decimal",
+          "description": "Amount of contracts / tokens available at best bid price"
+        },
+        "best_bid_price": {
+          "title": "best_bid_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Best bid price"
+        },
+        "erc20_details": {
+          "oneOf": [
+            {
+              "type": "object",
+              "$ref": "#/definitions/ERC20PublicDetailsSchema",
+              "field_many": false,
+              "description": "Details of the erc20 asset (if applicable)",
+              "default": {
+                "borrow_index": "1",
+                "underlying_erc20_address": "",
+                "supply_index": "1"
+              }
+            },
+            {
+              "type": "null",
+              "title": ""
+            }
+          ],
+          "description": "Details of the erc20 asset (if applicable)"
+        },
+        "fifo_min_allocation": {
+          "title": "fifo_min_allocation",
+          "type": "string",
+          "format": "decimal",
+          "description": "Minimum number of contracts that get filled using FIFO. Actual number of contracts that gets filled by FIFO will be the max between this value and (1 - pro_rata_fraction) x order_amount, plus any size leftovers due to rounding."
+        },
+        "five_percent_ask_depth": {
+          "title": "five_percent_ask_depth",
+          "type": "string",
+          "format": "decimal",
+          "description": "Total amount of contracts / tokens available at 5 percent above best ask price"
+        },
+        "five_percent_bid_depth": {
+          "title": "five_percent_bid_depth",
+          "type": "string",
+          "format": "decimal",
+          "description": "Total amount of contracts / tokens available at 5 percent below best bid price"
+        },
+        "index_price": {
+          "title": "index_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Index price"
+        },
+        "instrument_name": {
+          "title": "instrument_name",
+          "type": "string",
+          "description": "Instrument name"
+        },
+        "instrument_type": {
+          "title": "instrument_type",
+          "type": "string",
+          "enum": [
+            "erc20",
+            "option",
+            "perp"
+          ],
+          "description": "`erc20`, `option`, or `perp`"
+        },
+        "is_active": {
+          "title": "is_active",
+          "type": "boolean",
+          "description": "If `True`: instrument is tradeable within `activation` and `deactivation` timestamps"
+        },
+        "maker_fee_rate": {
+          "title": "maker_fee_rate",
+          "type": "string",
+          "format": "decimal",
+          "description": "Percent of spot price fee rate for makers"
+        },
+        "mark_price": {
+          "title": "mark_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Mark price"
+        },
+        "mark_price_fee_rate_cap": {
+          "title": "mark_price_fee_rate_cap",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "decimal",
+          "default": null,
+          "description": "Percent of option price fee cap, e.g. 12.5%, null if not applicable"
+        },
+        "max_price": {
+          "title": "max_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Maximum price at which an agressive buyer can be matched. Any portion of a market order that would execute above this price will be cancelled. A limit buy order with limit price above this value is treated as post only (i.e. it will be rejected if it would cross any existing resting order)."
+        },
+        "maximum_amount": {
+          "title": "maximum_amount",
+          "type": "string",
+          "format": "decimal",
+          "description": "Maximum valid amount of contracts / tokens per trade"
+        },
+        "min_price": {
+          "title": "min_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Minimum price at which an agressive seller can be matched. Any portion of a market order that would execute below this price will be cancelled. A limit sell order with limit price below this value is treated as post only (i.e. it will be rejected if it would cross any existing resting order)."
+        },
+        "minimum_amount": {
+          "title": "minimum_amount",
+          "type": "string",
+          "format": "decimal",
+          "description": "Minimum valid amount of contracts / tokens per trade"
+        },
+        "open_interest": {
+          "title": "open_interest",
+          "type": "object",
+          "description": "Margin type of subaccount (`PM` (Portfolio Margin), `PM2` (Portfolio Margin 2), or `SM` (Standard Margin)) -> (current open interest, open interest cap, manager currency)",
+          "additionalProperties": {
+            "title": "open_interest",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "$ref": "#/definitions/OpenInterestStatsSchema",
+              "field_many": true
+            }
+          }
+        },
+        "option_details": {
+          "oneOf": [
+            {
+              "type": "object",
+              "$ref": "#/definitions/OptionPublicDetailsSchema",
+              "field_many": false,
+              "description": "Details of the option asset (if applicable)",
+              "default": {
+                "settlement_price": null
+              }
+            },
+            {
+              "type": "null",
+              "title": ""
+            }
+          ],
+          "description": "Details of the option asset (if applicable)"
+        },
+        "option_pricing": {
+          "oneOf": [
+            {
+              "type": "object",
+              "$ref": "#/definitions/OptionPricingSchema",
+              "field_many": false,
+              "description": "Greeks, forward price, iv and mark price of the instrument (options only)",
+              "default": {}
+            },
+            {
+              "type": "null",
+              "title": ""
+            }
+          ],
+          "description": "Greeks, forward price, iv and mark price of the instrument (options only)"
+        },
+        "perp_details": {
+          "oneOf": [
+            {
+              "type": "object",
+              "$ref": "#/definitions/PerpPublicDetailsSchema",
+              "field_many": false,
+              "description": "Details of the perp asset (if applicable)",
+              "default": {}
+            },
+            {
+              "type": "null",
+              "title": ""
+            }
+          ],
+          "description": "Details of the perp asset (if applicable)"
+        },
+        "pro_rata_amount_step": {
+          "title": "pro_rata_amount_step",
+          "type": "string",
+          "format": "decimal",
+          "description": "Pro-rata fill share of every order is rounded down to be a multiple of this number. Leftovers of the order due to rounding are filled FIFO."
+        },
+        "pro_rata_fraction": {
+          "title": "pro_rata_fraction",
+          "type": "string",
+          "format": "decimal",
+          "description": "Fraction of order that gets filled using pro-rata matching. If zero, the matching is full FIFO."
+        },
+        "quote_currency": {
+          "title": "quote_currency",
+          "type": "string",
+          "description": "Quote currency (`USD` for perps, `USDC` for options)"
+        },
+        "scheduled_activation": {
+          "title": "scheduled_activation",
+          "type": "integer",
+          "description": "Timestamp at which became or will become active (if applicable)"
+        },
+        "scheduled_deactivation": {
+          "title": "scheduled_deactivation",
+          "type": "integer",
+          "description": "Scheduled deactivation time for instrument (if applicable)"
+        },
+        "stats": {
+          "type": "object",
+          "$ref": "#/definitions/AggregateTradingStatsSchema",
+          "field_many": false,
+          "description": "Aggregate trading stats for the last 24 hours"
+        },
+        "taker_fee_rate": {
+          "title": "taker_fee_rate",
+          "type": "string",
+          "format": "decimal",
+          "description": "Percent of spot price fee rate for takers"
+        },
+        "tick_size": {
+          "title": "tick_size",
+          "type": "string",
+          "format": "decimal",
+          "description": "Tick size of the instrument, i.e. minimum price increment"
+        },
+        "timestamp": {
+          "title": "timestamp",
+          "type": "integer",
+          "description": "Timestamp of the ticker feed snapshot"
+        }
+      },
+      "required": [
+        "amount_step",
+        "base_asset_address",
+        "base_asset_sub_id",
+        "base_currency",
+        "base_fee",
+        "best_ask_amount",
+        "best_ask_price",
+        "best_bid_amount",
+        "best_bid_price",
+        "erc20_details",
+        "fifo_min_allocation",
+        "five_percent_ask_depth",
+        "five_percent_bid_depth",
+        "index_price",
+        "instrument_name",
+        "instrument_type",
+        "is_active",
+        "maker_fee_rate",
+        "mark_price",
+        "max_price",
+        "maximum_amount",
+        "min_price",
+        "minimum_amount",
+        "open_interest",
+        "option_details",
+        "option_pricing",
+        "perp_details",
+        "pro_rata_amount_step",
+        "pro_rata_fraction",
+        "quote_currency",
+        "scheduled_activation",
+        "scheduled_deactivation",
+        "stats",
+        "taker_fee_rate",
+        "tick_size",
+        "timestamp"
+      ],
+      "additionalProperties": false
+    },
+    "ERC20PublicDetailsSchema": {
+      "type": "object",
+      "properties": {
+        "borrow_index": {
+          "title": "borrow_index",
+          "type": "string",
+          "format": "decimal",
+          "default": "1",
+          "description": "Latest borrow index as per `CashAsset.sol` implementation"
+        },
+        "decimals": {
+          "title": "decimals",
+          "type": "integer",
+          "description": "Number of decimals of the underlying on-chain ERC20 token"
+        },
+        "supply_index": {
+          "title": "supply_index",
+          "type": "string",
+          "format": "decimal",
+          "default": "1",
+          "description": "Latest supply index as per `CashAsset.sol` implementation"
+        },
+        "underlying_erc20_address": {
+          "title": "underlying_erc20_address",
+          "type": "string",
+          "default": "",
+          "description": "Address of underlying on-chain ERC20 (not V2 asset)"
+        }
+      },
+      "required": [
+        "decimals"
+      ],
+      "additionalProperties": false
+    },
+    "OpenInterestStatsSchema": {
+      "type": "object",
+      "properties": {
+        "current_open_interest": {
+          "title": "current_open_interest",
+          "type": "string",
+          "format": "decimal",
+          "description": "Current open interest for the margin type"
+        },
+        "interest_cap": {
+          "title": "interest_cap",
+          "type": "string",
+          "format": "decimal",
+          "description": "Total open interest cap"
+        },
+        "manager_currency": {
+          "title": "manager_currency",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "Currency of the manager (only applies to Portfolio Margin)"
+        }
+      },
+      "required": [
+        "current_open_interest",
+        "interest_cap"
+      ],
+      "additionalProperties": false
+    },
+    "OptionPublicDetailsSchema": {
+      "type": "object",
+      "properties": {
+        "expiry": {
+          "title": "expiry",
+          "type": "integer",
+          "description": "Unix timestamp of expiry date (in seconds)"
+        },
+        "index": {
+          "title": "index",
+          "type": "string",
+          "description": "Underlying settlement price index"
+        },
+        "option_type": {
+          "title": "option_type",
+          "type": "string",
+          "enum": [
+            "C",
+            "P"
+          ]
+        },
+        "settlement_price": {
+          "title": "settlement_price",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "decimal",
+          "default": null,
+          "description": "Settlement price of the option"
+        },
+        "strike": {
+          "title": "strike",
+          "type": "string",
+          "format": "decimal"
+        }
+      },
+      "required": [
+        "expiry",
+        "index",
+        "option_type",
+        "strike"
+      ],
+      "additionalProperties": false
+    },
+    "OptionPricingSchema": {
+      "type": "object",
+      "properties": {
+        "ask_iv": {
+          "title": "ask_iv",
+          "type": "string",
+          "format": "decimal",
+          "description": "Implied volatility of the current best ask"
+        },
+        "bid_iv": {
+          "title": "bid_iv",
+          "type": "string",
+          "format": "decimal",
+          "description": "Implied volatility of the current best bid"
+        },
+        "delta": {
+          "title": "delta",
+          "type": "string",
+          "format": "decimal",
+          "description": "Delta of the option"
+        },
+        "discount_factor": {
+          "title": "discount_factor",
+          "type": "string",
+          "format": "decimal",
+          "description": "Discount factor used to calculate option premium"
+        },
+        "forward_price": {
+          "title": "forward_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Forward price used to calculate option premium"
+        },
+        "gamma": {
+          "title": "gamma",
+          "type": "string",
+          "format": "decimal",
+          "description": "Gamma of the option"
+        },
+        "iv": {
+          "title": "iv",
+          "type": "string",
+          "format": "decimal",
+          "description": "Implied volatility of the option"
+        },
+        "mark_price": {
+          "title": "mark_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Mark price of the option"
+        },
+        "rho": {
+          "title": "rho",
+          "type": "string",
+          "format": "decimal",
+          "description": "Rho of the option"
+        },
+        "theta": {
+          "title": "theta",
+          "type": "string",
+          "format": "decimal",
+          "description": "Theta of the option"
+        },
+        "vega": {
+          "title": "vega",
+          "type": "string",
+          "format": "decimal",
+          "description": "Vega of the option"
+        }
+      },
+      "required": [
+        "ask_iv",
+        "bid_iv",
+        "delta",
+        "discount_factor",
+        "forward_price",
+        "gamma",
+        "iv",
+        "mark_price",
+        "rho",
+        "theta",
+        "vega"
+      ],
+      "additionalProperties": false
+    },
+    "PerpPublicDetailsSchema": {
+      "type": "object",
+      "properties": {
+        "aggregate_funding": {
+          "title": "aggregate_funding",
+          "type": "string",
+          "format": "decimal",
+          "description": "Latest aggregated funding as per `PerpAsset.sol`"
+        },
+        "funding_rate": {
+          "title": "funding_rate",
+          "type": "string",
+          "format": "decimal",
+          "description": "Current hourly funding rate as per `PerpAsset.sol`"
+        },
+        "index": {
+          "title": "index",
+          "type": "string",
+          "description": "Underlying spot price index for funding rate"
+        },
+        "max_rate_per_hour": {
+          "title": "max_rate_per_hour",
+          "type": "string",
+          "format": "decimal",
+          "description": "Max rate per hour as per `PerpAsset.sol`"
+        },
+        "min_rate_per_hour": {
+          "title": "min_rate_per_hour",
+          "type": "string",
+          "format": "decimal",
+          "description": "Min rate per hour as per `PerpAsset.sol`"
+        },
+        "static_interest_rate": {
+          "title": "static_interest_rate",
+          "type": "string",
+          "format": "decimal",
+          "description": "Static interest rate as per `PerpAsset.sol`"
+        }
+      },
+      "required": [
+        "aggregate_funding",
+        "funding_rate",
+        "index",
+        "max_rate_per_hour",
+        "min_rate_per_hour",
+        "static_interest_rate"
+      ],
+      "additionalProperties": false
+    },
+    "AggregateTradingStatsSchema": {
+      "type": "object",
+      "properties": {
+        "contract_volume": {
+          "title": "contract_volume",
+          "type": "string",
+          "format": "decimal",
+          "description": "Number of contracts traded during last 24 hours"
+        },
+        "high": {
+          "title": "high",
+          "type": "string",
+          "format": "decimal",
+          "description": "Highest trade price during last 24h"
+        },
+        "low": {
+          "title": "low",
+          "type": "string",
+          "format": "decimal",
+          "description": "Lowest trade price during last 24h"
+        },
+        "num_trades": {
+          "title": "num_trades",
+          "type": "string",
+          "format": "decimal",
+          "description": "Number of trades during last 24h "
+        },
+        "open_interest": {
+          "title": "open_interest",
+          "type": "string",
+          "format": "decimal",
+          "description": "Current total open interest"
+        },
+        "percent_change": {
+          "title": "percent_change",
+          "type": "string",
+          "format": "decimal",
+          "description": "24-hour price change expressed as a percentage. Options: percent change in vol; Perps: percent change in mark price"
+        },
+        "usd_change": {
+          "title": "usd_change",
+          "type": "string",
+          "format": "decimal",
+          "description": "24-hour price change in USD."
+        }
+      },
+      "required": [
+        "contract_volume",
+        "high",
+        "low",
+        "num_trades",
+        "open_interest",
+        "percent_change",
+        "usd_change"
+      ],
+      "additionalProperties": false
+    },
+    "TickerInstrumentNameIntervalPubSubSchema": {
+      "type": "object",
+      "properties": {
+        "channel_params": {
+          "type": "object",
+          "$ref": "#/definitions/TickerInstrumentNameIntervalChannelSchema",
+          "field_many": false
+        },
+        "notification": {
+          "type": "object",
+          "$ref": "#/definitions/TickerInstrumentNameIntervalNotificationSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "channel_params",
+        "notification"
+      ],
+      "additionalProperties": false
+    },
+    "TradesInstrumentNameChannelSchema": {
+      "type": "object",
+      "properties": {
+        "instrument_name": {
+          "title": "instrument_name",
+          "type": "string",
+          "description": "Instrument name"
+        }
+      },
+      "required": [
+        "instrument_name"
+      ],
+      "additionalProperties": false
+    },
+    "TradesInstrumentNameNotificationSchema": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "title": "method",
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "$ref": "#/definitions/TradesInstrumentNameNotificationParamsSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "method",
+        "params"
+      ],
+      "additionalProperties": false
+    },
+    "TradesInstrumentNameNotificationParamsSchema": {
+      "type": "object",
+      "properties": {
+        "channel": {
+          "title": "channel",
+          "type": "string",
+          "description": "Subscribed channel name"
+        },
+        "data": {
+          "title": "data",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/TradePublicResponseSchema",
+            "field_many": true
+          }
+        }
+      },
+      "required": [
+        "channel",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "TradePublicResponseSchema": {
+      "type": "object",
+      "properties": {
+        "direction": {
+          "title": "direction",
+          "type": "string",
+          "enum": [
+            "buy",
+            "sell"
+          ],
+          "description": "Direction of the taker order"
+        },
+        "index_price": {
+          "title": "index_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Index price of the underlying at the time of the trade"
+        },
+        "instrument_name": {
+          "title": "instrument_name",
+          "type": "string",
+          "description": "Instrument name"
+        },
+        "mark_price": {
+          "title": "mark_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Mark price of the instrument at the time of the trade"
+        },
+        "quote_id": {
+          "title": "quote_id",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid",
+          "default": null,
+          "description": "Quote ID if the trade was executed via RFQ"
+        },
+        "timestamp": {
+          "title": "timestamp",
+          "type": "integer",
+          "description": "Trade timestamp (in ms since Unix epoch)"
+        },
+        "trade_amount": {
+          "title": "trade_amount",
+          "type": "string",
+          "format": "decimal",
+          "description": "Amount filled in this trade"
+        },
+        "trade_id": {
+          "title": "trade_id",
+          "type": "string",
+          "description": "Trade ID"
+        },
+        "trade_price": {
+          "title": "trade_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Price at which the trade was filled"
+        }
+      },
+      "required": [
+        "direction",
+        "index_price",
+        "instrument_name",
+        "mark_price",
+        "quote_id",
+        "timestamp",
+        "trade_amount",
+        "trade_id",
+        "trade_price"
+      ],
+      "additionalProperties": false
+    },
+    "TradesInstrumentNamePubSubSchema": {
+      "type": "object",
+      "properties": {
+        "channel_params": {
+          "type": "object",
+          "$ref": "#/definitions/TradesInstrumentNameChannelSchema",
+          "field_many": false
+        },
+        "notification": {
+          "type": "object",
+          "$ref": "#/definitions/TradesInstrumentNameNotificationSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "channel_params",
+        "notification"
+      ],
+      "additionalProperties": false
+    },
+    "TradesInstrumentTypeCurrencyChannelSchema": {
+      "type": "object",
+      "properties": {
+        "currency": {
+          "title": "currency",
+          "type": "string",
+          "description": "Currency"
+        },
+        "instrument_type": {
+          "title": "instrument_type",
+          "type": "string",
+          "enum": [
+            "erc20",
+            "option",
+            "perp"
+          ],
+          "description": "Instrument type"
+        }
+      },
+      "required": [
+        "currency",
+        "instrument_type"
+      ],
+      "additionalProperties": false
+    },
+    "TradesInstrumentTypeCurrencyNotificationSchema": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "title": "method",
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "$ref": "#/definitions/TradesInstrumentTypeCurrencyNotificationParamsSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "method",
+        "params"
+      ],
+      "additionalProperties": false
+    },
+    "TradesInstrumentTypeCurrencyNotificationParamsSchema": {
+      "type": "object",
+      "properties": {
+        "channel": {
+          "title": "channel",
+          "type": "string",
+          "description": "Subscribed channel name"
+        },
+        "data": {
+          "title": "data",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/TradePublicResponseSchema",
+            "field_many": true
+          }
+        }
+      },
+      "required": [
+        "channel",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "TradesInstrumentTypeCurrencyPubSubSchema": {
+      "type": "object",
+      "properties": {
+        "channel_params": {
+          "type": "object",
+          "$ref": "#/definitions/TradesInstrumentTypeCurrencyChannelSchema",
+          "field_many": false
+        },
+        "notification": {
+          "type": "object",
+          "$ref": "#/definitions/TradesInstrumentTypeCurrencyNotificationSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "channel_params",
+        "notification"
+      ],
+      "additionalProperties": false
+    },
+    "TradesInstrumentTypeCurrencyTxStatusChannelSchema": {
+      "type": "object",
+      "properties": {
+        "currency": {
+          "title": "currency",
+          "type": "string",
+          "description": "Currency"
+        },
+        "instrument_type": {
+          "title": "instrument_type",
+          "type": "string",
+          "enum": [
+            "erc20",
+            "option",
+            "perp"
+          ],
+          "description": "Instrument type"
+        },
+        "tx_status": {
+          "title": "tx_status",
+          "type": "string",
+          "enum": [
+            "settled",
+            "reverted",
+            "timed_out"
+          ],
+          "description": "Transaction status"
+        }
+      },
+      "required": [
+        "currency",
+        "instrument_type",
+        "tx_status"
+      ],
+      "additionalProperties": false
+    },
+    "TradesInstrumentTypeCurrencyTxStatusNotificationSchema": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "title": "method",
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "$ref": "#/definitions/TradesInstrumentTypeCurrencyTxStatusNotificationParamsSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "method",
+        "params"
+      ],
+      "additionalProperties": false
+    },
+    "TradesInstrumentTypeCurrencyTxStatusNotificationParamsSchema": {
+      "type": "object",
+      "properties": {
+        "channel": {
+          "title": "channel",
+          "type": "string",
+          "description": "Subscribed channel name"
+        },
+        "data": {
+          "title": "data",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/TradeSettledPublicResponseSchema",
+            "field_many": true
+          }
+        }
+      },
+      "required": [
+        "channel",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "TradeSettledPublicResponseSchema": {
+      "type": "object",
+      "properties": {
+        "direction": {
+          "title": "direction",
+          "type": "string",
+          "enum": [
+            "buy",
+            "sell"
+          ],
+          "description": "Order direction"
+        },
+        "expected_rebate": {
+          "title": "expected_rebate",
+          "type": "string",
+          "format": "decimal",
+          "description": "Expected rebate for this trade"
+        },
+        "index_price": {
+          "title": "index_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Index price of the underlying at the time of the trade"
+        },
+        "instrument_name": {
+          "title": "instrument_name",
+          "type": "string",
+          "description": "Instrument name"
+        },
+        "liquidity_role": {
+          "title": "liquidity_role",
+          "type": "string",
+          "enum": [
+            "maker",
+            "taker"
+          ],
+          "description": "Role of the user in the trade"
+        },
+        "mark_price": {
+          "title": "mark_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Mark price of the instrument at the time of the trade"
+        },
+        "quote_id": {
+          "title": "quote_id",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid",
+          "default": null,
+          "description": "Quote ID if the trade was executed via RFQ"
+        },
+        "realized_pnl": {
+          "title": "realized_pnl",
+          "type": "string",
+          "format": "decimal",
+          "description": "Realized PnL for this trade"
+        },
+        "realized_pnl_excl_fees": {
+          "title": "realized_pnl_excl_fees",
+          "type": "string",
+          "format": "decimal",
+          "description": "Realized PnL for this trade using cost accounting that excludes fees"
+        },
+        "subaccount_id": {
+          "title": "subaccount_id",
+          "type": "integer",
+          "description": "Subaccount ID"
+        },
+        "timestamp": {
+          "title": "timestamp",
+          "type": "integer",
+          "description": "Trade timestamp (in ms since Unix epoch)"
+        },
+        "trade_amount": {
+          "title": "trade_amount",
+          "type": "string",
+          "format": "decimal",
+          "description": "Amount filled in this trade"
+        },
+        "trade_fee": {
+          "title": "trade_fee",
+          "type": "string",
+          "format": "decimal",
+          "description": "Fee for this trade"
+        },
+        "trade_id": {
+          "title": "trade_id",
+          "type": "string",
+          "description": "Trade ID"
+        },
+        "trade_price": {
+          "title": "trade_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Price at which the trade was filled"
+        },
+        "tx_hash": {
+          "title": "tx_hash",
+          "type": "string",
+          "description": "Blockchain transaction hash"
+        },
+        "tx_status": {
+          "title": "tx_status",
+          "type": "string",
+          "enum": [
+            "settled",
+            "reverted",
+            "timed_out"
+          ],
+          "description": "Blockchain transaction status"
+        },
+        "wallet": {
+          "title": "wallet",
+          "type": "string",
+          "description": "Wallet address (owner) of the subaccount"
+        }
+      },
+      "required": [
+        "direction",
+        "expected_rebate",
+        "index_price",
+        "instrument_name",
+        "liquidity_role",
+        "mark_price",
+        "quote_id",
+        "realized_pnl",
+        "realized_pnl_excl_fees",
+        "subaccount_id",
+        "timestamp",
+        "trade_amount",
+        "trade_fee",
+        "trade_id",
+        "trade_price",
+        "tx_hash",
+        "tx_status",
+        "wallet"
+      ],
+      "additionalProperties": false
+    },
+    "TradesInstrumentTypeCurrencyTxStatusPubSubSchema": {
+      "type": "object",
+      "properties": {
+        "channel_params": {
+          "type": "object",
+          "$ref": "#/definitions/TradesInstrumentTypeCurrencyTxStatusChannelSchema",
+          "field_many": false
+        },
+        "notification": {
+          "type": "object",
+          "$ref": "#/definitions/TradesInstrumentTypeCurrencyTxStatusNotificationSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "channel_params",
+        "notification"
+      ],
+      "additionalProperties": false
+    },
+    "WalletRfqsChannelSchema": {
+      "type": "object",
+      "properties": {
+        "wallet": {
+          "title": "wallet",
+          "type": "string",
+          "description": "Account (wallet) of RFQ market maker"
+        }
+      },
+      "required": [
+        "wallet"
+      ],
+      "additionalProperties": false
+    },
+    "WalletRfqsNotificationSchema": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "title": "method",
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "$ref": "#/definitions/WalletRfqsNotificationParamsSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "method",
+        "params"
+      ],
+      "additionalProperties": false
+    },
+    "WalletRfqsNotificationParamsSchema": {
+      "type": "object",
+      "properties": {
+        "channel": {
+          "title": "channel",
+          "type": "string",
+          "description": "Subscribed channel name"
+        },
+        "data": {
+          "title": "data",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/RFQResultPublicSchema",
+            "field_many": true
+          }
+        }
+      },
+      "required": [
+        "channel",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "RFQResultPublicSchema": {
+      "type": "object",
+      "properties": {
+        "cancel_reason": {
+          "title": "cancel_reason",
+          "type": "string",
+          "enum": [
+            "",
+            "user_request",
+            "insufficient_margin",
+            "signed_max_fee_too_low",
+            "mmp_trigger",
+            "cancel_on_disconnect",
+            "session_key_deregistered",
+            "subaccount_withdrawn",
+            "rfq_no_longer_open",
+            "compliance"
+          ],
+          "description": "Cancel reason, if any"
+        },
+        "creation_timestamp": {
+          "title": "creation_timestamp",
+          "type": "integer",
+          "description": "Creation timestamp in ms since Unix epoch"
+        },
+        "filled_direction": {
+          "title": "filled_direction",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "enum": [
+            "buy",
+            "sell"
+          ],
+          "description": "Direction at which the RFQ was filled (only if filled)"
+        },
+        "filled_pct": {
+          "title": "filled_pct",
+          "type": "string",
+          "format": "decimal",
+          "description": "Percentage of the RFQ that has been filled, from 0 to 1."
+        },
+        "last_update_timestamp": {
+          "title": "last_update_timestamp",
+          "type": "integer",
+          "description": "Last update timestamp in ms since Unix epoch"
+        },
+        "legs": {
+          "title": "legs",
+          "type": "array",
+          "description": "RFQ legs",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/LegUnpricedSchema",
+            "field_many": true
+          }
+        },
+        "partial_fill_step": {
+          "title": "partial_fill_step",
+          "type": "string",
+          "format": "decimal",
+          "description": "Step size for partial fills (default: 1)"
+        },
+        "rfq_id": {
+          "title": "rfq_id",
+          "type": "string",
+          "format": "uuid",
+          "description": "RFQ ID"
+        },
+        "status": {
+          "title": "status",
+          "type": "string",
+          "enum": [
+            "open",
+            "filled",
+            "cancelled",
+            "expired"
+          ],
+          "description": "Status"
+        },
+        "subaccount_id": {
+          "title": "subaccount_id",
+          "type": "integer",
+          "description": "Subaccount ID"
+        },
+        "total_cost": {
+          "title": "total_cost",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "decimal",
+          "default": null,
+          "description": "Total cost for the RFQ (only if filled)"
+        },
+        "valid_until": {
+          "title": "valid_until",
+          "type": "integer",
+          "description": "RFQ expiry timestamp in ms since Unix epoch"
+        }
+      },
+      "required": [
+        "cancel_reason",
+        "creation_timestamp",
+        "filled_direction",
+        "filled_pct",
+        "last_update_timestamp",
+        "legs",
+        "partial_fill_step",
+        "rfq_id",
+        "status",
+        "subaccount_id",
+        "total_cost",
+        "valid_until"
+      ],
+      "additionalProperties": false
+    },
+    "LegUnpricedSchema": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "title": "amount",
+          "type": "string",
+          "format": "decimal",
+          "description": "Amount in units of the base"
+        },
+        "direction": {
+          "title": "direction",
+          "type": "string",
+          "enum": [
+            "buy",
+            "sell"
+          ],
+          "description": "Leg direction"
+        },
+        "instrument_name": {
+          "title": "instrument_name",
+          "type": "string",
+          "description": "Instrument name"
+        }
+      },
+      "required": [
+        "amount",
+        "direction",
+        "instrument_name"
+      ],
+      "additionalProperties": false
+    },
+    "WalletRfqsPubSubSchema": {
+      "type": "object",
+      "properties": {
+        "channel_params": {
+          "type": "object",
+          "$ref": "#/definitions/WalletRfqsChannelSchema",
+          "field_many": false
+        },
+        "notification": {
+          "type": "object",
+          "$ref": "#/definitions/WalletRfqsNotificationSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "channel_params",
+        "notification"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
