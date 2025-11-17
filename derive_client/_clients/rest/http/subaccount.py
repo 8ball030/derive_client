@@ -9,6 +9,7 @@ from typing import Optional
 from derive_action_signing import ModuleData, SignedAction
 
 from derive_client._clients.rest.http.api import PrivateAPI, PublicAPI
+from derive_client._clients.rest.http.collateral import CollateralOperations
 from derive_client._clients.rest.http.markets import MarketOperations
 from derive_client._clients.rest.http.mmp import MMPOperations
 from derive_client._clients.rest.http.orders import OrderOperations
@@ -37,6 +38,7 @@ class Subaccount:
         config: EnvConfig,
         logger: Logger,
         markets: MarketOperations,
+        transactions: TransactionOperations,
         public_api: PublicAPI,
         private_api: PrivateAPI,
         _state: PrivateGetSubaccountResultSchema | None = None,
@@ -49,19 +51,23 @@ class Subaccount:
             auth: Authentication context for signing operations
             config: Environment configuration
             markets: Market operations interface
+            transactions: Transaction operations interface
             public_api: Public API interface
             private_api: Private API interface for authenticated requests
             _state: Initial state (internal use only)
         """
+
         self._id = subaccount_id
         self._auth = auth
         self._config = config
-        self._markets = markets
         self._logger = logger
         self._public_api = public_api
         self._private_api = private_api
 
-        self._transactions = TransactionOperations(subaccount=self)
+        self._markets = markets
+        self._transactions = transactions
+
+        self._collateral = CollateralOperations(subaccount=self)
         self._orders = OrderOperations(subaccount=self)
         self._trades = TradeOperations(subaccount=self)
         self._positions = PositionOperations(subaccount=self)
@@ -79,6 +85,7 @@ class Subaccount:
         config: EnvConfig,
         logger: Logger,
         markets: MarketOperations,
+        transactions: TransactionOperations,
         public_api: PublicAPI,
         private_api: PrivateAPI,
     ) -> Subaccount:
@@ -93,6 +100,7 @@ class Subaccount:
             auth: Authentication context for signing operations
             config: Environment configuration
             markets: Market operations interface
+            transactions: Transaction operations interface
             public_api: Public API interface
             private_api: Private API interface for authenticated requests
 
@@ -102,6 +110,7 @@ class Subaccount:
         Raises:
             APIError: If subaccount does not exist or API call fails
         """
+
         params = PrivateGetSubaccountParamsSchema(subaccount_id=subaccount_id)
         response = private_api.get_subaccount(params)
         state = response.result
@@ -113,6 +122,7 @@ class Subaccount:
             config=config,
             logger=logger,
             markets=markets,
+            transactions=transactions,
             public_api=public_api,
             private_api=private_api,
             _state=state,
@@ -120,6 +130,7 @@ class Subaccount:
 
     def refresh(self) -> Subaccount:
         """Refresh mutable state from API."""
+
         params = PrivateGetSubaccountParamsSchema(subaccount_id=self.id)
         response = self._private_api.get_subaccount(params)
         self._state = response.result
@@ -128,6 +139,7 @@ class Subaccount:
     @property
     def state(self) -> PrivateGetSubaccountResultSchema:
         """Current mutable state (positions, orders, collateral, etc)."""
+
         if not self._state:
             raise RuntimeError(
                 "Subaccount state not loaded. Use Subaccount.from_api() to create "
@@ -137,42 +149,68 @@ class Subaccount:
 
     @property
     def margin_type(self) -> MarginType:
+        """Margin type of subaccount (PM (Portfolio Margin), PM2 (Portfolio Margin 2), or SM (Standard Margin))"""
+
         return self.state.margin_type
 
     @property
     def currency(self) -> str:
+        """Currency of subaccount."""
+
         return self.state.currency
 
     @property
     def id(self) -> int:
+        """Subaccount ID."""
+
         return self._id
 
     @property
     def markets(self) -> MarketOperations:
+        """Access market data and instruments."""
+
         return self._markets
 
     @property
     def transactions(self) -> TransactionOperations:
+        """Query transaction status and details."""
+
         return self._transactions
 
     @property
+    def collateral(self) -> CollateralOperations:
+        """Manage collateral and margin."""
+
+        return self._collateral
+
+    @property
     def orders(self) -> OrderOperations:
+        """Place and manage orders."""
+
         return self._orders
 
     @property
     def positions(self) -> PositionOperations:
+        """View and manage positions."""
+
         return self._positions
 
     @property
     def rfq(self) -> RFQOperations:
+        """Request for quote operations."""
+
         return self._rfq
 
     @property
     def trades(self) -> TradeOperations:
+        """View trade history."""
+
         return self._trades
 
     @property
     def mmp(self) -> MMPOperations:
+        """Market maker protection settings."""
+
         return self._mmp
 
     def sign_action(

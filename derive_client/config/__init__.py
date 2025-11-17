@@ -50,7 +50,6 @@ from .contracts import (
 )
 from .networks import (
     CURRENCY_DECIMALS,
-    TOKEN_DECIMALS,
     DeriveTokenAddress,
     LayerZeroChainIDv2,
     SocketAddress,
@@ -107,7 +106,6 @@ __all__ = [
     "WITHDRAW_WRAPPER_V2_ABI_PATH",
     # networks
     "CURRENCY_DECIMALS",
-    "TOKEN_DECIMALS",
     "DeriveTokenAddress",
     "LayerZeroChainIDv2",
     "SocketAddress",

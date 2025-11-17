@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 from logging import Logger
+from pathlib import Path
 from typing import AsyncGenerator
 
 from pydantic import ConfigDict, validate_call
@@ -11,6 +12,7 @@ from web3 import AsyncWeb3
 from derive_client._bridge.async_client import AsyncBridgeClient
 from derive_client._clients.rest.async_http.account import LightAccount
 from derive_client._clients.rest.async_http.api import AsyncPrivateAPI, AsyncPublicAPI
+from derive_client._clients.rest.async_http.collateral import CollateralOperations
 from derive_client._clients.rest.async_http.markets import MarketOperations
 from derive_client._clients.rest.async_http.mmp import MMPOperations
 from derive_client._clients.rest.async_http.orders import OrderOperations
@@ -20,7 +22,7 @@ from derive_client._clients.rest.async_http.session import AsyncHTTPSession, _re
 from derive_client._clients.rest.async_http.subaccount import Subaccount
 from derive_client._clients.rest.async_http.trades import TradeOperations
 from derive_client._clients.rest.async_http.transactions import TransactionOperations
-from derive_client._clients.utils import AuthContext
+from derive_client._clients.utils import AuthContext, load_client_config
 from derive_client.config import CONFIGS
 from derive_client.data_types import ChecksumAddress, Environment
 from derive_client.exceptions import BridgePrimarySignerRequiredError, NotConnectedError
@@ -64,11 +66,24 @@ class AsyncHTTPClient:
         self._private_api = AsyncPrivateAPI(session=self._session, config=config, auth=auth)
 
         self._markets = MarketOperations(public_api=self._public_api, logger=self._logger)
+        self._transactions = TransactionOperations(public_api=self._public_api, logger=self._logger)
 
         self._light_account: LightAccount | None = None
         self._subaccounts: dict[int, Subaccount] = {}
 
         self._bridge_client: AsyncBridgeClient | None = None
+
+    @classmethod
+    def from_env(
+        cls,
+        session_key_path: Path | None = None,
+        env_file: Path | None = None,
+    ) -> AsyncHTTPClient:
+        """Create the AsyncHTTPClient instance."""
+
+        config = load_client_config(session_key_path=session_key_path, env_file=env_file)
+
+        return cls(**config.model_dump())
 
     async def connect(self, initialize_bridge: bool = True) -> None:
         """
@@ -132,6 +147,7 @@ class AsyncHTTPClient:
             config=self._config,
             logger=self._logger,
             markets=self._markets,
+            transactions=self._transactions,
             public_api=self._public_api,
             private_api=self._private_api,
         )
@@ -154,18 +170,24 @@ class AsyncHTTPClient:
 
     @property
     def account(self) -> LightAccount:
+        """Get the LightAccount instance (this is not a web3 contract instance)."""
+
         if self._light_account is None:
             raise NotConnectedError("AsyncHTTPClient.account accessed before connect(); call connect() first.")
         return self._light_account
 
     @property
     def active_subaccount(self) -> Subaccount:
+        """Get the currently active subaccount."""
+
         if (subaccount := self._subaccounts.get(self._subaccount_id)) is None:
             raise NotConnectedError("No active subaccount. Call connect() first and ensure subaccount exists.")
         return subaccount
 
     @property
     def bridge(self) -> AsyncBridgeClient:
+        """Get the bridge client for cross-chain transfers."""
+
         if not self._bridge_client:
             msg = "Bridge unavailable: call connect() and ensure session key is the LightAccount owner."
             raise NotConnectedError(msg)
@@ -173,44 +195,68 @@ class AsyncHTTPClient:
 
     async def fetch_subaccount(self, subaccount_id: int) -> Subaccount:
         """Fetch a subaccount from API and cache it."""
+
         self._subaccounts[subaccount_id] = await self._instantiate_subaccount(subaccount_id)
         return self._subaccounts[subaccount_id]
 
     async def fetch_subaccounts(self) -> list[Subaccount]:
         """Fetch subaccounts from API and cache them."""
+
         account_subaccounts = await self.account.get_subaccounts()
         return sorted(await asyncio.gather(*(self.fetch_subaccount(sid) for sid in account_subaccounts.subaccount_ids)))
 
     @property
     def cached_subaccounts(self) -> list[Subaccount]:
+        """Get all cached subaccounts."""
+
         return sorted(self._subaccounts.values())
 
     @property
     def markets(self) -> MarketOperations:
+        """Access market data and instruments."""
+
         return self._markets
 
     @property
     def transactions(self) -> TransactionOperations:
-        return self.active_subaccount.transactions
+        """Query transaction status and details."""
+
+        return self._transactions
+
+    @property
+    def collateral(self) -> CollateralOperations:
+        """Manage collateral and margin."""
+
+        return self.active_subaccount.collateral
 
     @property
     def orders(self) -> OrderOperations:
+        """Place and manage orders."""
+
         return self.active_subaccount.orders
 
     @property
-    def trades(self) -> TradeOperations:
-        return self.active_subaccount.trades
-
-    @property
     def positions(self) -> PositionOperations:
+        """View and manage positions."""
+
         return self.active_subaccount.positions
 
     @property
     def rfq(self) -> RFQOperations:
+        """Request for quote operations."""
+
         return self.active_subaccount.rfq
 
     @property
+    def trades(self) -> TradeOperations:
+        """View trade history."""
+
+        return self.active_subaccount.trades
+
+    @property
     def mmp(self) -> MMPOperations:
+        """Market maker protection settings."""
+
         return self.active_subaccount.mmp
 
     @contextlib.asynccontextmanager

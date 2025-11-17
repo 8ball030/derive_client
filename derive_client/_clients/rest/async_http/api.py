@@ -8,6 +8,8 @@ from derive_client.data_types import EnvConfig
 from derive_client.data_types.generated_models import (
     PrivateCancelAllParamsSchema,
     PrivateCancelAllResponseSchema,
+    PrivateCancelAllTriggerOrdersParamsSchema,
+    PrivateCancelAllTriggerOrdersResponseSchema,
     PrivateCancelBatchQuotesParamsSchema,
     PrivateCancelBatchQuotesResponseSchema,
     PrivateCancelBatchRfqsParamsSchema,
@@ -101,6 +103,8 @@ from derive_client.data_types.generated_models import (
     PrivateRegisterScopedSessionKeyParamsSchema,
     PrivateRegisterScopedSessionKeyResponseSchema,
     PrivateReplaceParamsSchema,
+    PrivateReplaceQuoteParamsSchema,
+    PrivateReplaceQuoteResponseSchema,
     PrivateReplaceResponseSchema,
     PrivateResetMmpParamsSchema,
     PrivateResetMmpResponseSchema,
@@ -174,6 +178,8 @@ from derive_client.data_types.generated_models import (
     PublicGetSpotFeedHistoryResponseSchema,
     PublicGetTickerParamsSchema,
     PublicGetTickerResponseSchema,
+    PublicGetTickersParamsSchema,
+    PublicGetTickersResponseSchema,
     PublicGetTimeParamsSchema,
     PublicGetTimeResponseSchema,
     PublicGetTradeHistoryParamsSchema,
@@ -371,12 +377,33 @@ class AsyncPublicAPI:
         """
         Get ticker information (best bid / ask, instrument contraints, fees info, etc.)
         for a single instrument
+
+        DEPRECATION NOTICE: This RPC is deprecated in favor of `get_tickers` on Dec 1,
+        2025.
         """
 
         url = self._endpoints.get_ticker
         data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PublicGetTickerResponseSchema)
+        return response
+
+    async def get_tickers(
+        self,
+        params: PublicGetTickersParamsSchema,
+    ) -> PublicGetTickersResponseSchema:
+        """
+        Get tickers information (best bid / ask, stats, etc.) for a multiple
+        instruments.
+
+        For most up to date stream of tickers, use the
+        `ticker.<instrument_name>.<interval>` channels.
+        """
+
+        url = self._endpoints.get_tickers
+        data = encode_json_exclude_none(params)
+        message = await self._session._send_request(url, data, headers=self.headers)
+        response = try_cast_response(message, PublicGetTickersResponseSchema)
         return response
 
     async def get_latest_signed_feeds(
@@ -1090,7 +1117,8 @@ class AsyncPrivateAPI:
         params: PrivateGetOrderParamsSchema,
     ) -> PrivateGetOrderResponseSchema:
         """
-        Get state of an order by order id
+        Get state of an order by order id.  If the order is an MMP order, it will not
+        show up if cancelled/expired.
 
         Required minimum session key permission level is `read_only`
         """
@@ -1231,6 +1259,24 @@ class AsyncPrivateAPI:
         data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateCancelTriggerOrderResponseSchema)
+        return response
+
+    async def cancel_all_trigger_orders(
+        self,
+        params: PrivateCancelAllTriggerOrdersParamsSchema,
+    ) -> PrivateCancelAllTriggerOrdersResponseSchema:
+        """
+        Cancel all trigger orders for this subaccount.
+
+        Also used by cancel_all in WS.
+
+        Required minimum session key permission level is `admin`
+        """
+
+        url = self._endpoints.cancel_all_trigger_orders
+        data = encode_json_exclude_none(params)
+        message = await self._session._send_request(url, data, headers=self.headers)
+        response = try_cast_response(message, PrivateCancelAllTriggerOrdersResponseSchema)
         return response
 
     async def get_order_history(
@@ -1400,6 +1446,28 @@ class AsyncPrivateAPI:
         data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         response = try_cast_response(message, PrivateSendQuoteResponseSchema)
+        return response
+
+    async def replace_quote(
+        self,
+        params: PrivateReplaceQuoteParamsSchema,
+    ) -> PrivateReplaceQuoteResponseSchema:
+        """
+        Cancel an existing quote with nonce or quote_id and create new quote with
+        different quote_id in a single RPC call.
+
+        If the cancel fails, the new quote will not be created.
+
+        If the cancel succeeds but the new quote fails, the old quote will still be
+        cancelled.
+
+        Required minimum session key permission level is `admin`
+        """
+
+        url = self._endpoints.replace_quote
+        data = encode_json_exclude_none(params)
+        message = await self._session._send_request(url, data, headers=self.headers)
+        response = try_cast_response(message, PrivateReplaceQuoteResponseSchema)
         return response
 
     async def cancel_quote(

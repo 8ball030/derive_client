@@ -410,6 +410,19 @@ class PrivateTransferErc20ResultSchema(Struct):
     transaction_id: str
 
 
+class PrivateCancelAllTriggerOrdersParamsSchema(PrivateGetOpenOrdersParamsSchema):
+    pass
+
+
+class Result(Enum):
+    ok = 'ok'
+
+
+class PrivateCancelAllTriggerOrdersResponseSchema(Struct):
+    id: Union[str, int]
+    result: Result
+
+
 class PrivateCancelByNonceParamsSchema(Struct):
     instrument_name: str
     nonce: int
@@ -825,6 +838,32 @@ class AggregateTradingStatsSchema(Struct):
     usd_change: Decimal
 
 
+class PrivateReplaceQuoteParamsSchema(Struct):
+    direction: Direction
+    legs: List[LegPricedSchema]
+    max_fee: Decimal
+    nonce: int
+    rfq_id: str
+    signature: str
+    signature_expiry_sec: int
+    signer: str
+    subaccount_id: int
+    label: str = ''
+    mmp: bool = False
+    nonce_to_cancel: Optional[int] = None
+    quote_id_to_cancel: Optional[str] = None
+
+
+class QuoteResultSchema(PrivateSendQuoteResultSchema):
+    pass
+
+
+class RPCErrorFormatSchema(Struct):
+    code: int
+    message: str
+    data: Optional[str] = None
+
+
 class PrivateGetAllPortfoliosParamsSchema(PrivateGetSubaccountsParamsSchema):
     pass
 
@@ -883,8 +922,9 @@ class PrivateGetQuotesParamsSchema(PrivatePollQuotesParamsSchema):
     pass
 
 
-class QuoteResultSchema(PrivateSendQuoteResultSchema):
-    pass
+class PrivateGetQuotesResultSchema(Struct):
+    quotes: List[QuoteResultSchema]
+    pagination: PaginationInfoSchema | None = None
 
 
 class PublicGetVaultShareParamsSchema(Struct):
@@ -1289,10 +1329,42 @@ class PrivateReplaceParamsSchema(Struct):
     trigger_type: Optional[TriggerType] = None
 
 
-class RPCErrorFormatSchema(Struct):
-    code: int
-    message: str
-    data: Optional[str] = None
+class PrivateReplaceResultSchema(Struct):
+    cancelled_order: OrderResponseSchema
+    create_order_error: Optional[RPCErrorFormatSchema] = None
+    order: Optional[OrderResponseSchema] = None
+    trades: Optional[List[TradeResponseSchema]] = None
+
+
+class PublicGetTickersParamsSchema(Struct):
+    currency: str
+    instrument_type: InstrumentType
+    expiry_date: Optional[str] = None
+
+
+class OptionPricingSlimSchema(Struct):
+    ai: Decimal
+    bi: Decimal
+    d: Decimal
+    df: Decimal
+    f: Decimal
+    g: Decimal
+    i: Decimal
+    m: Decimal
+    r: Decimal
+    t: Decimal
+    v: Decimal
+
+
+class AggregateTradingStatsSlimSchema(Struct):
+    c: Decimal
+    h: Decimal
+    l: Decimal
+    n: int
+    oi: Decimal
+    p: Decimal
+    pr: Decimal
+    v: Decimal
 
 
 class PrivateDepositParamsSchema(Struct):
@@ -1384,13 +1456,8 @@ class PrivateResetMmpParamsSchema(PrivateGetMmpConfigParamsSchema):
     pass
 
 
-class Result(Enum):
-    ok = 'ok'
-
-
-class PrivateResetMmpResponseSchema(Struct):
-    id: Union[str, int]
-    result: Result
+class PrivateResetMmpResponseSchema(PrivateCancelAllTriggerOrdersResponseSchema):
+    pass
 
 
 class PublicGetInterestRateHistoryParamsSchema(Struct):
@@ -1522,11 +1589,12 @@ class ExpiryResponseSchema(Struct):
     price: Optional[Decimal] = None
 
 
-class PrivateCancelAllParamsSchema(PrivateGetOpenOrdersParamsSchema):
-    pass
+class PrivateCancelAllParamsSchema(Struct):
+    subaccount_id: int
+    cancel_trigger_orders: bool = False
 
 
-class PrivateCancelAllResponseSchema(PrivateResetMmpResponseSchema):
+class PrivateCancelAllResponseSchema(PrivateCancelAllTriggerOrdersResponseSchema):
     pass
 
 
@@ -1760,7 +1828,7 @@ class PrivateSetCancelOnDisconnectParamsSchema(Struct):
     wallet: str
 
 
-class PrivateSetCancelOnDisconnectResponseSchema(PrivateResetMmpResponseSchema):
+class PrivateSetCancelOnDisconnectResponseSchema(PrivateCancelAllTriggerOrdersResponseSchema):
     pass
 
 
@@ -1769,7 +1837,7 @@ class PrivateCancelRfqParamsSchema(Struct):
     subaccount_id: int
 
 
-class PrivateCancelRfqResponseSchema(PrivateResetMmpResponseSchema):
+class PrivateCancelRfqResponseSchema(PrivateCancelAllTriggerOrdersResponseSchema):
     pass
 
 
@@ -2083,6 +2151,12 @@ class PublicGetTickerResultSchema(Struct):
     mark_price_fee_rate_cap: Optional[Decimal] = None
 
 
+class PrivateReplaceQuoteResultSchema(Struct):
+    cancelled_quote: QuoteResultSchema
+    create_quote_error: Optional[RPCErrorFormatSchema] = None
+    quote: Optional[QuoteResultSchema] = None
+
+
 class PrivateGetSubaccountResultSchema(Struct):
     collaterals: List[CollateralResponseSchema]
     collaterals_initial_margin: Decimal
@@ -2114,9 +2188,9 @@ class PrivateExpiredAndCancelledHistoryResponseSchema(Struct):
     result: PrivateExpiredAndCancelledHistoryResultSchema
 
 
-class PrivateGetQuotesResultSchema(Struct):
-    quotes: List[QuoteResultSchema]
-    pagination: PaginationInfoSchema | None = None
+class PrivateGetQuotesResponseSchema(Struct):
+    id: Union[str, int]
+    result: PrivateGetQuotesResultSchema
 
 
 class PublicGetVaultShareResultSchema(Struct):
@@ -2247,11 +2321,24 @@ class SignedTradeOrderSchema(Struct):
     subaccount_id: int
 
 
-class PrivateReplaceResultSchema(Struct):
-    cancelled_order: OrderResponseSchema
-    create_order_error: Optional[RPCErrorFormatSchema] = None
-    order: Optional[OrderResponseSchema] = None
-    trades: Optional[List[TradeResponseSchema]] = None
+class PrivateReplaceResponseSchema(Struct):
+    id: Union[str, int]
+    result: PrivateReplaceResultSchema
+
+
+class TickerSlimSchema(Struct):
+    A: Decimal
+    B: Decimal
+    I: Decimal
+    M: Decimal
+    a: Decimal
+    b: Decimal
+    maxp: Decimal
+    minp: Decimal
+    stats: AggregateTradingStatsSlimSchema
+    t: int
+    f: Optional[Decimal] = None
+    option_pricing: Optional[OptionPricingSlimSchema] = None
 
 
 class PrivateDepositResponseSchema(Struct):
@@ -2497,6 +2584,11 @@ class PublicGetTickerResponseSchema(Struct):
     result: PublicGetTickerResultSchema
 
 
+class PrivateReplaceQuoteResponseSchema(Struct):
+    id: Union[str, int]
+    result: PrivateReplaceQuoteResultSchema
+
+
 class PrivateGetAllPortfoliosResponseSchema(Struct):
     id: Union[str, int]
     result: List[PrivateGetSubaccountResultSchema]
@@ -2505,11 +2597,6 @@ class PrivateGetAllPortfoliosResponseSchema(Struct):
 class PrivateSessionKeysResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateSessionKeysResultSchema
-
-
-class PrivateGetQuotesResponseSchema(Struct):
-    id: Union[str, int]
-    result: PrivateGetQuotesResultSchema
 
 
 class PublicGetVaultShareResponseSchema(Struct):
@@ -2570,9 +2657,8 @@ class PrivateOrderDebugResultSchema(Struct):
     typed_data_hash: str
 
 
-class PrivateReplaceResponseSchema(Struct):
-    id: Union[str, int]
-    result: PrivateReplaceResultSchema
+class PublicGetTickersResultSchema(Struct):
+    tickers: Dict[str, TickerSlimSchema]
 
 
 class PublicGetInterestRateHistoryResponseSchema(Struct):
@@ -2628,3 +2714,8 @@ class PublicGetLatestSignedFeedsResponseSchema(Struct):
 class PrivateOrderDebugResponseSchema(Struct):
     id: Union[str, int]
     result: PrivateOrderDebugResultSchema
+
+
+class PublicGetTickersResponseSchema(Struct):
+    id: Union[str, int]
+    result: PublicGetTickersResultSchema

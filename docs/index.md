@@ -1,14 +1,16 @@
 # Derive Client
 
-The **Derive Client** is a comprehensive library for interacting with [Derive Protocol](https://derive.xyz) - a decentralized, self-custodial derivatives trading platform built on Ethereum.
+The **Derive Client** is a comprehensive Python library for interacting with [Derive Protocol](https://derive.xyz) - a decentralized, self-custodial derivatives trading platform on its own Ethereum L2 chain.
 
 ## What is Derive?
 
 Derive is a high-performance crypto trading platform offering options, perpetuals, and spot trading. The platform consists of:
 
-- **Derive Chain**: An Optimistic rollup settlement layer built on the OP Stack, secured by Ethereum
+- **Derive L2**: A dedicated Layer 2 blockchain built on the OP Stack, secured by Ethereum
 - **Trading Engine**: High-performance matching engine for derivatives trading
+- **Session Keys**: Secure delegation of trading permissions without compromising wallet security
 - **Self-Custodial**: Users maintain full control of their funds through smart contract wallets
+- **Multi-Chain Bridging**: Seamless asset bridging from Ethereum, Base, Arbitrum, and Optimism
 
 ## Key Features
 
@@ -20,9 +22,9 @@ Derive is a high-performance crypto trading platform offering options, perpetual
 
 ### **Built-in Bridging**
 
-- **Standard Bridge**: ETH bridging from Ethereum mainnet to Derive for gas fees
-- **Derive Bridge**: Asset bridging using Socket Superbridge (WBTC, WETH, USDC, etc.) and LayerZero (DRV token)
-- **Session Keys**: Secure delegation of trading permissions without compromising wallet security
+- **Multi-Chain Support**: Bridge assets to/from Ethereum, Base, Arbitrum, and Optimism
+- **Socket Superbridge**: ERC20 token bridging (WBTC, WETH, USDC, OLAS, etc.)
+- **LayerZero**: DRV token bridging across chains
 
 ### **Unified API**
 
@@ -42,27 +44,38 @@ graph TB
     D --> G
     E --> H[Derive API<br/>JSON-RPC over WebSocket]
 
-    F --> I[Standard Bridge<br/>ETH Mainnet → Derive]
-    F --> J[Socket Superbridge<br/>ERC20 Tokens]
-    F --> K[LayerZero<br/>DRV Token]
+    F --> I[Ethereum Mainnet]
+    F --> J[Base]
+    F --> K[Arbitrum]
+    F --> L[Optimism]
 ```
 
-## Next Steps
+## Getting Started
 
-### Getting Started
+### 🚀 Start Here
 
-1. **[Installation](getting-started/installation.md)** - Install the client and dependencies
-2. **[Account Model](getting-started/account-model.md)** - Understand EOA, LightAccount, subaccounts, and session keys
-3. **[Authentication](getting-started/authentication.md)** - Register accounts and session keys via the web app
-4. **[Bridging & Funding](getting-started/bridging.md)** - Deposit and withdraw assets to/from Derive
-5. **[Clients](getting-started/clients.md)** - Choose the right client for your use case
-6. **[Quick Start](getting-started/quickstart.md)** - Connect, fund, and start using the client programmatically
+New to Derive? Follow this path:
 
-### Need Help?
+1. **[Quickstart](quickstart.md)** - Install the client and dependencies
+2. **[Examples](examples.md)** - Run working code examples to learn by doing
+3. **Background Reading** - Dive deeper when you need it:
+   - [Account Model](concepts/account-model.md) - LightAccounts, subaccounts, and session keys
+   - [Authentication](concepts/authentication.md) - Registering accounts and session keys
+   - [Bridging](concepts/bridging.md) - Deposit and withdraw assets
+   - [Clients](concepts/clients.md) - Choose the right client for your use case
 
-- **[Examples](examples/)** - Working code examples
-- **[API Reference](reference/)** - Complete method documentation
+### 📚 Reference
+
+- **[Official Documentation](https://docs.derive.xyz/)**
+- **[API Reference](reference/SUMMARY.md)** - Method documentation of the public API
+- **[Internal API](internal/SUMMARY.md)** - Complete reference for contributors
+
+## Community & Support
+
+- **GitHub**: [8ball030/derive_client](https://github.com/8ball030/derive_client)
+- **Issues**: Report bugs or request features
+- **Derive Platform**: [derive.xyz](https://derive.xyz)
 
 ---
 
-_Ready to start trading derivatives on Derive? Let's get you set up!_
+_Ready to start trading derivatives on Derive? Jump to [Quickstart](quickstart.md) →_

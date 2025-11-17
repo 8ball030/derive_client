@@ -31,6 +31,8 @@ class MMPOperations:
         self._subaccount = subaccount
 
     async def get_config(self, *, currency: Optional[str] = None) -> list[MMPConfigResultSchema]:
+        """Get the current mmp config for a subaccount (optionally filtered by currency)."""
+
         subaccount_id = self._subaccount.id
         params = PrivateGetMmpConfigParamsSchema(
             subaccount_id=subaccount_id,
@@ -48,6 +50,8 @@ class MMPOperations:
         mmp_amount_limit: Decimal = Decimal("0"),
         mmp_delta_limit: Decimal = Decimal("0"),
     ) -> PrivateSetMmpConfigResultSchema:
+        """Set the mmp config for the subaccount and currency."""
+
         subaccount_id = self._subaccount.id
         params = PrivateSetMmpConfigParamsSchema(
             subaccount_id=subaccount_id,
@@ -61,6 +65,8 @@ class MMPOperations:
         return response.result
 
     async def reset(self, *, currency: Optional[str] = None) -> Result:
+        """Resets (unfreezes) the mmp state for a subaccount (optionally filtered by currency)."""
+
         subaccount_id = self._subaccount.id
         params = PrivateResetMmpParamsSchema(
             subaccount_id=subaccount_id,

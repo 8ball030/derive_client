@@ -1,26 +1,25 @@
 site_name: Derive Client
 site_description:
 docs_dir: docs
-# site_url: ...
+site_url: https://8ball030.github.io/derive_client/
 repo_url: https://github.com/8ball030/derive_client
 
 nav:
   - Home: index.md
-  - Getting Started:
-      - Installation: getting-started/installation.md
-      - Account Model: getting-started/account-model.md
-      - Authentication: getting-started/authentication.md
-      - Clients: getting-started/clients.md
-      - Bridging & Funding: getting-started/bridging.md
-      - Quick Start: getting-started/quickstart.md
-  # - Examples:
-  #   - Funding: examples/funding.md
-  #   - Trading: examples/trading.md
-  #   - Websockets: examples/websockets.md
-  # - API Reference:
-  #   - HTTP Client: reference/http_client.md
-  #   - Async Client: reference/async_client.md
-  #   - Websocket Client: reference/ws_client.md
+  - Quickstart: quickstart.md
+  - Examples: examples.md
+  - Concepts:
+      - Account Model: concepts/account-model.md
+      - Authentication: concepts/authentication.md
+      - Bridging: concepts/bridging.md
+      - Clients: concepts/clients.md
+  - CLI Reference: cli.md
+  - API Reference: reference/
+  - Internal API: internal/
+
+validation:
+  nav:
+    omitted_files: info
 
 theme:
   name: material
@@ -81,7 +80,7 @@ markdown_extensions:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - pymdownx.superfences:
-        # make exceptions to highlighting of code:
+      # make exceptions to highlighting of code:
       custom_fences:
         - name: mermaid
           class: mermaid
@@ -92,6 +91,31 @@ plugins:
   - mermaid2
   - search:
       lang: en
+  - gen-files:
+      scripts:
+        - scripts/generate-ref-pages.py
+        - scripts/generate-internal-pages.py
+  - literate-nav:
+      nav_file: SUMMARY.md
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: false
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            members_order: source
+            group_by_category: true
+            show_category_heading: true
+            show_if_no_docstring: false
+            inherited_members: false
+            merge_init_into_class: true
+            show_signature_annotations: true
+            separate_signature: true
+            signature_crossrefs: true
 
 extra:
   social:

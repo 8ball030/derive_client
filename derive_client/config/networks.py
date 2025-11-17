@@ -2,7 +2,7 @@
 
 from enum import Enum, IntEnum
 
-from derive_client.data_types import ChecksumAddress, Currency, UnderlyingCurrency
+from derive_client.data_types import ChecksumAddress, Currency
 
 
 class LayerZeroChainIDv2(IntEnum):
@@ -41,39 +41,23 @@ class DeriveTokenAddress(Enum):
     DERIVE = ChecksumAddress("0x2EE0fd70756EDC663AcC9676658A1497C247693A")
 
 
-TOKEN_DECIMALS = {
-    UnderlyingCurrency.ETH: 18,
-    UnderlyingCurrency.BTC: 8,
-    UnderlyingCurrency.USDC: 6,
-    UnderlyingCurrency.LBTC: 8,
-    UnderlyingCurrency.WEETH: 18,
-    UnderlyingCurrency.OP: 18,
-    UnderlyingCurrency.DRV: 18,
-    UnderlyingCurrency.rswETH: 18,
-    UnderlyingCurrency.rsETH: 18,
-    UnderlyingCurrency.DAI: 18,
-    UnderlyingCurrency.USDT: 6,
-    UnderlyingCurrency.OLAS: 18,
-    UnderlyingCurrency.DRV: 18,
-}
-
 CURRENCY_DECIMALS = {
     Currency.ETH: 18,
-    Currency.weETH: 18,
-    Currency.rswETH: 18,
-    Currency.rsETH: 18,
-    Currency.USDe: 18,
-    Currency.deUSD: 18,
+    Currency.WEETH: 18,
+    Currency.RSWETH: 18,
+    Currency.RSETH: 18,
+    Currency.USDE: 18,
+    Currency.DEUSD: 18,
     Currency.PYUSD: 6,
-    Currency.sUSDe: 18,
-    Currency.SolvBTC: 18,
-    Currency.SolvBTCBBN: 18,
+    Currency.SUSDE: 18,
+    Currency.SOLVBTC: 18,
+    Currency.SOLVBTCBBN: 18,
     Currency.LBTC: 8,
     Currency.OP: 18,
     Currency.DAI: 18,
-    Currency.sDAI: 18,
-    Currency.cbBTC: 8,
-    Currency.eBTC: 8,
+    Currency.SDAI: 18,
+    Currency.CBBTC: 8,
+    Currency.EBTC: 8,
     Currency.AAVE: 18,
     Currency.OLAS: 18,
     Currency.DRV: 18,
@@ -81,7 +65,7 @@ CURRENCY_DECIMALS = {
     Currency.WETH: 18,
     Currency.USDC: 6,
     Currency.USDT: 6,
-    Currency.wstETH: 18,
-    Currency.USDCe: 6,
+    Currency.WSTETH: 18,
+    Currency.USDCE: 6,
     Currency.SNX: 18,
 }

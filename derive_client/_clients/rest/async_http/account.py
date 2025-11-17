@@ -229,6 +229,13 @@ class LightAccount:
         return response.result
 
     async def session_keys(self) -> PrivateSessionKeysResultSchema:
+        """
+        Registered session keys, including details (expiry, scope, IP whitelist)
+
+        A session key is simply an Ethereum wallet.
+        Account owners can give other Ethereum wallets temporary access to their accounts via session keys.
+        """
+
         params = PrivateSessionKeysParamsSchema(wallet=self.address)
         response = await self._private_api.session_keys(params)
         return response.result
@@ -241,6 +248,8 @@ class LightAccount:
         ip_whitelist: Optional[list[str]] = None,
         label: Optional[str] = None,
     ) -> PrivateEditSessionKeyResultSchema:
+        """Edits session key parameters such as label and IP whitelist."""
+
         params = PrivateEditSessionKeyParamsSchema(
             wallet=self.address,
             public_session_key=public_session_key,
@@ -252,6 +261,8 @@ class LightAccount:
         return response.result
 
     async def get_all_portfolios(self) -> list[PrivateGetSubaccountResultSchema]:
+        """Get all subaccount portfolios of a wallet"""
+
         params = PrivateGetAllPortfoliosParamsSchema(wallet=self.address)
         response = await self._private_api.get_all_portfolios(params)
         return response.result
@@ -319,11 +330,15 @@ class LightAccount:
         return response.result
 
     async def get_subaccounts(self) -> PrivateGetSubaccountsResultSchema:
+        """Get all subaccount IDs of an account / wallet"""
+
         params = PrivateGetSubaccountsParamsSchema(wallet=self.address)
         response = await self._private_api.get_subaccounts(params)
         return response.result
 
     async def get(self) -> PrivateGetAccountResultSchema:
+        """Account details getter"""
+
         params = PrivateGetAccountParamsSchema(wallet=self.address)
         response = await self._private_api.get_account(params)
         return response.result

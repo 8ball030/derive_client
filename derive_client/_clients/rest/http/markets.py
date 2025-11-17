@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from logging import Logger
 from typing import Optional
 
@@ -21,6 +22,8 @@ from derive_client.data_types.generated_models import (
     PublicGetInstrumentsParamsSchema,
     PublicGetTickerParamsSchema,
     PublicGetTickerResultSchema,
+    PublicGetTickersParamsSchema,
+    TickerSlimSchema,
 )
 
 
@@ -151,16 +154,22 @@ class MarketOperations:
         return instrument
 
     def get_currency(self, *, currency: str) -> PublicGetCurrencyResultSchema:
+        """Get currency related risk params, spot price 24hrs ago and lending details for a specific currency."""
+
         params = PublicGetCurrencyParamsSchema(currency=currency)
         response = self._public_api.get_currency(params)
         return response.result
 
     def get_all_currencies(self) -> list[CurrencyDetailedResponseSchema]:
+        """Get all active currencies with their spot price, spot price 24hrs ago."""
+
         params = PublicGetAllCurrenciesParamsSchema()
         response = self._public_api.get_all_currencies(params)
         return response.result
 
     def get_instrument(self, *, instrument_name: str) -> PublicGetInstrumentResultSchema:
+        """Get single instrument by asset name."""
+
         params = PublicGetInstrumentParamsSchema(instrument_name=instrument_name)
         response = self._public_api.get_instrument(params)
         return response.result
@@ -172,6 +181,8 @@ class MarketOperations:
         expired: bool,
         instrument_type: InstrumentType,
     ) -> list[InstrumentPublicResponseSchema]:
+        """Get all active instruments for a given `currency` and `type`."""
+
         params = PublicGetInstrumentsParamsSchema(
             currency=currency,
             expired=expired,
@@ -189,6 +200,8 @@ class MarketOperations:
         page: int = 1,
         page_size: int = 100,
     ) -> PublicGetAllInstrumentsResultSchema:
+        """Get a paginated history of all instruments."""
+
         params = PublicGetAllInstrumentsParamsSchema(
             expired=expired,
             instrument_type=instrument_type,
@@ -200,19 +213,35 @@ class MarketOperations:
         return response.result
 
     def get_ticker(self, *, instrument_name: str) -> PublicGetTickerResultSchema:
+        """
+        Get ticker information (best bid / ask, instrument contraints, fees info, etc.) for a single instrument
+
+        DEPRECATION NOTICE: This RPC is deprecated in favor of `get_tickers` on Dec 1, 2025.
+        """
+
+        warnings.warn(
+            "get_ticker is deprecated and will be removed on Dec 1, 2025. Use get_tickers instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
         params = PublicGetTickerParamsSchema(instrument_name=instrument_name)
         response = self._public_api.get_ticker(params)
         return response.result
 
-    def get_all_tickers(
+    def get_tickers(
         self,
         *,
         currency: str,
-        expired: bool,
         instrument_type: InstrumentType,
-    ) -> list[PublicGetTickerResultSchema]:
-        """Collect tickers by calling get_ticker for each instrument. May issue many HTTP requests; use with care."""
+        expiry_date: Optional[str] = None,
+    ) -> dict[str, TickerSlimSchema]:
+        """Get tickers information (best bid / ask, stats, etc.) for multiple instruments."""
 
-        instruments = self.get_instruments(currency=currency, expired=expired, instrument_type=instrument_type)
-        tickers = [self.get_ticker(instrument_name=instrument.instrument_name) for instrument in instruments]
-        return tickers
+        params = PublicGetTickersParamsSchema(
+            currency=currency,
+            instrument_type=instrument_type,
+            expiry_date=expiry_date,
+        )
+        response = self._public_api.get_tickers(params)
+        return response.result.tickers

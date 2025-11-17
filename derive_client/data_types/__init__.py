@@ -10,7 +10,6 @@ from .enums import (
     EthereumJSONRPCErrorCode,
     GasPriority,
     TxStatus,
-    UnderlyingCurrency,
 )
 from .generated_models import (
     Direction,
@@ -22,6 +21,7 @@ from .models import (
     BridgeTxDetails,
     BridgeTxResult,
     ChecksumAddress,
+    ClientConfig,
     DeriveAddresses,
     DeriveContractAddresses,
     EnvConfig,
@@ -42,8 +42,10 @@ from .models import (
     TypedTxReceipt,
     Wei,
 )
+from .utils import D
 
 __all__ = [
+    "D",
     "ChecksumAddress",
     "ChainID",
     "TxStatus",
@@ -59,9 +61,9 @@ __all__ = [
     "EthereumJSONRPCErrorCode",
     "DeriveJSONRPCErrorCode",
     "DeriveContractAddresses",
-    "UnderlyingCurrency",
     "OrderType",
     "Environment",
+    "ClientConfig",
     "GasPriority",
     "FeeHistory",
     "FeeEstimate",

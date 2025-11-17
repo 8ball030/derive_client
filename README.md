@@ -1,117 +1,156 @@
-# Derive.xyz Python Client.
+# Derive Client
 
-This repo provides a unified interface for the Derive Exchange.
+> Python client for [Derive Protocol](https://derive.xyz) - a decentralized derivatives trading platform on its own Ethereum L2
 
-Please checkout the [examples](./examples) directory for usage.
+Trade options, perpetuals, and spot with full self-custody through smart contract wallets.
 
-Here is a quick demonstration of the cli functionality.
+[Full Documentation](https://8ball030.github.io/derive_client/)
 
-![alt text](derive_demo.gif "Demo of cli tools.")
+## CLI Tool Demo
 
+Here is a quick demonstration of the CLI functionality:
 
-## Preparing Keys for the Client
+![Demo of CLI tools](docs/cli_demo.gif)
 
-To use the client, you will need to generate an API key from the Derive Exchange.
-
-The process involves linking your local signer to the account you want to use programmatically.
-
-Here are the steps:
-
-0. Generate a local signer using your preferred method. For example, you can use the Open Aea Ledger Ethereum Cli.
-    ```bash
-    aea generate-key ethereum
-    ```
-    This will generate a new private key in the `ethereum_private_key.txt` file.
-
-1. Go to the [Derive Exchange](https://derive.xyz) and create an account.
-2. Go to the API section and create a new [API key](https://app.derive.xyz/developers).
-3. Register a new Session key with the Public Address of the account your signer generated in step 0.
-
-Once you have the API key, you can use it to interact with the Derive Exchange.
-
-You need;
-
-`DERIVE_WALLET` - The programtic wallet generated upon account creation. It can be found in the Developer section of the Derive Exchange.
-`SIGNER_PRIVATE_KEY` - The private key generated in step 0.
-`SUBACCOOUNT_ID` - The subaccount id you want to use for the API key.
-
-```python
-derive_client = DeriveClient(
-    private_key=TEST_PRIVATE_KEY, 
-    env=Environment.TEST, # or Environment.PROD
-    wallet=TEST_WALLET,
-    subaccount_id = 123456
-    )
-```
-
-## Orders Operations
-You can filter by status, instrument name, and more.
-```python
-
-orders = derive_client.orders.list(
-    status=OrderStatus.open,
-)
-```
-
-
-
-
-## Install
+## Installation from PyPI
 
 ```bash
 pip install derive-client
 ```
 
-## Dev
+## Quickstart
 
-### Formatting
-
-```bash
-make fmt
-```
-
-### Linting
+Create .env file
 
 ```bash
-make lint
+DERIVE_SESSION_KEY=0x2ae8be44db8a590d20bffbe3b6872df9b569147d3bf6801a35a28281a4816bbd
+DERIVE_WALLET=0xA419f70C696a4b449a4A24F92e955D91482d44e9
+DERIVE_SUBACCOUNT_ID=137626
+DERIVE_ENV=TEST
 ```
 
-### Typecheck
+Setup client, check market data and place an order.
+
+```python
+from derive_client import HTTPClient
+from derive_client.data_types import D, Direction, OrderType
+
+# Initialize client
+client = HTTPClient.from_env()
+
+# Check market data
+ticker = client.markets.get_ticker(instrument_name="ETH-PERP")
+
+# Place an order
+order_result = client.orders.create(
+    instrument_name="ETH-PERP",
+    amount=D("0.10"),  # 0.10 ETH
+    limit_price=D("1000"),  # Buy at $1000
+    direction=Direction.buy,
+    order_type=OrderType.limit,
+)
+```
+
+### Examples
+
+The fastest way to learn is by running the [examples](/examples/):
 
 ```bash
-make typecheck
+# Clone the repo (examples are not included in the package)
+git clone git@github.com:8ball030/derive_client.git
+cd derive_client
+
+# Install editable with pip
+pip install -e .
+
+# Run with testnet credentials (pre-configured)
+python examples/01_quickstart.py
 ```
 
-### Tests
+The examples use `.env.template` with **pre-filled testnet credentials**, so you can run them immediately without setup.
+
+- **01_quickstart.py** - Connect and Place Your First Trade
+- **02_market_data.py** - Exploring Available Markets and Price Information
+- **03_collateral_management.py** - Deposits, Withdrawals, and Margin.
+- **04_trading_basics.py** - Order Lifecycle and Management
+- **05_position_transfer.py** - Moving Positions Between Subaccounts
+- **06_bridging.py** - Moving Assets Between Chains
+
+**NOTE:** The bridging example cannot be ran using the TEST environment, as bridging is only available in PROD.
+
+## Using Your Own Account
+
+To trade on mainnet or with your own testnet account:
+
+1. Register at [derive.xyz](https://derive.xyz) to get your LightAccount wallet
+2. Create a [subaccount](https://app.derive.xyz/subaccounts)
+3. Register a session key (regular Ethereum private key for an EOA) as session key via the [Developers page](https://app.derive.xyz/developers)
+4. Copy `.env.template` to `.env` and add your credentials:
 
 ```bash
-make tests
+DERIVE_WALLET=0x...           # Your LightAccount address
+DERIVE_SESSION_KEY=0x...      # Session key private key
+DERIVE_SUBACCOUNT_ID=1        # Your subaccount ID
+DERIVE_ENV=PROD               # TEST or PROD
 ```
 
-### Codegen
+See [authentication.md](docs/concepts/authentication.md) for a more detailed explanation.
+
+## Documentation
+
+📖 **[Full Documentation](https://8ball030.github.io/derive_client/)**
+
+- **[Concepts](docs/concepts/)** - Account model, authentication, bridging, clients
+- **[API Reference](docs/reference/)** - Public API documentation
+- **[Internal API](docs/internal/)** - Internal API documentation
+
+## Development
+
+### From Source (for development)
+
+```bash
+git clone git@github.com:8ball030/derive_client.git
+cd derive_client
+
+# Install and spawn the virtual environment
+make install
+poetry shell
+```
+
+### Quick Commands
+
+```bash
+make fmt        # Format code
+make lint       # Run linters
+make typecheck  # Type checking
+make tests      # Run tests
+```
+
+### Code Generation
 
 ```bash
 make codegen-all
 ```
 
+### API Docs Generation
 
-
-For convience, all commands can be run with:
-
+```bash
+make docs
 ```
+
+Or, run all the above make commands sequentially using simply:
+
+```bash
 make all
 ```
 
 ### Releasing
 
-We can use `tbump` to automatically bump our versions in preparation of a release.
+Bump version and create release:
 
-```bash 
+```bash
 export new_version=0.1.5
 tbump $new_version
 ```
 
-The release workflow will then detect that a branch with a `v` prefix exists and create a release from it.
-
-Additionally, the package will be published to PyPI.
-
+The release workflow will automatically create a GitHub release and publish to PyPI.

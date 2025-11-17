@@ -44,16 +44,19 @@ class PositionOperations:
         """
         self._subaccount = subaccount
 
-    def list(self, is_open: Optional[bool] = None) -> list[PositionResponseSchema]:
+    def list(self, is_open: Optional[bool] = None, currency: str | None = None) -> list[PositionResponseSchema]:
         """Get all positions"""
 
         params = PrivateGetPositionsParamsSchema(subaccount_id=self._subaccount.id)
         response = self._subaccount._private_api.get_positions(params)
-        return (
+        intermediate = (
             response.result.positions
             if is_open is None
             else [p for p in response.result.positions if (p.amount != 0) == is_open]
         )
+        if currency:
+            intermediate = [p for p in intermediate if p.instrument_name.startswith(currency)]
+        return intermediate
 
     def transfer(
         self,
@@ -65,7 +68,23 @@ class PositionOperations:
         maker_nonce: Optional[int] = None,
         taker_nonce: Optional[int] = None,
     ) -> PrivateTransferPositionResultSchema:
-        """Transfer position to another subaccount"""
+        """Transfers a positions from one subaccount to another, owned by the same wallet.
+
+        The transfer is executed as a pair of orders crossing each other.
+
+        The maker order is created first, followed by a taker order crossing it.
+
+        The order amounts, limit prices and instrument name must be the same for both
+        orders.
+
+        Fee is not charged and a zero `max_fee` must be signed.
+
+        The maker order is forcibly considered to be `reduce_only`, meaning it can only
+        reduce the position size.
+
+        History: For position transfer history, use the `private/get_trade_history` RPC
+        (not `private/get_erc20_transfer_history`).
+        """
 
         from_subaccount = self._subaccount.id
         max_fee = Decimal("0")
@@ -151,7 +170,23 @@ class PositionOperations:
         maker_nonce: Optional[int] = None,
         taker_nonce: Optional[int] = None,
     ) -> PrivateTransferPositionsResultSchema:
-        """Transfer multiple positions"""
+        """Transfers multiple positions from one subaccount to another, owned by the same
+        wallet.
+
+        The transfer is executed as a an RFQ. A mock RFQ is first created from the taker
+        parameters, followed by a maker quote and a taker execute.
+
+        The leg amounts, prices and instrument name must be the same in both param
+        payloads.
+
+        Fee is not charged and a zero `max_fee` must be signed.
+
+        Every leg in the transfer must be a position reduction for either maker or taker
+        (or both).
+
+        History: for position transfer history, use the `private/get_trade_history` RPC
+        (not `private/get_erc20_transfer_history`).
+        """
 
         from_subaccount = self._subaccount.id
         positions = sort_by_instrument_name(positions)

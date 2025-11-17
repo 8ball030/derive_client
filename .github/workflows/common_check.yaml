@@ -38,29 +38,23 @@ jobs:
           installer-parallel: true
 
       - name: Install Packages
-        run: |
-          poetry install -v
+        run: poetry install -v
 
       - name: Codegen
-        run: |
-          poetry run make codegen-all
+        run: poetry run make codegen-all
+
+      - name: Docs
+        run: poetry run make docs
+
+      - name: Format
+        run:  poetry run make fmt
 
       - name: Lint
-        run: |
-          poetry run make lint
+        run:  poetry run make lint
 
-      - name: Typecheck
-        run: |
-          poetry run make typecheck
+      - name: Diff Check
+        run:  poetry run make check_diff
 
       - name: Tests
-        run: |
-          poetry run make tests
+        run:  poetry run make tests
 
-      - name: Doc Tests
-        run: |
-          make test-docs
-
-      - name: Check Diff
-        run: |
-          poetry run make check_diff

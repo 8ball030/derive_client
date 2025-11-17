@@ -10,6 +10,7 @@ from derive_client.data_types.generated_models import (
     PublicGetCurrencyResultSchema,
     PublicGetInstrumentResultSchema,
     PublicGetTickerResultSchema,
+    TickerSlimSchema,
 )
 
 
@@ -69,14 +70,22 @@ async def test_markets_get_ticker(client_admin_wallet):
 
 
 @pytest.mark.asyncio
-async def test_markets_get_all_tickers(client_admin_wallet):
+async def test_markets_get_tickers(client_admin_wallet):
     currency = "ETH"
     expired = False
-    instrument_type = InstrumentType.perp
-    tickers = await client_admin_wallet.markets.get_all_tickers(
+    instrument_type = InstrumentType.option
+    instruments = await client_admin_wallet.markets.get_instruments(
         currency=currency,
         expired=expired,
         instrument_type=instrument_type,
     )
-    assert isinstance(tickers, list)
-    assert all(isinstance(item, PublicGetTickerResultSchema) for item in tickers)
+
+    _, expiry_date, _, _ = instruments[0].instrument_name.split("-")
+    tickers = await client_admin_wallet.markets.get_tickers(
+        currency=currency,
+        expiry_date=expiry_date,
+        instrument_type=instrument_type,
+    )
+
+    assert isinstance(tickers, dict)
+    assert all(isinstance(ticker, TickerSlimSchema) for ticker in tickers.values())
