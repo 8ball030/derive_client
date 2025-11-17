@@ -252,6 +252,7 @@ def normalize_class_def(node: ast.ClassDef) -> str:
     Create a normalized representation of a class for content comparison.
     Ignores the class name itself, focuses on structure and values.
     """
+
     parts = []
 
     # Get base classes
@@ -280,6 +281,7 @@ def normalize_class_def(node: ast.ClassDef) -> str:
 
 def extract_models_from_file(file_path: Path) -> dict[str, ModelDefinition]:
     """Extract all model definitions from a Python file."""
+
     code = file_path.read_text()
     tree = ast.parse(code)
 
@@ -318,8 +320,9 @@ def find_duplicates(
     Find models in target that are identical to models in source.
     Returns list of deduplication strategies.
     """
+
     # Build reverse index: content_hash -> source_name
-    source_by_hash: dict[str, tuple[str, str]] = {}  # hash -> (name, type)
+    source_by_hash: dict[str, tuple[str, str]] = {}
     for name, model in source_models.items():
         if model.content_hash in source_by_hash:
             # Multiple source models with same content - use first one
@@ -334,15 +337,12 @@ def find_duplicates(
 
             # Determine action based on model type and name
             if target_model.type == 'enum':
-                # Enums: always remove and import
                 action = 'remove'
                 print(f"  ✓ {target_name} → {source_name} (enum, remove)")
             elif target_name == source_name:
-                # Same name: remove and import
                 action = 'remove'
                 print(f"  ✓ {target_name} → {source_name} (same name, remove)")
             else:
-                # Different name: inherit
                 action = 'inherit'
                 print(f"  ✓ {target_name} → {source_name} (inherit)")
 
@@ -383,15 +383,12 @@ class ModelDeduplicator(cst.CSTTransformer):
         strategy = self.strategies_by_name[class_name]
 
         if strategy.action == 'remove':
-            # Remove entirely
             self.removed_classes.add(class_name)
             return cst.RemovalSentinel.REMOVE
 
         elif strategy.action == 'inherit':
-            # Replace with inheritance from source model
             self.inherited_classes.add(class_name)
 
-            # Create new class that inherits from source
             new_class = updated_node.with_changes(
                 bases=[cst.Arg(value=cst.Name(strategy.source_name))],
                 body=cst.IndentedBlock(body=[cst.SimpleStatementLine(body=[cst.Pass()])]),
@@ -402,6 +399,7 @@ class ModelDeduplicator(cst.CSTTransformer):
 
     def leave_Name(self, original_node: cst.Name, updated_node: cst.Name) -> cst.Name:
         """Rewrite references to removed duplicates."""
+
         name = updated_node.value
 
         if name in self.strategies_by_name:
@@ -425,7 +423,6 @@ def add_imports(module: cst.Module, imports_to_add: set[str]) -> cst.Module:
     if not imports_to_add:
         return module
 
-    # Create import statement
     import_names = [cst.ImportAlias(name=cst.Name(name)) for name in sorted(imports_to_add)]
 
     new_import = cst.SimpleStatementLine(
@@ -440,7 +437,6 @@ def add_imports(module: cst.Module, imports_to_add: set[str]) -> cst.Module:
         ]
     )
 
-    # Find where to insert (after existing imports)
     body = list(module.body)
     insert_pos = 0
 
@@ -448,10 +444,8 @@ def add_imports(module: cst.Module, imports_to_add: set[str]) -> cst.Module:
         if m.matches(stmt, m.SimpleStatementLine(body=[m.Import() | m.ImportFrom()])):
             insert_pos = i + 1
         elif not m.matches(stmt, m.EmptyLine() | m.SimpleStatementLine(body=[m.Expr(value=m.SimpleString())])):
-            # Stop at first non-import, non-docstring statement
             break
 
-    # Insert new import
     body.insert(insert_pos, new_import)
 
     return module.with_changes(body=body)
