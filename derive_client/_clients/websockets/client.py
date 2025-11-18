@@ -1,301 +1,140 @@
 """
-Class to handle base websocket client
+Synchronous WebSocket client for Derive.
 """
 
-import json
-import time
-import uuid
-from decimal import Decimal
+from __future__ import annotations
 
-import msgspec
-from derive_action_signing.utils import sign_ws_login, utc_now_ms
-from websockets import State
-from websockets.sync.client import ClientConnection, connect
+import contextlib
+from logging import Logger
+from pathlib import Path
+from typing import Any, Callable, Generator
 
-from derive_client.data_types.channels.enums import Depth, Group, Interval
-from derive_client.data_types.channels.public.orderbook_instrument_name_group_depth import (
-    OrderbookInstrumentNameGroupDepthPublisherDataSchema as Orderbook,
-)
-from derive_client.data_types.enums import Currency
-from derive_client.data_types.generated_models import (
-    Direction,
-    InstrumentType,
-    OrderResponseSchema,
-    OrderType,
-    PrivateGetOrdersResultSchema,
-    PrivateGetPositionsResultSchema,
-    PrivateOrderParamsSchema,
-    PublicGetTickerResultSchema,
-    TimeInForce,
-    TradeResponseSchema,
-)
-from derive_client.exceptions import DeriveJSONRPCException
+from derive_client._clients.websockets.channels import PrivateChannels, PublicChannels
+from pydantic import ConfigDict, validate_call
+from web3 import Web3
 
-# from .base_client import BaseClient
+from derive_client._clients.utils import AuthContext, load_client_config
+from derive_client._clients.websockets.session import WebSocketSession
+from derive_client.config import CONFIGS
+from derive_client.data_types import ChecksumAddress, Environment
+from derive_client.utils.logger import get_logger
 
 
-class WsClient:
-    """Websocket client class."""
+class WebSocketClient:
+    """Synchronous WebSocket client for real-time data streams."""
 
-    _ws: ClientConnection | None = None
-    subsriptions: dict = {}
-    requests_in_flight: dict = {}
+    @validate_call(config=ConfigDict(arbitrary_types_allowed=True))
+    def __init__(
+        self,
+        *,
+        wallet: ChecksumAddress | str,
+        session_key: str,
+        subaccount_id: int,
+        env: Environment,
+        logger: Logger | None = None,
+        request_timeout: float = 10.0,
+    ):
+        config = CONFIGS[env]
+        w3 = Web3(Web3.HTTPProvider(config.rpc_endpoint))
+        account = w3.eth.account.from_key(session_key)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.login_client()
-
-    def connect_ws(self):
-        return connect(
-            self.config.ws_address,
+        auth = AuthContext(
+            w3=w3,
+            wallet=ChecksumAddress(wallet),
+            account=account,
+            config=config,
         )
+
+        self._env = env
+        self._auth = auth
+        self._config = config
+        self._subaccount_id = subaccount_id
+
+        self._logger = logger if logger is not None else get_logger()
+        self._session = WebSocketSession(
+            url=config.ws_endpoint,
+            request_timeout=request_timeout,
+            logger=self._logger,
+        )
+
+        # API facades - pass session for subscribe/unsubscribe
+        self._public_channels = PublicChannels(session=self._session)
+        self._private_channels = PrivateChannels(session=self._session)
+
+    @classmethod
+    def from_env(
+        cls,
+        session_key_path: Path | None = None,
+        env_file: Path | None = None,
+    ) -> WebSocketClient:
+        """Create WebSocketClient from environment configuration."""
+
+        config = load_client_config(session_key_path=session_key_path, env_file=env_file)
+        return cls(**config.model_dump())
+
+    def connect(self) -> None:
+        """Establish WebSocket connection."""
+        self._session.open()
+
+    def disconnect(self) -> None:
+        """Close WebSocket connection and clear subscriptions. Idempotent."""
+        self._session.close()
 
     @property
-    def ws(self):
-        if self._ws is None:
-            self._ws = self.connect_ws()
-        if self._ws.state is not State.OPEN:
-            self._ws = self.connect_ws()
-        return self._ws
+    def public(self) -> PublicChannels:
+        """Access public channel subscriptions."""
+        return self._public_channels
 
-    def login_client(
+    @property
+    def private(self) -> PrivateChannels:
+        """Access private channel subscriptions."""
+        return self._private_channels
+
+    def subscribe(
         self,
-        retries=3,
-    ):
-        login_request = {
-            "method": "public/login",
-            "params": sign_ws_login(
-                web3_client=self.web3_client,
-                smart_contract_wallet=self.wallet,
-                session_key_or_wallet_private_key=self.signer._private_key,
-            ),
-            "id": str(utc_now_ms()),
-        }
+        channel: str,
+        handler: Callable[[Any], None],
+    ) -> None:
+        """
+        Subscribe to a channel with a handler.
+
+        Low-level API - prefer using `client.public.*` or `client.private.*`
+
+        Args:
+            channel: Full channel name (e.g., "BTC-PERP.trades")
+            handler: Callback function to handle messages
+        """
+        self._session.subscribe(channel, handler)
+
+    def unsubscribe(
+        self,
+        channel: str,
+        handler: Callable[[Any], None] | None = None,
+    ) -> None:
+        """
+        Unsubscribe from a channel.
+
+        Low-level API - prefer using channel return values.
+
+        Args:
+            channel: Channel name
+            handler: Specific handler to remove (or None for all)
+        """
+        self._session.unsubscribe(channel, handler)
+
+    @contextlib.contextmanager
+    def timeout(self, seconds: float) -> Generator[None, None, None]:
+        """Temporarily override request timeout for RPC calls."""
+        prev = self._session._request_timeout
         try:
-            self.ws.send(json.dumps(login_request))
-            # we need to wait for the response
-            while True:
-                message = json.loads(self.ws.recv())
-                if message["id"] == login_request["id"]:
-                    if "result" not in message:
-                        if self._check_output_for_rate_limit(message):
-                            return self.login_client()
-                        raise DeriveJSONRPCException(**message["error"])
-                    break
-        except Exception as error:
-            if retries:
-                time.sleep(1)
-                self.login_client(retries=retries - 1)
-            raise error
+            self._session._request_timeout = float(seconds)
+            yield
+        finally:
+            self._session._request_timeout = prev
 
-    def create_order(
-        self,
-        amount: float | Decimal,
-        instrument_name: str,
-        price: float | None | Decimal = None,
-        reduce_only=False,
-        instrument_type: InstrumentType = InstrumentType.perp,
-        side: Direction = Direction.buy,
-        order_type: OrderType = OrderType.limit,
-        time_in_force: TimeInForce = TimeInForce.gtc,
-        instruments=None,  # temporary hack to allow async fetching of instruments
-    ) -> OrderResponseSchema:
-        """
-        Create the order.
-        """
-        if side.name.upper() not in Direction.__members__:
-            raise Exception(f"Invalid side {side}")
+    def __enter__(self):
+        self.connect()
+        return self
 
-        if not instruments:
-            _currency = Currency[instrument_name.split("-")[0]]
-            if instrument_type in [
-                InstrumentType.perp,
-                InstrumentType.erc20,
-                InstrumentType.option,
-            ]:
-                instruments = self._internal_map_instrument(instrument_type, _currency)
-            else:
-                raise Exception(f"Invalid instrument type {instrument_type}")
-
-        instrument = instruments[instrument_name]
-        amount_step = instrument["amount_step"]
-        rounded_amount = Decimal(str(amount)).quantize(Decimal(str(amount_step)))
-
-        if price is not None:
-            price_step = instrument["tick_size"]
-            rounded_price = Decimal(str(price)).quantize(Decimal(str(price_step)))
-
-        module_data = {
-            "asset_address": instrument["base_asset_address"],
-            "sub_id": int(instrument["base_asset_sub_id"]),
-            "limit_price": Decimal(str(rounded_price)) if price is not None else Decimal(0),
-            "amount": Decimal(str(rounded_amount)),
-            "max_fee": Decimal(1000),
-            "recipient_id": int(self.subaccount_id),
-            "is_bid": side == Direction.buy,
-        }
-
-        signed_action = self._generate_signed_action(
-            module_address=self.config.contracts.TRADE_MODULE, module_data=module_data
-        )
-
-        order = {
-            "instrument_name": instrument_name,
-            "direction": side.name.lower(),
-            "order_type": order_type.name.lower(),
-            "mmp": False,
-            "time_in_force": time_in_force.value,
-            # "referral_code": DEFAULT_REFERER,
-            **signed_action.to_json(),
-        }
-        _id = str(uuid.uuid4())
-        self.ws.send(json.dumps({"method": "private/order", "params": order, "id": _id}))
-        self.requests_in_flight[_id] = self._parse_order_message
-        return PrivateOrderParamsSchema(**order)
-
-    def subscribe_orderbook(self, instrument_name, group: Group = Group.field_1, depth: Depth = Depth.field_20):
-        """
-        Subscribe to an orderbook feed.
-        """
-        msg = f"orderbook.{instrument_name}.{group}.{depth}"
-        self.ws.send(json.dumps({"method": "subscribe", "params": {"channels": [msg]}, "id": str(utc_now_ms())}))
-        self.subsriptions[msg] = self._parse_orderbook_message
-
-    def subscribe_trades(self):
-        """
-        Subscribe to trades feed.
-        """
-        msg = f"{self.subaccount_id}.trades"
-        self.ws.send(json.dumps({"method": "subscribe", "params": {"channels": [msg]}, "id": str(utc_now_ms())}))
-        self.subsriptions[msg] = self._parse_trades_message
-
-    def subscribe_orders(self):
-        """
-        Subscribe to orders feed.
-        """
-        msg = f"{self.subaccount_id}.orders"
-        self.ws.send(json.dumps({"method": "subscribe", "params": {"channels": [msg]}, "id": str(utc_now_ms())}))
-        self.subsriptions[msg] = self._parse_orders_stream
-
-    def subscribe_ticker(self, instrument_name, interval: Interval = Interval.field_100):
-        """
-        Subscribe to a ticker feed.
-        """
-        msg = f"ticker.{instrument_name}.{interval}"
-        self.ws.send(json.dumps({"method": "subscribe", "params": {"channels": [msg]}, "id": str(utc_now_ms())}))
-        self.subsriptions[msg] = self._parse_ticker
-
-    def get_positions(self):
-        """
-        Get positions
-        """
-        id = str(uuid.uuid4())
-        payload = {"subaccount_id": self.subaccount_id}
-        self.ws.send(json.dumps({"method": "private/get_positions", "params": payload, "id": id}))
-        self.requests_in_flight[id] = self._parse_positions_response
-
-    def get_orders(self):
-        """
-        Get orders
-        """
-        id = str(uuid.uuid4())
-        payload = {"subaccount_id": self.subaccount_id}
-        self.ws.send(json.dumps({"method": "private/get_open_orders", "params": payload, "id": id}))
-        self.requests_in_flight[id] = self._parse_orders_message
-
-    def _parse_ticker(self, json_message):
-        """
-        Parse a ticker message.
-        """
-        return msgspec.convert(json_message["params"]["data"]['instrument_ticker'], PublicGetTickerResultSchema)
-
-    def _parse_orderbook_message(self, json_message):
-        """
-        Parse an orderbook message.
-        """
-        return Orderbook.from_json(json_message)
-
-    def _parse_trades_message(self, json_message):
-        """
-        Parse a trades message.
-        """
-        return msgspec.convert(json_message["params"]["data"], TradeResponseSchema)
-
-    def _parse_order_message(self, json_message):
-        """
-        Parse an orders message.
-        """
-        result = json_message.get("result", None)
-        if result is None:
-            raise Exception(f"Invalid order message {json_message}")
-        if "order" not in result:
-            return msgspec.convert(json_message["result"], OrderResponseSchema)
-        return msgspec.convert(json_message["result"]["order"], OrderResponseSchema)
-
-    def _parse_orders_stream(self, json_message):
-        """
-        Parse an orders message.
-        """
-        return msgspec.convert(
-            {"subaccount_id": self.subaccount_id, "orders": json_message['params']['data']},
-            PrivateGetOrdersResultSchema,
-        )
-
-    def _parse_orders_message(self, json_message):
-        """
-        Parse an orders message.
-        """
-        return msgspec.convert(json_message['result'], PrivateGetOrdersResultSchema)
-
-    def _parse_positions_response(self, json_message):
-        """
-        Parse a positions response message.
-        """
-        return msgspec.convert(json_message['result'], PrivateGetPositionsResultSchema)
-
-    def parse_message(self, raw_message):
-        """
-        find the parser based on the message type.
-        """
-        json_message = json.loads(raw_message)
-        if "method" in json_message and json_message["method"] == "subscription":
-            channel = json_message["params"]["channel"]
-            if channel in self.subsriptions:
-                return self.subsriptions[channel](json_message)
-            raise Exception(f"Unknown channel {channel}")
-        if "id" in json_message and json_message["id"] in self.requests_in_flight:
-            parser = self.requests_in_flight.pop(json_message["id"])
-            return parser(json_message)
-        return json_message
-
-    def cancel(self, order_id, instrument_name):
-        """
-        Cancel an order
-        """
-
-        id = str(uuid.uuid4())
-        payload = {
-            "order_id": order_id,
-            "subaccount_id": self.subaccount_id,
-            "instrument_name": instrument_name,
-        }
-        self.ws.send(json.dumps({"method": "private/cancel", "params": payload, "id": id}))
-        self.requests_in_flight[id] = self._parse_order_cancel_message
-
-    def _parse_order_cancel_message(self, json_message):
-        """
-        Parse an order cancel message.
-        """
-        error = json_message.get("error", None)
-        if error and error.get("code") in [11006, -32603]:
-            return
-        result = json_message.get("result", None)
-        return OrderResponseSchema(**result)
-
-    def cancel_all(self):
-        """
-        Cancel all orders
-        """
-        id = str(uuid.uuid4())
-        payload = {"subaccount_id": self.subaccount_id}
-        self.ws.send(json.dumps({"method": "private/cancel_all", "params": payload, "id": id}))
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.disconnect()
