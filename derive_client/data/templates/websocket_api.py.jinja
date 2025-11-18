@@ -1,0 +1,86 @@
+"""Auto-generated WebSocket API classes from channel schemas"""
+
+from typing import Callable, Any
+
+from derive_client.data_types.channel_models import (
+{% for schema in schema_imports -%}
+    {{ schema }},
+{% endfor %}
+)
+
+
+class PublicChannels:
+    """Public WebSocket channel subscriptions"""
+
+    def __init__(self, ws_client):
+        self._ws = ws_client
+
+{% for channel in public_channels %}
+    def {{ channel.name }}(
+        self,
+        {% for param in channel.params -%}
+        {{ param }}: str,
+        {% endfor -%}
+        callback: Callable[[{{ channel.notification_type }}], Any],
+    ) -> str:
+        {% if channel.description %}
+        """
+        {{ channel.description }}
+        
+        Args:
+            {% for param in channel.params -%}
+            {{ param }}: {{ param | replace('_', ' ') | title }}
+            {% endfor -%}
+            callback: Callback function to handle notifications
+            
+        Returns:
+            Channel name for unsubscribing
+        """
+        {% endif %}
+        channel = "{{ channel.channel_pattern }}".format(
+            {% for param in channel.params -%}
+            {{ param }}={{ param }},
+            {% endfor -%}
+        )
+        self._ws.subscribe(channel, callback)
+        return channel
+
+{% endfor %}
+
+class PrivateChannels:
+    """Private WebSocket channel subscriptions"""
+
+    def __init__(self, ws_client):
+        self._ws = ws_client
+
+{% for channel in private_channels %}
+    def {{ channel.name }}(
+        self,
+        {% for param in channel.params -%}
+        {{ param }}: {% if param == 'subaccount_id' %}int{% else %}str{% endif %},
+        {% endfor -%}
+        callback: Callable[[{{ channel.notification_type }}], Any],
+    ) -> str:
+        {% if channel.description %}
+        """
+        {{ channel.description }}
+        
+        Args:
+            {% for param in channel.params -%}
+            {{ param }}: {{ param | replace('_', ' ') | title }}
+            {% endfor -%}
+            callback: Callback function to handle notifications
+            
+        Returns:
+            Channel name for unsubscribing
+        """
+        {% endif %}
+        channel = "{{ channel.channel_pattern }}".format(
+            {% for param in channel.params -%}
+            {{ param }}={{ param }},
+            {% endfor -%}
+        )
+        self._ws.subscribe(channel, callback)
+        return channel
+
+{% endfor %}
