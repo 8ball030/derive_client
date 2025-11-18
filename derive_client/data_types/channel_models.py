@@ -69,12 +69,6 @@ class MarginWatchChannelSchema(AuctionsWatchChannelSchema):
     pass
 
 
-class InstrumentType(Enum):
-    erc20 = 'erc20'
-    option = 'option'
-    perp = 'perp'
-
-
 class CollateralPublicResponseSchema(Struct):
     amount: Decimal
     asset_name: str
@@ -240,12 +234,6 @@ class QuoteResultSchema(Struct):
 
 class SubaccountIdTradesChannelSchema(SubaccountIdBalancesChannelSchema):
     pass
-
-
-class TxStatus2(Enum):
-    settled = 'settled'
-    reverted = 'reverted'
-    timed_out = 'timed_out'
 
 
 class SubaccountIdTradesTxStatusChannelSchema(Struct):
