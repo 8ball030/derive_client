@@ -162,6 +162,22 @@ RATE_LIMIT: dict[RateLimitProfile, RateLimitConfig] = {
 }
 
 
+class WebsocketResponse(msgspec.Struct, omit_defaults=True):
+    # id may be string or number or absent (notification)
+    id: str | int = msgspec.UNSET
+
+    # optional top-level helpers
+    jsonrpc: str = msgspec.UNSET
+
+    # server notifications
+    method: str = msgspec.UNSET
+    params: msgspec.Raw = msgspec.UNSET
+
+    # RPC response/result
+    result: msgspec.Raw = msgspec.UNSET
+    error: msgspec.Raw = msgspec.UNSET
+
+
 def encode_json_exclude_none(obj: msgspec.Struct) -> bytes:
     """
     Encode msgspec Struct omitting None values.
