@@ -1,19 +1,73 @@
-"""Auto-generated WebSocket API classes from channel schemas"""
+"""Auto-generated WebSocket API classes"""
 
-from typing import Callable, Any
+from typing import Callable, Any, List
 
+from derive_client._clients.utils import decode_result
+from derive_client.data_types.generated_models import (
+{% for schema in rpc_schema_imports -%}
+    {{ schema }},
+{% endfor %}
+)
 from derive_client.data_types.channel_models import (
-{% for schema in schema_imports -%}
+{% for schema in channel_schema_imports -%}
     {{ schema }},
 {% endfor %}
 )
 
 
+# ============================================================================
+# RPC API Classes
+# ============================================================================
+
+class PublicRPC:
+    """Public WebSocket RPC methods"""
+
+    def __init__(self, session):
+        self._session = session
+
+{% for method in public_rpc_methods %}
+    def {{ method.name }}(self, params: {{ method.request_type }}) -> {{ method.result_type }}:
+        {% if method.description %}
+        """
+        {{ method.description }}
+        """
+        {% endif %}
+        method = "public/{{ method.name }}"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, {{ method.result_type }})
+        return result
+{% endfor %}
+
+
+class PrivateRPC:
+    """Private WebSocket RPC methods"""
+
+    def __init__(self, session):
+        self._session = session
+
+{% for method in private_rpc_methods %}
+    def {{ method.name }}(self, params: {{ method.request_type }}) -> {{ method.result_type }}:
+        {% if method.description %}
+        """
+        {{ method.description }}
+        """
+        {% endif %}
+        method = "private/{{ method.name }}"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, {{ method.result_type }})
+        return result
+{% endfor %}
+
+
+# ============================================================================
+# Channel Subscription Classes
+# ============================================================================
+
 class PublicChannels:
     """Public WebSocket channel subscriptions"""
 
-    def __init__(self, ws_client):
-        self._ws = ws_client
+    def __init__(self, session):
+        self._session = session
 
 {% for channel in public_channels %}
     def {{ channel.name }}(
@@ -21,7 +75,7 @@ class PublicChannels:
         {% for param in channel.params -%}
         {{ param }}: str,
         {% endfor -%}
-        callback: Callable[[{{ channel.notification_type }}], Any],
+        callback: Callable[[Any], None],
     ) -> str:
         {% if channel.description %}
         """
@@ -42,7 +96,7 @@ class PublicChannels:
             {{ param }}={{ param }},
             {% endfor -%}
         )
-        self._ws.subscribe(channel, callback)
+        self._session.subscribe(channel, callback)
         return channel
 
 {% endfor %}
@@ -50,8 +104,8 @@ class PublicChannels:
 class PrivateChannels:
     """Private WebSocket channel subscriptions"""
 
-    def __init__(self, ws_client):
-        self._ws = ws_client
+    def __init__(self, session):
+        self._session = session
 
 {% for channel in private_channels %}
     def {{ channel.name }}(
@@ -59,7 +113,7 @@ class PrivateChannels:
         {% for param in channel.params -%}
         {{ param }}: {% if param == 'subaccount_id' %}int{% else %}str{% endif %},
         {% endfor -%}
-        callback: Callable[[{{ channel.notification_type }}], Any],
+        callback: Callable[[Any], None],
     ) -> str:
         {% if channel.description %}
         """
@@ -80,7 +134,26 @@ class PrivateChannels:
             {{ param }}={{ param }},
             {% endfor -%}
         )
-        self._ws.subscribe(channel, callback)
+        self._session.subscribe(channel, callback)
         return channel
 
 {% endfor %}
+
+# ============================================================================
+# Combined API Classes
+# ============================================================================
+
+class PublicAPI:
+    """Combined public WebSocket API - RPC and channels"""
+
+    def __init__(self, session):
+        self.rpc = PublicRPC(session)
+        self.channels = PublicChannels(session)
+
+
+class PrivateAPI:
+    """Combined private WebSocket API - RPC and channels"""
+
+    def __init__(self, session):
+        self.rpc = PrivateRPC(session)
+        self.channels = PrivateChannels(session)
