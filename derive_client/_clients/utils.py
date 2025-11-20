@@ -162,6 +162,68 @@ RATE_LIMIT: dict[RateLimitProfile, RateLimitConfig] = {
 }
 
 
+class JSONRPCEnvelope(msgspec.Struct, omit_defaults=True):
+    """
+    Minimal JSON-RPC 2.0 envelope for hot-path dispatch.
+    Works for both HTTP and WebSocket transports.
+
+    Fields use msgspec.Raw to defer nested deserialization.
+    """
+
+    # Request/response ID (absent for notifications)
+    id: str | int = msgspec.UNSET
+
+    # Protocol version
+    jsonrpc: str = "2.0"
+
+    # Server->client notifications/subscriptions
+    method: str = msgspec.UNSET
+    params: msgspec.Raw = msgspec.UNSET
+
+    # RPC response fields (mutually exclusive)
+    result: msgspec.Raw = msgspec.UNSET
+    error: msgspec.Raw = msgspec.UNSET
+
+
+def decode_envelope(data: bytes) -> JSONRPCEnvelope:
+    """
+    Fast first-pass decode of JSON-RPC envelope.
+
+    Used in hot path to determine message routing without
+    deserializing nested result/error/params fields.
+    """
+    return msgspec.json.decode(data, type=JSONRPCEnvelope)
+
+
+def decode_result(envelope: JSONRPCEnvelope, result_schema: type[StructT]) -> StructT:
+    """
+    Deserialize RPC result field into typed schema.
+
+    Should only be called after verifying envelope.result is present.
+    Raises DeriveJSONRPCError if envelope contains error instead.
+
+    Args:
+        envelope: Already-decoded envelope from decode_envelope()
+        result_schema: Target struct type for result field
+
+    Returns:
+        Deserialized result
+
+    Raises:
+        DeriveJSONRPCError: If envelope contains error field
+        ValueError: If envelope has neither result nor error
+    """
+
+    if envelope.error is not msgspec.UnsetType():
+        error = msgspec.json.decode(envelope.error, type=RPCErrorFormatSchema)
+        raise DeriveJSONRPCError(envelope.id, error)
+
+    if envelope.result is None:
+        raise ValueError(f"Envelope has neither result nor error (id={envelope.id})")
+
+    return msgspec.json.decode(envelope.result, type=result_schema)
+
+
 def encode_json_exclude_none(obj: msgspec.Struct) -> bytes:
     """
     Encode msgspec Struct omitting None values.

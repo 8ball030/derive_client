@@ -84,11 +84,11 @@ release:
 
 .PHONY: generate-models
 generate-models:
-	curl https://docs.derive.xyz/openapi/rest-api.json | jq > openapi-spec.json
-	poetry run python scripts/patch_spec.py openapi-spec.json
-	poetry run python scripts/generate-models.py
-	poetry run ruff format derive_client/data_types/generated_models.py
-	poetry run ruff check --fix derive_client/data_types/generated_models.py
+	curl https://docs.derive.xyz/openapi/rest-api.json | jq > specs/openapi-spec.json
+	poetry run python scripts/patch_spec.py specs/openapi-spec.json
+	poetry run python scripts/generate_models.py
+	poetry run ruff format derive_client/data_types/generated_models.py derive_client/data_types/websocket_models.py
+	poetry run ruff check --fix derive_client/data_types/generated_models.py derive_client/data_types/websocket_models.py
 
 .PHONY: generate-rest-api
 generate-rest-api:
@@ -108,8 +108,13 @@ generate-sync-bridge-client:
 	poetry run ruff format derive_client/_bridge/client.py
 	poetry run ruff check --fix derive_client/_bridge/client.py
 
+.PHONEY: generate-channels
+generate-channels:
+	poetry run python scripts/generate-channel-models.py
+	poetry run ruff format derive_client/data_types/channels
+	poetry run ruff check --fix derive_client/data_types/channels
 
-codegen-all: generate-models generate-rest-api generate-rest-async-http generate-sync-bridge-client fmt lint
+codegen-all: generate-models generate-channels generate-rest-api generate-rest-async-http generate-sync-bridge-client fmt lint
 
 typecheck:
 	poetry run pyright derive_client tests
