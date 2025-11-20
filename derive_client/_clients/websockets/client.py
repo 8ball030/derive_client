@@ -9,11 +9,11 @@ from logging import Logger
 from pathlib import Path
 from typing import Any, Callable, Generator
 
-from derive_client._clients.websockets.channels import PrivateChannels, PublicChannels
 from pydantic import ConfigDict, validate_call
 from web3 import Web3
 
 from derive_client._clients.utils import AuthContext, load_client_config
+from derive_client._clients.websockets.api import PrivateAPI, PublicAPI
 from derive_client._clients.websockets.session import WebSocketSession
 from derive_client.config import CONFIGS
 from derive_client.data_types import ChecksumAddress, Environment
@@ -52,14 +52,13 @@ class WebSocketClient:
 
         self._logger = logger if logger is not None else get_logger()
         self._session = WebSocketSession(
-            url=config.ws_endpoint,
+            url=config.ws_address,
             request_timeout=request_timeout,
             logger=self._logger,
         )
 
-        # API facades - pass session for subscribe/unsubscribe
-        self._public_channels = PublicChannels(session=self._session)
-        self._private_channels = PrivateChannels(session=self._session)
+        self._public_api = PublicAPI(session=self._session)
+        self._private_api = PrivateAPI(session=self._session)
 
     @classmethod
     def from_env(
@@ -79,16 +78,6 @@ class WebSocketClient:
     def disconnect(self) -> None:
         """Close WebSocket connection and clear subscriptions. Idempotent."""
         self._session.close()
-
-    @property
-    def public(self) -> PublicChannels:
-        """Access public channel subscriptions."""
-        return self._public_channels
-
-    @property
-    def private(self) -> PrivateChannels:
-        """Access private channel subscriptions."""
-        return self._private_channels
 
     def subscribe(
         self,
