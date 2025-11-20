@@ -4,7 +4,6 @@ Synchronous WebSocket session with threaded message receiver.
 
 from __future__ import annotations
 
-import json
 import threading
 import uuid
 import weakref
@@ -13,8 +12,10 @@ from logging import Logger
 from queue import Empty, Queue
 from typing import Any, Callable
 
+import msgspec
 from websockets.sync.client import ClientConnection, connect
 
+from derive_client._clients.utils import JSONRPCEnvelope, decode_envelope
 from derive_client.utils.logger import get_logger
 
 
@@ -139,6 +140,7 @@ class WebSocketSession:
             channel: Channel name (e.g., "BTC-PERP.trades")
             handler: Callback function(data) to handle messages
         """
+
         if not self._connected.is_set():
             raise RuntimeError("WebSocket not connected. Call open() first.")
 
@@ -169,6 +171,7 @@ class WebSocketSession:
             channel: Channel name
             handler: Specific handler to remove (or None for all)
         """
+
         with self._handlers_lock:
             if channel not in self._handlers:
                 self._logger.warning(f"Not subscribed to channel: {channel}")
@@ -194,50 +197,27 @@ class WebSocketSession:
             self._logger.info(f"Unsubscribing from channel: {channel}")
             self._send_rpc("unsubscribe", {"channels": [channel]})
 
-    def _send_rpc(self, method: str, params: dict) -> dict:
-        """
-        Send JSON-RPC request and block until response.
+    def _send_rpc(self, method: str, params: msgspec.Struct) -> JSONRPCEnvelope:
+        """Send RPC request and return decoded envelope"""
 
-        Args:
-            method: RPC method name
-            params: RPC parameters
-
-        Returns:
-            RPC result
-
-        Raises:
-            RuntimeError: On RPC error or timeout
-        """
         if not self._ws:
             raise RuntimeError("WebSocket not connected")
 
         request_id = str(uuid.uuid4())
+        request = {"jsonrpc": "2.0", "method": method, "params": msgspec.to_builtins(params), "id": request_id}
+        data = msgspec.json.encode(request).decode("utf-8")
+
         response_queue: Queue = Queue(maxsize=1)
 
         with self._requests_lock:
             self._pending_requests[request_id] = response_queue
 
-        # Send request
-        message = {
-            "method": method,
-            "params": params,
-            "id": request_id,
-        }
-
         try:
-            self._ws.send(json.dumps(message))
+            self._ws.send(data)
 
-            # Block for response
             try:
-                response = response_queue.get(timeout=self._request_timeout)
-
-                # Check for error
-                if "error" in response:
-                    error = response["error"]
-                    self._logger.error(f"RPC error for {method}: {error}")
-                    raise RuntimeError(f"RPC error: {error}")
-
-                return response.get("result", {})
+                envelope = response_queue.get(timeout=self._request_timeout)
+                return envelope
 
             except Empty:
                 self._logger.error(f"RPC timeout for {method} after {self._request_timeout}s")
@@ -253,14 +233,14 @@ class WebSocketSession:
 
         Runs until stop_event is set or connection closes.
         """
+
         self._logger.info("Receiver thread started")
 
         try:
             while not self._stop_event.is_set() and self._ws:
                 try:
                     # Blocking receive with 1s timeout to check stop_event
-                    message_text = self._ws.recv(timeout=1.0)
-                    message = json.loads(message_text)
+                    message = self._ws.recv(timeout=1.0)
                     self._dispatch_message(message)
 
                 except TimeoutError:
@@ -275,43 +255,45 @@ class WebSocketSession:
         finally:
             self._logger.info("Receiver thread stopped")
 
-    def _dispatch_message(self, message: dict[str, Any]) -> None:
+    def _dispatch_message(self, data: bytes) -> None:
         """
-        Route incoming message to appropriate handler.
+        Hot path: minimal deserialization for dispatch routing.
 
         Three message types:
-        1. RPC response (has "id") -> resolve pending request
-        2. Subscription message (method="subscription") -> call channel handlers
+        1. RPC response (has id) -> queue for pending request
+        2. Subscription (method="subscription") -> invoke channel handlers
         3. Other notification -> log
         """
 
-        # RPC response
-        if "id" in message:
-            request_id = message["id"]
+        envelope = decode_envelope(data)
+        if envelope.id is not None:
             with self._requests_lock:
-                queue = self._pending_requests.get(request_id)
+                queue = self._pending_requests.get(envelope.id)
 
             if queue:
                 try:
-                    queue.put_nowait(message)
+                    queue.put_nowait(envelope)
                 except:
-                    self._logger.warning(f"Failed to queue RPC response: {request_id}")
+                    self._logger.warning(f"Failed to queue RPC response: {envelope.id}")
             else:
-                self._logger.debug(f"No pending request for id: {request_id}")
+                self._logger.debug(f"No pending request for id: {envelope.id}")
             return
 
         # Subscription message
-        method = message.get("method")
-        if method == "subscription":
-            params = message.get("params", {})
-            channel = params.get("channel")
-            data = params.get("data")
-
-            if not channel:
-                self._logger.warning("Subscription message missing channel")
+        if envelope.method == "subscription":
+            if envelope.params is None:
+                self._logger.warning("Subscription message missing params")
                 return
 
-            # Call all registered handlers for this channel
+            # Decode minimal channel info for routing
+            # Assuming params is {"channel": "...", "data": {...}}
+            params_dict = msgspec.json.decode(envelope.params)
+            channel = params_dict.get("channel")
+
+            if not channel:
+                self._logger.warning("Subscription params missing channel")
+                return
+
             with self._handlers_lock:
                 handlers = list(self._handlers.get(channel, []))
 
@@ -319,16 +301,17 @@ class WebSocketSession:
                 self._logger.debug(f"No handlers for channel: {channel}")
                 return
 
+            # Pass raw data to handlers - they decode based on channel schema
+            data_raw = params_dict.get("data")
             for handler in handlers:
                 try:
-                    handler(data)
+                    handler(data_raw)
                 except Exception as e:
                     self._logger.error(f"Handler error for {channel}: {e}", exc_info=True)
-
             return
 
         # Other notification
-        self._logger.debug(f"Unhandled message: {message}")
+        self._logger.debug(f"Unhandled notification: {envelope.method}")
 
     @staticmethod
     def _finalize(logger: Logger) -> None:
