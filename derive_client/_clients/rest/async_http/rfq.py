@@ -84,8 +84,8 @@ class RFQOperations:
             min_total_cost=min_total_cost,
             partial_fill_step=partial_fill_step,
         )
-        response = await self._subaccount._private_api.send_rfq(params)
-        return response.result
+        result = await self._subaccount._private_api.send_rfq(params)
+        return result
 
     async def get_rfqs(
         self,
@@ -111,16 +111,16 @@ class RFQOperations:
             status=status,
             to_timestamp=to_timestamp,
         )
-        response = await self._subaccount._private_api.get_rfqs(params)
-        return response.result
+        result = await self._subaccount._private_api.get_rfqs(params)
+        return result
 
     async def cancel_rfq(self, *, rfq_id: str) -> Result:
         """Cancels a single RFQ by id."""
 
         subaccount_id = self._subaccount.id
         params = PrivateCancelRfqParamsSchema(rfq_id=rfq_id, subaccount_id=subaccount_id)
-        response = await self._subaccount._private_api.cancel_rfq(params)
-        return response.result
+        result = await self._subaccount._private_api.cancel_rfq(params)
+        return result
 
     async def cancel_batch_rfqs(
         self,
@@ -144,8 +144,8 @@ class RFQOperations:
             nonce=nonce,
             rfq_id=rfq_id,
         )
-        response = await self._subaccount._private_api.cancel_batch_rfqs(params)
-        return response.result
+        result = await self._subaccount._private_api.cancel_batch_rfqs(params)
+        return result
 
     async def poll_rfqs(
         self,
@@ -175,8 +175,8 @@ class RFQOperations:
             status=status,
             to_timestamp=to_timestamp,
         )
-        response = await self._subaccount._private_api.poll_rfqs(params)
-        return response.result
+        result = await self._subaccount._private_api.poll_rfqs(params)
+        return result
 
     async def send_quote(
         self,
@@ -242,8 +242,8 @@ class RFQOperations:
             label=label,
             mmp=mmp,
         )
-        response = await self._subaccount._private_api.send_quote(params)
-        return response.result
+        result = await self._subaccount._private_api.send_quote(params)
+        return result
 
     async def cancel_quote(self, quote_id: str) -> PrivateCancelQuoteResultSchema:
         """Cancels an open quote."""
@@ -253,8 +253,8 @@ class RFQOperations:
             quote_id=quote_id,
             subaccount_id=subaccount_id,
         )
-        response = await self._subaccount._private_api.cancel_quote(params)
-        return response.result
+        result = await self._subaccount._private_api.cancel_quote(params)
+        return result
 
     async def cancel_batch_quotes(
         self,
@@ -279,8 +279,8 @@ class RFQOperations:
             quote_id=quote_id,
             rfq_id=rfq_id,
         )
-        response = await self._subaccount._private_api.cancel_batch_quotes(params)
-        return response.result
+        result = await self._subaccount._private_api.cancel_batch_quotes(params)
+        return result
 
     async def get_quotes(
         self,
@@ -309,8 +309,8 @@ class RFQOperations:
             status=status,
             to_timestamp=to_timestamp,
         )
-        response = await self._subaccount._private_api.get_quotes(params)
-        return response.result
+        result = await self._subaccount._private_api.get_quotes(params)
+        return result
 
     async def poll_quotes(
         self,
@@ -340,8 +340,8 @@ class RFQOperations:
             status=status,
             to_timestamp=to_timestamp,
         )
-        response = await self._subaccount._private_api.poll_quotes(params)
-        return response.result
+        result = await self._subaccount._private_api.poll_quotes(params)
+        return result
 
     async def execute_quote(
         self,
@@ -404,8 +404,8 @@ class RFQOperations:
             signer=signed_action.signer,
             label=label,
         )
-        response = await self._subaccount._private_api.execute_quote(params)
-        return response.result
+        result = await self._subaccount._private_api.execute_quote(params)
+        return result
 
     async def get_best_quote(
         self,
@@ -439,5 +439,5 @@ class RFQOperations:
             partial_fill_step=partial_fill_step,
             rfq_id=rfq_id,
         )
-        response = await self._subaccount._private_api.rfq_get_best_quote(params)
-        return response.result
+        result = await self._subaccount._private_api.rfq_get_best_quote(params)
+        return result

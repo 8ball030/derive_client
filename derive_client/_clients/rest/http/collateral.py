@@ -44,8 +44,8 @@ class CollateralOperations:
 
         subaccount_id = self._subaccount.id
         params = PrivateGetCollateralsParamsSchema(subaccount_id=subaccount_id)
-        response = self._subaccount._private_api.get_collaterals(params)
-        return response.result
+        result = self._subaccount._private_api.get_collaterals(params)
+        return result
 
     def get_margin(
         self,
@@ -64,8 +64,8 @@ class CollateralOperations:
             simulated_collateral_changes=simulated_collateral_changes,
             simulated_position_changes=simulated_position_changes,
         )
-        response = self._subaccount._private_api.get_margin(params)
-        return response.result
+        result = self._subaccount._private_api.get_margin(params)
+        return result
 
     def deposit_to_subaccount(
         self,
@@ -125,8 +125,8 @@ class CollateralOperations:
             subaccount_id=subaccount_id,
             is_atomic_signing=is_atomic_signing,
         )
-        response = self._subaccount._private_api.deposit(params)
-        return response.result
+        result = self._subaccount._private_api.deposit(params)
+        return result
 
     def withdraw_from_subaccount(
         self,
@@ -173,5 +173,5 @@ class CollateralOperations:
             subaccount_id=subaccount_id,
             is_atomic_signing=is_atomic_signing,
         )
-        response = self._subaccount._private_api.withdraw(params)
-        return response.result
+        result = self._subaccount._private_api.withdraw(params)
+        return result

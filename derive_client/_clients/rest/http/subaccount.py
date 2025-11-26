@@ -112,8 +112,8 @@ class Subaccount:
         """
 
         params = PrivateGetSubaccountParamsSchema(subaccount_id=subaccount_id)
-        response = private_api.get_subaccount(params)
-        state = response.result
+        result = private_api.get_subaccount(params)
+        state = result
         logger.debug(f"Subaccount validated: {state.subaccount_id}")
 
         return cls(
@@ -132,8 +132,8 @@ class Subaccount:
         """Refresh mutable state from API."""
 
         params = PrivateGetSubaccountParamsSchema(subaccount_id=self.id)
-        response = self._private_api.get_subaccount(params)
-        self._state = response.result
+        result = self._private_api.get_subaccount(params)
+        self._state = result
         return self
 
     @property

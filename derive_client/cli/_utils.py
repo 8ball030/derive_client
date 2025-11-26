@@ -5,14 +5,16 @@ from __future__ import annotations
 import math
 from decimal import Decimal
 from enum import Enum
+from typing import Sequence, TypeVar
 
 import msgspec
 import pandas as pd
 from rich.table import Table
 
-from derive_client._clients.utils import StructT
 from derive_client.data_types import PreparedBridgeTx
 from derive_client.utils import from_base_units
+
+StructT = TypeVar('StructT', bound=msgspec.Struct)
 
 
 def fmt_sig_up_to(x: float, sig: int = 4) -> str:
@@ -99,7 +101,7 @@ def struct_to_series(struct: msgspec.Struct) -> pd.Series:
     return series
 
 
-def structs_to_dataframe(structs: list[StructT]) -> pd.DataFrame:
+def structs_to_dataframe(structs: Sequence[StructT]) -> pd.DataFrame:
     """Convert a list of msgspec.Structs to a formatted pandas DataFrame.
 
     Automatically handles:

@@ -59,8 +59,8 @@ class TradeOperations:
             tx_hash=tx_hash,
             tx_status=tx_status,
         )
-        response = await self._subaccount._public_api.get_trade_history(params)
-        return response.result.trades
+        result = await self._subaccount._public_api.get_trade_history(params)
+        return result.trades
 
     async def list_private(
         self,
@@ -85,5 +85,5 @@ class TradeOperations:
             to_timestamp=to_timestamp,
             wallet=self._subaccount._auth.wallet,
         )
-        response = await self._subaccount._private_api.get_trade_history(params)
-        return response.result.trades
+        result = await self._subaccount._private_api.get_trade_history(params)
+        return result.trades
