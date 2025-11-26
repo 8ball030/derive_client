@@ -4,11 +4,11 @@ import pytest
 
 from derive_client.data_types.generated_models import (
     PrivateGetOrdersParamsSchema,
-    PrivateGetOrdersResponseSchema,
+    PrivateGetOrdersResultSchema,
     PrivateGetSubaccountsParamsSchema,
-    PrivateGetSubaccountsResponseSchema,
+    PrivateGetSubaccountsResultSchema,
     PublicGetTickerParamsSchema,
-    PublicGetTickerResponseSchema,
+    PublicGetTickerResultSchema,
 )
 
 
@@ -16,21 +16,21 @@ from derive_client.data_types.generated_models import (
 async def test_public_get_ticker(client_admin_wallet):
     instrument_name = "ETH-PERP"
     params = PublicGetTickerParamsSchema(instrument_name=instrument_name)
-    response = await client_admin_wallet._public_api.get_ticker(params=params)
-    assert isinstance(response, PublicGetTickerResponseSchema)
+    result = await client_admin_wallet._public_api.get_ticker(params=params)
+    assert isinstance(result, PublicGetTickerResultSchema)
 
 
 @pytest.mark.asyncio
 async def test_get_private_get_subaccounts(client_admin_wallet):
     wallet = client_admin_wallet._auth.wallet
     params = PrivateGetSubaccountsParamsSchema(wallet=wallet)
-    response = await client_admin_wallet._private_api.get_subaccounts(params=params)
-    assert isinstance(response, PrivateGetSubaccountsResponseSchema)
+    result = await client_admin_wallet._private_api.get_subaccounts(params=params)
+    assert isinstance(result, PrivateGetSubaccountsResultSchema)
 
 
 @pytest.mark.asyncio
 async def test_get_private_get_orders(client_admin_wallet):
     subaccount_id = client_admin_wallet.active_subaccount.id
     params = PrivateGetOrdersParamsSchema(subaccount_id=subaccount_id)
-    response = await client_admin_wallet._private_api.get_orders(params=params)
-    assert isinstance(response, PrivateGetOrdersResponseSchema)
+    result = await client_admin_wallet._private_api.get_orders(params=params)
+    assert isinstance(result, PrivateGetOrdersResultSchema)

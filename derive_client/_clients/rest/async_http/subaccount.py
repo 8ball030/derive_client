@@ -113,7 +113,7 @@ class Subaccount:
 
         params = PrivateGetSubaccountParamsSchema(subaccount_id=subaccount_id)
         response = await private_api.get_subaccount(params)
-        state = response.result
+        state = response
         logger.debug(f"Subaccount validated: {state.subaccount_id}")
 
         return cls(
@@ -133,7 +133,7 @@ class Subaccount:
 
         params = PrivateGetSubaccountParamsSchema(subaccount_id=self.id)
         response = await self._private_api.get_subaccount(params)
-        self._state = response.result
+        self._state = response
         return self
 
     @property
