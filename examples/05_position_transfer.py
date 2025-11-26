@@ -235,7 +235,7 @@ if batch_source_sub and batch_currency:
 
         # Build transfer list
         transfers = []
-        for pos in positions_to_batch[:3]:  # Max 3 for demo
+        for pos in positions_to_batch[2:4]:  # Max 3 for demo
             transfers.append(
                 PositionTransfer(
                     instrument_name=pos.instrument_name,
