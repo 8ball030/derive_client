@@ -39,7 +39,7 @@ class {{ api_prefix }}PublicAPI:
         data = encode_json_exclude_none(params)
         message = {% if is_async %}await {% endif %}self._session._send_request(url, data, headers=self.headers)
         envelope = decode_envelope(message)
-        result = decode_result(envelope, {{ method.result_type }})
+        result = decode_result(envelope, {{ method.result_type | replace('List[', 'list[') }})
         return result
 {% endfor %}
 
@@ -69,6 +69,6 @@ class {{ api_prefix }}PrivateAPI:
         data = encode_json_exclude_none(params)
         message = {% if is_async %}await {% endif %}self._session._send_request(url, data, headers=self.headers)
         envelope = decode_envelope(message)
-        result = decode_result(envelope, {{ method.result_type }})
+        result = decode_result(envelope, {{ method.result_type | replace('List[', 'list[') }})
         return result
 {% endfor %}
