@@ -20,12 +20,7 @@ from derive_client.utils.logger import get_logger
 
 
 class WebSocketSession:
-    """
-    Synchronous WebSocket session with background receiver thread.
-
-    Matches design of HTTPSession - lazy connection, explicit open/close,
-    finalizer for cleanup.
-    """
+    """Synchronous WebSocket session with background receiver thread."""
 
     def __init__(
         self,
@@ -178,11 +173,9 @@ class WebSocketSession:
                 return
 
             if handler is None:
-                # Remove all handlers
                 del self._handlers[channel]
                 should_unsubscribe = True
             else:
-                # Remove specific handler
                 try:
                     self._handlers[channel].remove(handler)
                     should_unsubscribe = len(self._handlers[channel]) == 0
@@ -192,7 +185,6 @@ class WebSocketSession:
                     self._logger.warning(f"Handler not found for channel: {channel}")
                     return
 
-        # Only send unsubscribe RPC if no more handlers
         if should_unsubscribe:
             self._logger.info(f"Unsubscribing from channel: {channel}")
             self._send_rpc("unsubscribe", {"channels": [channel]})

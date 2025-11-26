@@ -79,41 +79,18 @@ class WebSocketClient:
         """Close WebSocket connection and clear subscriptions. Idempotent."""
         self._session.close()
 
-    def subscribe(
-        self,
-        channel: str,
-        handler: Callable[[Any], None],
-    ) -> None:
-        """
-        Subscribe to a channel with a handler.
-
-        Low-level API - prefer using `client.public.*` or `client.private.*`
+    def unsubscribe(self, channels: list[str] | str) -> None:
+        """Unsubscribe from a channel.
 
         Args:
-            channel: Full channel name (e.g., "BTC-PERP.trades")
-            handler: Callback function to handle messages
+            channels: Single channel name or list of channel names
         """
-        self._session.subscribe(channel, handler)
-
-    def unsubscribe(
-        self,
-        channel: str,
-        handler: Callable[[Any], None] | None = None,
-    ) -> None:
-        """
-        Unsubscribe from a channel.
-
-        Low-level API - prefer using channel return values.
-
-        Args:
-            channel: Channel name
-            handler: Specific handler to remove (or None for all)
-        """
-        self._session.unsubscribe(channel, handler)
+        self._session.unsubscribe(channels)
 
     @contextlib.contextmanager
     def timeout(self, seconds: float) -> Generator[None, None, None]:
         """Temporarily override request timeout for RPC calls."""
+
         prev = self._session._request_timeout
         try:
             self._session._request_timeout = float(seconds)
