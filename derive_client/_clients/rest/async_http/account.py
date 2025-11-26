@@ -95,15 +95,15 @@ class LightAccount:
         """
 
         params = PrivateGetAccountParamsSchema(wallet=auth.wallet)
-        response = await private_api.get_account(params)
-        state = response
+        result = await private_api.get_account(params)
+        state = result
         logger.debug(f"LightAccount validated: {state.wallet}")
 
         # Check if the current signer is in the list of valid session keys
         session_keys_params = PrivateSessionKeysParamsSchema(wallet=auth.wallet)
-        session_keys_response = await private_api.session_keys(session_keys_params)
+        session_keys_result = await private_api.session_keys(session_keys_params)
 
-        valid_signers = {key.public_session_key: key for key in session_keys_response.public_session_keys}
+        valid_signers = {key.public_session_key: key for key in session_keys_result.public_session_keys}
         signer_address = auth.account.address  # type: ignore[attr-defined]
         if signer_address not in valid_signers:
             logger.warning(f"Session key {signer_address} is not registered for wallet {auth.wallet}")
@@ -225,8 +225,8 @@ class LightAccount:
             scope=scope,
             signed_raw_tx=signed_raw_tx,
         )
-        response = await self._private_api.register_scoped_session_key(params)
-        return response
+        result = await self._private_api.register_scoped_session_key(params)
+        return result
 
     async def session_keys(self) -> PrivateSessionKeysResultSchema:
         """
@@ -237,8 +237,8 @@ class LightAccount:
         """
 
         params = PrivateSessionKeysParamsSchema(wallet=self.address)
-        response = await self._private_api.session_keys(params)
-        return response
+        result = await self._private_api.session_keys(params)
+        return result
 
     async def edit_session_key(
         self,
@@ -257,15 +257,15 @@ class LightAccount:
             ip_whitelist=ip_whitelist,
             label=label,
         )
-        response = await self._private_api.edit_session_key(params)
-        return response
+        result = await self._private_api.edit_session_key(params)
+        return result
 
     async def get_all_portfolios(self) -> list[PrivateGetSubaccountResultSchema]:
         """Get all subaccount portfolios of a wallet"""
 
         params = PrivateGetAllPortfoliosParamsSchema(wallet=self.address)
-        response = await self._private_api.get_all_portfolios(params)
-        return response
+        result = await self._private_api.get_all_portfolios(params)
+        return result
 
     async def create_subaccount(
         self,
@@ -326,22 +326,22 @@ class LightAccount:
             signer=signed_action.signer,
             wallet=self.address,
         )
-        response = await self._private_api.create_subaccount(params)
-        return response
+        result = await self._private_api.create_subaccount(params)
+        return result
 
     async def get_subaccounts(self) -> PrivateGetSubaccountsResultSchema:
         """Get all subaccount IDs of an account / wallet"""
 
         params = PrivateGetSubaccountsParamsSchema(wallet=self.address)
-        response = await self._private_api.get_subaccounts(params)
-        return response
+        result = await self._private_api.get_subaccounts(params)
+        return result
 
     async def get(self) -> PrivateGetAccountResultSchema:
         """Account details getter"""
 
         params = PrivateGetAccountParamsSchema(wallet=self.address)
-        response = await self._private_api.get_account(params)
-        return response
+        result = await self._private_api.get_account(params)
+        return result
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__qualname__}({self.address}) object at {hex(id(self))}>"
