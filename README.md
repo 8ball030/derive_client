@@ -154,3 +154,9 @@ tbump $new_version
 ```
 
 The release workflow will automatically create a GitHub release and publish to PyPI.
+
+
+## Contributors
+
+<!-- readme: collaborators,contributors -start -->
+<!-- readme: collaborators,contributors -end -->
