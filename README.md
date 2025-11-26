@@ -159,4 +159,61 @@ The release workflow will automatically create a GitHub release and publish to P
 ## Contributors
 
 <!-- readme: collaborators,contributors -start -->
+<table>
+	<tbody>
+		<tr>
+            <td align="center">
+                <a href="https://github.com/Karrenbelt">
+                    <img src="https://avatars.githubusercontent.com/u/16686216?v=4" width="100;" alt="Karrenbelt"/>
+                    <br />
+                    <sub><b>Zarathustra</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/paulvaden">
+                    <img src="https://avatars.githubusercontent.com/u/24904465?v=4" width="100;" alt="paulvaden"/>
+                    <br />
+                    <sub><b>paulvaden</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/8ball030">
+                    <img src="https://avatars.githubusercontent.com/u/35799987?v=4" width="100;" alt="8ball030"/>
+                    <br />
+                    <sub><b>8ball030</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/DeBelg">
+                    <img src="https://avatars.githubusercontent.com/u/38403795?v=4" width="100;" alt="DeBelg"/>
+                    <br />
+                    <sub><b>Mf</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/Aviksaikat">
+                    <img src="https://avatars.githubusercontent.com/u/31238298?v=4" width="100;" alt="Aviksaikat"/>
+                    <br />
+                    <sub><b>Saikat K</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/andreiaugustin">
+                    <img src="https://avatars.githubusercontent.com/u/36695484?v=4" width="100;" alt="andreiaugustin"/>
+                    <br />
+                    <sub><b>Andrei Augustin</b></sub>
+                </a>
+            </td>
+		</tr>
+		<tr>
+            <td align="center">
+                <a href="https://github.com/0xdomrom">
+                    <img src="https://avatars.githubusercontent.com/u/11264336?v=4" width="100;" alt="0xdomrom"/>
+                    <br />
+                    <sub><b>DomRom</b></sub>
+                </a>
+            </td>
+		</tr>
+	<tbody>
+</table>
 <!-- readme: collaborators,contributors -end -->
