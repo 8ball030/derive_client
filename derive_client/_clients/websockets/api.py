@@ -1,0 +1,1685 @@
+"""Auto-generated WebSocket API classes"""
+
+from typing import Any, Callable, List
+
+from derive_client._clients.utils import decode_result
+from derive_client.data_types.generated_models import (
+    AuctionResultSchema,
+    CurrencyDetailedResponseSchema,
+    InstrumentPublicResponseSchema,
+    MMPConfigResultSchema,
+    PrivateCancelAllParamsSchema,
+    PrivateCancelAllTriggerOrdersParamsSchema,
+    PrivateCancelBatchQuotesParamsSchema,
+    PrivateCancelBatchQuotesResultSchema,
+    PrivateCancelBatchRfqsParamsSchema,
+    PrivateCancelBatchRfqsResultSchema,
+    PrivateCancelByInstrumentParamsSchema,
+    PrivateCancelByInstrumentResultSchema,
+    PrivateCancelByLabelParamsSchema,
+    PrivateCancelByLabelResultSchema,
+    PrivateCancelByNonceParamsSchema,
+    PrivateCancelByNonceResultSchema,
+    PrivateCancelParamsSchema,
+    PrivateCancelQuoteParamsSchema,
+    PrivateCancelQuoteResultSchema,
+    PrivateCancelResultSchema,
+    PrivateCancelRfqParamsSchema,
+    PrivateCancelTriggerOrderParamsSchema,
+    PrivateCancelTriggerOrderResultSchema,
+    PrivateChangeSubaccountLabelParamsSchema,
+    PrivateChangeSubaccountLabelResultSchema,
+    PrivateCreateSubaccountParamsSchema,
+    PrivateCreateSubaccountResultSchema,
+    PrivateDepositParamsSchema,
+    PrivateDepositResultSchema,
+    PrivateEditSessionKeyParamsSchema,
+    PrivateEditSessionKeyResultSchema,
+    PrivateExecuteQuoteParamsSchema,
+    PrivateExecuteQuoteResultSchema,
+    PrivateExpiredAndCancelledHistoryParamsSchema,
+    PrivateExpiredAndCancelledHistoryResultSchema,
+    PrivateGetAccountParamsSchema,
+    PrivateGetAccountResultSchema,
+    PrivateGetAllPortfoliosParamsSchema,
+    PrivateGetCollateralsParamsSchema,
+    PrivateGetCollateralsResultSchema,
+    PrivateGetDepositHistoryParamsSchema,
+    PrivateGetDepositHistoryResultSchema,
+    PrivateGetErc20TransferHistoryParamsSchema,
+    PrivateGetErc20TransferHistoryResultSchema,
+    PrivateGetFundingHistoryParamsSchema,
+    PrivateGetFundingHistoryResultSchema,
+    PrivateGetInterestHistoryParamsSchema,
+    PrivateGetInterestHistoryResultSchema,
+    PrivateGetLiquidationHistoryParamsSchema,
+    PrivateGetLiquidatorHistoryParamsSchema,
+    PrivateGetLiquidatorHistoryResultSchema,
+    PrivateGetMarginParamsSchema,
+    PrivateGetMarginResultSchema,
+    PrivateGetMmpConfigParamsSchema,
+    PrivateGetNotificationsParamsSchema,
+    PrivateGetNotificationsResultSchema,
+    PrivateGetOpenOrdersParamsSchema,
+    PrivateGetOpenOrdersResultSchema,
+    PrivateGetOptionSettlementHistoryParamsSchema,
+    PrivateGetOptionSettlementHistoryResultSchema,
+    PrivateGetOrderHistoryParamsSchema,
+    PrivateGetOrderHistoryResultSchema,
+    PrivateGetOrderParamsSchema,
+    PrivateGetOrderResultSchema,
+    PrivateGetOrdersParamsSchema,
+    PrivateGetOrdersResultSchema,
+    PrivateGetPositionsParamsSchema,
+    PrivateGetPositionsResultSchema,
+    PrivateGetQuotesParamsSchema,
+    PrivateGetQuotesResultSchema,
+    PrivateGetRfqsParamsSchema,
+    PrivateGetRfqsResultSchema,
+    PrivateGetSubaccountParamsSchema,
+    PrivateGetSubaccountResultSchema,
+    PrivateGetSubaccountsParamsSchema,
+    PrivateGetSubaccountsResultSchema,
+    PrivateGetSubaccountValueHistoryParamsSchema,
+    PrivateGetSubaccountValueHistoryResultSchema,
+    PrivateGetTradeHistoryParamsSchema,
+    PrivateGetTradeHistoryResultSchema,
+    PrivateGetWithdrawalHistoryParamsSchema,
+    PrivateGetWithdrawalHistoryResultSchema,
+    PrivateLiquidateParamsSchema,
+    PrivateLiquidateResultSchema,
+    PrivateOrderDebugParamsSchema,
+    PrivateOrderDebugResultSchema,
+    PrivateOrderParamsSchema,
+    PrivateOrderResultSchema,
+    PrivatePollQuotesParamsSchema,
+    PrivatePollQuotesResultSchema,
+    PrivatePollRfqsParamsSchema,
+    PrivatePollRfqsResultSchema,
+    PrivateRegisterScopedSessionKeyParamsSchema,
+    PrivateRegisterScopedSessionKeyResultSchema,
+    PrivateReplaceParamsSchema,
+    PrivateReplaceQuoteParamsSchema,
+    PrivateReplaceQuoteResultSchema,
+    PrivateReplaceResultSchema,
+    PrivateResetMmpParamsSchema,
+    PrivateRfqGetBestQuoteParamsSchema,
+    PrivateRfqGetBestQuoteResultSchema,
+    PrivateSendQuoteParamsSchema,
+    PrivateSendQuoteResultSchema,
+    PrivateSendRfqParamsSchema,
+    PrivateSendRfqResultSchema,
+    PrivateSessionKeysParamsSchema,
+    PrivateSessionKeysResultSchema,
+    PrivateSetCancelOnDisconnectParamsSchema,
+    PrivateSetMmpConfigParamsSchema,
+    PrivateSetMmpConfigResultSchema,
+    PrivateTransferErc20ParamsSchema,
+    PrivateTransferErc20ResultSchema,
+    PrivateTransferPositionParamsSchema,
+    PrivateTransferPositionResultSchema,
+    PrivateTransferPositionsParamsSchema,
+    PrivateTransferPositionsResultSchema,
+    PrivateUpdateNotificationsParamsSchema,
+    PrivateUpdateNotificationsResultSchema,
+    PrivateWithdrawParamsSchema,
+    PrivateWithdrawResultSchema,
+    ProgramResponseSchema,
+    PublicBuildRegisterSessionKeyTxParamsSchema,
+    PublicBuildRegisterSessionKeyTxResultSchema,
+    PublicCreateSubaccountDebugParamsSchema,
+    PublicCreateSubaccountDebugResultSchema,
+    PublicDepositDebugParamsSchema,
+    PublicDepositDebugResultSchema,
+    PublicDeregisterSessionKeyParamsSchema,
+    PublicDeregisterSessionKeyResultSchema,
+    PublicExecuteQuoteDebugParamsSchema,
+    PublicExecuteQuoteDebugResultSchema,
+    PublicGetAllCurrenciesParamsSchema,
+    PublicGetAllInstrumentsParamsSchema,
+    PublicGetAllInstrumentsResultSchema,
+    PublicGetCurrencyParamsSchema,
+    PublicGetCurrencyResultSchema,
+    PublicGetFundingRateHistoryParamsSchema,
+    PublicGetFundingRateHistoryResultSchema,
+    PublicGetInstrumentParamsSchema,
+    PublicGetInstrumentResultSchema,
+    PublicGetInstrumentsParamsSchema,
+    PublicGetInterestRateHistoryParamsSchema,
+    PublicGetInterestRateHistoryResultSchema,
+    PublicGetLatestSignedFeedsParamsSchema,
+    PublicGetLatestSignedFeedsResultSchema,
+    PublicGetLiquidationHistoryParamsSchema,
+    PublicGetLiquidationHistoryResultSchema,
+    PublicGetLiveIncidentsParamsSchema,
+    PublicGetLiveIncidentsResultSchema,
+    PublicGetMakerProgramScoresParamsSchema,
+    PublicGetMakerProgramScoresResultSchema,
+    PublicGetMakerProgramsParamsSchema,
+    PublicGetMarginParamsSchema,
+    PublicGetMarginResultSchema,
+    PublicGetOptionSettlementHistoryParamsSchema,
+    PublicGetOptionSettlementHistoryResultSchema,
+    PublicGetOptionSettlementPricesParamsSchema,
+    PublicGetOptionSettlementPricesResultSchema,
+    PublicGetReferralPerformanceParamsSchema,
+    PublicGetReferralPerformanceResultSchema,
+    PublicGetSpotFeedHistoryCandlesParamsSchema,
+    PublicGetSpotFeedHistoryCandlesResultSchema,
+    PublicGetSpotFeedHistoryParamsSchema,
+    PublicGetSpotFeedHistoryResultSchema,
+    PublicGetTickerParamsSchema,
+    PublicGetTickerResultSchema,
+    PublicGetTickersParamsSchema,
+    PublicGetTickersResultSchema,
+    PublicGetTimeParamsSchema,
+    PublicGetTradeHistoryParamsSchema,
+    PublicGetTradeHistoryResultSchema,
+    PublicGetTransactionParamsSchema,
+    PublicGetTransactionResultSchema,
+    PublicGetVaultBalancesParamsSchema,
+    PublicGetVaultShareParamsSchema,
+    PublicGetVaultShareResultSchema,
+    PublicGetVaultStatisticsParamsSchema,
+    PublicLoginParamsSchema,
+    PublicMarginWatchParamsSchema,
+    PublicMarginWatchResultSchema,
+    PublicRegisterSessionKeyParamsSchema,
+    PublicRegisterSessionKeyResultSchema,
+    PublicSendQuoteDebugParamsSchema,
+    PublicSendQuoteDebugResultSchema,
+    PublicStatisticsParamsSchema,
+    PublicStatisticsResultSchema,
+    PublicWithdrawDebugParamsSchema,
+    PublicWithdrawDebugResultSchema,
+    Result,
+    VaultBalanceResponseSchema,
+    VaultStatisticsResponseSchema,
+)
+
+# ============================================================================
+# RPC API Classes
+# ============================================================================
+
+
+class PublicRPC:
+    """Public WebSocket RPC methods"""
+
+    def __init__(self, session):
+        self._session = session
+
+    def build_register_session_key_tx(
+        self, params: PublicBuildRegisterSessionKeyTxParamsSchema
+    ) -> PublicBuildRegisterSessionKeyTxResultSchema:
+        """
+        Build a signable transaction params dictionary.
+        """
+
+        method = "public/build_register_session_key_tx"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicBuildRegisterSessionKeyTxResultSchema)
+        return result
+
+    def register_session_key(
+        self, params: PublicRegisterSessionKeyParamsSchema
+    ) -> PublicRegisterSessionKeyResultSchema:
+        """
+        Register or update expiry of an existing session key.<br />Currently, this only supports creating admin level session keys.<br />Keys with fewer permissions are registered via `/register_scoped_session_key`<br /><br />Expiries updated on admin session keys may not happen immediately due to waiting for the onchain transaction to settle.
+        """
+
+        method = "public/register_session_key"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicRegisterSessionKeyResultSchema)
+        return result
+
+    def deregister_session_key(
+        self, params: PublicDeregisterSessionKeyParamsSchema
+    ) -> PublicDeregisterSessionKeyResultSchema:
+        """
+        Used for de-registering admin scoped keys. For other scopes, use `/edit_session_key`.
+        """
+
+        method = "public/deregister_session_key"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicDeregisterSessionKeyResultSchema)
+        return result
+
+    def login(self, params: PublicLoginParamsSchema) -> List[int]:
+        """
+        Authenticate a websocket connection. Unavailable via HTTP.
+        """
+
+        method = "public/login"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, List[int])
+        return result
+
+    def statistics(self, params: PublicStatisticsParamsSchema) -> PublicStatisticsResultSchema:
+        """
+        Get statistics for a specific instrument or instrument type
+        """
+
+        method = "public/statistics"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicStatisticsResultSchema)
+        return result
+
+    def get_all_currencies(self, params: PublicGetAllCurrenciesParamsSchema) -> List[CurrencyDetailedResponseSchema]:
+        """
+        Get all active currencies with their spot price, spot price 24hrs ago.<br /><br />For real-time updates, recommend using channels -> ticker or orderbook.
+        """
+
+        method = "public/get_all_currencies"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, List[CurrencyDetailedResponseSchema])
+        return result
+
+    def get_currency(self, params: PublicGetCurrencyParamsSchema) -> PublicGetCurrencyResultSchema:
+        """
+        Get currency related risk params, spot price 24hrs ago and lending details for a specific currency.
+        """
+
+        method = "public/get_currency"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicGetCurrencyResultSchema)
+        return result
+
+    def get_instrument(self, params: PublicGetInstrumentParamsSchema) -> PublicGetInstrumentResultSchema:
+        """
+        Get single instrument by asset name
+        """
+
+        method = "public/get_instrument"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicGetInstrumentResultSchema)
+        return result
+
+    def get_all_instruments(self, params: PublicGetAllInstrumentsParamsSchema) -> PublicGetAllInstrumentsResultSchema:
+        """
+        Get a paginated history of all instruments
+        """
+
+        method = "public/get_all_instruments"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicGetAllInstrumentsResultSchema)
+        return result
+
+    def get_instruments(self, params: PublicGetInstrumentsParamsSchema) -> List[InstrumentPublicResponseSchema]:
+        """
+        Get all active instruments for a given `currency` and `type`.
+        """
+
+        method = "public/get_instruments"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, List[InstrumentPublicResponseSchema])
+        return result
+
+    def get_ticker(self, params: PublicGetTickerParamsSchema) -> PublicGetTickerResultSchema:
+        """
+        Get ticker information (best bid / ask, instrument contraints, fees info, etc.) for a single instrument<br /><br />DEPRECATION NOTICE: This RPC is deprecated in favor of `get_tickers` on Dec 1, 2025.
+        """
+
+        method = "public/get_ticker"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicGetTickerResultSchema)
+        return result
+
+    def get_tickers(self, params: PublicGetTickersParamsSchema) -> PublicGetTickersResultSchema:
+        """
+        Get tickers information (best bid / ask, stats, etc.) for a multiple instruments.<br /><br />For most up to date stream of tickers, use the `ticker.<instrument_name>.<interval>` channels.
+        """
+
+        method = "public/get_tickers"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicGetTickersResultSchema)
+        return result
+
+    def get_latest_signed_feeds(
+        self, params: PublicGetLatestSignedFeedsParamsSchema
+    ) -> PublicGetLatestSignedFeedsResultSchema:
+        """
+        Get latest signed data feeds
+        """
+
+        method = "public/get_latest_signed_feeds"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicGetLatestSignedFeedsResultSchema)
+        return result
+
+    def get_option_settlement_prices(
+        self, params: PublicGetOptionSettlementPricesParamsSchema
+    ) -> PublicGetOptionSettlementPricesResultSchema:
+        """
+        Get settlement prices by expiry for each currency
+        """
+
+        method = "public/get_option_settlement_prices"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicGetOptionSettlementPricesResultSchema)
+        return result
+
+    def get_spot_feed_history(
+        self, params: PublicGetSpotFeedHistoryParamsSchema
+    ) -> PublicGetSpotFeedHistoryResultSchema:
+        """
+        Get spot feed history by currency<br /><br />DB: read replica
+        """
+
+        method = "public/get_spot_feed_history"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicGetSpotFeedHistoryResultSchema)
+        return result
+
+    def get_spot_feed_history_candles(
+        self, params: PublicGetSpotFeedHistoryCandlesParamsSchema
+    ) -> PublicGetSpotFeedHistoryCandlesResultSchema:
+        """
+        Get spot feed history candles by currency<br /><br />DB: read replica
+        """
+
+        method = "public/get_spot_feed_history_candles"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicGetSpotFeedHistoryCandlesResultSchema)
+        return result
+
+    def get_funding_rate_history(
+        self, params: PublicGetFundingRateHistoryParamsSchema
+    ) -> PublicGetFundingRateHistoryResultSchema:
+        """
+        Get funding rate history. Start timestamp is restricted to at most 30 days ago.<br />End timestamp greater than current time will be truncated to current time.<br />Zero start timestamp is allowed and will default to 30 days from the end timestamp.<br /><br />DB: read replica
+        """
+
+        method = "public/get_funding_rate_history"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicGetFundingRateHistoryResultSchema)
+        return result
+
+    def get_trade_history(self, params: PublicGetTradeHistoryParamsSchema) -> PublicGetTradeHistoryResultSchema:
+        """
+        Get trade history for a subaccount, with filter parameters.
+        """
+
+        method = "public/get_trade_history"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicGetTradeHistoryResultSchema)
+        return result
+
+    def get_option_settlement_history(
+        self, params: PublicGetOptionSettlementHistoryParamsSchema
+    ) -> PublicGetOptionSettlementHistoryResultSchema:
+        """
+        Get expired option settlement history for a subaccount
+        """
+
+        method = "public/get_option_settlement_history"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicGetOptionSettlementHistoryResultSchema)
+        return result
+
+    def get_liquidation_history(
+        self, params: PublicGetLiquidationHistoryParamsSchema
+    ) -> PublicGetLiquidationHistoryResultSchema:
+        """
+        Returns a paginated liquidation history for all subaccounts. Note that the pagination is based on the number of<br />raw events that include bids, auction start, and auction end events. This means that the count returned in the<br />pagination info will be larger than the total number of auction events. This also means the number of returned<br />auctions per page will be smaller than the supplied `page_size`.
+        """
+
+        method = "public/get_liquidation_history"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicGetLiquidationHistoryResultSchema)
+        return result
+
+    def get_interest_rate_history(
+        self, params: PublicGetInterestRateHistoryParamsSchema
+    ) -> PublicGetInterestRateHistoryResultSchema:
+        """
+        Get latest USDC interest rate history
+        """
+
+        method = "public/get_interest_rate_history"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicGetInterestRateHistoryResultSchema)
+        return result
+
+    def get_transaction(self, params: PublicGetTransactionParamsSchema) -> PublicGetTransactionResultSchema:
+        """
+        Used for getting a transaction by its transaction id
+        """
+
+        method = "public/get_transaction"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicGetTransactionResultSchema)
+        return result
+
+    def get_margin(self, params: PublicGetMarginParamsSchema) -> PublicGetMarginResultSchema:
+        """
+        Calculates margin for a given portfolio and (optionally) a simulated state change.<br />Does not take into account open orders margin requirements.public/withdraw_debug
+        """
+
+        method = "public/get_margin"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicGetMarginResultSchema)
+        return result
+
+    def margin_watch(self, params: PublicMarginWatchParamsSchema) -> PublicMarginWatchResultSchema:
+        """
+        Calculates MtM and maintenance margin for a given subaccount.
+        """
+
+        method = "public/margin_watch"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicMarginWatchResultSchema)
+        return result
+
+    def get_vault_share(self, params: PublicGetVaultShareParamsSchema) -> PublicGetVaultShareResultSchema:
+        """
+        Gets the value of a vault's token against the base currency, underlying currency, and USD for a timestamp range.<br /><br />The name of the vault from the Vault proxy contract is used to fetch the vault's value.
+        """
+
+        method = "public/get_vault_share"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicGetVaultShareResultSchema)
+        return result
+
+    def get_vault_statistics(self, params: PublicGetVaultStatisticsParamsSchema) -> List[VaultStatisticsResponseSchema]:
+        """
+        Gets all the latest vault shareRate, totalSupply and TVL values for all vaults.<br /><br />For data on shares across chains, use public/get_vault_assets.
+        """
+
+        method = "public/get_vault_statistics"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, List[VaultStatisticsResponseSchema])
+        return result
+
+    def get_vault_balances(self, params: PublicGetVaultBalancesParamsSchema) -> List[VaultBalanceResponseSchema]:
+        """
+        Get all vault assets held by user. Can query by smart contract address or smart contract owner.<br /><br />Includes VaultERC20Pool balances
+        """
+
+        method = "public/get_vault_balances"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, List[VaultBalanceResponseSchema])
+        return result
+
+    def create_subaccount_debug(
+        self, params: PublicCreateSubaccountDebugParamsSchema
+    ) -> PublicCreateSubaccountDebugResultSchema:
+        """
+        Used for debugging only, do not use in production. Will return the incremental encoded and hashed data.<br /><br />See guides in Documentation for more.
+        """
+
+        method = "public/create_subaccount_debug"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicCreateSubaccountDebugResultSchema)
+        return result
+
+    def deposit_debug(self, params: PublicDepositDebugParamsSchema) -> PublicDepositDebugResultSchema:
+        """
+        Used for debugging only, do not use in production. Will return the incremental encoded and hashed data.<br /><br />See guides in Documentation for more.
+        """
+
+        method = "public/deposit_debug"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicDepositDebugResultSchema)
+        return result
+
+    def withdraw_debug(self, params: PublicWithdrawDebugParamsSchema) -> PublicWithdrawDebugResultSchema:
+        """
+        Used for debugging only, do not use in production. Will return the incremental encoded and hashed data.<br /><br />See guides in Documentation for more.
+        """
+
+        method = "public/withdraw_debug"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicWithdrawDebugResultSchema)
+        return result
+
+    def send_quote_debug(self, params: PublicSendQuoteDebugParamsSchema) -> PublicSendQuoteDebugResultSchema:
+        """
+        Sends a quote in response to an RFQ request.<br />The legs supplied in the parameters must exactly match those in the RFQ.
+        """
+
+        method = "public/send_quote_debug"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicSendQuoteDebugResultSchema)
+        return result
+
+    def execute_quote_debug(self, params: PublicExecuteQuoteDebugParamsSchema) -> PublicExecuteQuoteDebugResultSchema:
+        """
+        Sends a quote in response to an RFQ request.<br />The legs supplied in the parameters must exactly match those in the RFQ.
+        """
+
+        method = "public/execute_quote_debug"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicExecuteQuoteDebugResultSchema)
+        return result
+
+    def get_time(self, params: PublicGetTimeParamsSchema) -> int:
+        method = "public/get_time"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, int)
+        return result
+
+    def get_live_incidents(self, params: PublicGetLiveIncidentsParamsSchema) -> PublicGetLiveIncidentsResultSchema:
+        method = "public/get_live_incidents"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicGetLiveIncidentsResultSchema)
+        return result
+
+    def get_maker_programs(self, params: PublicGetMakerProgramsParamsSchema) -> List[ProgramResponseSchema]:
+        """
+        Get all maker programs, including past / historical ones.
+        """
+
+        method = "public/get_maker_programs"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, List[ProgramResponseSchema])
+        return result
+
+    def get_maker_program_scores(
+        self, params: PublicGetMakerProgramScoresParamsSchema
+    ) -> PublicGetMakerProgramScoresResultSchema:
+        """
+        Get scores breakdown by maker program.
+        """
+
+        method = "public/get_maker_program_scores"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicGetMakerProgramScoresResultSchema)
+        return result
+
+    def get_referral_performance(
+        self, params: PublicGetReferralPerformanceParamsSchema
+    ) -> PublicGetReferralPerformanceResultSchema:
+        """
+        Get the broker program referral performance. Epochs are 28 days long.
+        """
+
+        method = "public/get_referral_performance"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PublicGetReferralPerformanceResultSchema)
+        return result
+
+
+class PrivateRPC:
+    """Private WebSocket RPC methods"""
+
+    def __init__(self, session):
+        self._session = session
+
+    def get_account(self, params: PrivateGetAccountParamsSchema) -> PrivateGetAccountResultSchema:
+        """
+                Account details getter
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/get_account"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateGetAccountResultSchema)
+        return result
+
+    def create_subaccount(self, params: PrivateCreateSubaccountParamsSchema) -> PrivateCreateSubaccountResultSchema:
+        """
+                Create a new subaccount under a given wallet, and deposit an asset into that subaccount.<br /><br />See `public/create_subaccount_debug` for debugging invalid signature issues or go to guides in Documentation.
+        Required minimum session key permission level is `admin`
+        """
+
+        method = "private/create_subaccount"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateCreateSubaccountResultSchema)
+        return result
+
+    def get_subaccount(self, params: PrivateGetSubaccountParamsSchema) -> PrivateGetSubaccountResultSchema:
+        """
+                Get open orders, active positions, and collaterals of a subaccount
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/get_subaccount"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateGetSubaccountResultSchema)
+        return result
+
+    def get_subaccounts(self, params: PrivateGetSubaccountsParamsSchema) -> PrivateGetSubaccountsResultSchema:
+        """
+                Get all subaccounts of an account / wallet
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/get_subaccounts"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateGetSubaccountsResultSchema)
+        return result
+
+    def get_all_portfolios(self, params: PrivateGetAllPortfoliosParamsSchema) -> List[PrivateGetSubaccountResultSchema]:
+        """
+                Get all portfolios of a wallet
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/get_all_portfolios"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, List[PrivateGetSubaccountResultSchema])
+        return result
+
+    def change_subaccount_label(
+        self, params: PrivateChangeSubaccountLabelParamsSchema
+    ) -> PrivateChangeSubaccountLabelResultSchema:
+        """
+                Change a user defined label for given subaccount
+        Required minimum session key permission level is `account`
+        """
+
+        method = "private/change_subaccount_label"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateChangeSubaccountLabelResultSchema)
+        return result
+
+    def get_notifications(self, params: PrivateGetNotificationsParamsSchema) -> PrivateGetNotificationsResultSchema:
+        """
+                Get the notifications related to a subaccount.
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/get_notifications"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateGetNotificationsResultSchema)
+        return result
+
+    def update_notifications(
+        self, params: PrivateUpdateNotificationsParamsSchema
+    ) -> PrivateUpdateNotificationsResultSchema:
+        """
+                RPC to mark specified notifications as seen for a given subaccount.
+        Required minimum session key permission level is `account`
+        """
+
+        method = "private/update_notifications"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateUpdateNotificationsResultSchema)
+        return result
+
+    def deposit(self, params: PrivateDepositParamsSchema) -> PrivateDepositResultSchema:
+        """
+                Deposit an asset to a subaccount.<br /><br />See `public/deposit_debug' for debugging invalid signature issues or go to guides in Documentation.
+        Required minimum session key permission level is `admin`
+        """
+
+        method = "private/deposit"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateDepositResultSchema)
+        return result
+
+    def withdraw(self, params: PrivateWithdrawParamsSchema) -> PrivateWithdrawResultSchema:
+        """
+                Withdraw an asset to wallet.<br /><br />See `public/withdraw_debug` for debugging invalid signature issues or go to guides in Documentation.
+        Required minimum session key permission level is `admin`
+        """
+
+        method = "private/withdraw"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateWithdrawResultSchema)
+        return result
+
+    def transfer_erc20(self, params: PrivateTransferErc20ParamsSchema) -> PrivateTransferErc20ResultSchema:
+        """
+                Transfer ERC20 assets from one subaccount to another (e.g. USDC or ETH).<br /><br />For transfering positions (e.g. options or perps), use `private/transfer_position` instead.
+        Required minimum session key permission level is `admin`
+        """
+
+        method = "private/transfer_erc20"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateTransferErc20ResultSchema)
+        return result
+
+    def transfer_position(self, params: PrivateTransferPositionParamsSchema) -> PrivateTransferPositionResultSchema:
+        """
+                Transfers a positions from one subaccount to another, owned by the same wallet.<br /><br />The transfer is executed as a pair of orders crossing each other.<br />The maker order is created first, followed by a taker order crossing it.<br />The order amounts, limit prices and instrument name must be the same for both orders.<br />Fee is not charged and a zero `max_fee` must be signed.<br />The maker order is forcibly considered to be `reduce_only`, meaning it can only reduce the position size.<br /><br />History: For position transfer history, use the `private/get_trade_history` RPC (not `private/get_erc20_transfer_history`).
+        Required minimum session key permission level is `admin`
+        """
+
+        method = "private/transfer_position"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateTransferPositionResultSchema)
+        return result
+
+    def transfer_positions(self, params: PrivateTransferPositionsParamsSchema) -> PrivateTransferPositionsResultSchema:
+        """
+                Transfers multiple positions from one subaccount to another, owned by the same wallet.<br /><br />The transfer is executed as a an RFQ. A mock RFQ is first created from the taker parameters, followed by a maker quote and a taker execute.<br />The leg amounts, prices and instrument name must be the same in both param payloads.<br />Fee is not charged and a zero `max_fee` must be signed.<br />Every leg in the transfer must be a position reduction for either maker or taker (or both).<br /><br />History: for position transfer history, use the `private/get_trade_history` RPC (not `private/get_erc20_transfer_history`).
+        Required minimum session key permission level is `admin`
+        """
+
+        method = "private/transfer_positions"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateTransferPositionsResultSchema)
+        return result
+
+    def order(self, params: PrivateOrderParamsSchema) -> PrivateOrderResultSchema:
+        """
+                Create a new order.
+        Required minimum session key permission level is `admin`
+        """
+
+        method = "private/order"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateOrderResultSchema)
+        return result
+
+    def replace(self, params: PrivateReplaceParamsSchema) -> PrivateReplaceResultSchema:
+        """
+                Cancel an existing order with nonce or order_id and create new order with different order_id in a single RPC call.<br /><br />If the cancel fails, the new order will not be created.<br />If the cancel succeeds but the new order fails, the old order will still be cancelled.
+        Required minimum session key permission level is `admin`
+        """
+
+        method = "private/replace"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateReplaceResultSchema)
+        return result
+
+    def order_debug(self, params: PrivateOrderDebugParamsSchema) -> PrivateOrderDebugResultSchema:
+        """
+                Debug a new order
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/order_debug"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateOrderDebugResultSchema)
+        return result
+
+    def get_order(self, params: PrivateGetOrderParamsSchema) -> PrivateGetOrderResultSchema:
+        """
+                Get state of an order by order id
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/get_order"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateGetOrderResultSchema)
+        return result
+
+    def get_orders(self, params: PrivateGetOrdersParamsSchema) -> PrivateGetOrdersResultSchema:
+        """
+                Get orders for a subaccount, with optional filtering.
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/get_orders"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateGetOrdersResultSchema)
+        return result
+
+    def get_open_orders(self, params: PrivateGetOpenOrdersParamsSchema) -> PrivateGetOpenOrdersResultSchema:
+        """
+                Get all open orders of a subacccount
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/get_open_orders"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateGetOpenOrdersResultSchema)
+        return result
+
+    def cancel(self, params: PrivateCancelParamsSchema) -> PrivateCancelResultSchema:
+        """
+                Cancel a single order.<br /><br />Other `private/cancel_*` routes are available through both REST and WebSocket.
+        Required minimum session key permission level is `admin`
+        """
+
+        method = "private/cancel"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateCancelResultSchema)
+        return result
+
+    def cancel_all(self, params: PrivateCancelAllParamsSchema) -> Result:
+        """
+                Cancel all orders for this instrument.
+        Required minimum session key permission level is `admin`
+        """
+
+        method = "private/cancel_all"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, Result)
+        return result
+
+    def cancel_by_label(self, params: PrivateCancelByLabelParamsSchema) -> PrivateCancelByLabelResultSchema:
+        """
+                Cancel all open orders for a given subaccount and a given label.  If instrument_name is provided, only orders for that instrument will be cancelled.
+        Required minimum session key permission level is `admin`
+        """
+
+        method = "private/cancel_by_label"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateCancelByLabelResultSchema)
+        return result
+
+    def cancel_by_nonce(self, params: PrivateCancelByNonceParamsSchema) -> PrivateCancelByNonceResultSchema:
+        """
+                Cancel a single order by nonce. Uses up that nonce if the order does not exist, so any future orders with that nonce will fail
+        Required minimum session key permission level is `admin`
+        """
+
+        method = "private/cancel_by_nonce"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateCancelByNonceResultSchema)
+        return result
+
+    def cancel_by_instrument(
+        self, params: PrivateCancelByInstrumentParamsSchema
+    ) -> PrivateCancelByInstrumentResultSchema:
+        """
+                Cancel all orders for this instrument.
+        Required minimum session key permission level is `admin`
+        """
+
+        method = "private/cancel_by_instrument"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateCancelByInstrumentResultSchema)
+        return result
+
+    def cancel_trigger_order(
+        self, params: PrivateCancelTriggerOrderParamsSchema
+    ) -> PrivateCancelTriggerOrderResultSchema:
+        """
+                Cancels a trigger order.
+        Required minimum session key permission level is `admin`
+        """
+
+        method = "private/cancel_trigger_order"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateCancelTriggerOrderResultSchema)
+        return result
+
+    def cancel_all_trigger_orders(self, params: PrivateCancelAllTriggerOrdersParamsSchema) -> Result:
+        """
+                Cancel all trigger orders for this subaccount.<br /><br />Also used by cancel_all in WS.
+        Required minimum session key permission level is `admin`
+        """
+
+        method = "private/cancel_all_trigger_orders"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, Result)
+        return result
+
+    def get_order_history(self, params: PrivateGetOrderHistoryParamsSchema) -> PrivateGetOrderHistoryResultSchema:
+        """
+                Get order history for a subaccount
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/get_order_history"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateGetOrderHistoryResultSchema)
+        return result
+
+    def get_trade_history(self, params: PrivateGetTradeHistoryParamsSchema) -> PrivateGetTradeHistoryResultSchema:
+        """
+                Get trade history for a subaccount, with filter parameters.
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/get_trade_history"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateGetTradeHistoryResultSchema)
+        return result
+
+    def get_deposit_history(self, params: PrivateGetDepositHistoryParamsSchema) -> PrivateGetDepositHistoryResultSchema:
+        """
+                Get subaccount deposit history.
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/get_deposit_history"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateGetDepositHistoryResultSchema)
+        return result
+
+    def get_withdrawal_history(
+        self, params: PrivateGetWithdrawalHistoryParamsSchema
+    ) -> PrivateGetWithdrawalHistoryResultSchema:
+        """
+                Get subaccount withdrawal history.
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/get_withdrawal_history"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateGetWithdrawalHistoryResultSchema)
+        return result
+
+    def send_rfq(self, params: PrivateSendRfqParamsSchema) -> PrivateSendRfqResultSchema:
+        """
+                Requests two-sided quotes from participating market makers.
+        Required minimum session key permission level is `account`
+        """
+
+        method = "private/send_rfq"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateSendRfqResultSchema)
+        return result
+
+    def cancel_rfq(self, params: PrivateCancelRfqParamsSchema) -> Result:
+        """
+                Cancels a single RFQ by id.
+        Required minimum session key permission level is `account`
+        """
+
+        method = "private/cancel_rfq"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, Result)
+        return result
+
+    def cancel_batch_rfqs(self, params: PrivateCancelBatchRfqsParamsSchema) -> PrivateCancelBatchRfqsResultSchema:
+        """
+                Cancels RFQs given optional filters.<br />If no filters are provided, all RFQs for the subaccount are cancelled.<br />All filters are combined using `AND` logic, so mutually exclusive filters will result in no RFQs being cancelled.
+        Required minimum session key permission level is `account`
+        """
+
+        method = "private/cancel_batch_rfqs"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateCancelBatchRfqsResultSchema)
+        return result
+
+    def get_rfqs(self, params: PrivateGetRfqsParamsSchema) -> PrivateGetRfqsResultSchema:
+        """
+                Retrieves a list of RFQs matching filter criteria. Takers can use this to get their open RFQs, RFQ history, etc.
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/get_rfqs"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateGetRfqsResultSchema)
+        return result
+
+    def poll_rfqs(self, params: PrivatePollRfqsParamsSchema) -> PrivatePollRfqsResultSchema:
+        """
+                Retrieves a list of RFQs matching filter criteria. Market makers can use this to poll RFQs directed to them.
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/poll_rfqs"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivatePollRfqsResultSchema)
+        return result
+
+    def send_quote(self, params: PrivateSendQuoteParamsSchema) -> PrivateSendQuoteResultSchema:
+        """
+                Sends a quote in response to an RFQ request.<br />The legs supplied in the parameters must exactly match those in the RFQ.
+        Required minimum session key permission level is `admin`
+        """
+
+        method = "private/send_quote"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateSendQuoteResultSchema)
+        return result
+
+    def replace_quote(self, params: PrivateReplaceQuoteParamsSchema) -> PrivateReplaceQuoteResultSchema:
+        """
+                Cancel an existing quote with nonce or quote_id and create new quote with different quote_id in a single RPC call.<br /><br />If the cancel fails, the new quote will not be created.<br />If the cancel succeeds but the new quote fails, the old quote will still be cancelled.
+        Required minimum session key permission level is `admin`
+        """
+
+        method = "private/replace_quote"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateReplaceQuoteResultSchema)
+        return result
+
+    def cancel_quote(self, params: PrivateCancelQuoteParamsSchema) -> PrivateCancelQuoteResultSchema:
+        """
+                Cancels an open quote.
+        Required minimum session key permission level is `admin`
+        """
+
+        method = "private/cancel_quote"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateCancelQuoteResultSchema)
+        return result
+
+    def cancel_batch_quotes(self, params: PrivateCancelBatchQuotesParamsSchema) -> PrivateCancelBatchQuotesResultSchema:
+        """
+                Cancels quotes given optional filters. If no filters are provided, all quotes by the subaccount are cancelled.<br />All filters are combined using `AND` logic, so mutually exclusive filters will result in no quotes being cancelled.
+        Required minimum session key permission level is `admin`
+        """
+
+        method = "private/cancel_batch_quotes"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateCancelBatchQuotesResultSchema)
+        return result
+
+    def get_quotes(self, params: PrivateGetQuotesParamsSchema) -> PrivateGetQuotesResultSchema:
+        """
+                Retrieves a list of quotes matching filter criteria.<br />Market makers can use this to get their open quotes, quote history, etc.
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/get_quotes"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateGetQuotesResultSchema)
+        return result
+
+    def poll_quotes(self, params: PrivatePollQuotesParamsSchema) -> PrivatePollQuotesResultSchema:
+        """
+                Retrieves a list of quotes matching filter criteria.<br />Takers can use this to poll open quotes that they can fill against their open RFQs.
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/poll_quotes"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivatePollQuotesResultSchema)
+        return result
+
+    def execute_quote(self, params: PrivateExecuteQuoteParamsSchema) -> PrivateExecuteQuoteResultSchema:
+        """
+                Executes a quote.
+        Required minimum session key permission level is `admin`
+        """
+
+        method = "private/execute_quote"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateExecuteQuoteResultSchema)
+        return result
+
+    def rfq_get_best_quote(self, params: PrivateRfqGetBestQuoteParamsSchema) -> PrivateRfqGetBestQuoteResultSchema:
+        """
+                Performs a "dry run" on an RFQ, returning the estimated fee and whether the trade is expected to pass.<br /><br />Should any exception be raised in the process of evaluating the trade, a standard RPC error will be returned<br />with the error details.
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/rfq_get_best_quote"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateRfqGetBestQuoteResultSchema)
+        return result
+
+    def get_margin(self, params: PrivateGetMarginParamsSchema) -> PrivateGetMarginResultSchema:
+        """
+                Calculates margin for a given subaccount and (optionally) a simulated state change. Does not take into account<br />open orders margin requirements.
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/get_margin"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateGetMarginResultSchema)
+        return result
+
+    def get_collaterals(self, params: PrivateGetCollateralsParamsSchema) -> PrivateGetCollateralsResultSchema:
+        """
+                Get collaterals of a subaccount
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/get_collaterals"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateGetCollateralsResultSchema)
+        return result
+
+    def get_positions(self, params: PrivateGetPositionsParamsSchema) -> PrivateGetPositionsResultSchema:
+        """
+                Get active positions of a subaccount
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/get_positions"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateGetPositionsResultSchema)
+        return result
+
+    def get_option_settlement_history(
+        self, params: PrivateGetOptionSettlementHistoryParamsSchema
+    ) -> PrivateGetOptionSettlementHistoryResultSchema:
+        """
+                Get expired option settlement history for a subaccount
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/get_option_settlement_history"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateGetOptionSettlementHistoryResultSchema)
+        return result
+
+    def get_subaccount_value_history(
+        self, params: PrivateGetSubaccountValueHistoryParamsSchema
+    ) -> PrivateGetSubaccountValueHistoryResultSchema:
+        """
+                Get the value history of a subaccount
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/get_subaccount_value_history"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateGetSubaccountValueHistoryResultSchema)
+        return result
+
+    def expired_and_cancelled_history(
+        self, params: PrivateExpiredAndCancelledHistoryParamsSchema
+    ) -> PrivateExpiredAndCancelledHistoryResultSchema:
+        """
+                Generate a list of URLs to retrieve archived orders
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/expired_and_cancelled_history"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateExpiredAndCancelledHistoryResultSchema)
+        return result
+
+    def get_funding_history(self, params: PrivateGetFundingHistoryParamsSchema) -> PrivateGetFundingHistoryResultSchema:
+        """
+                Get subaccount funding history.<br /><br />DB: read replica
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/get_funding_history"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateGetFundingHistoryResultSchema)
+        return result
+
+    def get_interest_history(
+        self, params: PrivateGetInterestHistoryParamsSchema
+    ) -> PrivateGetInterestHistoryResultSchema:
+        """
+                Get subaccount interest payment history.
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/get_interest_history"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateGetInterestHistoryResultSchema)
+        return result
+
+    def get_erc20_transfer_history(
+        self, params: PrivateGetErc20TransferHistoryParamsSchema
+    ) -> PrivateGetErc20TransferHistoryResultSchema:
+        """
+                Get subaccount erc20 transfer history.<br /><br />Position transfers (e.g. options or perps) are treated as trades. Use `private/get_trade_history` for position transfer history.
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/get_erc20_transfer_history"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateGetErc20TransferHistoryResultSchema)
+        return result
+
+    def get_liquidation_history(self, params: PrivateGetLiquidationHistoryParamsSchema) -> List[AuctionResultSchema]:
+        """
+
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/get_liquidation_history"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, List[AuctionResultSchema])
+        return result
+
+    def liquidate(self, params: PrivateLiquidateParamsSchema) -> PrivateLiquidateResultSchema:
+        """
+                Liquidates a given subaccount using funds from another subaccount. This endpoint has a few limitations:<br />1. If succesful, the RPC will freeze the caller's subaccount until the bid is settled or is reverted on chain.<br />2. The caller's subaccount must not have any open orders.<br />3. The caller's subaccount must have enough withdrawable cash to cover the bid and the buffer margin requirements.
+        Required minimum session key permission level is `admin`
+        """
+
+        method = "private/liquidate"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateLiquidateResultSchema)
+        return result
+
+    def get_liquidator_history(
+        self, params: PrivateGetLiquidatorHistoryParamsSchema
+    ) -> PrivateGetLiquidatorHistoryResultSchema:
+        """
+                Returns a paginated history of auctions that the subaccount has participated in as a liquidator.
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/get_liquidator_history"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateGetLiquidatorHistoryResultSchema)
+        return result
+
+    def session_keys(self, params: PrivateSessionKeysParamsSchema) -> PrivateSessionKeysResultSchema:
+        """
+
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/session_keys"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateSessionKeysResultSchema)
+        return result
+
+    def edit_session_key(self, params: PrivateEditSessionKeyParamsSchema) -> PrivateEditSessionKeyResultSchema:
+        """
+                Edits session key parameters such as label and IP whitelist.<br />For non-admin keys you can also toggle whether to disable a particular key.<br />Disabling non-admin keys must be done through /deregister_session_key
+        Required minimum session key permission level is `account`
+        """
+
+        method = "private/edit_session_key"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateEditSessionKeyResultSchema)
+        return result
+
+    def register_scoped_session_key(
+        self, params: PrivateRegisterScopedSessionKeyParamsSchema
+    ) -> PrivateRegisterScopedSessionKeyResultSchema:
+        """
+                Registers a new session key bounded to a scope without a transaction attached.<br />If you want to register an admin key, you must provide a signed raw transaction.
+        Required minimum session key permission level is `account`
+        """
+
+        method = "private/register_scoped_session_key"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateRegisterScopedSessionKeyResultSchema)
+        return result
+
+    def get_mmp_config(self, params: PrivateGetMmpConfigParamsSchema) -> List[MMPConfigResultSchema]:
+        """
+                Get the current mmp config for a subaccount (optionally filtered by currency)
+        Required minimum session key permission level is `read_only`
+        """
+
+        method = "private/get_mmp_config"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, List[MMPConfigResultSchema])
+        return result
+
+    def set_mmp_config(self, params: PrivateSetMmpConfigParamsSchema) -> PrivateSetMmpConfigResultSchema:
+        """
+                Set the mmp config for the subaccount and currency
+        Required minimum session key permission level is `account`
+        """
+
+        method = "private/set_mmp_config"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, PrivateSetMmpConfigResultSchema)
+        return result
+
+    def reset_mmp(self, params: PrivateResetMmpParamsSchema) -> Result:
+        """
+                Resets (unfreezes) the mmp state for a subaccount (optionally filtered by currency)
+        Required minimum session key permission level is `account`
+        """
+
+        method = "private/reset_mmp"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, Result)
+        return result
+
+    def set_cancel_on_disconnect(self, params: PrivateSetCancelOnDisconnectParamsSchema) -> Result:
+        """
+                Enables cancel on disconnect for the account
+        Required minimum session key permission level is `account`
+        """
+
+        method = "private/set_cancel_on_disconnect"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, Result)
+        return result
+
+
+# ============================================================================
+# Channel Subscription Classes
+# ============================================================================
+
+
+class PublicChannels:
+    """Public WebSocket channel subscriptions"""
+
+    def __init__(self, session):
+        self._session = session
+
+    def auctions_watch(
+        self,
+        callback: Callable[[Any], None],
+    ) -> str:
+        """
+        Subscribe to state of ongoing auctions.
+
+        Args:
+            callback: Callback function to handle notifications
+
+        Returns:
+            Channel name for unsubscribing
+        """
+
+        channel = "auctions.watch".format()
+        self._session.subscribe(channel, callback)
+        return channel
+
+    def margin_watch(
+        self,
+        callback: Callable[[Any], None],
+    ) -> str:
+        """
+        Subscribe to state of margin and MtM of all users.
+
+        Args:
+            callback: Callback function to handle notifications
+
+        Returns:
+            Channel name for unsubscribing
+        """
+
+        channel = "margin.watch".format()
+        self._session.subscribe(channel, callback)
+        return channel
+
+    def orderbook_group_depth_by_instrument_name(
+        self,
+        instrument_name: str,
+        group: str,
+        depth: str,
+        callback: Callable[[Any], None],
+    ) -> str:
+        """
+        Periodically publishes bids and asks for an instrument.
+
+        Args:
+            instrument_name: Instrument Name
+            group: Group
+            depth: Depth
+            callback: Callback function to handle notifications
+
+        Returns:
+            Channel name for unsubscribing
+        """
+
+        channel = "orderbook.{instrument_name}.{group}.{depth}".format(
+            instrument_name=instrument_name,
+            group=group,
+            depth=depth,
+        )
+        self._session.subscribe(channel, callback)
+        return channel
+
+    def spot_feed_by_currency(
+        self,
+        currency: str,
+        callback: Callable[[Any], None],
+    ) -> str:
+        """
+        Periodically publishes spot index price by currency.
+
+        Args:
+            currency: Currency
+            callback: Callback function to handle notifications
+
+        Returns:
+            Channel name for unsubscribing
+        """
+
+        channel = "spot_feed.{currency}".format(
+            currency=currency,
+        )
+        self._session.subscribe(channel, callback)
+        return channel
+
+    def ticker_interval_by_instrument_name(
+        self,
+        instrument_name: str,
+        interval: str,
+        callback: Callable[[Any], None],
+    ) -> str:
+        """
+        Periodically publishes ticker info (best bid / ask, instrument contraints, fees, etc.) for a single instrument.
+
+        Args:
+            instrument_name: Instrument Name
+            interval: Interval
+            callback: Callback function to handle notifications
+
+        Returns:
+            Channel name for unsubscribing
+        """
+
+        channel = "ticker.{instrument_name}.{interval}".format(
+            instrument_name=instrument_name,
+            interval=interval,
+        )
+        self._session.subscribe(channel, callback)
+        return channel
+
+    def trades_by_instrument_name(
+        self,
+        instrument_name: str,
+        callback: Callable[[Any], None],
+    ) -> str:
+        """
+        Subscribe to trades (order executions) for a given instrument name.
+
+        Args:
+            instrument_name: Instrument Name
+            callback: Callback function to handle notifications
+
+        Returns:
+            Channel name for unsubscribing
+        """
+
+        channel = "trades.{instrument_name}".format(
+            instrument_name=instrument_name,
+        )
+        self._session.subscribe(channel, callback)
+        return channel
+
+    def trades_by_instrument_type(
+        self,
+        instrument_type: str,
+        currency: str,
+        callback: Callable[[Any], None],
+    ) -> str:
+        """
+        Subscribe to trades (order executions) for a given instrument type and currency.
+
+        Args:
+            instrument_type: Instrument Type
+            currency: Currency
+            callback: Callback function to handle notifications
+
+        Returns:
+            Channel name for unsubscribing
+        """
+
+        channel = "trades.{instrument_type}.{currency}".format(
+            instrument_type=instrument_type,
+            currency=currency,
+        )
+        self._session.subscribe(channel, callback)
+        return channel
+
+    def trades_tx_status_by_instrument_type(
+        self,
+        instrument_type: str,
+        currency: str,
+        callback: Callable[[Any], None],
+    ) -> str:
+        """
+        Subscribe to the status on on-chain trade settlement events for a given instrument type and currency.
+
+        Args:
+            instrument_type: Instrument Type
+            currency: Currency
+            callback: Callback function to handle notifications
+
+        Returns:
+            Channel name for unsubscribing
+        """
+
+        channel = "trades.{instrument_type}.{currency}.tx_status".format(
+            instrument_type=instrument_type,
+            currency=currency,
+        )
+        self._session.subscribe(channel, callback)
+        return channel
+
+
+class PrivateChannels:
+    """Private WebSocket channel subscriptions"""
+
+    def __init__(self, session):
+        self._session = session
+
+    def balances_by_subaccount_id(
+        self,
+        subaccount_id: int,
+        callback: Callable[[Any], None],
+    ) -> str:
+        """
+        Subscribe to changes in user's positions for a given subaccount ID.<br /><br />For perpetuals, additional balance updates are emitted under the name Q-{ccy}-PERP where Q stands for "quote".<br />This balance is a proxy for an on-chain state of lastMarkPrice.<br />Because of a synchronization lag with the on-chain state, the orderbook instead keeps track of a running total cost of perpetual trades,<br /><br />For example:<br />Q-ETH-PERP balance of $6,600 and an ETH-PERP balance of 3 means the lastMarkPrice state is estimated to be $2,200.
+
+        Args:
+            subaccount_id: Subaccount Id
+            callback: Callback function to handle notifications
+
+        Returns:
+            Channel name for unsubscribing
+        """
+
+        channel = "{subaccount_id}.balances".format(
+            subaccount_id=subaccount_id,
+        )
+        self._session.subscribe(channel, callback)
+        return channel
+
+    def best_quotes_by_subaccount_id(
+        self,
+        subaccount_id: int,
+        callback: Callable[[Any], None],
+    ) -> str:
+        """
+        Subscribe to best quote state for a given subaccount ID.<br />This will notify the user about the best quote available for the RFQ they have sent.
+
+        Args:
+            subaccount_id: Subaccount Id
+            callback: Callback function to handle notifications
+
+        Returns:
+            Channel name for unsubscribing
+        """
+
+        channel = "{subaccount_id}.best.quotes".format(
+            subaccount_id=subaccount_id,
+        )
+        self._session.subscribe(channel, callback)
+        return channel
+
+    def orders_by_subaccount_id(
+        self,
+        subaccount_id: int,
+        callback: Callable[[Any], None],
+    ) -> str:
+        """
+        Subscribe to changes in user's orders for a given subaccount ID.
+
+        Args:
+            subaccount_id: Subaccount Id
+            callback: Callback function to handle notifications
+
+        Returns:
+            Channel name for unsubscribing
+        """
+
+        channel = "{subaccount_id}.orders".format(
+            subaccount_id=subaccount_id,
+        )
+        self._session.subscribe(channel, callback)
+        return channel
+
+    def quotes_by_subaccount_id(
+        self,
+        subaccount_id: int,
+        callback: Callable[[Any], None],
+    ) -> str:
+        """
+        Subscribe to quote state for a given subaccount ID.<br />This will notify the usser about the state change of the quotes they have sent.
+
+        Args:
+            subaccount_id: Subaccount Id
+            callback: Callback function to handle notifications
+
+        Returns:
+            Channel name for unsubscribing
+        """
+
+        channel = "{subaccount_id}.quotes".format(
+            subaccount_id=subaccount_id,
+        )
+        self._session.subscribe(channel, callback)
+        return channel
+
+    def trades_by_subaccount_id(
+        self,
+        subaccount_id: int,
+        callback: Callable[[Any], None],
+    ) -> str:
+        """
+        Subscribe to user's trades (order executions) for a given subaccount ID.
+
+        Args:
+            subaccount_id: Subaccount Id
+            callback: Callback function to handle notifications
+
+        Returns:
+            Channel name for unsubscribing
+        """
+
+        channel = "{subaccount_id}.trades".format(
+            subaccount_id=subaccount_id,
+        )
+        self._session.subscribe(channel, callback)
+        return channel
+
+    def trades_tx_status_by_subaccount_id(
+        self,
+        subaccount_id: int,
+        callback: Callable[[Any], None],
+    ) -> str:
+        """
+        Subscribe to user's trade settlement for a given subaccount ID.
+
+        Args:
+            subaccount_id: Subaccount Id
+            callback: Callback function to handle notifications
+
+        Returns:
+            Channel name for unsubscribing
+        """
+
+        channel = "{subaccount_id}.trades.tx_status".format(
+            subaccount_id=subaccount_id,
+        )
+        self._session.subscribe(channel, callback)
+        return channel
+
+    def rfqs_by_wallet(
+        self,
+        callback: Callable[[Any], None],
+    ) -> str:
+        """
+        Subscribe to RFQs directed to a given wallet.
+
+        Args:
+            callback: Callback function to handle notifications
+
+        Returns:
+            Channel name for unsubscribing
+        """
+
+        channel = "wallet.rfqs".format()
+        self._session.subscribe(channel, callback)
+        return channel
+
+
+# ============================================================================
+# Combined API Classes
+# ============================================================================
+
+
+class PublicAPI:
+    """Combined public WebSocket API - RPC and channels"""
+
+    def __init__(self, session):
+        self.rpc = PublicRPC(session)
+        self.channels = PublicChannels(session)
+
+
+class PrivateAPI:
+    """Combined private WebSocket API - RPC and channels"""
+
+    def __init__(self, session):
+        self.rpc = PrivateRPC(session)
+        self.channels = PrivateChannels(session)
