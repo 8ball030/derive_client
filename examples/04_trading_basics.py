@@ -163,7 +163,7 @@ market_order = client.orders.create(
     instrument_name=INSTRUMENT,
     amount=MINIMUM_AMOUNT,
     direction=Direction.buy,
-    limit_price=ticker.mark_price * D(1.05),
+    limit_price=ticker.best_ask_price,
     order_type=OrderType.market,
 )
 print("\nMarket order executed:")
@@ -179,7 +179,7 @@ close_order = client.orders.create(
     instrument_name=INSTRUMENT,
     amount=MINIMUM_AMOUNT,
     direction=Direction.sell,
-    limit_price=ticker.mark_price * D(0.95),
+    limit_price=ticker.best_bid_price * D("0.99"),  # Acceptable worst price
     order_type=OrderType.market,
 )
 print(f"\nPosition closed: {close_order.order_id}")
