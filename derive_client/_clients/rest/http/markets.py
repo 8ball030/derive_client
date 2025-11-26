@@ -157,22 +157,22 @@ class MarketOperations:
         """Get currency related risk params, spot price 24hrs ago and lending details for a specific currency."""
 
         params = PublicGetCurrencyParamsSchema(currency=currency)
-        response = self._public_api.get_currency(params)
-        return response.result
+        result = self._public_api.get_currency(params)
+        return result
 
     def get_all_currencies(self) -> list[CurrencyDetailedResponseSchema]:
         """Get all active currencies with their spot price, spot price 24hrs ago."""
 
         params = PublicGetAllCurrenciesParamsSchema()
-        response = self._public_api.get_all_currencies(params)
-        return response.result
+        result = self._public_api.get_all_currencies(params)
+        return result
 
     def get_instrument(self, *, instrument_name: str) -> PublicGetInstrumentResultSchema:
         """Get single instrument by asset name."""
 
         params = PublicGetInstrumentParamsSchema(instrument_name=instrument_name)
-        response = self._public_api.get_instrument(params)
-        return response.result
+        result = self._public_api.get_instrument(params)
+        return result
 
     def get_instruments(
         self,
@@ -188,8 +188,8 @@ class MarketOperations:
             expired=expired,
             instrument_type=instrument_type,
         )
-        response = self._public_api.get_instruments(params)
-        return response.result
+        result = self._public_api.get_instruments(params)
+        return result
 
     def get_all_instruments(
         self,
@@ -209,8 +209,8 @@ class MarketOperations:
             page=page,
             page_size=page_size,
         )
-        response = self._public_api.get_all_instruments(params)
-        return response.result
+        result = self._public_api.get_all_instruments(params)
+        return result
 
     def get_ticker(self, *, instrument_name: str) -> PublicGetTickerResultSchema:
         """
@@ -226,8 +226,8 @@ class MarketOperations:
         )
 
         params = PublicGetTickerParamsSchema(instrument_name=instrument_name)
-        response = self._public_api.get_ticker(params)
-        return response.result
+        result = self._public_api.get_ticker(params)
+        return result
 
     def get_tickers(
         self,
@@ -243,5 +243,5 @@ class MarketOperations:
             instrument_type=instrument_type,
             expiry_date=expiry_date,
         )
-        response = self._public_api.get_tickers(params)
-        return response.result.tickers
+        result = self._public_api.get_tickers(params)
+        return result.tickers

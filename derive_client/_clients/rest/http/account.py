@@ -96,14 +96,14 @@ class LightAccount:
 
         params = PrivateGetAccountParamsSchema(wallet=auth.wallet)
         response = private_api.get_account(params)
-        state = response.result
+        state = response
         logger.debug(f"LightAccount validated: {state.wallet}")
 
         # Check if the current signer is in the list of valid session keys
         session_keys_params = PrivateSessionKeysParamsSchema(wallet=auth.wallet)
         session_keys_response = private_api.session_keys(session_keys_params)
 
-        valid_signers = {key.public_session_key: key for key in session_keys_response.result.public_session_keys}
+        valid_signers = {key.public_session_key: key for key in session_keys_response.public_session_keys}
         signer_address = auth.account.address  # type: ignore[attr-defined]
         if signer_address not in valid_signers:
             logger.warning(f"Session key {signer_address} is not registered for wallet {auth.wallet}")
@@ -136,7 +136,7 @@ class LightAccount:
         """Refresh mutable state from API."""
         params = PrivateGetAccountParamsSchema(wallet=self._auth.wallet)
         response = self._private_api.get_account(params)
-        self._state = response.result
+        self._state = response
         return self
 
     def build_register_session_key_tx(
@@ -226,7 +226,7 @@ class LightAccount:
             signed_raw_tx=signed_raw_tx,
         )
         response = self._private_api.register_scoped_session_key(params)
-        return response.result
+        return response
 
     def session_keys(self) -> PrivateSessionKeysResultSchema:
         """
@@ -238,7 +238,7 @@ class LightAccount:
 
         params = PrivateSessionKeysParamsSchema(wallet=self.address)
         response = self._private_api.session_keys(params)
-        return response.result
+        return response
 
     def edit_session_key(
         self,
@@ -258,14 +258,14 @@ class LightAccount:
             label=label,
         )
         response = self._private_api.edit_session_key(params)
-        return response.result
+        return response
 
     def get_all_portfolios(self) -> list[PrivateGetSubaccountResultSchema]:
         """Get all subaccount portfolios of a wallet"""
 
         params = PrivateGetAllPortfoliosParamsSchema(wallet=self.address)
         response = self._private_api.get_all_portfolios(params)
-        return response.result
+        return response
 
     def create_subaccount(
         self,
@@ -327,21 +327,21 @@ class LightAccount:
             wallet=self.address,
         )
         response = self._private_api.create_subaccount(params)
-        return response.result
+        return response
 
     def get_subaccounts(self) -> PrivateGetSubaccountsResultSchema:
         """Get all subaccount IDs of an account / wallet"""
 
         params = PrivateGetSubaccountsParamsSchema(wallet=self.address)
         response = self._private_api.get_subaccounts(params)
-        return response.result
+        return response
 
     def get(self) -> PrivateGetAccountResultSchema:
         """Account details getter"""
 
         params = PrivateGetAccountParamsSchema(wallet=self.address)
         response = self._private_api.get_account(params)
-        return response.result
+        return response
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__qualname__}({self.address}) object at {hex(id(self))}>"

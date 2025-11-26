@@ -128,8 +128,8 @@ class OrderOperations:
             trigger_price_type=trigger_price_type,
             trigger_type=trigger_type,
         )
-        response = self._subaccount._private_api.order(params)
-        return response.result.order
+        result = self._subaccount._private_api.order(params)
+        return result.order
 
     def get(self, *, order_id: str) -> PrivateGetOrderResultSchema:
         """Get state of an order by order id."""
@@ -139,8 +139,8 @@ class OrderOperations:
             order_id=order_id,
             subaccount_id=subaccount_id,
         )
-        response = self._subaccount._private_api.get_order(params)
-        return response.result
+        result = self._subaccount._private_api.get_order(params)
+        return result
 
     def list(
         self,
@@ -161,15 +161,15 @@ class OrderOperations:
             page_size=page_size,
             status=status,
         )
-        response = self._subaccount._private_api.get_orders(params)
-        return response.result.orders
+        result = self._subaccount._private_api.get_orders(params)
+        return result.orders
 
     def list_open(self) -> List[OrderResponseSchema]:
         """Get all open orders of a subacccount."""
 
         params = PrivateGetOpenOrdersParamsSchema(subaccount_id=self._subaccount.id)
-        response = self._subaccount._private_api.get_open_orders(params)
-        return response.result.orders
+        result = self._subaccount._private_api.get_open_orders(params)
+        return result.orders
 
     def cancel(
         self,
@@ -184,8 +184,8 @@ class OrderOperations:
             order_id=order_id,
             subaccount_id=self._subaccount.id,
         )
-        response = self._subaccount._private_api.cancel(params)
-        return response.result
+        result = self._subaccount._private_api.cancel(params)
+        return result
 
     def cancel_by_label(
         self,
@@ -204,8 +204,8 @@ class OrderOperations:
             instrument_name=instrument_name,
             subaccount_id=self._subaccount.id,
         )
-        response = self._subaccount._private_api.cancel_by_label(params)
-        return response.result
+        result = self._subaccount._private_api.cancel_by_label(params)
+        return result
 
     def cancel_by_nonce(
         self,
@@ -222,8 +222,8 @@ class OrderOperations:
             subaccount_id=self._subaccount.id,
             wallet=self._subaccount._auth.wallet,
         )
-        response = self._subaccount._private_api.cancel_by_nonce(params)
-        return response.result
+        result = self._subaccount._private_api.cancel_by_nonce(params)
+        return result
 
     def cancel_by_instrument(self, *, instrument_name: str) -> PrivateCancelByInstrumentResultSchema:
         """Cancel all orders for this instrument."""
@@ -232,15 +232,15 @@ class OrderOperations:
             instrument_name=instrument_name,
             subaccount_id=self._subaccount.id,
         )
-        response = self._subaccount._private_api.cancel_by_instrument(params)
-        return response.result
+        result = self._subaccount._private_api.cancel_by_instrument(params)
+        return result
 
     def cancel_all(self) -> Result:
         """Cancel all orders for this instrument."""
 
         params = PrivateCancelAllParamsSchema(subaccount_id=self._subaccount.id)
-        response = self._subaccount._private_api.cancel_all(params)
-        return response.result
+        result = self._subaccount._private_api.cancel_all(params)
+        return result
 
     def replace(
         self,
@@ -334,5 +334,5 @@ class OrderOperations:
             trigger_price_type=trigger_price_type,
             trigger_type=trigger_type,
         )
-        response = self._subaccount._private_api.replace(params)
-        return response.result
+        result = self._subaccount._private_api.replace(params)
+        return result

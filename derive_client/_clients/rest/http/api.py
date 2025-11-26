@@ -1,6 +1,5 @@
 """Auto-generated API classes from OpenAPI spec"""
 
-
 from typing import List
 
 from derive_client._clients.rest.endpoints import PrivateEndpoints, PublicEndpoints

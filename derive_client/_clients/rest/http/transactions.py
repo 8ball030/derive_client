@@ -29,5 +29,5 @@ class TransactionOperations:
         """Get a transaction by its transaction id."""
 
         params = PublicGetTransactionParamsSchema(transaction_id=transaction_id)
-        response = self._public_api.get_transaction(params)
-        return response.result
+        result = self._public_api.get_transaction(params)
+        return result
