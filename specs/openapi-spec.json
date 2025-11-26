@@ -1493,7 +1493,7 @@
           "Private"
         ],
         "summary": "Get Order",
-        "description": "Get state of an order by order id.  If the order is an MMP order, it will not show up if cancelled/expired.\nRequired minimum session key permission level is `read_only`",
+        "description": "Get state of an order by order id\nRequired minimum session key permission level is `read_only`",
         "responses": {
           "200": {
             "description": "successful operation",
@@ -3187,10 +3187,10 @@
   "components": {
     "schemas": {
       "PublicGetFundingRateHistoryParamsSchema": {
+        "type": "object",
         "required": [
           "instrument_name"
         ],
-        "type": "object",
         "properties": {
           "end_timestamp": {
             "title": "end_timestamp",
@@ -3226,11 +3226,11 @@
         "additionalProperties": false
       },
       "PublicGetFundingRateHistoryResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -3251,10 +3251,10 @@
         "additionalProperties": false
       },
       "PublicGetFundingRateHistoryResultSchema": {
+        "type": "object",
         "required": [
           "funding_rate_history"
         ],
-        "type": "object",
         "properties": {
           "funding_rate_history": {
             "title": "funding_rate_history",
@@ -3268,11 +3268,11 @@
         "additionalProperties": false
       },
       "FundingRateSchema": {
+        "type": "object",
         "required": [
           "funding_rate",
           "timestamp"
         ],
-        "type": "object",
         "properties": {
           "funding_rate": {
             "title": "funding_rate",
@@ -3289,11 +3289,11 @@
         "additionalProperties": false
       },
       "PrivateEditSessionKeyParamsSchema": {
+        "type": "object",
         "required": [
           "public_session_key",
           "wallet"
         ],
-        "type": "object",
         "properties": {
           "disable": {
             "title": "disable",
@@ -3333,11 +3333,11 @@
         "additionalProperties": false
       },
       "PrivateEditSessionKeyResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -3358,6 +3358,7 @@
         "additionalProperties": false
       },
       "PrivateEditSessionKeyResultSchema": {
+        "type": "object",
         "required": [
           "expiry_sec",
           "ip_whitelist",
@@ -3366,7 +3367,6 @@
           "registered_sec",
           "scope"
         ],
-        "type": "object",
         "properties": {
           "expiry_sec": {
             "title": "expiry_sec",
@@ -3443,11 +3443,11 @@
         "additionalProperties": false
       },
       "PublicGetLiquidationHistoryResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -3468,11 +3468,11 @@
         "additionalProperties": false
       },
       "PublicGetLiquidationHistoryResultSchema": {
+        "type": "object",
         "required": [
           "auctions",
           "pagination"
         ],
-        "type": "object",
         "properties": {
           "auctions": {
             "title": "auctions",
@@ -3489,6 +3489,7 @@
         "additionalProperties": false
       },
       "AuctionResultSchema": {
+        "type": "object",
         "required": [
           "auction_id",
           "auction_type",
@@ -3499,7 +3500,6 @@
           "subaccount_id",
           "tx_hash"
         ],
-        "type": "object",
         "properties": {
           "auction_id": {
             "title": "auction_id",
@@ -3555,6 +3555,7 @@
         "additionalProperties": false
       },
       "AuctionBidEventSchema": {
+        "type": "object",
         "required": [
           "amounts_liquidated",
           "cash_received",
@@ -3567,7 +3568,6 @@
           "timestamp",
           "tx_hash"
         ],
-        "type": "object",
         "properties": {
           "amounts_liquidated": {
             "title": "amounts_liquidated",
@@ -3643,11 +3643,11 @@
         "additionalProperties": false
       },
       "PaginationInfoSchema": {
+        "type": "object",
         "required": [
           "count",
           "num_pages"
         ],
-        "type": "object",
         "properties": {
           "count": {
             "title": "count",
@@ -3663,10 +3663,10 @@
         "additionalProperties": false
       },
       "PrivateGetOpenOrdersParamsSchema": {
+        "type": "object",
         "required": [
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "subaccount_id": {
             "title": "subaccount_id",
@@ -3677,11 +3677,11 @@
         "additionalProperties": false
       },
       "PrivateGetOpenOrdersResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -3702,11 +3702,11 @@
         "additionalProperties": false
       },
       "PrivateGetOpenOrdersResultSchema": {
+        "type": "object",
         "required": [
           "orders",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "orders": {
             "title": "orders",
@@ -3725,6 +3725,7 @@
         "additionalProperties": false
       },
       "OrderResponseSchema": {
+        "type": "object",
         "required": [
           "amount",
           "average_price",
@@ -3751,7 +3752,6 @@
           "subaccount_id",
           "time_in_force"
         ],
-        "type": "object",
         "properties": {
           "amount": {
             "title": "amount",
@@ -3966,10 +3966,10 @@
         "additionalProperties": false
       },
       "PrivatePollQuotesParamsSchema": {
+        "type": "object",
         "required": [
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "from_timestamp": {
             "title": "from_timestamp",
@@ -4033,11 +4033,11 @@
         "additionalProperties": false
       },
       "PrivatePollQuotesResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -4058,11 +4058,11 @@
         "additionalProperties": false
       },
       "PrivatePollQuotesResultSchema": {
+        "type": "object",
         "required": [
           "pagination",
           "quotes"
         ],
-        "type": "object",
         "properties": {
           "pagination": {
             "$ref": "#/components/schemas/PaginationInfoSchema"
@@ -4079,6 +4079,7 @@
         "additionalProperties": false
       },
       "QuoteResultPublicSchema": {
+        "type": "object",
         "required": [
           "cancel_reason",
           "creation_timestamp",
@@ -4096,7 +4097,6 @@
           "tx_status",
           "wallet"
         ],
-        "type": "object",
         "properties": {
           "cancel_reason": {
             "title": "cancel_reason",
@@ -4221,13 +4221,13 @@
         "additionalProperties": false
       },
       "LegPricedSchema": {
+        "type": "object",
         "required": [
           "amount",
           "direction",
           "instrument_name",
           "price"
         ],
-        "type": "object",
         "properties": {
           "amount": {
             "title": "amount",
@@ -4324,11 +4324,11 @@
         "additionalProperties": false
       },
       "PrivateGetTradeHistoryResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -4349,12 +4349,12 @@
         "additionalProperties": false
       },
       "PrivateGetTradeHistoryResultSchema": {
+        "type": "object",
         "required": [
           "pagination",
           "subaccount_id",
           "trades"
         ],
-        "type": "object",
         "properties": {
           "pagination": {
             "$ref": "#/components/schemas/PaginationInfoSchema"
@@ -4376,6 +4376,7 @@
         "additionalProperties": false
       },
       "TradeResponseSchema": {
+        "type": "object",
         "required": [
           "direction",
           "expected_rebate",
@@ -4399,7 +4400,6 @@
           "tx_hash",
           "tx_status"
         ],
-        "type": "object",
         "properties": {
           "direction": {
             "title": "direction",
@@ -4628,11 +4628,11 @@
         "additionalProperties": false
       },
       "PublicGetTradeHistoryResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -4653,11 +4653,11 @@
         "additionalProperties": false
       },
       "PublicGetTradeHistoryResultSchema": {
+        "type": "object",
         "required": [
           "pagination",
           "trades"
         ],
-        "type": "object",
         "properties": {
           "pagination": {
             "$ref": "#/components/schemas/PaginationInfoSchema"
@@ -4674,6 +4674,7 @@
         "additionalProperties": false
       },
       "TradeSettledPublicResponseSchema": {
+        "type": "object",
         "required": [
           "direction",
           "expected_rebate",
@@ -4694,7 +4695,6 @@
           "tx_status",
           "wallet"
         ],
-        "type": "object",
         "properties": {
           "direction": {
             "title": "direction",
@@ -4814,10 +4814,10 @@
         "additionalProperties": false
       },
       "PublicStatisticsParamsSchema": {
+        "type": "object",
         "required": [
           "instrument_name"
         ],
-        "type": "object",
         "properties": {
           "currency": {
             "title": "currency",
@@ -4842,11 +4842,11 @@
         "additionalProperties": false
       },
       "PublicStatisticsResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -4867,6 +4867,7 @@
         "additionalProperties": false
       },
       "PublicStatisticsResultSchema": {
+        "type": "object",
         "required": [
           "daily_fees",
           "daily_notional_volume",
@@ -4878,7 +4879,6 @@
           "total_premium_volume",
           "total_trades"
         ],
-        "type": "object",
         "properties": {
           "daily_fees": {
             "title": "daily_fees",
@@ -4936,10 +4936,10 @@
         "additionalProperties": false
       },
       "PublicGetInstrumentParamsSchema": {
+        "type": "object",
         "required": [
           "instrument_name"
         ],
-        "type": "object",
         "properties": {
           "instrument_name": {
             "title": "instrument_name",
@@ -4950,11 +4950,11 @@
         "additionalProperties": false
       },
       "PublicGetInstrumentResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -4975,6 +4975,7 @@
         "additionalProperties": false
       },
       "PublicGetInstrumentResultSchema": {
+        "type": "object",
         "required": [
           "amount_step",
           "base_asset_address",
@@ -4999,7 +5000,6 @@
           "taker_fee_rate",
           "tick_size"
         ],
-        "type": "object",
         "properties": {
           "amount_step": {
             "title": "amount_step",
@@ -5135,10 +5135,10 @@
         "additionalProperties": false
       },
       "ERC20PublicDetailsSchema": {
+        "type": "object",
         "required": [
           "decimals"
         ],
-        "type": "object",
         "properties": {
           "borrow_index": {
             "title": "borrow_index",
@@ -5169,13 +5169,13 @@
         "additionalProperties": false
       },
       "OptionPublicDetailsSchema": {
+        "type": "object",
         "required": [
           "expiry",
           "index",
           "option_type",
           "strike"
         ],
-        "type": "object",
         "properties": {
           "expiry": {
             "title": "expiry",
@@ -5212,6 +5212,7 @@
         "additionalProperties": false
       },
       "PerpPublicDetailsSchema": {
+        "type": "object",
         "required": [
           "aggregate_funding",
           "funding_rate",
@@ -5220,7 +5221,6 @@
           "min_rate_per_hour",
           "static_interest_rate"
         ],
-        "type": "object",
         "properties": {
           "aggregate_funding": {
             "title": "aggregate_funding",
@@ -5261,11 +5261,11 @@
         "additionalProperties": false
       },
       "PrivateSendRfqParamsSchema": {
+        "type": "object",
         "required": [
           "legs",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "counterparties": {
             "title": "counterparties",
@@ -5324,12 +5324,12 @@
         "additionalProperties": false
       },
       "LegUnpricedSchema": {
+        "type": "object",
         "required": [
           "amount",
           "direction",
           "instrument_name"
         ],
-        "type": "object",
         "properties": {
           "amount": {
             "title": "amount",
@@ -5355,11 +5355,11 @@
         "additionalProperties": false
       },
       "PrivateSendRfqResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -5380,6 +5380,7 @@
         "additionalProperties": false
       },
       "PrivateSendRfqResultSchema": {
+        "type": "object",
         "required": [
           "ask_total_cost",
           "bid_total_cost",
@@ -5402,7 +5403,6 @@
           "valid_until",
           "wallet"
         ],
-        "type": "object",
         "properties": {
           "ask_total_cost": {
             "title": "ask_total_cost",
@@ -5562,10 +5562,10 @@
         "additionalProperties": false
       },
       "PrivateGetSubaccountsParamsSchema": {
+        "type": "object",
         "required": [
           "wallet"
         ],
-        "type": "object",
         "properties": {
           "wallet": {
             "title": "wallet",
@@ -5576,11 +5576,11 @@
         "additionalProperties": false
       },
       "PrivateGetSubaccountsResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -5601,11 +5601,11 @@
         "additionalProperties": false
       },
       "PrivateGetSubaccountsResultSchema": {
+        "type": "object",
         "required": [
           "subaccount_ids",
           "wallet"
         ],
-        "type": "object",
         "properties": {
           "subaccount_ids": {
             "title": "subaccount_ids",
@@ -5625,10 +5625,10 @@
         "additionalProperties": false
       },
       "PrivateGetLiquidationHistoryParamsSchema": {
+        "type": "object",
         "required": [
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "end_timestamp": {
             "title": "end_timestamp",
@@ -5651,11 +5651,11 @@
         "additionalProperties": false
       },
       "PrivateGetLiquidationHistoryResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -5681,6 +5681,7 @@
         "additionalProperties": false
       },
       "PrivateTransferErc20ParamsSchema": {
+        "type": "object",
         "required": [
           "recipient_details",
           "recipient_subaccount_id",
@@ -5688,7 +5689,6 @@
           "subaccount_id",
           "transfer"
         ],
-        "type": "object",
         "properties": {
           "recipient_details": {
             "$ref": "#/components/schemas/SignatureDetailsSchema"
@@ -5713,13 +5713,13 @@
         "additionalProperties": false
       },
       "SignatureDetailsSchema": {
+        "type": "object",
         "required": [
           "nonce",
           "signature",
           "signature_expiry_sec",
           "signer"
         ],
-        "type": "object",
         "properties": {
           "nonce": {
             "title": "nonce",
@@ -5745,12 +5745,12 @@
         "additionalProperties": false
       },
       "TransferDetailsSchema": {
+        "type": "object",
         "required": [
           "address",
           "amount",
           "sub_id"
         ],
-        "type": "object",
         "properties": {
           "address": {
             "title": "address",
@@ -5772,11 +5772,11 @@
         "additionalProperties": false
       },
       "PrivateTransferErc20ResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -5797,11 +5797,11 @@
         "additionalProperties": false
       },
       "PrivateTransferErc20ResultSchema": {
+        "type": "object",
         "required": [
           "status",
           "transaction_id"
         ],
-        "type": "object",
         "properties": {
           "status": {
             "title": "status",
@@ -5818,10 +5818,10 @@
         "additionalProperties": false
       },
       "PrivateCancelAllTriggerOrdersParamsSchema": {
+        "type": "object",
         "required": [
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "subaccount_id": {
             "title": "subaccount_id",
@@ -5831,11 +5831,11 @@
         "additionalProperties": false
       },
       "PrivateCancelAllTriggerOrdersResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -5861,13 +5861,13 @@
         "additionalProperties": false
       },
       "PrivateCancelByNonceParamsSchema": {
+        "type": "object",
         "required": [
           "instrument_name",
           "nonce",
           "subaccount_id",
           "wallet"
         ],
-        "type": "object",
         "properties": {
           "instrument_name": {
             "title": "instrument_name",
@@ -5893,11 +5893,11 @@
         "additionalProperties": false
       },
       "PrivateCancelByNonceResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -5918,10 +5918,10 @@
         "additionalProperties": false
       },
       "PrivateCancelByNonceResultSchema": {
+        "type": "object",
         "required": [
           "cancelled_orders"
         ],
-        "type": "object",
         "properties": {
           "cancelled_orders": {
             "title": "cancelled_orders",
@@ -5957,11 +5957,11 @@
         "additionalProperties": false
       },
       "PublicGetOptionSettlementHistoryResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -5982,11 +5982,11 @@
         "additionalProperties": false
       },
       "PublicGetOptionSettlementHistoryResultSchema": {
+        "type": "object",
         "required": [
           "pagination",
           "settlements"
         ],
-        "type": "object",
         "properties": {
           "pagination": {
             "$ref": "#/components/schemas/PaginationInfoSchema"
@@ -6003,6 +6003,7 @@
         "additionalProperties": false
       },
       "OptionSettlementResponseSchema": {
+        "type": "object",
         "required": [
           "amount",
           "expiry",
@@ -6012,7 +6013,6 @@
           "settlement_price",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "amount": {
             "title": "amount",
@@ -6057,13 +6057,13 @@
         "additionalProperties": false
       },
       "PrivateSetMmpConfigParamsSchema": {
+        "type": "object",
         "required": [
           "currency",
           "mmp_frozen_time",
           "mmp_interval",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "currency": {
             "title": "currency",
@@ -6103,11 +6103,11 @@
         "additionalProperties": false
       },
       "PrivateSetMmpConfigResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -6128,13 +6128,13 @@
         "additionalProperties": false
       },
       "PrivateSetMmpConfigResultSchema": {
+        "type": "object",
         "required": [
           "currency",
           "mmp_frozen_time",
           "mmp_interval",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "currency": {
             "title": "currency",
@@ -6174,6 +6174,7 @@
         "additionalProperties": false
       },
       "PublicDepositDebugParamsSchema": {
+        "type": "object",
         "required": [
           "amount",
           "asset_name",
@@ -6182,7 +6183,6 @@
           "signer",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "amount": {
             "title": "amount",
@@ -6225,11 +6225,11 @@
         "additionalProperties": false
       },
       "PublicDepositDebugResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -6250,13 +6250,13 @@
         "additionalProperties": false
       },
       "PublicDepositDebugResultSchema": {
+        "type": "object",
         "required": [
           "action_hash",
           "encoded_data",
           "encoded_data_hashed",
           "typed_data_hash"
         ],
-        "type": "object",
         "properties": {
           "action_hash": {
             "title": "action_hash",
@@ -6282,11 +6282,11 @@
         "additionalProperties": false
       },
       "PublicGetReferralPerformanceParamsSchema": {
+        "type": "object",
         "required": [
           "end_ms",
           "start_ms"
         ],
-        "type": "object",
         "properties": {
           "end_ms": {
             "title": "end_ms",
@@ -6316,11 +6316,11 @@
         "additionalProperties": false
       },
       "PublicGetReferralPerformanceResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -6341,6 +6341,7 @@
         "additionalProperties": false
       },
       "PublicGetReferralPerformanceResultSchema": {
+        "type": "object",
         "required": [
           "fee_share_percentage",
           "referral_code",
@@ -6350,7 +6351,6 @@
           "total_notional_volume",
           "total_referred_fees"
         ],
-        "type": "object",
         "properties": {
           "fee_share_percentage": {
             "title": "fee_share_percentage",
@@ -6407,12 +6407,12 @@
         "additionalProperties": false
       },
       "ReferralPerformanceByInstrumentTypeSchema": {
+        "type": "object",
         "required": [
           "fee_reward",
           "notional_volume",
           "referred_fee"
         ],
-        "type": "object",
         "properties": {
           "fee_reward": {
             "title": "fee_reward",
@@ -6436,11 +6436,11 @@
         "additionalProperties": false
       },
       "PrivateCancelByInstrumentParamsSchema": {
+        "type": "object",
         "required": [
           "instrument_name",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "instrument_name": {
             "title": "instrument_name",
@@ -6456,11 +6456,11 @@
         "additionalProperties": false
       },
       "PrivateCancelByInstrumentResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -6481,10 +6481,10 @@
         "additionalProperties": false
       },
       "PrivateCancelByInstrumentResultSchema": {
+        "type": "object",
         "required": [
           "cancelled_orders"
         ],
-        "type": "object",
         "properties": {
           "cancelled_orders": {
             "title": "cancelled_orders",
@@ -6495,6 +6495,7 @@
         "additionalProperties": false
       },
       "PublicSendQuoteDebugParamsSchema": {
+        "type": "object",
         "required": [
           "direction",
           "legs",
@@ -6506,7 +6507,6 @@
           "signer",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "direction": {
             "title": "direction",
@@ -6578,11 +6578,11 @@
         "additionalProperties": false
       },
       "PublicSendQuoteDebugResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -6603,13 +6603,13 @@
         "additionalProperties": false
       },
       "PublicSendQuoteDebugResultSchema": {
+        "type": "object",
         "required": [
           "action_hash",
           "encoded_data",
           "encoded_data_hashed",
           "typed_data_hash"
         ],
-        "type": "object",
         "properties": {
           "action_hash": {
             "title": "action_hash",
@@ -6635,6 +6635,7 @@
         "additionalProperties": false
       },
       "PublicCreateSubaccountDebugParamsSchema": {
+        "type": "object",
         "required": [
           "amount",
           "asset_name",
@@ -6644,7 +6645,6 @@
           "signer",
           "wallet"
         ],
-        "type": "object",
         "properties": {
           "amount": {
             "title": "amount",
@@ -6698,11 +6698,11 @@
         "additionalProperties": false
       },
       "PublicCreateSubaccountDebugResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -6723,13 +6723,13 @@
         "additionalProperties": false
       },
       "PublicCreateSubaccountDebugResultSchema": {
+        "type": "object",
         "required": [
           "action_hash",
           "encoded_data",
           "encoded_data_hashed",
           "typed_data_hash"
         ],
-        "type": "object",
         "properties": {
           "action_hash": {
             "title": "action_hash",
@@ -6755,10 +6755,10 @@
         "additionalProperties": false
       },
       "PrivateGetErc20TransferHistoryParamsSchema": {
+        "type": "object",
         "required": [
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "end_timestamp": {
             "title": "end_timestamp",
@@ -6781,11 +6781,11 @@
         "additionalProperties": false
       },
       "PrivateGetErc20TransferHistoryResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -6806,10 +6806,10 @@
         "additionalProperties": false
       },
       "PrivateGetErc20TransferHistoryResultSchema": {
+        "type": "object",
         "required": [
           "events"
         ],
-        "type": "object",
         "properties": {
           "events": {
             "title": "events",
@@ -6823,6 +6823,7 @@
         "additionalProperties": false
       },
       "ERC20TransferSchema": {
+        "type": "object",
         "required": [
           "amount",
           "asset",
@@ -6831,7 +6832,6 @@
           "timestamp",
           "tx_hash"
         ],
-        "type": "object",
         "properties": {
           "amount": {
             "title": "amount",
@@ -6888,11 +6888,11 @@
         "additionalProperties": false
       },
       "PublicGetLatestSignedFeedsResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -6913,6 +6913,7 @@
         "additionalProperties": false
       },
       "PublicGetLatestSignedFeedsResultSchema": {
+        "type": "object",
         "required": [
           "fwd_data",
           "perp_data",
@@ -6920,7 +6921,6 @@
           "spot_data",
           "vol_data"
         ],
-        "type": "object",
         "properties": {
           "fwd_data": {
             "title": "fwd_data",
@@ -6982,6 +6982,7 @@
         "additionalProperties": false
       },
       "ForwardFeedDataSchema": {
+        "type": "object",
         "required": [
           "confidence",
           "currency",
@@ -6993,7 +6994,6 @@
           "spot_aggregate_start",
           "timestamp"
         ],
-        "type": "object",
         "properties": {
           "confidence": {
             "title": "confidence",
@@ -7070,6 +7070,7 @@
         "additionalProperties": false
       },
       "PerpFeedDataSchema": {
+        "type": "object",
         "required": [
           "confidence",
           "currency",
@@ -7079,7 +7080,6 @@
           "timestamp",
           "type"
         ],
-        "type": "object",
         "properties": {
           "confidence": {
             "title": "confidence",
@@ -7125,6 +7125,7 @@
         "additionalProperties": false
       },
       "RateFeedDataSchema": {
+        "type": "object",
         "required": [
           "confidence",
           "currency",
@@ -7134,7 +7135,6 @@
           "signatures",
           "timestamp"
         ],
-        "type": "object",
         "properties": {
           "confidence": {
             "title": "confidence",
@@ -7175,6 +7175,7 @@
         "additionalProperties": false
       },
       "SpotFeedDataSchema": {
+        "type": "object",
         "required": [
           "confidence",
           "currency",
@@ -7183,7 +7184,6 @@
           "signatures",
           "timestamp"
         ],
-        "type": "object",
         "properties": {
           "confidence": {
             "title": "confidence",
@@ -7229,6 +7229,7 @@
         "additionalProperties": false
       },
       "VolFeedDataSchema": {
+        "type": "object",
         "required": [
           "confidence",
           "currency",
@@ -7238,7 +7239,6 @@
           "timestamp",
           "vol_data"
         ],
-        "type": "object",
         "properties": {
           "confidence": {
             "title": "confidence",
@@ -7276,6 +7276,7 @@
         "additionalProperties": false
       },
       "VolSVIParamDataSchema": {
+        "type": "object",
         "required": [
           "SVI_a",
           "SVI_b",
@@ -7285,7 +7286,6 @@
           "SVI_rho",
           "SVI_sigma"
         ],
-        "type": "object",
         "properties": {
           "SVI_a": {
             "title": "SVI_a",
@@ -7326,11 +7326,11 @@
         "additionalProperties": false
       },
       "PrivateCancelTriggerOrderParamsSchema": {
+        "type": "object",
         "required": [
           "order_id",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "order_id": {
             "title": "order_id",
@@ -7345,11 +7345,11 @@
         "additionalProperties": false
       },
       "PrivateCancelTriggerOrderResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -7370,6 +7370,7 @@
         "additionalProperties": false
       },
       "PrivateCancelTriggerOrderResultSchema": {
+        "type": "object",
         "required": [
           "amount",
           "average_price",
@@ -7396,7 +7397,6 @@
           "subaccount_id",
           "time_in_force"
         ],
-        "type": "object",
         "properties": {
           "amount": {
             "title": "amount",
@@ -7611,12 +7611,12 @@
         "additionalProperties": false
       },
       "PublicLoginParamsSchema": {
+        "type": "object",
         "required": [
           "signature",
           "timestamp",
           "wallet"
         ],
-        "type": "object",
         "properties": {
           "signature": {
             "title": "signature",
@@ -7637,11 +7637,11 @@
         "additionalProperties": false
       },
       "PublicLoginResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -7668,12 +7668,12 @@
         "additionalProperties": false
       },
       "PrivateTransferPositionParamsSchema": {
+        "type": "object",
         "required": [
           "maker_params",
           "taker_params",
           "wallet"
         ],
-        "type": "object",
         "properties": {
           "maker_params": {
             "$ref": "#/components/schemas/TradeModuleParamsSchema"
@@ -7690,6 +7690,7 @@
         "additionalProperties": false
       },
       "TradeModuleParamsSchema": {
+        "type": "object",
         "required": [
           "amount",
           "direction",
@@ -7702,7 +7703,6 @@
           "signer",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "amount": {
             "title": "amount",
@@ -7765,11 +7765,11 @@
         "additionalProperties": false
       },
       "PrivateTransferPositionResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -7790,13 +7790,13 @@
         "additionalProperties": false
       },
       "PrivateTransferPositionResultSchema": {
+        "type": "object",
         "required": [
           "maker_order",
           "maker_trade",
           "taker_order",
           "taker_trade"
         ],
-        "type": "object",
         "properties": {
           "maker_order": {
             "$ref": "#/components/schemas/OrderResponseSchema"
@@ -7814,10 +7814,10 @@
         "additionalProperties": false
       },
       "PublicMarginWatchParamsSchema": {
+        "type": "object",
         "required": [
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "force_onchain": {
             "title": "force_onchain",
@@ -7834,11 +7834,11 @@
         "additionalProperties": false
       },
       "PublicMarginWatchResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -7859,6 +7859,7 @@
         "additionalProperties": false
       },
       "PublicMarginWatchResultSchema": {
+        "type": "object",
         "required": [
           "collaterals",
           "currency",
@@ -7870,7 +7871,6 @@
           "subaccount_value",
           "valuation_timestamp"
         ],
-        "type": "object",
         "properties": {
           "collaterals": {
             "title": "collaterals",
@@ -7935,6 +7935,7 @@
         "additionalProperties": false
       },
       "CollateralPublicResponseSchema": {
+        "type": "object",
         "required": [
           "amount",
           "asset_name",
@@ -7944,7 +7945,6 @@
           "mark_price",
           "mark_value"
         ],
-        "type": "object",
         "properties": {
           "amount": {
             "title": "amount",
@@ -7995,6 +7995,7 @@
         "additionalProperties": false
       },
       "PositionPublicResponseSchema": {
+        "type": "object",
         "required": [
           "amount",
           "delta",
@@ -8010,7 +8011,6 @@
           "theta",
           "vega"
         ],
-        "type": "object",
         "properties": {
           "amount": {
             "title": "amount",
@@ -8099,6 +8099,7 @@
         "additionalProperties": false
       },
       "PublicBuildRegisterSessionKeyTxParamsSchema": {
+        "type": "object",
         "required": [
           "expiry_sec",
           "gas",
@@ -8106,7 +8107,6 @@
           "public_session_key",
           "wallet"
         ],
-        "type": "object",
         "properties": {
           "expiry_sec": {
             "title": "expiry_sec",
@@ -8141,11 +8141,11 @@
         "additionalProperties": false
       },
       "PublicBuildRegisterSessionKeyTxResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -8166,10 +8166,10 @@
         "additionalProperties": false
       },
       "PublicBuildRegisterSessionKeyTxResultSchema": {
+        "type": "object",
         "required": [
           "tx_params"
         ],
-        "type": "object",
         "properties": {
           "tx_params": {
             "title": "tx_params",
@@ -8186,11 +8186,11 @@
         "additionalProperties": false
       },
       "PublicGetAllCurrenciesResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -8216,6 +8216,7 @@
         "additionalProperties": false
       },
       "CurrencyDetailedResponseSchema": {
+        "type": "object",
         "required": [
           "asset_cap_and_supply_per_manager",
           "borrow_apy",
@@ -8232,7 +8233,6 @@
           "total_borrow",
           "total_supply"
         ],
-        "type": "object",
         "properties": {
           "asset_cap_and_supply_per_manager": {
             "title": "asset_cap_and_supply_per_manager",
@@ -8373,11 +8373,11 @@
         "additionalProperties": false
       },
       "OpenInterestStatsSchema": {
+        "type": "object",
         "required": [
           "current_open_interest",
           "interest_cap"
         ],
-        "type": "object",
         "properties": {
           "current_open_interest": {
             "title": "current_open_interest",
@@ -8402,11 +8402,11 @@
         "additionalProperties": false
       },
       "ManagerContractResponseSchema": {
+        "type": "object",
         "required": [
           "address",
           "margin_type"
         ],
-        "type": "object",
         "properties": {
           "address": {
             "title": "address",
@@ -8434,12 +8434,12 @@
         "additionalProperties": false
       },
       "PM2CollateralDiscountsSchema": {
+        "type": "object",
         "required": [
           "im_discount",
           "manager_currency",
           "mm_discount"
         ],
-        "type": "object",
         "properties": {
           "im_discount": {
             "title": "im_discount",
@@ -8496,10 +8496,10 @@
         "additionalProperties": false
       },
       "PrivateGetAccountParamsSchema": {
+        "type": "object",
         "required": [
           "wallet"
         ],
-        "type": "object",
         "properties": {
           "wallet": {
             "title": "wallet",
@@ -8510,11 +8510,11 @@
         "additionalProperties": false
       },
       "PrivateGetAccountResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -8535,6 +8535,7 @@
         "additionalProperties": false
       },
       "PrivateGetAccountResultSchema": {
+        "type": "object",
         "required": [
           "cancel_on_disconnect",
           "fee_info",
@@ -8547,7 +8548,6 @@
           "websocket_option_tps",
           "websocket_perp_tps"
         ],
-        "type": "object",
         "properties": {
           "cancel_on_disconnect": {
             "title": "cancel_on_disconnect",
@@ -8613,6 +8613,7 @@
         "additionalProperties": false
       },
       "AccountFeeInfoSchema": {
+        "type": "object",
         "required": [
           "base_fee_discount",
           "option_maker_fee",
@@ -8624,7 +8625,6 @@
           "spot_maker_fee",
           "spot_taker_fee"
         ],
-        "type": "object",
         "properties": {
           "base_fee_discount": {
             "title": "base_fee_discount",
@@ -8696,6 +8696,7 @@
         "additionalProperties": false
       },
       "PrivateSendQuoteParamsSchema": {
+        "type": "object",
         "required": [
           "direction",
           "legs",
@@ -8707,7 +8708,6 @@
           "signer",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "direction": {
             "title": "direction",
@@ -8779,11 +8779,11 @@
         "additionalProperties": false
       },
       "PrivateSendQuoteResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -8804,6 +8804,7 @@
         "additionalProperties": false
       },
       "PrivateSendQuoteResultSchema": {
+        "type": "object",
         "required": [
           "cancel_reason",
           "creation_timestamp",
@@ -8829,7 +8830,6 @@
           "tx_hash",
           "tx_status"
         ],
-        "type": "object",
         "properties": {
           "cancel_reason": {
             "title": "cancel_reason",
@@ -8996,10 +8996,10 @@
         "additionalProperties": false
       },
       "PrivateGetCollateralsParamsSchema": {
+        "type": "object",
         "required": [
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "subaccount_id": {
             "title": "subaccount_id",
@@ -9010,11 +9010,11 @@
         "additionalProperties": false
       },
       "PrivateGetCollateralsResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -9035,11 +9035,11 @@
         "additionalProperties": false
       },
       "PrivateGetCollateralsResultSchema": {
+        "type": "object",
         "required": [
           "collaterals",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "collaterals": {
             "title": "collaterals",
@@ -9058,6 +9058,7 @@
         "additionalProperties": false
       },
       "CollateralResponseSchema": {
+        "type": "object",
         "required": [
           "amount",
           "amount_step",
@@ -9082,7 +9083,6 @@
           "unrealized_pnl",
           "unrealized_pnl_excl_fees"
         ],
-        "type": "object",
         "properties": {
           "amount": {
             "title": "amount",
@@ -9220,10 +9220,10 @@
         "additionalProperties": false
       },
       "PublicGetTickerParamsSchema": {
+        "type": "object",
         "required": [
           "instrument_name"
         ],
-        "type": "object",
         "properties": {
           "instrument_name": {
             "title": "instrument_name",
@@ -9234,11 +9234,11 @@
         "additionalProperties": false
       },
       "PublicGetTickerResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -9259,6 +9259,7 @@
         "additionalProperties": false
       },
       "PublicGetTickerResultSchema": {
+        "type": "object",
         "required": [
           "amount_step",
           "base_asset_address",
@@ -9297,7 +9298,6 @@
           "tick_size",
           "timestamp"
         ],
-        "type": "object",
         "properties": {
           "amount_step": {
             "title": "amount_step",
@@ -9517,6 +9517,7 @@
         "additionalProperties": false
       },
       "OptionPricingSchema": {
+        "type": "object",
         "required": [
           "ask_iv",
           "bid_iv",
@@ -9530,7 +9531,6 @@
           "theta",
           "vega"
         ],
-        "type": "object",
         "properties": {
           "ask_iv": {
             "title": "ask_iv",
@@ -9602,6 +9602,7 @@
         "additionalProperties": false
       },
       "AggregateTradingStatsSchema": {
+        "type": "object",
         "required": [
           "contract_volume",
           "high",
@@ -9611,7 +9612,6 @@
           "percent_change",
           "usd_change"
         ],
-        "type": "object",
         "properties": {
           "contract_volume": {
             "title": "contract_volume",
@@ -9659,6 +9659,7 @@
         "additionalProperties": false
       },
       "PrivateReplaceQuoteParamsSchema": {
+        "type": "object",
         "required": [
           "direction",
           "legs",
@@ -9670,7 +9671,6 @@
           "signer",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "direction": {
             "title": "direction",
@@ -9757,11 +9757,11 @@
         "additionalProperties": false
       },
       "PrivateReplaceQuoteResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -9782,12 +9782,12 @@
         "additionalProperties": false
       },
       "PrivateReplaceQuoteResultSchema": {
+        "type": "object",
         "required": [
           "cancelled_quote",
           "create_quote_error",
           "quote"
         ],
-        "type": "object",
         "properties": {
           "cancelled_quote": {
             "$ref": "#/components/schemas/QuoteResultSchema"
@@ -9804,6 +9804,7 @@
         "additionalProperties": false
       },
       "QuoteResultSchema": {
+        "type": "object",
         "required": [
           "cancel_reason",
           "creation_timestamp",
@@ -9829,7 +9830,6 @@
           "tx_hash",
           "tx_status"
         ],
-        "type": "object",
         "properties": {
           "cancel_reason": {
             "title": "cancel_reason",
@@ -9996,11 +9996,11 @@
         "additionalProperties": false
       },
       "RPCErrorFormatSchema": {
+        "type": "object",
         "required": [
           "code",
           "message"
         ],
-        "type": "object",
         "properties": {
           "code": {
             "title": "code",
@@ -10020,10 +10020,10 @@
         "additionalProperties": false
       },
       "PrivateGetAllPortfoliosParamsSchema": {
+        "type": "object",
         "required": [
           "wallet"
         ],
-        "type": "object",
         "properties": {
           "wallet": {
             "title": "wallet",
@@ -10034,11 +10034,11 @@
         "additionalProperties": false
       },
       "PrivateGetAllPortfoliosResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -10064,6 +10064,7 @@
         "additionalProperties": false
       },
       "PrivateGetSubaccountResultSchema": {
+        "type": "object",
         "required": [
           "collaterals",
           "collaterals_initial_margin",
@@ -10085,7 +10086,6 @@
           "subaccount_id",
           "subaccount_value"
         ],
-        "type": "object",
         "properties": {
           "collaterals": {
             "title": "collaterals",
@@ -10211,6 +10211,7 @@
         "additionalProperties": false
       },
       "PositionResponseSchema": {
+        "type": "object",
         "required": [
           "amount",
           "amount_step",
@@ -10240,7 +10241,6 @@
           "unrealized_pnl_excl_fees",
           "vega"
         ],
-        "type": "object",
         "properties": {
           "amount": {
             "title": "amount",
@@ -10414,10 +10414,10 @@
         "additionalProperties": false
       },
       "PrivateSessionKeysParamsSchema": {
+        "type": "object",
         "required": [
           "wallet"
         ],
-        "type": "object",
         "properties": {
           "wallet": {
             "title": "wallet",
@@ -10428,11 +10428,11 @@
         "additionalProperties": false
       },
       "PrivateSessionKeysResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -10453,10 +10453,10 @@
         "additionalProperties": false
       },
       "PrivateSessionKeysResultSchema": {
+        "type": "object",
         "required": [
           "public_session_keys"
         ],
-        "type": "object",
         "properties": {
           "public_session_keys": {
             "title": "public_session_keys",
@@ -10470,6 +10470,7 @@
         "additionalProperties": false
       },
       "SessionKeyResponseSchema": {
+        "type": "object",
         "required": [
           "expiry_sec",
           "ip_whitelist",
@@ -10478,7 +10479,6 @@
           "registered_sec",
           "scope"
         ],
-        "type": "object",
         "properties": {
           "expiry_sec": {
             "title": "expiry_sec",
@@ -10518,6 +10518,7 @@
         "additionalProperties": false
       },
       "PrivateExpiredAndCancelledHistoryParamsSchema": {
+        "type": "object",
         "required": [
           "end_timestamp",
           "expiry",
@@ -10525,7 +10526,6 @@
           "subaccount_id",
           "wallet"
         ],
-        "type": "object",
         "properties": {
           "end_timestamp": {
             "title": "end_timestamp",
@@ -10556,11 +10556,11 @@
         "additionalProperties": false
       },
       "PrivateExpiredAndCancelledHistoryResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -10581,10 +10581,10 @@
         "additionalProperties": false
       },
       "PrivateExpiredAndCancelledHistoryResultSchema": {
+        "type": "object",
         "required": [
           "presigned_urls"
         ],
-        "type": "object",
         "properties": {
           "presigned_urls": {
             "title": "presigned_urls",
@@ -10599,10 +10599,10 @@
         "additionalProperties": false
       },
       "PrivateGetQuotesParamsSchema": {
+        "type": "object",
         "required": [
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "from_timestamp": {
             "title": "from_timestamp",
@@ -10666,11 +10666,11 @@
         "additionalProperties": false
       },
       "PrivateGetQuotesResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -10691,11 +10691,11 @@
         "additionalProperties": false
       },
       "PrivateGetQuotesResultSchema": {
+        "type": "object",
         "required": [
           "pagination",
           "quotes"
         ],
-        "type": "object",
         "properties": {
           "pagination": {
             "$ref": "#/components/schemas/PaginationInfoSchema"
@@ -10712,12 +10712,12 @@
         "additionalProperties": false
       },
       "PublicGetVaultShareParamsSchema": {
+        "type": "object",
         "required": [
           "from_timestamp_sec",
           "to_timestamp_sec",
           "vault_name"
         ],
-        "type": "object",
         "properties": {
           "from_timestamp_sec": {
             "title": "from_timestamp_sec",
@@ -10750,11 +10750,11 @@
         "additionalProperties": false
       },
       "PublicGetVaultShareResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -10775,11 +10775,11 @@
         "additionalProperties": false
       },
       "PublicGetVaultShareResultSchema": {
+        "type": "object",
         "required": [
           "pagination",
           "vault_shares"
         ],
-        "type": "object",
         "properties": {
           "pagination": {
             "$ref": "#/components/schemas/PaginationInfoSchema"
@@ -10796,6 +10796,7 @@
         "additionalProperties": false
       },
       "VaultShareResponseSchema": {
+        "type": "object",
         "required": [
           "base_value",
           "block_number",
@@ -10803,7 +10804,6 @@
           "underlying_value",
           "usd_value"
         ],
-        "type": "object",
         "properties": {
           "base_value": {
             "title": "base_value",
@@ -10839,6 +10839,7 @@
         "additionalProperties": false
       },
       "PublicRegisterSessionKeyParamsSchema": {
+        "type": "object",
         "required": [
           "expiry_sec",
           "label",
@@ -10846,7 +10847,6 @@
           "signed_raw_tx",
           "wallet"
         ],
-        "type": "object",
         "properties": {
           "expiry_sec": {
             "title": "expiry_sec",
@@ -10877,11 +10877,11 @@
         "additionalProperties": false
       },
       "PublicRegisterSessionKeyResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -10902,12 +10902,12 @@
         "additionalProperties": false
       },
       "PublicRegisterSessionKeyResultSchema": {
+        "type": "object",
         "required": [
           "label",
           "public_session_key",
           "transaction_id"
         ],
-        "type": "object",
         "properties": {
           "label": {
             "title": "label",
@@ -10929,12 +10929,12 @@
         "additionalProperties": false
       },
       "PrivateRegisterScopedSessionKeyParamsSchema": {
+        "type": "object",
         "required": [
           "expiry_sec",
           "public_session_key",
           "wallet"
         ],
-        "type": "object",
         "properties": {
           "expiry_sec": {
             "title": "expiry_sec",
@@ -10991,11 +10991,11 @@
         "additionalProperties": false
       },
       "PrivateRegisterScopedSessionKeyResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -11016,6 +11016,7 @@
         "additionalProperties": false
       },
       "PrivateRegisterScopedSessionKeyResultSchema": {
+        "type": "object",
         "required": [
           "expiry_sec",
           "ip_whitelist",
@@ -11024,7 +11025,6 @@
           "scope",
           "transaction_id"
         ],
-        "type": "object",
         "properties": {
           "expiry_sec": {
             "title": "expiry_sec",
@@ -11076,10 +11076,10 @@
         "additionalProperties": false
       },
       "PrivateGetMmpConfigParamsSchema": {
+        "type": "object",
         "required": [
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "currency": {
             "title": "currency",
@@ -11097,11 +11097,11 @@
         "additionalProperties": false
       },
       "PrivateGetMmpConfigResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -11127,6 +11127,7 @@
         "additionalProperties": false
       },
       "MMPConfigResultSchema": {
+        "type": "object",
         "required": [
           "currency",
           "is_frozen",
@@ -11135,7 +11136,6 @@
           "mmp_unfreeze_time",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "currency": {
             "title": "currency",
@@ -11185,6 +11185,7 @@
         "additionalProperties": false
       },
       "PublicExecuteQuoteDebugParamsSchema": {
+        "type": "object",
         "required": [
           "direction",
           "legs",
@@ -11197,7 +11198,6 @@
           "signer",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "direction": {
             "title": "direction",
@@ -11275,11 +11275,11 @@
         "additionalProperties": false
       },
       "PublicExecuteQuoteDebugResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -11300,6 +11300,7 @@
         "additionalProperties": false
       },
       "PublicExecuteQuoteDebugResultSchema": {
+        "type": "object",
         "required": [
           "action_hash",
           "encoded_data",
@@ -11308,7 +11309,6 @@
           "legs_hash",
           "typed_data_hash"
         ],
-        "type": "object",
         "properties": {
           "action_hash": {
             "title": "action_hash",
@@ -11344,11 +11344,11 @@
         "additionalProperties": false
       },
       "PrivateUpdateNotificationsParamsSchema": {
+        "type": "object",
         "required": [
           "notification_ids",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "notification_ids": {
             "title": "notification_ids",
@@ -11379,11 +11379,11 @@
         "additionalProperties": false
       },
       "PrivateUpdateNotificationsResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -11404,10 +11404,10 @@
         "additionalProperties": false
       },
       "PrivateUpdateNotificationsResultSchema": {
+        "type": "object",
         "required": [
           "updated_count"
         ],
-        "type": "object",
         "properties": {
           "updated_count": {
             "title": "updated_count",
@@ -11418,13 +11418,13 @@
         "additionalProperties": false
       },
       "PrivateGetSubaccountValueHistoryParamsSchema": {
+        "type": "object",
         "required": [
           "end_timestamp",
           "period",
           "start_timestamp",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "end_timestamp": {
             "title": "end_timestamp",
@@ -11450,11 +11450,11 @@
         "additionalProperties": false
       },
       "PrivateGetSubaccountValueHistoryResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -11475,11 +11475,11 @@
         "additionalProperties": false
       },
       "PrivateGetSubaccountValueHistoryResultSchema": {
+        "type": "object",
         "required": [
           "subaccount_id",
           "subaccount_value_history"
         ],
-        "type": "object",
         "properties": {
           "subaccount_id": {
             "title": "subaccount_id",
@@ -11498,11 +11498,11 @@
         "additionalProperties": false
       },
       "SubAccountValueHistoryResponseSchema": {
+        "type": "object",
         "required": [
           "subaccount_value",
           "timestamp"
         ],
-        "type": "object",
         "properties": {
           "subaccount_value": {
             "title": "subaccount_value",
@@ -11519,13 +11519,13 @@
         "additionalProperties": false
       },
       "PublicGetSpotFeedHistoryCandlesParamsSchema": {
+        "type": "object",
         "required": [
           "currency",
           "end_timestamp",
           "period",
           "start_timestamp"
         ],
-        "type": "object",
         "properties": {
           "currency": {
             "title": "currency",
@@ -11562,11 +11562,11 @@
         "additionalProperties": false
       },
       "PublicGetSpotFeedHistoryCandlesResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -11587,11 +11587,11 @@
         "additionalProperties": false
       },
       "PublicGetSpotFeedHistoryCandlesResultSchema": {
+        "type": "object",
         "required": [
           "currency",
           "spot_feed_history"
         ],
-        "type": "object",
         "properties": {
           "currency": {
             "title": "currency",
@@ -11610,6 +11610,7 @@
         "additionalProperties": false
       },
       "SpotFeedHistoryCandlesResponseSchema": {
+        "type": "object",
         "required": [
           "close_price",
           "high_price",
@@ -11619,7 +11620,6 @@
           "timestamp",
           "timestamp_bucket"
         ],
-        "type": "object",
         "properties": {
           "close_price": {
             "title": "close_price",
@@ -11665,11 +11665,11 @@
         "additionalProperties": false
       },
       "PrivateRfqGetBestQuoteParamsSchema": {
+        "type": "object",
         "required": [
           "legs",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "counterparties": {
             "title": "counterparties",
@@ -11746,11 +11746,11 @@
         "additionalProperties": false
       },
       "PrivateRfqGetBestQuoteResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -11771,6 +11771,7 @@
         "additionalProperties": false
       },
       "PrivateRfqGetBestQuoteResultSchema": {
+        "type": "object",
         "required": [
           "best_quote",
           "direction",
@@ -11789,7 +11790,6 @@
           "suggested_max_fee",
           "up_liquidation_price"
         ],
-        "type": "object",
         "properties": {
           "best_quote": {
             "$ref": "#/components/schemas/QuoteResultPublicSchema",
@@ -11909,13 +11909,13 @@
         "additionalProperties": false
       },
       "PublicGetSpotFeedHistoryParamsSchema": {
+        "type": "object",
         "required": [
           "currency",
           "end_timestamp",
           "period",
           "start_timestamp"
         ],
-        "type": "object",
         "properties": {
           "currency": {
             "title": "currency",
@@ -11941,11 +11941,11 @@
         "additionalProperties": false
       },
       "PublicGetSpotFeedHistoryResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -11966,11 +11966,11 @@
         "additionalProperties": false
       },
       "PublicGetSpotFeedHistoryResultSchema": {
+        "type": "object",
         "required": [
           "currency",
           "spot_feed_history"
         ],
-        "type": "object",
         "properties": {
           "currency": {
             "title": "currency",
@@ -11989,12 +11989,12 @@
         "additionalProperties": false
       },
       "SpotFeedHistoryResponseSchema": {
+        "type": "object",
         "required": [
           "price",
           "timestamp",
           "timestamp_bucket"
         ],
-        "type": "object",
         "properties": {
           "price": {
             "title": "price",
@@ -12016,6 +12016,7 @@
         "additionalProperties": false
       },
       "PrivateLiquidateParamsSchema": {
+        "type": "object",
         "required": [
           "cash_transfer",
           "last_seen_trade_id",
@@ -12028,7 +12029,6 @@
           "signer",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "cash_transfer": {
             "title": "cash_transfer",
@@ -12087,11 +12087,11 @@
         "additionalProperties": false
       },
       "PrivateLiquidateResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -12112,13 +12112,13 @@
         "additionalProperties": false
       },
       "PrivateLiquidateResultSchema": {
+        "type": "object",
         "required": [
           "estimated_bid_price",
           "estimated_discount_pnl",
           "estimated_percent_bid",
           "transaction_id"
         ],
-        "type": "object",
         "properties": {
           "estimated_bid_price": {
             "title": "estimated_bid_price",
@@ -12148,10 +12148,10 @@
         "additionalProperties": false
       },
       "PrivateGetRfqsParamsSchema": {
+        "type": "object",
         "required": [
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "from_timestamp": {
             "title": "from_timestamp",
@@ -12207,11 +12207,11 @@
         "additionalProperties": false
       },
       "PrivateGetRfqsResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -12232,11 +12232,11 @@
         "additionalProperties": false
       },
       "PrivateGetRfqsResultSchema": {
+        "type": "object",
         "required": [
           "pagination",
           "rfqs"
         ],
-        "type": "object",
         "properties": {
           "pagination": {
             "$ref": "#/components/schemas/PaginationInfoSchema"
@@ -12253,6 +12253,7 @@
         "additionalProperties": false
       },
       "RFQResultSchema": {
+        "type": "object",
         "required": [
           "ask_total_cost",
           "bid_total_cost",
@@ -12275,7 +12276,6 @@
           "valid_until",
           "wallet"
         ],
-        "type": "object",
         "properties": {
           "ask_total_cost": {
             "title": "ask_total_cost",
@@ -12435,10 +12435,10 @@
         "additionalProperties": false
       },
       "PrivateGetDepositHistoryParamsSchema": {
+        "type": "object",
         "required": [
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "end_timestamp": {
             "title": "end_timestamp",
@@ -12461,11 +12461,11 @@
         "additionalProperties": false
       },
       "PrivateGetDepositHistoryResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -12486,10 +12486,10 @@
         "additionalProperties": false
       },
       "PrivateGetDepositHistoryResultSchema": {
+        "type": "object",
         "required": [
           "events"
         ],
-        "type": "object",
         "properties": {
           "events": {
             "title": "events",
@@ -12503,6 +12503,7 @@
         "additionalProperties": false
       },
       "DepositSchema": {
+        "type": "object",
         "required": [
           "amount",
           "asset",
@@ -12512,7 +12513,6 @@
           "tx_hash",
           "tx_status"
         ],
-        "type": "object",
         "properties": {
           "amount": {
             "title": "amount",
@@ -12566,10 +12566,10 @@
         "additionalProperties": false
       },
       "PrivateGetSubaccountParamsSchema": {
+        "type": "object",
         "required": [
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "subaccount_id": {
             "title": "subaccount_id",
@@ -12580,11 +12580,11 @@
         "additionalProperties": false
       },
       "PrivateGetSubaccountResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -12605,10 +12605,10 @@
         "additionalProperties": false
       },
       "PrivateGetOrderHistoryParamsSchema": {
+        "type": "object",
         "required": [
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "page": {
             "title": "page",
@@ -12631,11 +12631,11 @@
         "additionalProperties": false
       },
       "PrivateGetOrderHistoryResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -12656,12 +12656,12 @@
         "additionalProperties": false
       },
       "PrivateGetOrderHistoryResultSchema": {
+        "type": "object",
         "required": [
           "orders",
           "pagination",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "orders": {
             "title": "orders",
@@ -12683,12 +12683,12 @@
         "additionalProperties": false
       },
       "PublicGetMarginParamsSchema": {
+        "type": "object",
         "required": [
           "margin_type",
           "simulated_collaterals",
           "simulated_positions"
         ],
-        "type": "object",
         "properties": {
           "margin_type": {
             "title": "margin_type",
@@ -12747,11 +12747,11 @@
         "additionalProperties": false
       },
       "SimulatedCollateralSchema": {
+        "type": "object",
         "required": [
           "amount",
           "asset_name"
         ],
-        "type": "object",
         "properties": {
           "amount": {
             "title": "amount",
@@ -12768,11 +12768,11 @@
         "additionalProperties": false
       },
       "SimulatedPositionSchema": {
+        "type": "object",
         "required": [
           "amount",
           "instrument_name"
         ],
-        "type": "object",
         "properties": {
           "amount": {
             "title": "amount",
@@ -12797,11 +12797,11 @@
         "additionalProperties": false
       },
       "PublicGetMarginResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -12822,6 +12822,7 @@
         "additionalProperties": false
       },
       "PublicGetMarginResultSchema": {
+        "type": "object",
         "required": [
           "is_valid_trade",
           "post_initial_margin",
@@ -12830,7 +12831,6 @@
           "pre_maintenance_margin",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "is_valid_trade": {
             "title": "is_valid_trade",
@@ -12936,11 +12936,11 @@
         "additionalProperties": false
       },
       "PrivateGetNotificationsResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -12961,11 +12961,11 @@
         "additionalProperties": false
       },
       "PrivateGetNotificationsResultSchema": {
+        "type": "object",
         "required": [
           "notifications",
           "pagination"
         ],
-        "type": "object",
         "properties": {
           "notifications": {
             "title": "notifications",
@@ -12982,6 +12982,7 @@
         "additionalProperties": false
       },
       "NotificationResponseSchema": {
+        "type": "object",
         "required": [
           "event",
           "event_details",
@@ -12990,7 +12991,6 @@
           "subaccount_id",
           "timestamp"
         ],
-        "type": "object",
         "properties": {
           "event": {
             "title": "event",
@@ -13041,10 +13041,10 @@
         "additionalProperties": false
       },
       "PrivateGetFundingHistoryParamsSchema": {
+        "type": "object",
         "required": [
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "end_timestamp": {
             "title": "end_timestamp",
@@ -13086,11 +13086,11 @@
         "additionalProperties": false
       },
       "PrivateGetFundingHistoryResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -13111,11 +13111,11 @@
         "additionalProperties": false
       },
       "PrivateGetFundingHistoryResultSchema": {
+        "type": "object",
         "required": [
           "events",
           "pagination"
         ],
-        "type": "object",
         "properties": {
           "events": {
             "title": "events",
@@ -13132,13 +13132,13 @@
         "additionalProperties": false
       },
       "FundingPaymentSchema": {
+        "type": "object",
         "required": [
           "funding",
           "instrument_name",
           "pnl",
           "timestamp"
         ],
-        "type": "object",
         "properties": {
           "funding": {
             "title": "funding",
@@ -13166,10 +13166,10 @@
         "additionalProperties": false
       },
       "PrivateGetWithdrawalHistoryParamsSchema": {
+        "type": "object",
         "required": [
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "end_timestamp": {
             "title": "end_timestamp",
@@ -13192,11 +13192,11 @@
         "additionalProperties": false
       },
       "PrivateGetWithdrawalHistoryResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -13217,10 +13217,10 @@
         "additionalProperties": false
       },
       "PrivateGetWithdrawalHistoryResultSchema": {
+        "type": "object",
         "required": [
           "events"
         ],
-        "type": "object",
         "properties": {
           "events": {
             "title": "events",
@@ -13234,6 +13234,7 @@
         "additionalProperties": false
       },
       "WithdrawalSchema": {
+        "type": "object",
         "required": [
           "amount",
           "asset",
@@ -13242,7 +13243,6 @@
           "tx_hash",
           "tx_status"
         ],
-        "type": "object",
         "properties": {
           "amount": {
             "title": "amount",
@@ -13290,6 +13290,7 @@
         "additionalProperties": false
       },
       "PrivateOrderDebugParamsSchema": {
+        "type": "object",
         "required": [
           "amount",
           "direction",
@@ -13302,7 +13303,6 @@
           "signer",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "amount": {
             "title": "amount",
@@ -13454,11 +13454,11 @@
         "additionalProperties": false
       },
       "PrivateOrderDebugResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -13479,6 +13479,7 @@
         "additionalProperties": false
       },
       "PrivateOrderDebugResultSchema": {
+        "type": "object",
         "required": [
           "action_hash",
           "encoded_data",
@@ -13486,7 +13487,6 @@
           "raw_data",
           "typed_data_hash"
         ],
-        "type": "object",
         "properties": {
           "action_hash": {
             "title": "action_hash",
@@ -13515,6 +13515,7 @@
         "additionalProperties": false
       },
       "SignedTradeOrderSchema": {
+        "type": "object",
         "required": [
           "data",
           "expiry",
@@ -13526,7 +13527,6 @@
           "signer",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "data": {
             "$ref": "#/components/schemas/TradeModuleDataSchema"
@@ -13567,6 +13567,7 @@
         "additionalProperties": false
       },
       "TradeModuleDataSchema": {
+        "type": "object",
         "required": [
           "asset",
           "desired_amount",
@@ -13577,7 +13578,6 @@
           "trade_id",
           "worst_fee"
         ],
-        "type": "object",
         "properties": {
           "asset": {
             "title": "asset",
@@ -13618,6 +13618,7 @@
         "additionalProperties": false
       },
       "PrivateReplaceParamsSchema": {
+        "type": "object",
         "required": [
           "amount",
           "direction",
@@ -13630,7 +13631,6 @@
           "signer",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "amount": {
             "title": "amount",
@@ -13805,11 +13805,11 @@
         "additionalProperties": false
       },
       "PrivateReplaceResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -13830,10 +13830,10 @@
         "additionalProperties": false
       },
       "PrivateReplaceResultSchema": {
+        "type": "object",
         "required": [
           "cancelled_order"
         ],
-        "type": "object",
         "properties": {
           "cancelled_order": {
             "$ref": "#/components/schemas/OrderResponseSchema"
@@ -13860,11 +13860,11 @@
         "additionalProperties": false
       },
       "PublicGetTickersParamsSchema": {
+        "type": "object",
         "required": [
           "currency",
           "instrument_type"
         ],
-        "type": "object",
         "properties": {
           "currency": {
             "title": "currency",
@@ -13892,11 +13892,11 @@
         "additionalProperties": false
       },
       "PublicGetTickersResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -13917,10 +13917,10 @@
         "additionalProperties": false
       },
       "PublicGetTickersResultSchema": {
+        "type": "object",
         "required": [
           "tickers"
         ],
-        "type": "object",
         "properties": {
           "tickers": {
             "title": "tickers",
@@ -13934,6 +13934,7 @@
         "additionalProperties": false
       },
       "TickerSlimSchema": {
+        "type": "object",
         "required": [
           "A",
           "B",
@@ -13948,7 +13949,6 @@
           "stats",
           "t"
         ],
-        "type": "object",
         "properties": {
           "A": {
             "title": "A",
@@ -14022,6 +14022,7 @@
         "additionalProperties": false
       },
       "OptionPricingSlimSchema": {
+        "type": "object",
         "required": [
           "ai",
           "bi",
@@ -14035,7 +14036,6 @@
           "t",
           "v"
         ],
-        "type": "object",
         "properties": {
           "ai": {
             "title": "ai",
@@ -14107,6 +14107,7 @@
         "additionalProperties": false
       },
       "AggregateTradingStatsSlimSchema": {
+        "type": "object",
         "required": [
           "c",
           "h",
@@ -14117,7 +14118,6 @@
           "pr",
           "v"
         ],
-        "type": "object",
         "properties": {
           "c": {
             "title": "c",
@@ -14170,6 +14170,7 @@
         "additionalProperties": false
       },
       "PrivateDepositParamsSchema": {
+        "type": "object",
         "required": [
           "amount",
           "asset_name",
@@ -14179,7 +14180,6 @@
           "signer",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "amount": {
             "title": "amount",
@@ -14227,11 +14227,11 @@
         "additionalProperties": false
       },
       "PrivateDepositResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -14252,11 +14252,11 @@
         "additionalProperties": false
       },
       "PrivateDepositResultSchema": {
+        "type": "object",
         "required": [
           "status",
           "transaction_id"
         ],
-        "type": "object",
         "properties": {
           "status": {
             "title": "status",
@@ -14273,12 +14273,12 @@
         "additionalProperties": false
       },
       "PrivateCancelParamsSchema": {
+        "type": "object",
         "required": [
           "instrument_name",
           "order_id",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "instrument_name": {
             "title": "instrument_name",
@@ -14297,11 +14297,11 @@
         "additionalProperties": false
       },
       "PrivateCancelResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -14322,6 +14322,7 @@
         "additionalProperties": false
       },
       "PrivateCancelResultSchema": {
+        "type": "object",
         "required": [
           "amount",
           "average_price",
@@ -14348,7 +14349,6 @@
           "subaccount_id",
           "time_in_force"
         ],
-        "type": "object",
         "properties": {
           "amount": {
             "title": "amount",
@@ -14563,6 +14563,7 @@
         "additionalProperties": false
       },
       "PrivateWithdrawParamsSchema": {
+        "type": "object",
         "required": [
           "amount",
           "asset_name",
@@ -14572,7 +14573,6 @@
           "signer",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "amount": {
             "title": "amount",
@@ -14620,11 +14620,11 @@
         "additionalProperties": false
       },
       "PrivateWithdrawResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -14645,11 +14645,11 @@
         "additionalProperties": false
       },
       "PrivateWithdrawResultSchema": {
+        "type": "object",
         "required": [
           "status",
           "transaction_id"
         ],
-        "type": "object",
         "properties": {
           "status": {
             "title": "status",
@@ -14666,10 +14666,10 @@
         "additionalProperties": false
       },
       "PrivateCancelBatchRfqsParamsSchema": {
+        "type": "object",
         "required": [
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "label": {
             "title": "label",
@@ -14702,11 +14702,11 @@
         "additionalProperties": false
       },
       "PrivateCancelBatchRfqsResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -14727,10 +14727,10 @@
         "additionalProperties": false
       },
       "PrivateCancelBatchRfqsResultSchema": {
+        "type": "object",
         "required": [
           "cancelled_ids"
         ],
-        "type": "object",
         "properties": {
           "cancelled_ids": {
             "title": "cancelled_ids",
@@ -14746,6 +14746,7 @@
         "additionalProperties": false
       },
       "PublicWithdrawDebugParamsSchema": {
+        "type": "object",
         "required": [
           "amount",
           "asset_name",
@@ -14754,7 +14755,6 @@
           "signer",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "amount": {
             "title": "amount",
@@ -14797,11 +14797,11 @@
         "additionalProperties": false
       },
       "PublicWithdrawDebugResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -14822,13 +14822,13 @@
         "additionalProperties": false
       },
       "PublicWithdrawDebugResultSchema": {
+        "type": "object",
         "required": [
           "action_hash",
           "encoded_data",
           "encoded_data_hashed",
           "typed_data_hash"
         ],
-        "type": "object",
         "properties": {
           "action_hash": {
             "title": "action_hash",
@@ -14854,11 +14854,11 @@
         "additionalProperties": false
       },
       "PrivateCancelByLabelParamsSchema": {
+        "type": "object",
         "required": [
           "label",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "instrument_name": {
             "title": "instrument_name",
@@ -14881,11 +14881,11 @@
         "additionalProperties": false
       },
       "PrivateCancelByLabelResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -14906,10 +14906,10 @@
         "additionalProperties": false
       },
       "PrivateCancelByLabelResultSchema": {
+        "type": "object",
         "required": [
           "cancelled_orders"
         ],
-        "type": "object",
         "properties": {
           "cancelled_orders": {
             "title": "cancelled_orders",
@@ -14920,10 +14920,10 @@
         "additionalProperties": false
       },
       "PublicGetCurrencyParamsSchema": {
+        "type": "object",
         "required": [
           "currency"
         ],
-        "type": "object",
         "properties": {
           "currency": {
             "title": "currency",
@@ -14934,11 +14934,11 @@
         "additionalProperties": false
       },
       "PublicGetCurrencyResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -14959,6 +14959,7 @@
         "additionalProperties": false
       },
       "PublicGetCurrencyResultSchema": {
+        "type": "object",
         "required": [
           "asset_cap_and_supply_per_manager",
           "borrow_apy",
@@ -14975,7 +14976,6 @@
           "total_borrow",
           "total_supply"
         ],
-        "type": "object",
         "properties": {
           "asset_cap_and_supply_per_manager": {
             "title": "asset_cap_and_supply_per_manager",
@@ -15116,10 +15116,10 @@
         "additionalProperties": false
       },
       "PrivateResetMmpParamsSchema": {
+        "type": "object",
         "required": [
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "currency": {
             "title": "currency",
@@ -15137,11 +15137,11 @@
         "additionalProperties": false
       },
       "PrivateResetMmpResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -15167,11 +15167,11 @@
         "additionalProperties": false
       },
       "PublicGetInterestRateHistoryParamsSchema": {
+        "type": "object",
         "required": [
           "from_timestamp_sec",
           "to_timestamp_sec"
         ],
-        "type": "object",
         "properties": {
           "from_timestamp_sec": {
             "title": "from_timestamp_sec",
@@ -15199,11 +15199,11 @@
         "additionalProperties": false
       },
       "PublicGetInterestRateHistoryResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -15224,11 +15224,11 @@
         "additionalProperties": false
       },
       "PublicGetInterestRateHistoryResultSchema": {
+        "type": "object",
         "required": [
           "interest_rates",
           "pagination"
         ],
-        "type": "object",
         "properties": {
           "interest_rates": {
             "title": "interest_rates",
@@ -15245,6 +15245,7 @@
         "additionalProperties": false
       },
       "InterestRateHistoryResponseSchema": {
+        "type": "object",
         "required": [
           "block",
           "borrow_apy",
@@ -15253,7 +15254,6 @@
           "total_borrow",
           "total_supply"
         ],
-        "type": "object",
         "properties": {
           "block": {
             "title": "block",
@@ -15293,10 +15293,10 @@
         "additionalProperties": false
       },
       "PrivatePollRfqsParamsSchema": {
+        "type": "object",
         "required": [
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "from_timestamp": {
             "title": "from_timestamp",
@@ -15359,11 +15359,11 @@
         "additionalProperties": false
       },
       "PrivatePollRfqsResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -15384,11 +15384,11 @@
         "additionalProperties": false
       },
       "PrivatePollRfqsResultSchema": {
+        "type": "object",
         "required": [
           "pagination",
           "rfqs"
         ],
-        "type": "object",
         "properties": {
           "pagination": {
             "$ref": "#/components/schemas/PaginationInfoSchema"
@@ -15405,6 +15405,7 @@
         "additionalProperties": false
       },
       "RFQResultPublicSchema": {
+        "type": "object",
         "required": [
           "cancel_reason",
           "creation_timestamp",
@@ -15422,7 +15423,6 @@
           "valid_until",
           "wallet"
         ],
-        "type": "object",
         "properties": {
           "cancel_reason": {
             "title": "cancel_reason",
@@ -15542,11 +15542,11 @@
         "additionalProperties": false
       },
       "PrivateCancelQuoteParamsSchema": {
+        "type": "object",
         "required": [
           "quote_id",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "quote_id": {
             "title": "quote_id",
@@ -15563,11 +15563,11 @@
         "additionalProperties": false
       },
       "PrivateCancelQuoteResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -15588,6 +15588,7 @@
         "additionalProperties": false
       },
       "PrivateCancelQuoteResultSchema": {
+        "type": "object",
         "required": [
           "cancel_reason",
           "creation_timestamp",
@@ -15613,7 +15614,6 @@
           "tx_hash",
           "tx_status"
         ],
-        "type": "object",
         "properties": {
           "cancel_reason": {
             "title": "cancel_reason",
@@ -15780,12 +15780,12 @@
         "additionalProperties": false
       },
       "PrivateTransferPositionsParamsSchema": {
+        "type": "object",
         "required": [
           "maker_params",
           "taker_params",
           "wallet"
         ],
-        "type": "object",
         "properties": {
           "maker_params": {
             "$ref": "#/components/schemas/SignedQuoteParamsSchema"
@@ -15802,6 +15802,7 @@
         "additionalProperties": false
       },
       "SignedQuoteParamsSchema": {
+        "type": "object",
         "required": [
           "direction",
           "legs",
@@ -15812,7 +15813,6 @@
           "signer",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "direction": {
             "title": "direction",
@@ -15866,11 +15866,11 @@
         "additionalProperties": false
       },
       "PrivateTransferPositionsResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -15891,11 +15891,11 @@
         "additionalProperties": false
       },
       "PrivateTransferPositionsResultSchema": {
+        "type": "object",
         "required": [
           "maker_quote",
           "taker_quote"
         ],
-        "type": "object",
         "properties": {
           "maker_quote": {
             "$ref": "#/components/schemas/QuoteResultSchema"
@@ -15907,10 +15907,10 @@
         "additionalProperties": false
       },
       "PublicGetTransactionParamsSchema": {
+        "type": "object",
         "required": [
           "transaction_id"
         ],
-        "type": "object",
         "properties": {
           "transaction_id": {
             "title": "transaction_id",
@@ -15922,11 +15922,11 @@
         "additionalProperties": false
       },
       "PublicGetTransactionResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -15947,13 +15947,13 @@
         "additionalProperties": false
       },
       "PublicGetTransactionResultSchema": {
+        "type": "object",
         "required": [
           "data",
           "error_log",
           "status",
           "transaction_hash"
         ],
-        "type": "object",
         "properties": {
           "data": {
             "title": "data",
@@ -15991,10 +15991,10 @@
         "additionalProperties": false
       },
       "PrivateGetPositionsParamsSchema": {
+        "type": "object",
         "required": [
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "subaccount_id": {
             "title": "subaccount_id",
@@ -16005,11 +16005,11 @@
         "additionalProperties": false
       },
       "PrivateGetPositionsResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -16030,11 +16030,11 @@
         "additionalProperties": false
       },
       "PrivateGetPositionsResultSchema": {
+        "type": "object",
         "required": [
           "positions",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "positions": {
             "title": "positions",
@@ -16058,11 +16058,11 @@
         "additionalProperties": false
       },
       "PublicGetTimeResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -16085,10 +16085,10 @@
         "additionalProperties": false
       },
       "PrivateGetInterestHistoryParamsSchema": {
+        "type": "object",
         "required": [
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "end_timestamp": {
             "title": "end_timestamp",
@@ -16111,11 +16111,11 @@
         "additionalProperties": false
       },
       "PrivateGetInterestHistoryResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -16136,10 +16136,10 @@
         "additionalProperties": false
       },
       "PrivateGetInterestHistoryResultSchema": {
+        "type": "object",
         "required": [
           "events"
         ],
-        "type": "object",
         "properties": {
           "events": {
             "title": "events",
@@ -16153,11 +16153,11 @@
         "additionalProperties": false
       },
       "InterestPaymentSchema": {
+        "type": "object",
         "required": [
           "interest",
           "timestamp"
         ],
-        "type": "object",
         "properties": {
           "interest": {
             "title": "interest",
@@ -16174,12 +16174,12 @@
         "additionalProperties": false
       },
       "PublicDeregisterSessionKeyParamsSchema": {
+        "type": "object",
         "required": [
           "public_session_key",
           "signed_raw_tx",
           "wallet"
         ],
-        "type": "object",
         "properties": {
           "public_session_key": {
             "title": "public_session_key",
@@ -16200,11 +16200,11 @@
         "additionalProperties": false
       },
       "PublicDeregisterSessionKeyResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -16225,11 +16225,11 @@
         "additionalProperties": false
       },
       "PublicDeregisterSessionKeyResultSchema": {
+        "type": "object",
         "required": [
           "public_session_key",
           "transaction_id"
         ],
-        "type": "object",
         "properties": {
           "public_session_key": {
             "title": "public_session_key",
@@ -16246,10 +16246,10 @@
         "additionalProperties": false
       },
       "PublicGetOptionSettlementPricesParamsSchema": {
+        "type": "object",
         "required": [
           "currency"
         ],
-        "type": "object",
         "properties": {
           "currency": {
             "title": "currency",
@@ -16260,11 +16260,11 @@
         "additionalProperties": false
       },
       "PublicGetOptionSettlementPricesResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -16285,10 +16285,10 @@
         "additionalProperties": false
       },
       "PublicGetOptionSettlementPricesResultSchema": {
+        "type": "object",
         "required": [
           "expiries"
         ],
-        "type": "object",
         "properties": {
           "expiries": {
             "title": "expiries",
@@ -16302,12 +16302,12 @@
         "additionalProperties": false
       },
       "ExpiryResponseSchema": {
+        "type": "object",
         "required": [
           "expiry_date",
           "price",
           "utc_expiry_sec"
         ],
-        "type": "object",
         "properties": {
           "expiry_date": {
             "title": "expiry_date",
@@ -16331,10 +16331,10 @@
         "additionalProperties": false
       },
       "PrivateCancelAllParamsSchema": {
+        "type": "object",
         "required": [
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "cancel_trigger_orders": {
             "title": "cancel_trigger_orders",
@@ -16350,11 +16350,11 @@
         "additionalProperties": false
       },
       "PrivateCancelAllResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -16385,11 +16385,11 @@
         "additionalProperties": false
       },
       "PublicGetVaultStatisticsResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -16415,6 +16415,7 @@
         "additionalProperties": false
       },
       "VaultStatisticsResponseSchema": {
+        "type": "object",
         "required": [
           "base_value",
           "block_number",
@@ -16426,7 +16427,6 @@
           "usd_value",
           "vault_name"
         ],
-        "type": "object",
         "properties": {
           "base_value": {
             "title": "base_value",
@@ -16492,11 +16492,11 @@
         "additionalProperties": false
       },
       "PublicGetLiveIncidentsResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -16517,10 +16517,10 @@
         "additionalProperties": false
       },
       "PublicGetLiveIncidentsResultSchema": {
+        "type": "object",
         "required": [
           "incidents"
         ],
-        "type": "object",
         "properties": {
           "incidents": {
             "title": "incidents",
@@ -16534,6 +16534,7 @@
         "additionalProperties": false
       },
       "IncidentResponseSchema": {
+        "type": "object",
         "required": [
           "creation_timestamp_sec",
           "label",
@@ -16541,7 +16542,6 @@
           "monitor_type",
           "severity"
         ],
-        "type": "object",
         "properties": {
           "creation_timestamp_sec": {
             "title": "creation_timestamp_sec",
@@ -16581,11 +16581,11 @@
         "additionalProperties": false
       },
       "PublicGetAllInstrumentsParamsSchema": {
+        "type": "object",
         "required": [
           "expired",
           "instrument_type"
         ],
-        "type": "object",
         "properties": {
           "currency": {
             "title": "currency",
@@ -16625,11 +16625,11 @@
         "additionalProperties": false
       },
       "PublicGetAllInstrumentsResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -16650,11 +16650,11 @@
         "additionalProperties": false
       },
       "PublicGetAllInstrumentsResultSchema": {
+        "type": "object",
         "required": [
           "instruments",
           "pagination"
         ],
-        "type": "object",
         "properties": {
           "instruments": {
             "title": "instruments",
@@ -16671,6 +16671,7 @@
         "additionalProperties": false
       },
       "InstrumentPublicResponseSchema": {
+        "type": "object",
         "required": [
           "amount_step",
           "base_asset_address",
@@ -16695,7 +16696,6 @@
           "taker_fee_rate",
           "tick_size"
         ],
-        "type": "object",
         "properties": {
           "amount_step": {
             "title": "amount_step",
@@ -16831,11 +16831,11 @@
         "additionalProperties": false
       },
       "PublicGetMakerProgramScoresParamsSchema": {
+        "type": "object",
         "required": [
           "epoch_start_timestamp",
           "program_name"
         ],
-        "type": "object",
         "properties": {
           "epoch_start_timestamp": {
             "title": "epoch_start_timestamp",
@@ -16851,11 +16851,11 @@
         "additionalProperties": false
       },
       "PublicGetMakerProgramScoresResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -16876,13 +16876,13 @@
         "additionalProperties": false
       },
       "PublicGetMakerProgramScoresResultSchema": {
+        "type": "object",
         "required": [
           "program",
           "scores",
           "total_score",
           "total_volume"
         ],
-        "type": "object",
         "properties": {
           "program": {
             "$ref": "#/components/schemas/ProgramResponseSchema"
@@ -16911,6 +16911,7 @@
         "additionalProperties": false
       },
       "ProgramResponseSchema": {
+        "type": "object",
         "required": [
           "asset_types",
           "currencies",
@@ -16920,7 +16921,6 @@
           "rewards",
           "start_timestamp"
         ],
-        "type": "object",
         "properties": {
           "asset_types": {
             "title": "asset_types",
@@ -16975,6 +16975,7 @@
         "additionalProperties": false
       },
       "ScoreBreakdownSchema": {
+        "type": "object",
         "required": [
           "coverage_score",
           "holder_boost",
@@ -16984,7 +16985,6 @@
           "volume_multiplier",
           "wallet"
         ],
-        "type": "object",
         "properties": {
           "coverage_score": {
             "title": "coverage_score",
@@ -17031,12 +17031,12 @@
         "additionalProperties": false
       },
       "PublicGetInstrumentsParamsSchema": {
+        "type": "object",
         "required": [
           "currency",
           "expired",
           "instrument_type"
         ],
-        "type": "object",
         "properties": {
           "currency": {
             "title": "currency",
@@ -17062,11 +17062,11 @@
         "additionalProperties": false
       },
       "PublicGetInstrumentsResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -17092,10 +17092,10 @@
         "additionalProperties": false
       },
       "PrivateGetOptionSettlementHistoryParamsSchema": {
+        "type": "object",
         "required": [
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "subaccount_id": {
             "title": "subaccount_id",
@@ -17106,11 +17106,11 @@
         "additionalProperties": false
       },
       "PrivateGetOptionSettlementHistoryResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -17131,11 +17131,11 @@
         "additionalProperties": false
       },
       "PrivateGetOptionSettlementHistoryResultSchema": {
+        "type": "object",
         "required": [
           "settlements",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "settlements": {
             "title": "settlements",
@@ -17154,10 +17154,10 @@
         "additionalProperties": false
       },
       "PrivateGetMarginParamsSchema": {
+        "type": "object",
         "required": [
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "simulated_collateral_changes": {
             "title": "simulated_collateral_changes",
@@ -17188,11 +17188,11 @@
         "additionalProperties": false
       },
       "PrivateGetMarginResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -17213,6 +17213,7 @@
         "additionalProperties": false
       },
       "PrivateGetMarginResultSchema": {
+        "type": "object",
         "required": [
           "is_valid_trade",
           "post_initial_margin",
@@ -17221,7 +17222,6 @@
           "pre_maintenance_margin",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "is_valid_trade": {
             "title": "is_valid_trade",
@@ -17261,11 +17261,11 @@
         "additionalProperties": false
       },
       "PrivateChangeSubaccountLabelParamsSchema": {
+        "type": "object",
         "required": [
           "label",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "label": {
             "title": "label",
@@ -17281,11 +17281,11 @@
         "additionalProperties": false
       },
       "PrivateChangeSubaccountLabelResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -17306,11 +17306,11 @@
         "additionalProperties": false
       },
       "PrivateChangeSubaccountLabelResultSchema": {
+        "type": "object",
         "required": [
           "label",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "label": {
             "title": "label",
@@ -17346,11 +17346,11 @@
         "additionalProperties": false
       },
       "PublicGetVaultBalancesResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -17376,6 +17376,7 @@
         "additionalProperties": false
       },
       "VaultBalanceResponseSchema": {
+        "type": "object",
         "required": [
           "address",
           "amount",
@@ -17383,7 +17384,6 @@
           "name",
           "vault_asset_type"
         ],
-        "type": "object",
         "properties": {
           "address": {
             "title": "address",
@@ -17415,11 +17415,11 @@
         "additionalProperties": false
       },
       "PublicGetMakerProgramsResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -17445,6 +17445,7 @@
         "additionalProperties": false
       },
       "PrivateExecuteQuoteParamsSchema": {
+        "type": "object",
         "required": [
           "direction",
           "legs",
@@ -17457,7 +17458,6 @@
           "signer",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "direction": {
             "title": "direction",
@@ -17535,11 +17535,11 @@
         "additionalProperties": false
       },
       "PrivateExecuteQuoteResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -17560,6 +17560,7 @@
         "additionalProperties": false
       },
       "PrivateExecuteQuoteResultSchema": {
+        "type": "object",
         "required": [
           "cancel_reason",
           "creation_timestamp",
@@ -17586,7 +17587,6 @@
           "tx_hash",
           "tx_status"
         ],
-        "type": "object",
         "properties": {
           "cancel_reason": {
             "title": "cancel_reason",
@@ -17759,10 +17759,10 @@
         "additionalProperties": false
       },
       "PrivateGetOrdersParamsSchema": {
+        "type": "object",
         "required": [
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "instrument_name": {
             "title": "instrument_name",
@@ -17813,11 +17813,11 @@
         "additionalProperties": false
       },
       "PrivateGetOrdersResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -17838,12 +17838,12 @@
         "additionalProperties": false
       },
       "PrivateGetOrdersResultSchema": {
+        "type": "object",
         "required": [
           "orders",
           "pagination",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "orders": {
             "title": "orders",
@@ -17865,6 +17865,7 @@
         "additionalProperties": false
       },
       "PrivateOrderParamsSchema": {
+        "type": "object",
         "required": [
           "amount",
           "direction",
@@ -17877,7 +17878,6 @@
           "signer",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "amount": {
             "title": "amount",
@@ -18029,11 +18029,11 @@
         "additionalProperties": false
       },
       "PrivateOrderResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -18054,11 +18054,11 @@
         "additionalProperties": false
       },
       "PrivateOrderResultSchema": {
+        "type": "object",
         "required": [
           "order",
           "trades"
         ],
-        "type": "object",
         "properties": {
           "order": {
             "$ref": "#/components/schemas/OrderResponseSchema"
@@ -18074,10 +18074,10 @@
         "additionalProperties": false
       },
       "PrivateCancelBatchQuotesParamsSchema": {
+        "type": "object",
         "required": [
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "label": {
             "title": "label",
@@ -18118,11 +18118,11 @@
         "additionalProperties": false
       },
       "PrivateCancelBatchQuotesResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -18143,10 +18143,10 @@
         "additionalProperties": false
       },
       "PrivateCancelBatchQuotesResultSchema": {
+        "type": "object",
         "required": [
           "cancelled_ids"
         ],
-        "type": "object",
         "properties": {
           "cancelled_ids": {
             "title": "cancelled_ids",
@@ -18162,11 +18162,11 @@
         "additionalProperties": false
       },
       "PrivateSetCancelOnDisconnectParamsSchema": {
+        "type": "object",
         "required": [
           "enabled",
           "wallet"
         ],
-        "type": "object",
         "properties": {
           "enabled": {
             "title": "enabled",
@@ -18182,11 +18182,11 @@
         "additionalProperties": false
       },
       "PrivateSetCancelOnDisconnectResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -18212,11 +18212,11 @@
         "additionalProperties": false
       },
       "PrivateCancelRfqParamsSchema": {
+        "type": "object",
         "required": [
           "rfq_id",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "rfq_id": {
             "title": "rfq_id",
@@ -18233,11 +18233,11 @@
         "additionalProperties": false
       },
       "PrivateCancelRfqResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -18263,11 +18263,11 @@
         "additionalProperties": false
       },
       "PrivateGetOrderParamsSchema": {
+        "type": "object",
         "required": [
           "order_id",
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "order_id": {
             "title": "order_id",
@@ -18283,11 +18283,11 @@
         "additionalProperties": false
       },
       "PrivateGetOrderResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -18308,6 +18308,7 @@
         "additionalProperties": false
       },
       "PrivateGetOrderResultSchema": {
+        "type": "object",
         "required": [
           "amount",
           "average_price",
@@ -18334,7 +18335,6 @@
           "subaccount_id",
           "time_in_force"
         ],
-        "type": "object",
         "properties": {
           "amount": {
             "title": "amount",
@@ -18549,6 +18549,7 @@
         "additionalProperties": false
       },
       "PrivateCreateSubaccountParamsSchema": {
+        "type": "object",
         "required": [
           "amount",
           "asset_name",
@@ -18559,7 +18560,6 @@
           "signer",
           "wallet"
         ],
-        "type": "object",
         "properties": {
           "amount": {
             "title": "amount",
@@ -18618,11 +18618,11 @@
         "additionalProperties": false
       },
       "PrivateCreateSubaccountResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -18643,11 +18643,11 @@
         "additionalProperties": false
       },
       "PrivateCreateSubaccountResultSchema": {
+        "type": "object",
         "required": [
           "status",
           "transaction_id"
         ],
-        "type": "object",
         "properties": {
           "status": {
             "title": "status",
@@ -18664,10 +18664,10 @@
         "additionalProperties": false
       },
       "PrivateGetLiquidatorHistoryParamsSchema": {
+        "type": "object",
         "required": [
           "subaccount_id"
         ],
-        "type": "object",
         "properties": {
           "end_timestamp": {
             "title": "end_timestamp",
@@ -18702,11 +18702,11 @@
         "additionalProperties": false
       },
       "PrivateGetLiquidatorHistoryResponseSchema": {
+        "type": "object",
         "required": [
           "id",
           "result"
         ],
-        "type": "object",
         "properties": {
           "id": {
             "oneOf": [
@@ -18727,11 +18727,11 @@
         "additionalProperties": false
       },
       "PrivateGetLiquidatorHistoryResultSchema": {
+        "type": "object",
         "required": [
           "bids",
           "pagination"
         ],
-        "type": "object",
         "properties": {
           "bids": {
             "title": "bids",
