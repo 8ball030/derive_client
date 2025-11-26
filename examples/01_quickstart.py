@@ -78,7 +78,7 @@ print("=" * 60)
 order_result = client.orders.create(
     instrument_name="ETH-PERP",
     amount=D("0.10"),  # 0.10 ETH
-    limit_price=D("3000"),  # Buy at $3000
+    limit_price=ticker.index_price * D(0.95),  # Buy at 95% of the index price
     direction=Direction.buy,
     order_type=OrderType.limit,
 )

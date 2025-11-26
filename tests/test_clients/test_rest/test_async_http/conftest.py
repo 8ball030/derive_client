@@ -88,9 +88,9 @@ async def client_owner_wallet_with_position():
     if market_perp_instrument in [p.instrument_name for p in current_positions]:
         # we already have the position we must make sure it is large enough
         position = [p for p in current_positions if p.instrument_name == market_perp_instrument][0]
-        if abs(position.amount) < D("0.1"):
+        if abs(position.amount) < D("0.2"):
             # we need to increase the position size
-            additional_amount = D("0.1") - abs(position.amount)
+            additional_amount = D("0.2") - abs(position.amount)
             direction = Direction.buy if position.amount > 0 else Direction.sell
             # check if we can take liquidity
             ticker = await client_owner_wallet.markets.get_ticker(instrument_name=market_perp_instrument)
