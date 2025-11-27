@@ -158,7 +158,7 @@ The release workflow will automatically create a GitHub release and publish to P
 
 ## Contributors
 
-<!-- readme: collaborators,contributors -start -->
+<!-- readme: contributors -start -->
 <table>
 	<tbody>
 		<tr>
@@ -216,4 +216,4 @@ The release workflow will automatically create a GitHub release and publish to P
 		</tr>
 	<tbody>
 </table>
-<!-- readme: collaborators,contributors -end -->
+<!-- readme: contributors -end -->
