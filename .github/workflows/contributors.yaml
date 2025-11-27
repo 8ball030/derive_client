@@ -3,6 +3,8 @@ on:
         branches:
             - main
 
+name: Update Contributors README
+
 jobs:
     contrib-readme-job:
         runs-on: ubuntu-latest
