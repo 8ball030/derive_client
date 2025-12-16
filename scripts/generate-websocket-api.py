@@ -1,5 +1,6 @@
 import json
 import re
+import textwrap
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -431,6 +432,26 @@ def parse_openapi_for_rpc(spec_path: Path, parser: ResponseSchemaParser):
     return public_methods, private_methods, schema_imports
 
 
+def format_docstring(text: str, width: int = 88) -> str:
+    """Format text as a proper Python docstring"""
+
+    if not text:
+        return ""
+
+    text = text.replace("<br />", "\n").replace("<br/>", "\n")
+    paragraphs = [p.strip() for p in text.split("\n") if p.strip()]
+
+    wrapped = []
+    for para in paragraphs:
+        wrapped.extend(textwrap.wrap(para, width=width - 8))
+        wrapped.append("")
+
+    if wrapped and not wrapped[-1]:
+        wrapped.pop()
+
+    return "\n        ".join(wrapped)
+
+
 def generate_websocket_api(channels_dir: Path, openapi_spec: Path, models_file: Path):
     """Generate WebSocket API file from channel schemas and OpenAPI spec."""
 
@@ -451,6 +472,7 @@ def generate_websocket_api(channels_dir: Path, openapi_spec: Path, models_file: 
     public_rpc_methods, private_rpc_methods, rpc_schema_imports = parse_openapi_for_rpc(openapi_spec, parser)
 
     env = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
+    env.filters['format_docstring'] = format_docstring
 
     print("\nGenerating websockets/api.py...")
     template = env.get_template("websocket_api.py.jinja")

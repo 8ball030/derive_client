@@ -29,7 +29,7 @@ class PublicRPC:
     def {{ method.name }}(self, params: {{ method.request_type }}) -> {{ method.result_type }}:
         {% if method.description %}
         """
-        {{ method.description }}
+        {{ method.description | format_docstring }}
         """
         {% endif %}
         method = "public/{{ method.name }}"
@@ -49,7 +49,7 @@ class PrivateRPC:
     def {{ method.name }}(self, params: {{ method.request_type }}) -> {{ method.result_type }}:
         {% if method.description %}
         """
-        {{ method.description }}
+        {{ method.description | format_docstring }}
         """
         {% endif %}
         method = "private/{{ method.name }}"
@@ -79,7 +79,7 @@ class PublicChannels:
     ) -> str:
         {% if channel.description %}
         """
-        {{ channel.description }}
+        {{ channel.description | format_docstring }}
         
         Args:
             {% for param in channel.params -%}
@@ -117,7 +117,7 @@ class PrivateChannels:
     ) -> str:
         {% if channel.description %}
         """
-        {{ channel.description }}
+        {{ channel.description | format_docstring }}
         
         Args:
             {% for param in channel.params -%}
