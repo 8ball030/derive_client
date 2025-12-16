@@ -224,7 +224,14 @@ class PublicRPC:
         self, params: PublicRegisterSessionKeyParamsSchema
     ) -> PublicRegisterSessionKeyResultSchema:
         """
-        Register or update expiry of an existing session key.<br />Currently, this only supports creating admin level session keys.<br />Keys with fewer permissions are registered via `/register_scoped_session_key`<br /><br />Expiries updated on admin session keys may not happen immediately due to waiting for the onchain transaction to settle.
+        Register or update expiry of an existing session key.
+
+        Currently, this only supports creating admin level session keys.
+
+        Keys with fewer permissions are registered via `/register_scoped_session_key`
+
+        Expiries updated on admin session keys may not happen immediately due to waiting
+        for the onchain transaction to settle.
         """
 
         method = "public/register_session_key"
@@ -236,7 +243,8 @@ class PublicRPC:
         self, params: PublicDeregisterSessionKeyParamsSchema
     ) -> PublicDeregisterSessionKeyResultSchema:
         """
-        Used for de-registering admin scoped keys. For other scopes, use `/edit_session_key`.
+        Used for de-registering admin scoped keys. For other scopes, use
+        `/edit_session_key`.
         """
 
         method = "public/deregister_session_key"
@@ -266,7 +274,9 @@ class PublicRPC:
 
     def get_all_currencies(self, params: PublicGetAllCurrenciesParamsSchema) -> List[CurrencyDetailedResponseSchema]:
         """
-        Get all active currencies with their spot price, spot price 24hrs ago.<br /><br />For real-time updates, recommend using channels -> ticker or orderbook.
+        Get all active currencies with their spot price, spot price 24hrs ago.
+
+        For real-time updates, recommend using channels -> ticker or orderbook.
         """
 
         method = "public/get_all_currencies"
@@ -276,7 +286,8 @@ class PublicRPC:
 
     def get_currency(self, params: PublicGetCurrencyParamsSchema) -> PublicGetCurrencyResultSchema:
         """
-        Get currency related risk params, spot price 24hrs ago and lending details for a specific currency.
+        Get currency related risk params, spot price 24hrs ago and lending details for a
+        specific currency.
         """
 
         method = "public/get_currency"
@@ -316,7 +327,11 @@ class PublicRPC:
 
     def get_ticker(self, params: PublicGetTickerParamsSchema) -> PublicGetTickerResultSchema:
         """
-        Get ticker information (best bid / ask, instrument contraints, fees info, etc.) for a single instrument<br /><br />DEPRECATION NOTICE: This RPC is deprecated in favor of `get_tickers` on Dec 1, 2025.
+        Get ticker information (best bid / ask, instrument contraints, fees info, etc.)
+        for a single instrument
+
+        DEPRECATION NOTICE: This RPC is deprecated in favor of `get_tickers` on Dec 1,
+        2025.
         """
 
         method = "public/get_ticker"
@@ -326,7 +341,11 @@ class PublicRPC:
 
     def get_tickers(self, params: PublicGetTickersParamsSchema) -> PublicGetTickersResultSchema:
         """
-        Get tickers information (best bid / ask, stats, etc.) for a multiple instruments.<br /><br />For most up to date stream of tickers, use the `ticker.<instrument_name>.<interval>` channels.
+        Get tickers information (best bid / ask, stats, etc.) for a multiple
+        instruments.
+
+        For most up to date stream of tickers, use the
+        `ticker.<instrument_name>.<interval>` channels.
         """
 
         method = "public/get_tickers"
@@ -362,7 +381,9 @@ class PublicRPC:
         self, params: PublicGetSpotFeedHistoryParamsSchema
     ) -> PublicGetSpotFeedHistoryResultSchema:
         """
-        Get spot feed history by currency<br /><br />DB: read replica
+        Get spot feed history by currency
+
+        DB: read replica
         """
 
         method = "public/get_spot_feed_history"
@@ -374,7 +395,9 @@ class PublicRPC:
         self, params: PublicGetSpotFeedHistoryCandlesParamsSchema
     ) -> PublicGetSpotFeedHistoryCandlesResultSchema:
         """
-        Get spot feed history candles by currency<br /><br />DB: read replica
+        Get spot feed history candles by currency
+
+        DB: read replica
         """
 
         method = "public/get_spot_feed_history_candles"
@@ -386,7 +409,14 @@ class PublicRPC:
         self, params: PublicGetFundingRateHistoryParamsSchema
     ) -> PublicGetFundingRateHistoryResultSchema:
         """
-        Get funding rate history. Start timestamp is restricted to at most 30 days ago.<br />End timestamp greater than current time will be truncated to current time.<br />Zero start timestamp is allowed and will default to 30 days from the end timestamp.<br /><br />DB: read replica
+        Get funding rate history. Start timestamp is restricted to at most 30 days ago.
+
+        End timestamp greater than current time will be truncated to current time.
+
+        Zero start timestamp is allowed and will default to 30 days from the end
+        timestamp.
+
+        DB: read replica
         """
 
         method = "public/get_funding_rate_history"
@@ -420,7 +450,16 @@ class PublicRPC:
         self, params: PublicGetLiquidationHistoryParamsSchema
     ) -> PublicGetLiquidationHistoryResultSchema:
         """
-        Returns a paginated liquidation history for all subaccounts. Note that the pagination is based on the number of<br />raw events that include bids, auction start, and auction end events. This means that the count returned in the<br />pagination info will be larger than the total number of auction events. This also means the number of returned<br />auctions per page will be smaller than the supplied `page_size`.
+        Returns a paginated liquidation history for all subaccounts. Note that the
+        pagination is based on the number of
+
+        raw events that include bids, auction start, and auction end events. This means
+        that the count returned in the
+
+        pagination info will be larger than the total number of auction events. This
+        also means the number of returned
+
+        auctions per page will be smaller than the supplied `page_size`.
         """
 
         method = "public/get_liquidation_history"
@@ -452,7 +491,10 @@ class PublicRPC:
 
     def get_margin(self, params: PublicGetMarginParamsSchema) -> PublicGetMarginResultSchema:
         """
-        Calculates margin for a given portfolio and (optionally) a simulated state change.<br />Does not take into account open orders margin requirements.public/withdraw_debug
+        Calculates margin for a given portfolio and (optionally) a simulated state
+        change.
+
+        Does not take into account open orders margin requirements.public/withdraw_debug
         """
 
         method = "public/get_margin"
@@ -472,7 +514,11 @@ class PublicRPC:
 
     def get_vault_share(self, params: PublicGetVaultShareParamsSchema) -> PublicGetVaultShareResultSchema:
         """
-        Gets the value of a vault's token against the base currency, underlying currency, and USD for a timestamp range.<br /><br />The name of the vault from the Vault proxy contract is used to fetch the vault's value.
+        Gets the value of a vault's token against the base currency, underlying
+        currency, and USD for a timestamp range.
+
+        The name of the vault from the Vault proxy contract is used to fetch the vault's
+        value.
         """
 
         method = "public/get_vault_share"
@@ -482,7 +528,9 @@ class PublicRPC:
 
     def get_vault_statistics(self, params: PublicGetVaultStatisticsParamsSchema) -> List[VaultStatisticsResponseSchema]:
         """
-        Gets all the latest vault shareRate, totalSupply and TVL values for all vaults.<br /><br />For data on shares across chains, use public/get_vault_assets.
+        Gets all the latest vault shareRate, totalSupply and TVL values for all vaults.
+
+        For data on shares across chains, use public/get_vault_assets.
         """
 
         method = "public/get_vault_statistics"
@@ -492,7 +540,10 @@ class PublicRPC:
 
     def get_vault_balances(self, params: PublicGetVaultBalancesParamsSchema) -> List[VaultBalanceResponseSchema]:
         """
-        Get all vault assets held by user. Can query by smart contract address or smart contract owner.<br /><br />Includes VaultERC20Pool balances
+        Get all vault assets held by user. Can query by smart contract address or smart
+        contract owner.
+
+        Includes VaultERC20Pool balances
         """
 
         method = "public/get_vault_balances"
@@ -504,7 +555,10 @@ class PublicRPC:
         self, params: PublicCreateSubaccountDebugParamsSchema
     ) -> PublicCreateSubaccountDebugResultSchema:
         """
-        Used for debugging only, do not use in production. Will return the incremental encoded and hashed data.<br /><br />See guides in Documentation for more.
+        Used for debugging only, do not use in production. Will return the incremental
+        encoded and hashed data.
+
+        See guides in Documentation for more.
         """
 
         method = "public/create_subaccount_debug"
@@ -514,7 +568,10 @@ class PublicRPC:
 
     def deposit_debug(self, params: PublicDepositDebugParamsSchema) -> PublicDepositDebugResultSchema:
         """
-        Used for debugging only, do not use in production. Will return the incremental encoded and hashed data.<br /><br />See guides in Documentation for more.
+        Used for debugging only, do not use in production. Will return the incremental
+        encoded and hashed data.
+
+        See guides in Documentation for more.
         """
 
         method = "public/deposit_debug"
@@ -524,7 +581,10 @@ class PublicRPC:
 
     def withdraw_debug(self, params: PublicWithdrawDebugParamsSchema) -> PublicWithdrawDebugResultSchema:
         """
-        Used for debugging only, do not use in production. Will return the incremental encoded and hashed data.<br /><br />See guides in Documentation for more.
+        Used for debugging only, do not use in production. Will return the incremental
+        encoded and hashed data.
+
+        See guides in Documentation for more.
         """
 
         method = "public/withdraw_debug"
@@ -534,7 +594,9 @@ class PublicRPC:
 
     def send_quote_debug(self, params: PublicSendQuoteDebugParamsSchema) -> PublicSendQuoteDebugResultSchema:
         """
-        Sends a quote in response to an RFQ request.<br />The legs supplied in the parameters must exactly match those in the RFQ.
+        Sends a quote in response to an RFQ request.
+
+        The legs supplied in the parameters must exactly match those in the RFQ.
         """
 
         method = "public/send_quote_debug"
@@ -544,7 +606,9 @@ class PublicRPC:
 
     def execute_quote_debug(self, params: PublicExecuteQuoteDebugParamsSchema) -> PublicExecuteQuoteDebugResultSchema:
         """
-        Sends a quote in response to an RFQ request.<br />The legs supplied in the parameters must exactly match those in the RFQ.
+        Sends a quote in response to an RFQ request.
+
+        The legs supplied in the parameters must exactly match those in the RFQ.
         """
 
         method = "public/execute_quote_debug"
@@ -607,7 +671,8 @@ class PrivateRPC:
 
     def get_account(self, params: PrivateGetAccountParamsSchema) -> PrivateGetAccountResultSchema:
         """
-                Account details getter
+        Account details getter
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -618,7 +683,12 @@ class PrivateRPC:
 
     def create_subaccount(self, params: PrivateCreateSubaccountParamsSchema) -> PrivateCreateSubaccountResultSchema:
         """
-                Create a new subaccount under a given wallet, and deposit an asset into that subaccount.<br /><br />See `public/create_subaccount_debug` for debugging invalid signature issues or go to guides in Documentation.
+        Create a new subaccount under a given wallet, and deposit an asset into that
+        subaccount.
+
+        See `public/create_subaccount_debug` for debugging invalid signature issues or
+        go to guides in Documentation.
+
         Required minimum session key permission level is `admin`
         """
 
@@ -629,7 +699,8 @@ class PrivateRPC:
 
     def get_subaccount(self, params: PrivateGetSubaccountParamsSchema) -> PrivateGetSubaccountResultSchema:
         """
-                Get open orders, active positions, and collaterals of a subaccount
+        Get open orders, active positions, and collaterals of a subaccount
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -640,7 +711,8 @@ class PrivateRPC:
 
     def get_subaccounts(self, params: PrivateGetSubaccountsParamsSchema) -> PrivateGetSubaccountsResultSchema:
         """
-                Get all subaccounts of an account / wallet
+        Get all subaccounts of an account / wallet
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -651,7 +723,8 @@ class PrivateRPC:
 
     def get_all_portfolios(self, params: PrivateGetAllPortfoliosParamsSchema) -> List[PrivateGetSubaccountResultSchema]:
         """
-                Get all portfolios of a wallet
+        Get all portfolios of a wallet
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -664,7 +737,8 @@ class PrivateRPC:
         self, params: PrivateChangeSubaccountLabelParamsSchema
     ) -> PrivateChangeSubaccountLabelResultSchema:
         """
-                Change a user defined label for given subaccount
+        Change a user defined label for given subaccount
+
         Required minimum session key permission level is `account`
         """
 
@@ -675,7 +749,8 @@ class PrivateRPC:
 
     def get_notifications(self, params: PrivateGetNotificationsParamsSchema) -> PrivateGetNotificationsResultSchema:
         """
-                Get the notifications related to a subaccount.
+        Get the notifications related to a subaccount.
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -688,7 +763,8 @@ class PrivateRPC:
         self, params: PrivateUpdateNotificationsParamsSchema
     ) -> PrivateUpdateNotificationsResultSchema:
         """
-                RPC to mark specified notifications as seen for a given subaccount.
+        RPC to mark specified notifications as seen for a given subaccount.
+
         Required minimum session key permission level is `account`
         """
 
@@ -699,7 +775,11 @@ class PrivateRPC:
 
     def deposit(self, params: PrivateDepositParamsSchema) -> PrivateDepositResultSchema:
         """
-                Deposit an asset to a subaccount.<br /><br />See `public/deposit_debug' for debugging invalid signature issues or go to guides in Documentation.
+        Deposit an asset to a subaccount.
+
+        See `public/deposit_debug' for debugging invalid signature issues or go to
+        guides in Documentation.
+
         Required minimum session key permission level is `admin`
         """
 
@@ -710,7 +790,11 @@ class PrivateRPC:
 
     def withdraw(self, params: PrivateWithdrawParamsSchema) -> PrivateWithdrawResultSchema:
         """
-                Withdraw an asset to wallet.<br /><br />See `public/withdraw_debug` for debugging invalid signature issues or go to guides in Documentation.
+        Withdraw an asset to wallet.
+
+        See `public/withdraw_debug` for debugging invalid signature issues or go to
+        guides in Documentation.
+
         Required minimum session key permission level is `admin`
         """
 
@@ -721,7 +805,11 @@ class PrivateRPC:
 
     def transfer_erc20(self, params: PrivateTransferErc20ParamsSchema) -> PrivateTransferErc20ResultSchema:
         """
-                Transfer ERC20 assets from one subaccount to another (e.g. USDC or ETH).<br /><br />For transfering positions (e.g. options or perps), use `private/transfer_position` instead.
+        Transfer ERC20 assets from one subaccount to another (e.g. USDC or ETH).
+
+        For transfering positions (e.g. options or perps), use
+        `private/transfer_position` instead.
+
         Required minimum session key permission level is `admin`
         """
 
@@ -732,7 +820,23 @@ class PrivateRPC:
 
     def transfer_position(self, params: PrivateTransferPositionParamsSchema) -> PrivateTransferPositionResultSchema:
         """
-                Transfers a positions from one subaccount to another, owned by the same wallet.<br /><br />The transfer is executed as a pair of orders crossing each other.<br />The maker order is created first, followed by a taker order crossing it.<br />The order amounts, limit prices and instrument name must be the same for both orders.<br />Fee is not charged and a zero `max_fee` must be signed.<br />The maker order is forcibly considered to be `reduce_only`, meaning it can only reduce the position size.<br /><br />History: For position transfer history, use the `private/get_trade_history` RPC (not `private/get_erc20_transfer_history`).
+        Transfers a positions from one subaccount to another, owned by the same wallet.
+
+        The transfer is executed as a pair of orders crossing each other.
+
+        The maker order is created first, followed by a taker order crossing it.
+
+        The order amounts, limit prices and instrument name must be the same for both
+        orders.
+
+        Fee is not charged and a zero `max_fee` must be signed.
+
+        The maker order is forcibly considered to be `reduce_only`, meaning it can only
+        reduce the position size.
+
+        History: For position transfer history, use the `private/get_trade_history` RPC
+        (not `private/get_erc20_transfer_history`).
+
         Required minimum session key permission level is `admin`
         """
 
@@ -743,7 +847,23 @@ class PrivateRPC:
 
     def transfer_positions(self, params: PrivateTransferPositionsParamsSchema) -> PrivateTransferPositionsResultSchema:
         """
-                Transfers multiple positions from one subaccount to another, owned by the same wallet.<br /><br />The transfer is executed as a an RFQ. A mock RFQ is first created from the taker parameters, followed by a maker quote and a taker execute.<br />The leg amounts, prices and instrument name must be the same in both param payloads.<br />Fee is not charged and a zero `max_fee` must be signed.<br />Every leg in the transfer must be a position reduction for either maker or taker (or both).<br /><br />History: for position transfer history, use the `private/get_trade_history` RPC (not `private/get_erc20_transfer_history`).
+        Transfers multiple positions from one subaccount to another, owned by the same
+        wallet.
+
+        The transfer is executed as a an RFQ. A mock RFQ is first created from the taker
+        parameters, followed by a maker quote and a taker execute.
+
+        The leg amounts, prices and instrument name must be the same in both param
+        payloads.
+
+        Fee is not charged and a zero `max_fee` must be signed.
+
+        Every leg in the transfer must be a position reduction for either maker or taker
+        (or both).
+
+        History: for position transfer history, use the `private/get_trade_history` RPC
+        (not `private/get_erc20_transfer_history`).
+
         Required minimum session key permission level is `admin`
         """
 
@@ -754,7 +874,8 @@ class PrivateRPC:
 
     def order(self, params: PrivateOrderParamsSchema) -> PrivateOrderResultSchema:
         """
-                Create a new order.
+        Create a new order.
+
         Required minimum session key permission level is `admin`
         """
 
@@ -765,7 +886,14 @@ class PrivateRPC:
 
     def replace(self, params: PrivateReplaceParamsSchema) -> PrivateReplaceResultSchema:
         """
-                Cancel an existing order with nonce or order_id and create new order with different order_id in a single RPC call.<br /><br />If the cancel fails, the new order will not be created.<br />If the cancel succeeds but the new order fails, the old order will still be cancelled.
+        Cancel an existing order with nonce or order_id and create new order with
+        different order_id in a single RPC call.
+
+        If the cancel fails, the new order will not be created.
+
+        If the cancel succeeds but the new order fails, the old order will still be
+        cancelled.
+
         Required minimum session key permission level is `admin`
         """
 
@@ -776,7 +904,8 @@ class PrivateRPC:
 
     def order_debug(self, params: PrivateOrderDebugParamsSchema) -> PrivateOrderDebugResultSchema:
         """
-                Debug a new order
+        Debug a new order
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -787,7 +916,8 @@ class PrivateRPC:
 
     def get_order(self, params: PrivateGetOrderParamsSchema) -> PrivateGetOrderResultSchema:
         """
-                Get state of an order by order id
+        Get state of an order by order id
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -798,7 +928,8 @@ class PrivateRPC:
 
     def get_orders(self, params: PrivateGetOrdersParamsSchema) -> PrivateGetOrdersResultSchema:
         """
-                Get orders for a subaccount, with optional filtering.
+        Get orders for a subaccount, with optional filtering.
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -809,7 +940,8 @@ class PrivateRPC:
 
     def get_open_orders(self, params: PrivateGetOpenOrdersParamsSchema) -> PrivateGetOpenOrdersResultSchema:
         """
-                Get all open orders of a subacccount
+        Get all open orders of a subacccount
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -820,7 +952,10 @@ class PrivateRPC:
 
     def cancel(self, params: PrivateCancelParamsSchema) -> PrivateCancelResultSchema:
         """
-                Cancel a single order.<br /><br />Other `private/cancel_*` routes are available through both REST and WebSocket.
+        Cancel a single order.
+
+        Other `private/cancel_*` routes are available through both REST and WebSocket.
+
         Required minimum session key permission level is `admin`
         """
 
@@ -831,7 +966,8 @@ class PrivateRPC:
 
     def cancel_all(self, params: PrivateCancelAllParamsSchema) -> Result:
         """
-                Cancel all orders for this instrument.
+        Cancel all orders for this instrument.
+
         Required minimum session key permission level is `admin`
         """
 
@@ -842,7 +978,9 @@ class PrivateRPC:
 
     def cancel_by_label(self, params: PrivateCancelByLabelParamsSchema) -> PrivateCancelByLabelResultSchema:
         """
-                Cancel all open orders for a given subaccount and a given label.  If instrument_name is provided, only orders for that instrument will be cancelled.
+        Cancel all open orders for a given subaccount and a given label.  If
+        instrument_name is provided, only orders for that instrument will be cancelled.
+
         Required minimum session key permission level is `admin`
         """
 
@@ -853,7 +991,9 @@ class PrivateRPC:
 
     def cancel_by_nonce(self, params: PrivateCancelByNonceParamsSchema) -> PrivateCancelByNonceResultSchema:
         """
-                Cancel a single order by nonce. Uses up that nonce if the order does not exist, so any future orders with that nonce will fail
+        Cancel a single order by nonce. Uses up that nonce if the order does not exist,
+        so any future orders with that nonce will fail
+
         Required minimum session key permission level is `admin`
         """
 
@@ -866,7 +1006,8 @@ class PrivateRPC:
         self, params: PrivateCancelByInstrumentParamsSchema
     ) -> PrivateCancelByInstrumentResultSchema:
         """
-                Cancel all orders for this instrument.
+        Cancel all orders for this instrument.
+
         Required minimum session key permission level is `admin`
         """
 
@@ -879,7 +1020,8 @@ class PrivateRPC:
         self, params: PrivateCancelTriggerOrderParamsSchema
     ) -> PrivateCancelTriggerOrderResultSchema:
         """
-                Cancels a trigger order.
+        Cancels a trigger order.
+
         Required minimum session key permission level is `admin`
         """
 
@@ -890,7 +1032,10 @@ class PrivateRPC:
 
     def cancel_all_trigger_orders(self, params: PrivateCancelAllTriggerOrdersParamsSchema) -> Result:
         """
-                Cancel all trigger orders for this subaccount.<br /><br />Also used by cancel_all in WS.
+        Cancel all trigger orders for this subaccount.
+
+        Also used by cancel_all in WS.
+
         Required minimum session key permission level is `admin`
         """
 
@@ -901,7 +1046,8 @@ class PrivateRPC:
 
     def get_order_history(self, params: PrivateGetOrderHistoryParamsSchema) -> PrivateGetOrderHistoryResultSchema:
         """
-                Get order history for a subaccount
+        Get order history for a subaccount
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -912,7 +1058,8 @@ class PrivateRPC:
 
     def get_trade_history(self, params: PrivateGetTradeHistoryParamsSchema) -> PrivateGetTradeHistoryResultSchema:
         """
-                Get trade history for a subaccount, with filter parameters.
+        Get trade history for a subaccount, with filter parameters.
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -923,7 +1070,8 @@ class PrivateRPC:
 
     def get_deposit_history(self, params: PrivateGetDepositHistoryParamsSchema) -> PrivateGetDepositHistoryResultSchema:
         """
-                Get subaccount deposit history.
+        Get subaccount deposit history.
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -936,7 +1084,8 @@ class PrivateRPC:
         self, params: PrivateGetWithdrawalHistoryParamsSchema
     ) -> PrivateGetWithdrawalHistoryResultSchema:
         """
-                Get subaccount withdrawal history.
+        Get subaccount withdrawal history.
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -947,7 +1096,8 @@ class PrivateRPC:
 
     def send_rfq(self, params: PrivateSendRfqParamsSchema) -> PrivateSendRfqResultSchema:
         """
-                Requests two-sided quotes from participating market makers.
+        Requests two-sided quotes from participating market makers.
+
         Required minimum session key permission level is `account`
         """
 
@@ -958,7 +1108,8 @@ class PrivateRPC:
 
     def cancel_rfq(self, params: PrivateCancelRfqParamsSchema) -> Result:
         """
-                Cancels a single RFQ by id.
+        Cancels a single RFQ by id.
+
         Required minimum session key permission level is `account`
         """
 
@@ -969,7 +1120,13 @@ class PrivateRPC:
 
     def cancel_batch_rfqs(self, params: PrivateCancelBatchRfqsParamsSchema) -> PrivateCancelBatchRfqsResultSchema:
         """
-                Cancels RFQs given optional filters.<br />If no filters are provided, all RFQs for the subaccount are cancelled.<br />All filters are combined using `AND` logic, so mutually exclusive filters will result in no RFQs being cancelled.
+        Cancels RFQs given optional filters.
+
+        If no filters are provided, all RFQs for the subaccount are cancelled.
+
+        All filters are combined using `AND` logic, so mutually exclusive filters will
+        result in no RFQs being cancelled.
+
         Required minimum session key permission level is `account`
         """
 
@@ -980,7 +1137,9 @@ class PrivateRPC:
 
     def get_rfqs(self, params: PrivateGetRfqsParamsSchema) -> PrivateGetRfqsResultSchema:
         """
-                Retrieves a list of RFQs matching filter criteria. Takers can use this to get their open RFQs, RFQ history, etc.
+        Retrieves a list of RFQs matching filter criteria. Takers can use this to get
+        their open RFQs, RFQ history, etc.
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -991,7 +1150,9 @@ class PrivateRPC:
 
     def poll_rfqs(self, params: PrivatePollRfqsParamsSchema) -> PrivatePollRfqsResultSchema:
         """
-                Retrieves a list of RFQs matching filter criteria. Market makers can use this to poll RFQs directed to them.
+        Retrieves a list of RFQs matching filter criteria. Market makers can use this to
+        poll RFQs directed to them.
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -1002,7 +1163,10 @@ class PrivateRPC:
 
     def send_quote(self, params: PrivateSendQuoteParamsSchema) -> PrivateSendQuoteResultSchema:
         """
-                Sends a quote in response to an RFQ request.<br />The legs supplied in the parameters must exactly match those in the RFQ.
+        Sends a quote in response to an RFQ request.
+
+        The legs supplied in the parameters must exactly match those in the RFQ.
+
         Required minimum session key permission level is `admin`
         """
 
@@ -1013,7 +1177,14 @@ class PrivateRPC:
 
     def replace_quote(self, params: PrivateReplaceQuoteParamsSchema) -> PrivateReplaceQuoteResultSchema:
         """
-                Cancel an existing quote with nonce or quote_id and create new quote with different quote_id in a single RPC call.<br /><br />If the cancel fails, the new quote will not be created.<br />If the cancel succeeds but the new quote fails, the old quote will still be cancelled.
+        Cancel an existing quote with nonce or quote_id and create new quote with
+        different quote_id in a single RPC call.
+
+        If the cancel fails, the new quote will not be created.
+
+        If the cancel succeeds but the new quote fails, the old quote will still be
+        cancelled.
+
         Required minimum session key permission level is `admin`
         """
 
@@ -1024,7 +1195,8 @@ class PrivateRPC:
 
     def cancel_quote(self, params: PrivateCancelQuoteParamsSchema) -> PrivateCancelQuoteResultSchema:
         """
-                Cancels an open quote.
+        Cancels an open quote.
+
         Required minimum session key permission level is `admin`
         """
 
@@ -1035,7 +1207,12 @@ class PrivateRPC:
 
     def cancel_batch_quotes(self, params: PrivateCancelBatchQuotesParamsSchema) -> PrivateCancelBatchQuotesResultSchema:
         """
-                Cancels quotes given optional filters. If no filters are provided, all quotes by the subaccount are cancelled.<br />All filters are combined using `AND` logic, so mutually exclusive filters will result in no quotes being cancelled.
+        Cancels quotes given optional filters. If no filters are provided, all quotes by
+        the subaccount are cancelled.
+
+        All filters are combined using `AND` logic, so mutually exclusive filters will
+        result in no quotes being cancelled.
+
         Required minimum session key permission level is `admin`
         """
 
@@ -1046,7 +1223,10 @@ class PrivateRPC:
 
     def get_quotes(self, params: PrivateGetQuotesParamsSchema) -> PrivateGetQuotesResultSchema:
         """
-                Retrieves a list of quotes matching filter criteria.<br />Market makers can use this to get their open quotes, quote history, etc.
+        Retrieves a list of quotes matching filter criteria.
+
+        Market makers can use this to get their open quotes, quote history, etc.
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -1057,7 +1237,11 @@ class PrivateRPC:
 
     def poll_quotes(self, params: PrivatePollQuotesParamsSchema) -> PrivatePollQuotesResultSchema:
         """
-                Retrieves a list of quotes matching filter criteria.<br />Takers can use this to poll open quotes that they can fill against their open RFQs.
+        Retrieves a list of quotes matching filter criteria.
+
+        Takers can use this to poll open quotes that they can fill against their open
+        RFQs.
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -1068,7 +1252,8 @@ class PrivateRPC:
 
     def execute_quote(self, params: PrivateExecuteQuoteParamsSchema) -> PrivateExecuteQuoteResultSchema:
         """
-                Executes a quote.
+        Executes a quote.
+
         Required minimum session key permission level is `admin`
         """
 
@@ -1079,7 +1264,14 @@ class PrivateRPC:
 
     def rfq_get_best_quote(self, params: PrivateRfqGetBestQuoteParamsSchema) -> PrivateRfqGetBestQuoteResultSchema:
         """
-                Performs a "dry run" on an RFQ, returning the estimated fee and whether the trade is expected to pass.<br /><br />Should any exception be raised in the process of evaluating the trade, a standard RPC error will be returned<br />with the error details.
+        Performs a "dry run" on an RFQ, returning the estimated fee and whether the
+        trade is expected to pass.
+
+        Should any exception be raised in the process of evaluating the trade, a
+        standard RPC error will be returned
+
+        with the error details.
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -1090,7 +1282,11 @@ class PrivateRPC:
 
     def get_margin(self, params: PrivateGetMarginParamsSchema) -> PrivateGetMarginResultSchema:
         """
-                Calculates margin for a given subaccount and (optionally) a simulated state change. Does not take into account<br />open orders margin requirements.
+        Calculates margin for a given subaccount and (optionally) a simulated state
+        change. Does not take into account
+
+        open orders margin requirements.
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -1101,7 +1297,8 @@ class PrivateRPC:
 
     def get_collaterals(self, params: PrivateGetCollateralsParamsSchema) -> PrivateGetCollateralsResultSchema:
         """
-                Get collaterals of a subaccount
+        Get collaterals of a subaccount
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -1112,7 +1309,8 @@ class PrivateRPC:
 
     def get_positions(self, params: PrivateGetPositionsParamsSchema) -> PrivateGetPositionsResultSchema:
         """
-                Get active positions of a subaccount
+        Get active positions of a subaccount
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -1125,7 +1323,8 @@ class PrivateRPC:
         self, params: PrivateGetOptionSettlementHistoryParamsSchema
     ) -> PrivateGetOptionSettlementHistoryResultSchema:
         """
-                Get expired option settlement history for a subaccount
+        Get expired option settlement history for a subaccount
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -1138,7 +1337,8 @@ class PrivateRPC:
         self, params: PrivateGetSubaccountValueHistoryParamsSchema
     ) -> PrivateGetSubaccountValueHistoryResultSchema:
         """
-                Get the value history of a subaccount
+        Get the value history of a subaccount
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -1151,7 +1351,8 @@ class PrivateRPC:
         self, params: PrivateExpiredAndCancelledHistoryParamsSchema
     ) -> PrivateExpiredAndCancelledHistoryResultSchema:
         """
-                Generate a list of URLs to retrieve archived orders
+        Generate a list of URLs to retrieve archived orders
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -1162,7 +1363,10 @@ class PrivateRPC:
 
     def get_funding_history(self, params: PrivateGetFundingHistoryParamsSchema) -> PrivateGetFundingHistoryResultSchema:
         """
-                Get subaccount funding history.<br /><br />DB: read replica
+        Get subaccount funding history.
+
+        DB: read replica
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -1175,7 +1379,8 @@ class PrivateRPC:
         self, params: PrivateGetInterestHistoryParamsSchema
     ) -> PrivateGetInterestHistoryResultSchema:
         """
-                Get subaccount interest payment history.
+        Get subaccount interest payment history.
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -1188,7 +1393,11 @@ class PrivateRPC:
         self, params: PrivateGetErc20TransferHistoryParamsSchema
     ) -> PrivateGetErc20TransferHistoryResultSchema:
         """
-                Get subaccount erc20 transfer history.<br /><br />Position transfers (e.g. options or perps) are treated as trades. Use `private/get_trade_history` for position transfer history.
+        Get subaccount erc20 transfer history.
+
+        Position transfers (e.g. options or perps) are treated as trades. Use
+        `private/get_trade_history` for position transfer history.
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -1199,7 +1408,6 @@ class PrivateRPC:
 
     def get_liquidation_history(self, params: PrivateGetLiquidationHistoryParamsSchema) -> List[AuctionResultSchema]:
         """
-
         Required minimum session key permission level is `read_only`
         """
 
@@ -1210,7 +1418,17 @@ class PrivateRPC:
 
     def liquidate(self, params: PrivateLiquidateParamsSchema) -> PrivateLiquidateResultSchema:
         """
-                Liquidates a given subaccount using funds from another subaccount. This endpoint has a few limitations:<br />1. If succesful, the RPC will freeze the caller's subaccount until the bid is settled or is reverted on chain.<br />2. The caller's subaccount must not have any open orders.<br />3. The caller's subaccount must have enough withdrawable cash to cover the bid and the buffer margin requirements.
+        Liquidates a given subaccount using funds from another subaccount. This endpoint
+        has a few limitations:
+
+        1. If succesful, the RPC will freeze the caller's subaccount until the bid is
+        settled or is reverted on chain.
+
+        2. The caller's subaccount must not have any open orders.
+
+        3. The caller's subaccount must have enough withdrawable cash to cover the bid
+        and the buffer margin requirements.
+
         Required minimum session key permission level is `admin`
         """
 
@@ -1223,7 +1441,9 @@ class PrivateRPC:
         self, params: PrivateGetLiquidatorHistoryParamsSchema
     ) -> PrivateGetLiquidatorHistoryResultSchema:
         """
-                Returns a paginated history of auctions that the subaccount has participated in as a liquidator.
+        Returns a paginated history of auctions that the subaccount has participated in
+        as a liquidator.
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -1234,7 +1454,6 @@ class PrivateRPC:
 
     def session_keys(self, params: PrivateSessionKeysParamsSchema) -> PrivateSessionKeysResultSchema:
         """
-
         Required minimum session key permission level is `read_only`
         """
 
@@ -1245,7 +1464,12 @@ class PrivateRPC:
 
     def edit_session_key(self, params: PrivateEditSessionKeyParamsSchema) -> PrivateEditSessionKeyResultSchema:
         """
-                Edits session key parameters such as label and IP whitelist.<br />For non-admin keys you can also toggle whether to disable a particular key.<br />Disabling non-admin keys must be done through /deregister_session_key
+        Edits session key parameters such as label and IP whitelist.
+
+        For non-admin keys you can also toggle whether to disable a particular key.
+
+        Disabling non-admin keys must be done through /deregister_session_key
+
         Required minimum session key permission level is `account`
         """
 
@@ -1258,7 +1482,10 @@ class PrivateRPC:
         self, params: PrivateRegisterScopedSessionKeyParamsSchema
     ) -> PrivateRegisterScopedSessionKeyResultSchema:
         """
-                Registers a new session key bounded to a scope without a transaction attached.<br />If you want to register an admin key, you must provide a signed raw transaction.
+        Registers a new session key bounded to a scope without a transaction attached.
+
+        If you want to register an admin key, you must provide a signed raw transaction.
+
         Required minimum session key permission level is `account`
         """
 
@@ -1269,7 +1496,8 @@ class PrivateRPC:
 
     def get_mmp_config(self, params: PrivateGetMmpConfigParamsSchema) -> List[MMPConfigResultSchema]:
         """
-                Get the current mmp config for a subaccount (optionally filtered by currency)
+        Get the current mmp config for a subaccount (optionally filtered by currency)
+
         Required minimum session key permission level is `read_only`
         """
 
@@ -1280,7 +1508,8 @@ class PrivateRPC:
 
     def set_mmp_config(self, params: PrivateSetMmpConfigParamsSchema) -> PrivateSetMmpConfigResultSchema:
         """
-                Set the mmp config for the subaccount and currency
+        Set the mmp config for the subaccount and currency
+
         Required minimum session key permission level is `account`
         """
 
@@ -1291,7 +1520,9 @@ class PrivateRPC:
 
     def reset_mmp(self, params: PrivateResetMmpParamsSchema) -> Result:
         """
-                Resets (unfreezes) the mmp state for a subaccount (optionally filtered by currency)
+        Resets (unfreezes) the mmp state for a subaccount (optionally filtered by
+        currency)
+
         Required minimum session key permission level is `account`
         """
 
@@ -1302,7 +1533,8 @@ class PrivateRPC:
 
     def set_cancel_on_disconnect(self, params: PrivateSetCancelOnDisconnectParamsSchema) -> Result:
         """
-                Enables cancel on disconnect for the account
+        Enables cancel on disconnect for the account
+
         Required minimum session key permission level is `account`
         """
 
@@ -1416,7 +1648,8 @@ class PublicChannels:
         callback: Callable[[Any], None],
     ) -> str:
         """
-        Periodically publishes ticker info (best bid / ask, instrument contraints, fees, etc.) for a single instrument.
+        Periodically publishes ticker info (best bid / ask, instrument contraints, fees,
+        etc.) for a single instrument.
 
         Args:
             instrument_name: Instrument Name
@@ -1488,7 +1721,8 @@ class PublicChannels:
         callback: Callable[[Any], None],
     ) -> str:
         """
-        Subscribe to the status on on-chain trade settlement events for a given instrument type and currency.
+        Subscribe to the status on on-chain trade settlement events for a given
+        instrument type and currency.
 
         Args:
             instrument_type: Instrument Type
@@ -1519,7 +1753,20 @@ class PrivateChannels:
         callback: Callable[[Any], None],
     ) -> str:
         """
-        Subscribe to changes in user's positions for a given subaccount ID.<br /><br />For perpetuals, additional balance updates are emitted under the name Q-{ccy}-PERP where Q stands for "quote".<br />This balance is a proxy for an on-chain state of lastMarkPrice.<br />Because of a synchronization lag with the on-chain state, the orderbook instead keeps track of a running total cost of perpetual trades,<br /><br />For example:<br />Q-ETH-PERP balance of $6,600 and an ETH-PERP balance of 3 means the lastMarkPrice state is estimated to be $2,200.
+        Subscribe to changes in user's positions for a given subaccount ID.
+
+        For perpetuals, additional balance updates are emitted under the name
+        Q-{ccy}-PERP where Q stands for "quote".
+
+        This balance is a proxy for an on-chain state of lastMarkPrice.
+
+        Because of a synchronization lag with the on-chain state, the orderbook instead
+        keeps track of a running total cost of perpetual trades,
+
+        For example:
+
+        Q-ETH-PERP balance of $6,600 and an ETH-PERP balance of 3 means the
+        lastMarkPrice state is estimated to be $2,200.
 
         Args:
             subaccount_id: Subaccount Id
@@ -1541,7 +1788,10 @@ class PrivateChannels:
         callback: Callable[[Any], None],
     ) -> str:
         """
-        Subscribe to best quote state for a given subaccount ID.<br />This will notify the user about the best quote available for the RFQ they have sent.
+        Subscribe to best quote state for a given subaccount ID.
+
+        This will notify the user about the best quote available for the RFQ they have
+        sent.
 
         Args:
             subaccount_id: Subaccount Id
@@ -1585,7 +1835,9 @@ class PrivateChannels:
         callback: Callable[[Any], None],
     ) -> str:
         """
-        Subscribe to quote state for a given subaccount ID.<br />This will notify the usser about the state change of the quotes they have sent.
+        Subscribe to quote state for a given subaccount ID.
+
+        This will notify the usser about the state change of the quotes they have sent.
 
         Args:
             subaccount_id: Subaccount Id
