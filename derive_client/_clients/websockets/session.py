@@ -9,14 +9,17 @@ import uuid
 import weakref
 from collections import defaultdict
 from logging import Logger
-from queue import Empty, Queue
-from typing import Any, Callable
+from queue import Empty, Full, Queue
+from typing import Any, Callable, TypeVar
 
 import msgspec
 from websockets.sync.client import ClientConnection, connect
 
 from derive_client._clients.utils import JSONRPCEnvelope, decode_envelope
 from derive_client.utils.logger import get_logger
+
+MessageT = TypeVar('MessageT')
+Handler = Callable[[MessageT], None]
 
 
 class WebSocketSession:
@@ -111,11 +114,11 @@ class WebSocketSession:
 
         # Cancel any pending requests
         with self._requests_lock:
-            for queue in self._pending_requests.values():
+            for rid, queue in self._pending_requests.items():
                 try:
                     queue.put_nowait({"error": "Connection closed"})
-                except:
-                    pass
+                except Full:
+                    self._logger.warning(f"Could not notify pending request of closure: {rid}")
             self._pending_requests.clear()
 
         self._logger.info("WebSocket closed")
@@ -123,7 +126,7 @@ class WebSocketSession:
     def subscribe(
         self,
         channel: str,
-        handler: Callable[[Any], None],
+        handler: Handler,
     ) -> None:
         """
         Subscribe to a channel with a handler.
@@ -153,7 +156,7 @@ class WebSocketSession:
     def unsubscribe(
         self,
         channel: str,
-        handler: Callable[[Any], None] | None = None,
+        handler: Handler | None = None,
     ) -> None:
         """
         Unsubscribe from a channel.
@@ -265,7 +268,7 @@ class WebSocketSession:
             if queue:
                 try:
                     queue.put_nowait(envelope)
-                except:
+                except Full:
                     self._logger.warning(f"Failed to queue RPC response: {envelope.id}")
             else:
                 self._logger.debug(f"No pending request for id: {envelope.id}")
