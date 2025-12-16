@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, Optional, TypeVar
 
 import msgspec
-from derive_action_signing import ModuleData, SignedAction, sign_rest_auth_header
+from derive_action_signing import ModuleData, SignedAction, sign_rest_auth_header, sign_ws_login
 from dotenv import load_dotenv
 from eth_account.signers.local import LocalAccount
 from hexbytes import HexBytes
@@ -70,6 +70,13 @@ class AuthContext:
     def signed_headers(self):
         return sign_rest_auth_header(
             web3_client=self.w3,  # type: ignore
+            smart_contract_wallet=self.wallet,
+            session_key_or_wallet_private_key=HexBytes(self.account.key).to_0x_hex(),
+        )
+
+    def sign_ws_login(self) -> dict[str, str]:
+        return sign_ws_login(
+            web3_client=self.w3,
             smart_contract_wallet=self.wallet,
             session_key_or_wallet_private_key=HexBytes(self.account.key).to_0x_hex(),
         )

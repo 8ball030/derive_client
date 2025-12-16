@@ -7,7 +7,7 @@ from __future__ import annotations
 import contextlib
 from logging import Logger
 from pathlib import Path
-from typing import Any, Callable, Generator
+from typing import Generator
 
 from pydantic import ConfigDict, validate_call
 from web3 import Web3
@@ -17,6 +17,7 @@ from derive_client._clients.websockets.api import PrivateAPI, PublicAPI
 from derive_client._clients.websockets.session import WebSocketSession
 from derive_client.config import CONFIGS
 from derive_client.data_types import ChecksumAddress, Environment
+from derive_client.data_types.generated_models import PublicLoginParamsSchema
 from derive_client.utils.logger import get_logger
 
 
@@ -74,6 +75,9 @@ class WebSocketClient:
     def connect(self) -> None:
         """Establish WebSocket connection."""
         self._session.open()
+        params = PublicLoginParamsSchema(**self._auth.sign_ws_login())
+        subaccount_ids = self._public_api.rpc.login(params=params)
+        self._logger.debug(f"Websocket login returned subaccount ids: {subaccount_ids}")
 
     def disconnect(self) -> None:
         """Close WebSocket connection and clear subscriptions. Idempotent."""

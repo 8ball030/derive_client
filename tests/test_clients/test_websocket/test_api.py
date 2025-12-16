@@ -2,9 +2,9 @@
 
 from derive_client.data_types.generated_models import (
     PrivateGetOrdersParamsSchema,
-    PrivateGetOrdersResponseSchema,
+    PrivateGetOrdersResultSchema,
     PrivateGetSubaccountsParamsSchema,
-    PrivateGetSubaccountsResponseSchema,
+    PrivateGetSubaccountsResultSchema,
     PublicGetTickerParamsSchema,
     PublicGetTickerResultSchema,
 )
@@ -20,12 +20,12 @@ def test_public_get_ticker(client_admin_wallet):
 def test_get_private_get_subaccounts(client_admin_wallet):
     wallet = client_admin_wallet._auth.wallet
     params = PrivateGetSubaccountsParamsSchema(wallet=wallet)
-    response = client_admin_wallet._private_api.get_subaccounts(params=params)
-    assert isinstance(response, PrivateGetSubaccountsResponseSchema)
+    response = client_admin_wallet._private_api.rpc.get_subaccounts(params=params)
+    assert isinstance(response, PrivateGetSubaccountsResultSchema)
 
 
 def test_get_private_get_orders(client_admin_wallet):
     subaccount_id = client_admin_wallet.active_subaccount.id
     params = PrivateGetOrdersParamsSchema(subaccount_id=subaccount_id)
-    response = client_admin_wallet._private_api.get_orders(params=params)
-    assert isinstance(response, PrivateGetOrdersResponseSchema)
+    response = client_admin_wallet._private_api.rpc.get_orders(params=params)
+    assert isinstance(response, PrivateGetOrdersResultSchema)
