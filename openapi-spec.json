@@ -373,7 +373,7 @@
           "Public"
         ],
         "summary": "Get Tickers",
-        "description": "Get tickers information (best bid / ask, stats, etc.) for a multiple instruments.<br /><br />For most up to date stream of tickers, use the `ticker.<instrument_name>.<interval>` channels.",
+        "description": "Get tickers information (best bid / ask, stats, etc.) for a multiple instruments.<br /><br />For options: currency is required and expiry_date is required.<br />For perps: currency is optional, expiry_date will throw an error.<br />For erc20s: currency is optional, expiry_date will throw an error.<br /><br />For most up to date stream of tickers, use the `ticker.<instrument_name>.<interval>` channels.",
         "responses": {
           "200": {
             "description": "successful operation",
@@ -5262,6 +5262,12 @@
       },
       "PrivateSendRfqParamsSchema": {
         "properties": {
+          "client": {
+            "title": "client",
+            "type": "string",
+            "default": "",
+            "description": "Optional client that sent RFQ"
+          },
           "counterparties": {
             "title": "counterparties",
             "type": "array",
@@ -6496,6 +6502,12 @@
       },
       "PublicSendQuoteDebugParamsSchema": {
         "properties": {
+          "client": {
+            "title": "client",
+            "type": "string",
+            "default": "",
+            "description": "Optional client that sent the quote"
+          },
           "direction": {
             "title": "direction",
             "type": "string",
@@ -8697,6 +8709,12 @@
       },
       "PrivateSendQuoteParamsSchema": {
         "properties": {
+          "client": {
+            "title": "client",
+            "type": "string",
+            "default": "",
+            "description": "Optional client that sent the quote"
+          },
           "direction": {
             "title": "direction",
             "type": "string",
@@ -9660,6 +9678,12 @@
       },
       "PrivateReplaceQuoteParamsSchema": {
         "properties": {
+          "client": {
+            "title": "client",
+            "type": "string",
+            "default": "",
+            "description": "Optional client that sent the quote"
+          },
           "direction": {
             "title": "direction",
             "type": "string",
@@ -11186,6 +11210,12 @@
       },
       "PublicExecuteQuoteDebugParamsSchema": {
         "properties": {
+          "client": {
+            "title": "client",
+            "type": "string",
+            "default": "",
+            "description": "Optional client that sent the execute quote"
+          },
           "direction": {
             "title": "direction",
             "type": "string",
@@ -11666,6 +11696,12 @@
       },
       "PrivateRfqGetBestQuoteParamsSchema": {
         "properties": {
+          "client": {
+            "title": "client",
+            "type": "string",
+            "default": "",
+            "description": "Optional client that sent RFQ"
+          },
           "counterparties": {
             "title": "counterparties",
             "type": "array",
@@ -13297,6 +13333,13 @@
             "format": "decimal",
             "description": "Order amount in units of the base"
           },
+          "client": {
+            "title": "client",
+            "type": "string",
+            "default": "",
+            "description": "Client that submitted the order",
+            "nullable": true
+          },
           "direction": {
             "title": "direction",
             "type": "string",
@@ -13625,6 +13668,13 @@
             "format": "decimal",
             "description": "Order amount in units of the base"
           },
+          "client": {
+            "title": "client",
+            "type": "string",
+            "default": "",
+            "description": "Client that submitted the order",
+            "nullable": true
+          },
           "direction": {
             "title": "direction",
             "type": "string",
@@ -13864,7 +13914,9 @@
           "currency": {
             "title": "currency",
             "type": "string",
-            "description": "Underlying currency of asset (`ETH`, `BTC`, etc)"
+            "default": null,
+            "description": "Underlying currency of asset (`ETH`, `BTC`, etc). Required for options.",
+            "nullable": true
           },
           "expiry_date": {
             "title": "expiry_date",
@@ -13886,7 +13938,6 @@
         },
         "type": "object",
         "required": [
-          "currency",
           "instrument_type"
         ],
         "additionalProperties": false
@@ -17446,6 +17497,12 @@
       },
       "PrivateExecuteQuoteParamsSchema": {
         "properties": {
+          "client": {
+            "title": "client",
+            "type": "string",
+            "default": "",
+            "description": "Optional client that sent the execute quote"
+          },
           "direction": {
             "title": "direction",
             "type": "string",
@@ -17871,6 +17928,13 @@
             "type": "string",
             "format": "decimal",
             "description": "Order amount in units of the base"
+          },
+          "client": {
+            "title": "client",
+            "type": "string",
+            "default": "",
+            "description": "Client that submitted the order",
+            "nullable": true
           },
           "direction": {
             "title": "direction",
