@@ -1,209 +1,204 @@
 """Auto-generated API classes from OpenAPI spec"""
 
+from typing import List
+
 from derive_client._clients.rest.endpoints import PrivateEndpoints, PublicEndpoints
 from derive_client._clients.rest.http.session import HTTPSession
-from derive_client._clients.utils import AuthContext, encode_json_exclude_none, try_cast_response
+from derive_client._clients.utils import AuthContext, decode_envelope, decode_result, encode_json_exclude_none
 from derive_client.config import PUBLIC_HEADERS
 from derive_client.data_types import EnvConfig
 from derive_client.data_types.generated_models import (
+    AuctionResultSchema,
+    CurrencyDetailedResponseSchema,
+    InstrumentPublicResponseSchema,
+    MMPConfigResultSchema,
     PrivateCancelAllParamsSchema,
-    PrivateCancelAllResponseSchema,
     PrivateCancelAllTriggerOrdersParamsSchema,
-    PrivateCancelAllTriggerOrdersResponseSchema,
     PrivateCancelBatchQuotesParamsSchema,
-    PrivateCancelBatchQuotesResponseSchema,
+    PrivateCancelBatchQuotesResultSchema,
     PrivateCancelBatchRfqsParamsSchema,
-    PrivateCancelBatchRfqsResponseSchema,
+    PrivateCancelBatchRfqsResultSchema,
     PrivateCancelByInstrumentParamsSchema,
-    PrivateCancelByInstrumentResponseSchema,
+    PrivateCancelByInstrumentResultSchema,
     PrivateCancelByLabelParamsSchema,
-    PrivateCancelByLabelResponseSchema,
+    PrivateCancelByLabelResultSchema,
     PrivateCancelByNonceParamsSchema,
-    PrivateCancelByNonceResponseSchema,
+    PrivateCancelByNonceResultSchema,
     PrivateCancelParamsSchema,
     PrivateCancelQuoteParamsSchema,
-    PrivateCancelQuoteResponseSchema,
-    PrivateCancelResponseSchema,
+    PrivateCancelQuoteResultSchema,
+    PrivateCancelResultSchema,
     PrivateCancelRfqParamsSchema,
-    PrivateCancelRfqResponseSchema,
     PrivateCancelTriggerOrderParamsSchema,
-    PrivateCancelTriggerOrderResponseSchema,
+    PrivateCancelTriggerOrderResultSchema,
     PrivateChangeSubaccountLabelParamsSchema,
-    PrivateChangeSubaccountLabelResponseSchema,
+    PrivateChangeSubaccountLabelResultSchema,
     PrivateCreateSubaccountParamsSchema,
-    PrivateCreateSubaccountResponseSchema,
+    PrivateCreateSubaccountResultSchema,
     PrivateDepositParamsSchema,
-    PrivateDepositResponseSchema,
+    PrivateDepositResultSchema,
     PrivateEditSessionKeyParamsSchema,
-    PrivateEditSessionKeyResponseSchema,
+    PrivateEditSessionKeyResultSchema,
     PrivateExecuteQuoteParamsSchema,
-    PrivateExecuteQuoteResponseSchema,
+    PrivateExecuteQuoteResultSchema,
     PrivateExpiredAndCancelledHistoryParamsSchema,
-    PrivateExpiredAndCancelledHistoryResponseSchema,
+    PrivateExpiredAndCancelledHistoryResultSchema,
     PrivateGetAccountParamsSchema,
-    PrivateGetAccountResponseSchema,
+    PrivateGetAccountResultSchema,
     PrivateGetAllPortfoliosParamsSchema,
-    PrivateGetAllPortfoliosResponseSchema,
     PrivateGetCollateralsParamsSchema,
-    PrivateGetCollateralsResponseSchema,
+    PrivateGetCollateralsResultSchema,
     PrivateGetDepositHistoryParamsSchema,
-    PrivateGetDepositHistoryResponseSchema,
+    PrivateGetDepositHistoryResultSchema,
     PrivateGetErc20TransferHistoryParamsSchema,
-    PrivateGetErc20TransferHistoryResponseSchema,
+    PrivateGetErc20TransferHistoryResultSchema,
     PrivateGetFundingHistoryParamsSchema,
-    PrivateGetFundingHistoryResponseSchema,
+    PrivateGetFundingHistoryResultSchema,
     PrivateGetInterestHistoryParamsSchema,
-    PrivateGetInterestHistoryResponseSchema,
+    PrivateGetInterestHistoryResultSchema,
     PrivateGetLiquidationHistoryParamsSchema,
-    PrivateGetLiquidationHistoryResponseSchema,
     PrivateGetLiquidatorHistoryParamsSchema,
-    PrivateGetLiquidatorHistoryResponseSchema,
+    PrivateGetLiquidatorHistoryResultSchema,
     PrivateGetMarginParamsSchema,
-    PrivateGetMarginResponseSchema,
+    PrivateGetMarginResultSchema,
     PrivateGetMmpConfigParamsSchema,
-    PrivateGetMmpConfigResponseSchema,
     PrivateGetNotificationsParamsSchema,
-    PrivateGetNotificationsResponseSchema,
+    PrivateGetNotificationsResultSchema,
     PrivateGetOpenOrdersParamsSchema,
-    PrivateGetOpenOrdersResponseSchema,
+    PrivateGetOpenOrdersResultSchema,
     PrivateGetOptionSettlementHistoryParamsSchema,
-    PrivateGetOptionSettlementHistoryResponseSchema,
+    PrivateGetOptionSettlementHistoryResultSchema,
     PrivateGetOrderHistoryParamsSchema,
-    PrivateGetOrderHistoryResponseSchema,
+    PrivateGetOrderHistoryResultSchema,
     PrivateGetOrderParamsSchema,
-    PrivateGetOrderResponseSchema,
+    PrivateGetOrderResultSchema,
     PrivateGetOrdersParamsSchema,
-    PrivateGetOrdersResponseSchema,
+    PrivateGetOrdersResultSchema,
     PrivateGetPositionsParamsSchema,
-    PrivateGetPositionsResponseSchema,
+    PrivateGetPositionsResultSchema,
     PrivateGetQuotesParamsSchema,
-    PrivateGetQuotesResponseSchema,
+    PrivateGetQuotesResultSchema,
     PrivateGetRfqsParamsSchema,
-    PrivateGetRfqsResponseSchema,
+    PrivateGetRfqsResultSchema,
     PrivateGetSubaccountParamsSchema,
-    PrivateGetSubaccountResponseSchema,
+    PrivateGetSubaccountResultSchema,
     PrivateGetSubaccountsParamsSchema,
-    PrivateGetSubaccountsResponseSchema,
+    PrivateGetSubaccountsResultSchema,
     PrivateGetSubaccountValueHistoryParamsSchema,
-    PrivateGetSubaccountValueHistoryResponseSchema,
+    PrivateGetSubaccountValueHistoryResultSchema,
     PrivateGetTradeHistoryParamsSchema,
-    PrivateGetTradeHistoryResponseSchema,
+    PrivateGetTradeHistoryResultSchema,
     PrivateGetWithdrawalHistoryParamsSchema,
-    PrivateGetWithdrawalHistoryResponseSchema,
+    PrivateGetWithdrawalHistoryResultSchema,
     PrivateLiquidateParamsSchema,
-    PrivateLiquidateResponseSchema,
+    PrivateLiquidateResultSchema,
     PrivateOrderDebugParamsSchema,
-    PrivateOrderDebugResponseSchema,
+    PrivateOrderDebugResultSchema,
     PrivateOrderParamsSchema,
-    PrivateOrderResponseSchema,
+    PrivateOrderResultSchema,
     PrivatePollQuotesParamsSchema,
-    PrivatePollQuotesResponseSchema,
+    PrivatePollQuotesResultSchema,
     PrivatePollRfqsParamsSchema,
-    PrivatePollRfqsResponseSchema,
+    PrivatePollRfqsResultSchema,
     PrivateRegisterScopedSessionKeyParamsSchema,
-    PrivateRegisterScopedSessionKeyResponseSchema,
+    PrivateRegisterScopedSessionKeyResultSchema,
     PrivateReplaceParamsSchema,
     PrivateReplaceQuoteParamsSchema,
-    PrivateReplaceQuoteResponseSchema,
-    PrivateReplaceResponseSchema,
+    PrivateReplaceQuoteResultSchema,
+    PrivateReplaceResultSchema,
     PrivateResetMmpParamsSchema,
-    PrivateResetMmpResponseSchema,
     PrivateRfqGetBestQuoteParamsSchema,
-    PrivateRfqGetBestQuoteResponseSchema,
+    PrivateRfqGetBestQuoteResultSchema,
     PrivateSendQuoteParamsSchema,
-    PrivateSendQuoteResponseSchema,
+    PrivateSendQuoteResultSchema,
     PrivateSendRfqParamsSchema,
-    PrivateSendRfqResponseSchema,
+    PrivateSendRfqResultSchema,
     PrivateSessionKeysParamsSchema,
-    PrivateSessionKeysResponseSchema,
+    PrivateSessionKeysResultSchema,
     PrivateSetCancelOnDisconnectParamsSchema,
-    PrivateSetCancelOnDisconnectResponseSchema,
     PrivateSetMmpConfigParamsSchema,
-    PrivateSetMmpConfigResponseSchema,
+    PrivateSetMmpConfigResultSchema,
     PrivateTransferErc20ParamsSchema,
-    PrivateTransferErc20ResponseSchema,
+    PrivateTransferErc20ResultSchema,
     PrivateTransferPositionParamsSchema,
-    PrivateTransferPositionResponseSchema,
+    PrivateTransferPositionResultSchema,
     PrivateTransferPositionsParamsSchema,
-    PrivateTransferPositionsResponseSchema,
+    PrivateTransferPositionsResultSchema,
     PrivateUpdateNotificationsParamsSchema,
-    PrivateUpdateNotificationsResponseSchema,
+    PrivateUpdateNotificationsResultSchema,
     PrivateWithdrawParamsSchema,
-    PrivateWithdrawResponseSchema,
+    PrivateWithdrawResultSchema,
+    ProgramResponseSchema,
     PublicBuildRegisterSessionKeyTxParamsSchema,
-    PublicBuildRegisterSessionKeyTxResponseSchema,
+    PublicBuildRegisterSessionKeyTxResultSchema,
     PublicCreateSubaccountDebugParamsSchema,
-    PublicCreateSubaccountDebugResponseSchema,
+    PublicCreateSubaccountDebugResultSchema,
     PublicDepositDebugParamsSchema,
-    PublicDepositDebugResponseSchema,
+    PublicDepositDebugResultSchema,
     PublicDeregisterSessionKeyParamsSchema,
-    PublicDeregisterSessionKeyResponseSchema,
+    PublicDeregisterSessionKeyResultSchema,
     PublicExecuteQuoteDebugParamsSchema,
-    PublicExecuteQuoteDebugResponseSchema,
+    PublicExecuteQuoteDebugResultSchema,
     PublicGetAllCurrenciesParamsSchema,
-    PublicGetAllCurrenciesResponseSchema,
     PublicGetAllInstrumentsParamsSchema,
-    PublicGetAllInstrumentsResponseSchema,
+    PublicGetAllInstrumentsResultSchema,
     PublicGetCurrencyParamsSchema,
-    PublicGetCurrencyResponseSchema,
+    PublicGetCurrencyResultSchema,
     PublicGetFundingRateHistoryParamsSchema,
-    PublicGetFundingRateHistoryResponseSchema,
+    PublicGetFundingRateHistoryResultSchema,
     PublicGetInstrumentParamsSchema,
-    PublicGetInstrumentResponseSchema,
+    PublicGetInstrumentResultSchema,
     PublicGetInstrumentsParamsSchema,
-    PublicGetInstrumentsResponseSchema,
     PublicGetInterestRateHistoryParamsSchema,
-    PublicGetInterestRateHistoryResponseSchema,
+    PublicGetInterestRateHistoryResultSchema,
     PublicGetLatestSignedFeedsParamsSchema,
-    PublicGetLatestSignedFeedsResponseSchema,
+    PublicGetLatestSignedFeedsResultSchema,
     PublicGetLiquidationHistoryParamsSchema,
-    PublicGetLiquidationHistoryResponseSchema,
+    PublicGetLiquidationHistoryResultSchema,
     PublicGetLiveIncidentsParamsSchema,
-    PublicGetLiveIncidentsResponseSchema,
+    PublicGetLiveIncidentsResultSchema,
     PublicGetMakerProgramScoresParamsSchema,
-    PublicGetMakerProgramScoresResponseSchema,
+    PublicGetMakerProgramScoresResultSchema,
     PublicGetMakerProgramsParamsSchema,
-    PublicGetMakerProgramsResponseSchema,
     PublicGetMarginParamsSchema,
-    PublicGetMarginResponseSchema,
+    PublicGetMarginResultSchema,
     PublicGetOptionSettlementHistoryParamsSchema,
-    PublicGetOptionSettlementHistoryResponseSchema,
+    PublicGetOptionSettlementHistoryResultSchema,
     PublicGetOptionSettlementPricesParamsSchema,
-    PublicGetOptionSettlementPricesResponseSchema,
+    PublicGetOptionSettlementPricesResultSchema,
     PublicGetReferralPerformanceParamsSchema,
-    PublicGetReferralPerformanceResponseSchema,
+    PublicGetReferralPerformanceResultSchema,
     PublicGetSpotFeedHistoryCandlesParamsSchema,
-    PublicGetSpotFeedHistoryCandlesResponseSchema,
+    PublicGetSpotFeedHistoryCandlesResultSchema,
     PublicGetSpotFeedHistoryParamsSchema,
-    PublicGetSpotFeedHistoryResponseSchema,
+    PublicGetSpotFeedHistoryResultSchema,
     PublicGetTickerParamsSchema,
-    PublicGetTickerResponseSchema,
+    PublicGetTickerResultSchema,
     PublicGetTickersParamsSchema,
-    PublicGetTickersResponseSchema,
+    PublicGetTickersResultSchema,
     PublicGetTimeParamsSchema,
-    PublicGetTimeResponseSchema,
     PublicGetTradeHistoryParamsSchema,
-    PublicGetTradeHistoryResponseSchema,
+    PublicGetTradeHistoryResultSchema,
     PublicGetTransactionParamsSchema,
-    PublicGetTransactionResponseSchema,
+    PublicGetTransactionResultSchema,
     PublicGetVaultBalancesParamsSchema,
-    PublicGetVaultBalancesResponseSchema,
     PublicGetVaultShareParamsSchema,
-    PublicGetVaultShareResponseSchema,
+    PublicGetVaultShareResultSchema,
     PublicGetVaultStatisticsParamsSchema,
-    PublicGetVaultStatisticsResponseSchema,
     PublicLoginParamsSchema,
-    PublicLoginResponseSchema,
     PublicMarginWatchParamsSchema,
-    PublicMarginWatchResponseSchema,
+    PublicMarginWatchResultSchema,
     PublicRegisterSessionKeyParamsSchema,
-    PublicRegisterSessionKeyResponseSchema,
+    PublicRegisterSessionKeyResultSchema,
     PublicSendQuoteDebugParamsSchema,
-    PublicSendQuoteDebugResponseSchema,
+    PublicSendQuoteDebugResultSchema,
     PublicStatisticsParamsSchema,
-    PublicStatisticsResponseSchema,
+    PublicStatisticsResultSchema,
     PublicWithdrawDebugParamsSchema,
-    PublicWithdrawDebugResponseSchema,
+    PublicWithdrawDebugResultSchema,
+    Result,
+    VaultBalanceResponseSchema,
+    VaultStatisticsResponseSchema,
 )
 
 
@@ -222,7 +217,7 @@ class PublicAPI:
     def build_register_session_key_tx(
         self,
         params: PublicBuildRegisterSessionKeyTxParamsSchema,
-    ) -> PublicBuildRegisterSessionKeyTxResponseSchema:
+    ) -> PublicBuildRegisterSessionKeyTxResultSchema:
         """
         Build a signable transaction params dictionary.
         """
@@ -230,13 +225,14 @@ class PublicAPI:
         url = self._endpoints.build_register_session_key_tx
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicBuildRegisterSessionKeyTxResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicBuildRegisterSessionKeyTxResultSchema)
+        return result
 
     def register_session_key(
         self,
         params: PublicRegisterSessionKeyParamsSchema,
-    ) -> PublicRegisterSessionKeyResponseSchema:
+    ) -> PublicRegisterSessionKeyResultSchema:
         """
         Register or update expiry of an existing session key.
 
@@ -251,13 +247,14 @@ class PublicAPI:
         url = self._endpoints.register_session_key
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicRegisterSessionKeyResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicRegisterSessionKeyResultSchema)
+        return result
 
     def deregister_session_key(
         self,
         params: PublicDeregisterSessionKeyParamsSchema,
-    ) -> PublicDeregisterSessionKeyResponseSchema:
+    ) -> PublicDeregisterSessionKeyResultSchema:
         """
         Used for de-registering admin scoped keys. For other scopes, use
         `/edit_session_key`.
@@ -266,13 +263,14 @@ class PublicAPI:
         url = self._endpoints.deregister_session_key
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicDeregisterSessionKeyResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicDeregisterSessionKeyResultSchema)
+        return result
 
     def login(
         self,
         params: PublicLoginParamsSchema,
-    ) -> PublicLoginResponseSchema:
+    ) -> List[int]:
         """
         Authenticate a websocket connection. Unavailable via HTTP.
         """
@@ -280,13 +278,14 @@ class PublicAPI:
         url = self._endpoints.login
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicLoginResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, list[int])
+        return result
 
     def statistics(
         self,
         params: PublicStatisticsParamsSchema,
-    ) -> PublicStatisticsResponseSchema:
+    ) -> PublicStatisticsResultSchema:
         """
         Get statistics for a specific instrument or instrument type
         """
@@ -294,13 +293,14 @@ class PublicAPI:
         url = self._endpoints.statistics
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicStatisticsResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicStatisticsResultSchema)
+        return result
 
     def get_all_currencies(
         self,
         params: PublicGetAllCurrenciesParamsSchema,
-    ) -> PublicGetAllCurrenciesResponseSchema:
+    ) -> List[CurrencyDetailedResponseSchema]:
         """
         Get all active currencies with their spot price, spot price 24hrs ago.
 
@@ -310,13 +310,14 @@ class PublicAPI:
         url = self._endpoints.get_all_currencies
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicGetAllCurrenciesResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, list[CurrencyDetailedResponseSchema])
+        return result
 
     def get_currency(
         self,
         params: PublicGetCurrencyParamsSchema,
-    ) -> PublicGetCurrencyResponseSchema:
+    ) -> PublicGetCurrencyResultSchema:
         """
         Get currency related risk params, spot price 24hrs ago and lending details for a
         specific currency.
@@ -325,13 +326,14 @@ class PublicAPI:
         url = self._endpoints.get_currency
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicGetCurrencyResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicGetCurrencyResultSchema)
+        return result
 
     def get_instrument(
         self,
         params: PublicGetInstrumentParamsSchema,
-    ) -> PublicGetInstrumentResponseSchema:
+    ) -> PublicGetInstrumentResultSchema:
         """
         Get single instrument by asset name
         """
@@ -339,13 +341,14 @@ class PublicAPI:
         url = self._endpoints.get_instrument
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicGetInstrumentResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicGetInstrumentResultSchema)
+        return result
 
     def get_all_instruments(
         self,
         params: PublicGetAllInstrumentsParamsSchema,
-    ) -> PublicGetAllInstrumentsResponseSchema:
+    ) -> PublicGetAllInstrumentsResultSchema:
         """
         Get a paginated history of all instruments
         """
@@ -353,13 +356,14 @@ class PublicAPI:
         url = self._endpoints.get_all_instruments
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicGetAllInstrumentsResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicGetAllInstrumentsResultSchema)
+        return result
 
     def get_instruments(
         self,
         params: PublicGetInstrumentsParamsSchema,
-    ) -> PublicGetInstrumentsResponseSchema:
+    ) -> List[InstrumentPublicResponseSchema]:
         """
         Get all active instruments for a given `currency` and `type`.
         """
@@ -367,13 +371,14 @@ class PublicAPI:
         url = self._endpoints.get_instruments
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicGetInstrumentsResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, list[InstrumentPublicResponseSchema])
+        return result
 
     def get_ticker(
         self,
         params: PublicGetTickerParamsSchema,
-    ) -> PublicGetTickerResponseSchema:
+    ) -> PublicGetTickerResultSchema:
         """
         Get ticker information (best bid / ask, instrument contraints, fees info, etc.)
         for a single instrument
@@ -385,13 +390,14 @@ class PublicAPI:
         url = self._endpoints.get_ticker
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicGetTickerResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicGetTickerResultSchema)
+        return result
 
     def get_tickers(
         self,
         params: PublicGetTickersParamsSchema,
-    ) -> PublicGetTickersResponseSchema:
+    ) -> PublicGetTickersResultSchema:
         """
         Get tickers information (best bid / ask, stats, etc.) for a multiple
         instruments.
@@ -403,13 +409,14 @@ class PublicAPI:
         url = self._endpoints.get_tickers
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicGetTickersResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicGetTickersResultSchema)
+        return result
 
     def get_latest_signed_feeds(
         self,
         params: PublicGetLatestSignedFeedsParamsSchema,
-    ) -> PublicGetLatestSignedFeedsResponseSchema:
+    ) -> PublicGetLatestSignedFeedsResultSchema:
         """
         Get latest signed data feeds
         """
@@ -417,13 +424,14 @@ class PublicAPI:
         url = self._endpoints.get_latest_signed_feeds
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicGetLatestSignedFeedsResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicGetLatestSignedFeedsResultSchema)
+        return result
 
     def get_option_settlement_prices(
         self,
         params: PublicGetOptionSettlementPricesParamsSchema,
-    ) -> PublicGetOptionSettlementPricesResponseSchema:
+    ) -> PublicGetOptionSettlementPricesResultSchema:
         """
         Get settlement prices by expiry for each currency
         """
@@ -431,13 +439,14 @@ class PublicAPI:
         url = self._endpoints.get_option_settlement_prices
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicGetOptionSettlementPricesResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicGetOptionSettlementPricesResultSchema)
+        return result
 
     def get_spot_feed_history(
         self,
         params: PublicGetSpotFeedHistoryParamsSchema,
-    ) -> PublicGetSpotFeedHistoryResponseSchema:
+    ) -> PublicGetSpotFeedHistoryResultSchema:
         """
         Get spot feed history by currency
 
@@ -447,13 +456,14 @@ class PublicAPI:
         url = self._endpoints.get_spot_feed_history
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicGetSpotFeedHistoryResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicGetSpotFeedHistoryResultSchema)
+        return result
 
     def get_spot_feed_history_candles(
         self,
         params: PublicGetSpotFeedHistoryCandlesParamsSchema,
-    ) -> PublicGetSpotFeedHistoryCandlesResponseSchema:
+    ) -> PublicGetSpotFeedHistoryCandlesResultSchema:
         """
         Get spot feed history candles by currency
 
@@ -463,13 +473,14 @@ class PublicAPI:
         url = self._endpoints.get_spot_feed_history_candles
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicGetSpotFeedHistoryCandlesResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicGetSpotFeedHistoryCandlesResultSchema)
+        return result
 
     def get_funding_rate_history(
         self,
         params: PublicGetFundingRateHistoryParamsSchema,
-    ) -> PublicGetFundingRateHistoryResponseSchema:
+    ) -> PublicGetFundingRateHistoryResultSchema:
         """
         Get funding rate history. Start timestamp is restricted to at most 30 days ago.
 
@@ -484,13 +495,14 @@ class PublicAPI:
         url = self._endpoints.get_funding_rate_history
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicGetFundingRateHistoryResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicGetFundingRateHistoryResultSchema)
+        return result
 
     def get_trade_history(
         self,
         params: PublicGetTradeHistoryParamsSchema,
-    ) -> PublicGetTradeHistoryResponseSchema:
+    ) -> PublicGetTradeHistoryResultSchema:
         """
         Get trade history for a subaccount, with filter parameters.
         """
@@ -498,13 +510,14 @@ class PublicAPI:
         url = self._endpoints.get_trade_history
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicGetTradeHistoryResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicGetTradeHistoryResultSchema)
+        return result
 
     def get_option_settlement_history(
         self,
         params: PublicGetOptionSettlementHistoryParamsSchema,
-    ) -> PublicGetOptionSettlementHistoryResponseSchema:
+    ) -> PublicGetOptionSettlementHistoryResultSchema:
         """
         Get expired option settlement history for a subaccount
         """
@@ -512,13 +525,14 @@ class PublicAPI:
         url = self._endpoints.get_option_settlement_history
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicGetOptionSettlementHistoryResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicGetOptionSettlementHistoryResultSchema)
+        return result
 
     def get_liquidation_history(
         self,
         params: PublicGetLiquidationHistoryParamsSchema,
-    ) -> PublicGetLiquidationHistoryResponseSchema:
+    ) -> PublicGetLiquidationHistoryResultSchema:
         """
         Returns a paginated liquidation history for all subaccounts. Note that the
         pagination is based on the number of
@@ -535,13 +549,14 @@ class PublicAPI:
         url = self._endpoints.get_liquidation_history
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicGetLiquidationHistoryResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicGetLiquidationHistoryResultSchema)
+        return result
 
     def get_interest_rate_history(
         self,
         params: PublicGetInterestRateHistoryParamsSchema,
-    ) -> PublicGetInterestRateHistoryResponseSchema:
+    ) -> PublicGetInterestRateHistoryResultSchema:
         """
         Get latest USDC interest rate history
         """
@@ -549,13 +564,14 @@ class PublicAPI:
         url = self._endpoints.get_interest_rate_history
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicGetInterestRateHistoryResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicGetInterestRateHistoryResultSchema)
+        return result
 
     def get_transaction(
         self,
         params: PublicGetTransactionParamsSchema,
-    ) -> PublicGetTransactionResponseSchema:
+    ) -> PublicGetTransactionResultSchema:
         """
         Used for getting a transaction by its transaction id
         """
@@ -563,13 +579,14 @@ class PublicAPI:
         url = self._endpoints.get_transaction
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicGetTransactionResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicGetTransactionResultSchema)
+        return result
 
     def get_margin(
         self,
         params: PublicGetMarginParamsSchema,
-    ) -> PublicGetMarginResponseSchema:
+    ) -> PublicGetMarginResultSchema:
         """
         Calculates margin for a given portfolio and (optionally) a simulated state
         change.
@@ -580,13 +597,14 @@ class PublicAPI:
         url = self._endpoints.get_margin
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicGetMarginResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicGetMarginResultSchema)
+        return result
 
     def margin_watch(
         self,
         params: PublicMarginWatchParamsSchema,
-    ) -> PublicMarginWatchResponseSchema:
+    ) -> PublicMarginWatchResultSchema:
         """
         Calculates MtM and maintenance margin for a given subaccount.
         """
@@ -594,13 +612,14 @@ class PublicAPI:
         url = self._endpoints.margin_watch
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicMarginWatchResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicMarginWatchResultSchema)
+        return result
 
     def get_vault_share(
         self,
         params: PublicGetVaultShareParamsSchema,
-    ) -> PublicGetVaultShareResponseSchema:
+    ) -> PublicGetVaultShareResultSchema:
         """
         Gets the value of a vault's token against the base currency, underlying
         currency, and USD for a timestamp range.
@@ -612,13 +631,14 @@ class PublicAPI:
         url = self._endpoints.get_vault_share
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicGetVaultShareResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicGetVaultShareResultSchema)
+        return result
 
     def get_vault_statistics(
         self,
         params: PublicGetVaultStatisticsParamsSchema,
-    ) -> PublicGetVaultStatisticsResponseSchema:
+    ) -> List[VaultStatisticsResponseSchema]:
         """
         Gets all the latest vault shareRate, totalSupply and TVL values for all vaults.
 
@@ -628,13 +648,14 @@ class PublicAPI:
         url = self._endpoints.get_vault_statistics
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicGetVaultStatisticsResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, list[VaultStatisticsResponseSchema])
+        return result
 
     def get_vault_balances(
         self,
         params: PublicGetVaultBalancesParamsSchema,
-    ) -> PublicGetVaultBalancesResponseSchema:
+    ) -> List[VaultBalanceResponseSchema]:
         """
         Get all vault assets held by user. Can query by smart contract address or smart
         contract owner.
@@ -645,13 +666,14 @@ class PublicAPI:
         url = self._endpoints.get_vault_balances
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicGetVaultBalancesResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, list[VaultBalanceResponseSchema])
+        return result
 
     def create_subaccount_debug(
         self,
         params: PublicCreateSubaccountDebugParamsSchema,
-    ) -> PublicCreateSubaccountDebugResponseSchema:
+    ) -> PublicCreateSubaccountDebugResultSchema:
         """
         Used for debugging only, do not use in production. Will return the incremental
         encoded and hashed data.
@@ -662,13 +684,14 @@ class PublicAPI:
         url = self._endpoints.create_subaccount_debug
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicCreateSubaccountDebugResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicCreateSubaccountDebugResultSchema)
+        return result
 
     def deposit_debug(
         self,
         params: PublicDepositDebugParamsSchema,
-    ) -> PublicDepositDebugResponseSchema:
+    ) -> PublicDepositDebugResultSchema:
         """
         Used for debugging only, do not use in production. Will return the incremental
         encoded and hashed data.
@@ -679,13 +702,14 @@ class PublicAPI:
         url = self._endpoints.deposit_debug
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicDepositDebugResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicDepositDebugResultSchema)
+        return result
 
     def withdraw_debug(
         self,
         params: PublicWithdrawDebugParamsSchema,
-    ) -> PublicWithdrawDebugResponseSchema:
+    ) -> PublicWithdrawDebugResultSchema:
         """
         Used for debugging only, do not use in production. Will return the incremental
         encoded and hashed data.
@@ -696,13 +720,14 @@ class PublicAPI:
         url = self._endpoints.withdraw_debug
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicWithdrawDebugResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicWithdrawDebugResultSchema)
+        return result
 
     def send_quote_debug(
         self,
         params: PublicSendQuoteDebugParamsSchema,
-    ) -> PublicSendQuoteDebugResponseSchema:
+    ) -> PublicSendQuoteDebugResultSchema:
         """
         Sends a quote in response to an RFQ request.
 
@@ -712,13 +737,14 @@ class PublicAPI:
         url = self._endpoints.send_quote_debug
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicSendQuoteDebugResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicSendQuoteDebugResultSchema)
+        return result
 
     def execute_quote_debug(
         self,
         params: PublicExecuteQuoteDebugParamsSchema,
-    ) -> PublicExecuteQuoteDebugResponseSchema:
+    ) -> PublicExecuteQuoteDebugResultSchema:
         """
         Sends a quote in response to an RFQ request.
 
@@ -728,33 +754,36 @@ class PublicAPI:
         url = self._endpoints.execute_quote_debug
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicExecuteQuoteDebugResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicExecuteQuoteDebugResultSchema)
+        return result
 
     def get_time(
         self,
         params: PublicGetTimeParamsSchema,
-    ) -> PublicGetTimeResponseSchema:
+    ) -> int:
         url = self._endpoints.get_time
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicGetTimeResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, int)
+        return result
 
     def get_live_incidents(
         self,
         params: PublicGetLiveIncidentsParamsSchema,
-    ) -> PublicGetLiveIncidentsResponseSchema:
+    ) -> PublicGetLiveIncidentsResultSchema:
         url = self._endpoints.get_live_incidents
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicGetLiveIncidentsResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicGetLiveIncidentsResultSchema)
+        return result
 
     def get_maker_programs(
         self,
         params: PublicGetMakerProgramsParamsSchema,
-    ) -> PublicGetMakerProgramsResponseSchema:
+    ) -> List[ProgramResponseSchema]:
         """
         Get all maker programs, including past / historical ones.
         """
@@ -762,13 +791,14 @@ class PublicAPI:
         url = self._endpoints.get_maker_programs
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicGetMakerProgramsResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, list[ProgramResponseSchema])
+        return result
 
     def get_maker_program_scores(
         self,
         params: PublicGetMakerProgramScoresParamsSchema,
-    ) -> PublicGetMakerProgramScoresResponseSchema:
+    ) -> PublicGetMakerProgramScoresResultSchema:
         """
         Get scores breakdown by maker program.
         """
@@ -776,13 +806,14 @@ class PublicAPI:
         url = self._endpoints.get_maker_program_scores
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicGetMakerProgramScoresResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicGetMakerProgramScoresResultSchema)
+        return result
 
     def get_referral_performance(
         self,
         params: PublicGetReferralPerformanceParamsSchema,
-    ) -> PublicGetReferralPerformanceResponseSchema:
+    ) -> PublicGetReferralPerformanceResultSchema:
         """
         Get the broker program referral performance. Epochs are 28 days long.
         """
@@ -790,8 +821,9 @@ class PublicAPI:
         url = self._endpoints.get_referral_performance
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PublicGetReferralPerformanceResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PublicGetReferralPerformanceResultSchema)
+        return result
 
 
 class PrivateAPI:
@@ -810,7 +842,7 @@ class PrivateAPI:
     def get_account(
         self,
         params: PrivateGetAccountParamsSchema,
-    ) -> PrivateGetAccountResponseSchema:
+    ) -> PrivateGetAccountResultSchema:
         """
         Account details getter
 
@@ -820,13 +852,14 @@ class PrivateAPI:
         url = self._endpoints.get_account
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateGetAccountResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateGetAccountResultSchema)
+        return result
 
     def create_subaccount(
         self,
         params: PrivateCreateSubaccountParamsSchema,
-    ) -> PrivateCreateSubaccountResponseSchema:
+    ) -> PrivateCreateSubaccountResultSchema:
         """
         Create a new subaccount under a given wallet, and deposit an asset into that
         subaccount.
@@ -840,13 +873,14 @@ class PrivateAPI:
         url = self._endpoints.create_subaccount
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateCreateSubaccountResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateCreateSubaccountResultSchema)
+        return result
 
     def get_subaccount(
         self,
         params: PrivateGetSubaccountParamsSchema,
-    ) -> PrivateGetSubaccountResponseSchema:
+    ) -> PrivateGetSubaccountResultSchema:
         """
         Get open orders, active positions, and collaterals of a subaccount
 
@@ -856,13 +890,14 @@ class PrivateAPI:
         url = self._endpoints.get_subaccount
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateGetSubaccountResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateGetSubaccountResultSchema)
+        return result
 
     def get_subaccounts(
         self,
         params: PrivateGetSubaccountsParamsSchema,
-    ) -> PrivateGetSubaccountsResponseSchema:
+    ) -> PrivateGetSubaccountsResultSchema:
         """
         Get all subaccounts of an account / wallet
 
@@ -872,13 +907,14 @@ class PrivateAPI:
         url = self._endpoints.get_subaccounts
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateGetSubaccountsResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateGetSubaccountsResultSchema)
+        return result
 
     def get_all_portfolios(
         self,
         params: PrivateGetAllPortfoliosParamsSchema,
-    ) -> PrivateGetAllPortfoliosResponseSchema:
+    ) -> List[PrivateGetSubaccountResultSchema]:
         """
         Get all portfolios of a wallet
 
@@ -888,13 +924,14 @@ class PrivateAPI:
         url = self._endpoints.get_all_portfolios
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateGetAllPortfoliosResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, list[PrivateGetSubaccountResultSchema])
+        return result
 
     def change_subaccount_label(
         self,
         params: PrivateChangeSubaccountLabelParamsSchema,
-    ) -> PrivateChangeSubaccountLabelResponseSchema:
+    ) -> PrivateChangeSubaccountLabelResultSchema:
         """
         Change a user defined label for given subaccount
 
@@ -904,13 +941,14 @@ class PrivateAPI:
         url = self._endpoints.change_subaccount_label
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateChangeSubaccountLabelResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateChangeSubaccountLabelResultSchema)
+        return result
 
     def get_notifications(
         self,
         params: PrivateGetNotificationsParamsSchema,
-    ) -> PrivateGetNotificationsResponseSchema:
+    ) -> PrivateGetNotificationsResultSchema:
         """
         Get the notifications related to a subaccount.
 
@@ -920,13 +958,14 @@ class PrivateAPI:
         url = self._endpoints.get_notifications
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateGetNotificationsResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateGetNotificationsResultSchema)
+        return result
 
     def update_notifications(
         self,
         params: PrivateUpdateNotificationsParamsSchema,
-    ) -> PrivateUpdateNotificationsResponseSchema:
+    ) -> PrivateUpdateNotificationsResultSchema:
         """
         RPC to mark specified notifications as seen for a given subaccount.
 
@@ -936,13 +975,14 @@ class PrivateAPI:
         url = self._endpoints.update_notifications
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateUpdateNotificationsResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateUpdateNotificationsResultSchema)
+        return result
 
     def deposit(
         self,
         params: PrivateDepositParamsSchema,
-    ) -> PrivateDepositResponseSchema:
+    ) -> PrivateDepositResultSchema:
         """
         Deposit an asset to a subaccount.
 
@@ -955,13 +995,14 @@ class PrivateAPI:
         url = self._endpoints.deposit
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateDepositResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateDepositResultSchema)
+        return result
 
     def withdraw(
         self,
         params: PrivateWithdrawParamsSchema,
-    ) -> PrivateWithdrawResponseSchema:
+    ) -> PrivateWithdrawResultSchema:
         """
         Withdraw an asset to wallet.
 
@@ -974,13 +1015,14 @@ class PrivateAPI:
         url = self._endpoints.withdraw
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateWithdrawResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateWithdrawResultSchema)
+        return result
 
     def transfer_erc20(
         self,
         params: PrivateTransferErc20ParamsSchema,
-    ) -> PrivateTransferErc20ResponseSchema:
+    ) -> PrivateTransferErc20ResultSchema:
         """
         Transfer ERC20 assets from one subaccount to another (e.g. USDC or ETH).
 
@@ -993,13 +1035,14 @@ class PrivateAPI:
         url = self._endpoints.transfer_erc20
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateTransferErc20ResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateTransferErc20ResultSchema)
+        return result
 
     def transfer_position(
         self,
         params: PrivateTransferPositionParamsSchema,
-    ) -> PrivateTransferPositionResponseSchema:
+    ) -> PrivateTransferPositionResultSchema:
         """
         Transfers a positions from one subaccount to another, owned by the same wallet.
 
@@ -1024,13 +1067,14 @@ class PrivateAPI:
         url = self._endpoints.transfer_position
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateTransferPositionResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateTransferPositionResultSchema)
+        return result
 
     def transfer_positions(
         self,
         params: PrivateTransferPositionsParamsSchema,
-    ) -> PrivateTransferPositionsResponseSchema:
+    ) -> PrivateTransferPositionsResultSchema:
         """
         Transfers multiple positions from one subaccount to another, owned by the same
         wallet.
@@ -1055,13 +1099,14 @@ class PrivateAPI:
         url = self._endpoints.transfer_positions
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateTransferPositionsResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateTransferPositionsResultSchema)
+        return result
 
     def order(
         self,
         params: PrivateOrderParamsSchema,
-    ) -> PrivateOrderResponseSchema:
+    ) -> PrivateOrderResultSchema:
         """
         Create a new order.
 
@@ -1071,13 +1116,14 @@ class PrivateAPI:
         url = self._endpoints.order
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateOrderResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateOrderResultSchema)
+        return result
 
     def replace(
         self,
         params: PrivateReplaceParamsSchema,
-    ) -> PrivateReplaceResponseSchema:
+    ) -> PrivateReplaceResultSchema:
         """
         Cancel an existing order with nonce or order_id and create new order with
         different order_id in a single RPC call.
@@ -1093,13 +1139,14 @@ class PrivateAPI:
         url = self._endpoints.replace
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateReplaceResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateReplaceResultSchema)
+        return result
 
     def order_debug(
         self,
         params: PrivateOrderDebugParamsSchema,
-    ) -> PrivateOrderDebugResponseSchema:
+    ) -> PrivateOrderDebugResultSchema:
         """
         Debug a new order
 
@@ -1109,13 +1156,14 @@ class PrivateAPI:
         url = self._endpoints.order_debug
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateOrderDebugResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateOrderDebugResultSchema)
+        return result
 
     def get_order(
         self,
         params: PrivateGetOrderParamsSchema,
-    ) -> PrivateGetOrderResponseSchema:
+    ) -> PrivateGetOrderResultSchema:
         """
         Get state of an order by order id.  If the order is an MMP order, it will not
         show up if cancelled/expired.
@@ -1126,13 +1174,14 @@ class PrivateAPI:
         url = self._endpoints.get_order
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateGetOrderResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateGetOrderResultSchema)
+        return result
 
     def get_orders(
         self,
         params: PrivateGetOrdersParamsSchema,
-    ) -> PrivateGetOrdersResponseSchema:
+    ) -> PrivateGetOrdersResultSchema:
         """
         Get orders for a subaccount, with optional filtering.
 
@@ -1142,13 +1191,14 @@ class PrivateAPI:
         url = self._endpoints.get_orders
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateGetOrdersResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateGetOrdersResultSchema)
+        return result
 
     def get_open_orders(
         self,
         params: PrivateGetOpenOrdersParamsSchema,
-    ) -> PrivateGetOpenOrdersResponseSchema:
+    ) -> PrivateGetOpenOrdersResultSchema:
         """
         Get all open orders of a subacccount
 
@@ -1158,13 +1208,14 @@ class PrivateAPI:
         url = self._endpoints.get_open_orders
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateGetOpenOrdersResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateGetOpenOrdersResultSchema)
+        return result
 
     def cancel(
         self,
         params: PrivateCancelParamsSchema,
-    ) -> PrivateCancelResponseSchema:
+    ) -> PrivateCancelResultSchema:
         """
         Cancel a single order.
 
@@ -1176,13 +1227,14 @@ class PrivateAPI:
         url = self._endpoints.cancel
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateCancelResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateCancelResultSchema)
+        return result
 
     def cancel_all(
         self,
         params: PrivateCancelAllParamsSchema,
-    ) -> PrivateCancelAllResponseSchema:
+    ) -> Result:
         """
         Cancel all orders for this instrument.
 
@@ -1192,13 +1244,14 @@ class PrivateAPI:
         url = self._endpoints.cancel_all
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateCancelAllResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, Result)
+        return result
 
     def cancel_by_label(
         self,
         params: PrivateCancelByLabelParamsSchema,
-    ) -> PrivateCancelByLabelResponseSchema:
+    ) -> PrivateCancelByLabelResultSchema:
         """
         Cancel all open orders for a given subaccount and a given label.  If
         instrument_name is provided, only orders for that instrument will be cancelled.
@@ -1209,13 +1262,14 @@ class PrivateAPI:
         url = self._endpoints.cancel_by_label
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateCancelByLabelResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateCancelByLabelResultSchema)
+        return result
 
     def cancel_by_nonce(
         self,
         params: PrivateCancelByNonceParamsSchema,
-    ) -> PrivateCancelByNonceResponseSchema:
+    ) -> PrivateCancelByNonceResultSchema:
         """
         Cancel a single order by nonce. Uses up that nonce if the order does not exist,
         so any future orders with that nonce will fail
@@ -1226,13 +1280,14 @@ class PrivateAPI:
         url = self._endpoints.cancel_by_nonce
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateCancelByNonceResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateCancelByNonceResultSchema)
+        return result
 
     def cancel_by_instrument(
         self,
         params: PrivateCancelByInstrumentParamsSchema,
-    ) -> PrivateCancelByInstrumentResponseSchema:
+    ) -> PrivateCancelByInstrumentResultSchema:
         """
         Cancel all orders for this instrument.
 
@@ -1242,13 +1297,14 @@ class PrivateAPI:
         url = self._endpoints.cancel_by_instrument
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateCancelByInstrumentResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateCancelByInstrumentResultSchema)
+        return result
 
     def cancel_trigger_order(
         self,
         params: PrivateCancelTriggerOrderParamsSchema,
-    ) -> PrivateCancelTriggerOrderResponseSchema:
+    ) -> PrivateCancelTriggerOrderResultSchema:
         """
         Cancels a trigger order.
 
@@ -1258,13 +1314,14 @@ class PrivateAPI:
         url = self._endpoints.cancel_trigger_order
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateCancelTriggerOrderResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateCancelTriggerOrderResultSchema)
+        return result
 
     def cancel_all_trigger_orders(
         self,
         params: PrivateCancelAllTriggerOrdersParamsSchema,
-    ) -> PrivateCancelAllTriggerOrdersResponseSchema:
+    ) -> Result:
         """
         Cancel all trigger orders for this subaccount.
 
@@ -1276,13 +1333,14 @@ class PrivateAPI:
         url = self._endpoints.cancel_all_trigger_orders
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateCancelAllTriggerOrdersResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, Result)
+        return result
 
     def get_order_history(
         self,
         params: PrivateGetOrderHistoryParamsSchema,
-    ) -> PrivateGetOrderHistoryResponseSchema:
+    ) -> PrivateGetOrderHistoryResultSchema:
         """
         Get order history for a subaccount
 
@@ -1292,13 +1350,14 @@ class PrivateAPI:
         url = self._endpoints.get_order_history
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateGetOrderHistoryResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateGetOrderHistoryResultSchema)
+        return result
 
     def get_trade_history(
         self,
         params: PrivateGetTradeHistoryParamsSchema,
-    ) -> PrivateGetTradeHistoryResponseSchema:
+    ) -> PrivateGetTradeHistoryResultSchema:
         """
         Get trade history for a subaccount, with filter parameters.
 
@@ -1308,13 +1367,14 @@ class PrivateAPI:
         url = self._endpoints.get_trade_history
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateGetTradeHistoryResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateGetTradeHistoryResultSchema)
+        return result
 
     def get_deposit_history(
         self,
         params: PrivateGetDepositHistoryParamsSchema,
-    ) -> PrivateGetDepositHistoryResponseSchema:
+    ) -> PrivateGetDepositHistoryResultSchema:
         """
         Get subaccount deposit history.
 
@@ -1324,13 +1384,14 @@ class PrivateAPI:
         url = self._endpoints.get_deposit_history
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateGetDepositHistoryResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateGetDepositHistoryResultSchema)
+        return result
 
     def get_withdrawal_history(
         self,
         params: PrivateGetWithdrawalHistoryParamsSchema,
-    ) -> PrivateGetWithdrawalHistoryResponseSchema:
+    ) -> PrivateGetWithdrawalHistoryResultSchema:
         """
         Get subaccount withdrawal history.
 
@@ -1340,13 +1401,14 @@ class PrivateAPI:
         url = self._endpoints.get_withdrawal_history
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateGetWithdrawalHistoryResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateGetWithdrawalHistoryResultSchema)
+        return result
 
     def send_rfq(
         self,
         params: PrivateSendRfqParamsSchema,
-    ) -> PrivateSendRfqResponseSchema:
+    ) -> PrivateSendRfqResultSchema:
         """
         Requests two-sided quotes from participating market makers.
 
@@ -1356,13 +1418,14 @@ class PrivateAPI:
         url = self._endpoints.send_rfq
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateSendRfqResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateSendRfqResultSchema)
+        return result
 
     def cancel_rfq(
         self,
         params: PrivateCancelRfqParamsSchema,
-    ) -> PrivateCancelRfqResponseSchema:
+    ) -> Result:
         """
         Cancels a single RFQ by id.
 
@@ -1372,13 +1435,14 @@ class PrivateAPI:
         url = self._endpoints.cancel_rfq
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateCancelRfqResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, Result)
+        return result
 
     def cancel_batch_rfqs(
         self,
         params: PrivateCancelBatchRfqsParamsSchema,
-    ) -> PrivateCancelBatchRfqsResponseSchema:
+    ) -> PrivateCancelBatchRfqsResultSchema:
         """
         Cancels RFQs given optional filters.
 
@@ -1393,13 +1457,14 @@ class PrivateAPI:
         url = self._endpoints.cancel_batch_rfqs
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateCancelBatchRfqsResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateCancelBatchRfqsResultSchema)
+        return result
 
     def get_rfqs(
         self,
         params: PrivateGetRfqsParamsSchema,
-    ) -> PrivateGetRfqsResponseSchema:
+    ) -> PrivateGetRfqsResultSchema:
         """
         Retrieves a list of RFQs matching filter criteria. Takers can use this to get
         their open RFQs, RFQ history, etc.
@@ -1410,13 +1475,14 @@ class PrivateAPI:
         url = self._endpoints.get_rfqs
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateGetRfqsResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateGetRfqsResultSchema)
+        return result
 
     def poll_rfqs(
         self,
         params: PrivatePollRfqsParamsSchema,
-    ) -> PrivatePollRfqsResponseSchema:
+    ) -> PrivatePollRfqsResultSchema:
         """
         Retrieves a list of RFQs matching filter criteria. Market makers can use this to
         poll RFQs directed to them.
@@ -1427,13 +1493,14 @@ class PrivateAPI:
         url = self._endpoints.poll_rfqs
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivatePollRfqsResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivatePollRfqsResultSchema)
+        return result
 
     def send_quote(
         self,
         params: PrivateSendQuoteParamsSchema,
-    ) -> PrivateSendQuoteResponseSchema:
+    ) -> PrivateSendQuoteResultSchema:
         """
         Sends a quote in response to an RFQ request.
 
@@ -1445,13 +1512,14 @@ class PrivateAPI:
         url = self._endpoints.send_quote
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateSendQuoteResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateSendQuoteResultSchema)
+        return result
 
     def replace_quote(
         self,
         params: PrivateReplaceQuoteParamsSchema,
-    ) -> PrivateReplaceQuoteResponseSchema:
+    ) -> PrivateReplaceQuoteResultSchema:
         """
         Cancel an existing quote with nonce or quote_id and create new quote with
         different quote_id in a single RPC call.
@@ -1467,13 +1535,14 @@ class PrivateAPI:
         url = self._endpoints.replace_quote
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateReplaceQuoteResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateReplaceQuoteResultSchema)
+        return result
 
     def cancel_quote(
         self,
         params: PrivateCancelQuoteParamsSchema,
-    ) -> PrivateCancelQuoteResponseSchema:
+    ) -> PrivateCancelQuoteResultSchema:
         """
         Cancels an open quote.
 
@@ -1483,13 +1552,14 @@ class PrivateAPI:
         url = self._endpoints.cancel_quote
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateCancelQuoteResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateCancelQuoteResultSchema)
+        return result
 
     def cancel_batch_quotes(
         self,
         params: PrivateCancelBatchQuotesParamsSchema,
-    ) -> PrivateCancelBatchQuotesResponseSchema:
+    ) -> PrivateCancelBatchQuotesResultSchema:
         """
         Cancels quotes given optional filters. If no filters are provided, all quotes by
         the subaccount are cancelled.
@@ -1503,13 +1573,14 @@ class PrivateAPI:
         url = self._endpoints.cancel_batch_quotes
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateCancelBatchQuotesResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateCancelBatchQuotesResultSchema)
+        return result
 
     def get_quotes(
         self,
         params: PrivateGetQuotesParamsSchema,
-    ) -> PrivateGetQuotesResponseSchema:
+    ) -> PrivateGetQuotesResultSchema:
         """
         Retrieves a list of quotes matching filter criteria.
 
@@ -1521,13 +1592,14 @@ class PrivateAPI:
         url = self._endpoints.get_quotes
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateGetQuotesResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateGetQuotesResultSchema)
+        return result
 
     def poll_quotes(
         self,
         params: PrivatePollQuotesParamsSchema,
-    ) -> PrivatePollQuotesResponseSchema:
+    ) -> PrivatePollQuotesResultSchema:
         """
         Retrieves a list of quotes matching filter criteria.
 
@@ -1540,13 +1612,14 @@ class PrivateAPI:
         url = self._endpoints.poll_quotes
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivatePollQuotesResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivatePollQuotesResultSchema)
+        return result
 
     def execute_quote(
         self,
         params: PrivateExecuteQuoteParamsSchema,
-    ) -> PrivateExecuteQuoteResponseSchema:
+    ) -> PrivateExecuteQuoteResultSchema:
         """
         Executes a quote.
 
@@ -1556,13 +1629,14 @@ class PrivateAPI:
         url = self._endpoints.execute_quote
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateExecuteQuoteResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateExecuteQuoteResultSchema)
+        return result
 
     def rfq_get_best_quote(
         self,
         params: PrivateRfqGetBestQuoteParamsSchema,
-    ) -> PrivateRfqGetBestQuoteResponseSchema:
+    ) -> PrivateRfqGetBestQuoteResultSchema:
         """
         Performs a "dry run" on an RFQ, returning the estimated fee and whether the
         trade is expected to pass.
@@ -1578,13 +1652,14 @@ class PrivateAPI:
         url = self._endpoints.rfq_get_best_quote
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateRfqGetBestQuoteResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateRfqGetBestQuoteResultSchema)
+        return result
 
     def get_margin(
         self,
         params: PrivateGetMarginParamsSchema,
-    ) -> PrivateGetMarginResponseSchema:
+    ) -> PrivateGetMarginResultSchema:
         """
         Calculates margin for a given subaccount and (optionally) a simulated state
         change. Does not take into account
@@ -1597,13 +1672,14 @@ class PrivateAPI:
         url = self._endpoints.get_margin
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateGetMarginResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateGetMarginResultSchema)
+        return result
 
     def get_collaterals(
         self,
         params: PrivateGetCollateralsParamsSchema,
-    ) -> PrivateGetCollateralsResponseSchema:
+    ) -> PrivateGetCollateralsResultSchema:
         """
         Get collaterals of a subaccount
 
@@ -1613,13 +1689,14 @@ class PrivateAPI:
         url = self._endpoints.get_collaterals
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateGetCollateralsResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateGetCollateralsResultSchema)
+        return result
 
     def get_positions(
         self,
         params: PrivateGetPositionsParamsSchema,
-    ) -> PrivateGetPositionsResponseSchema:
+    ) -> PrivateGetPositionsResultSchema:
         """
         Get active positions of a subaccount
 
@@ -1629,13 +1706,14 @@ class PrivateAPI:
         url = self._endpoints.get_positions
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateGetPositionsResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateGetPositionsResultSchema)
+        return result
 
     def get_option_settlement_history(
         self,
         params: PrivateGetOptionSettlementHistoryParamsSchema,
-    ) -> PrivateGetOptionSettlementHistoryResponseSchema:
+    ) -> PrivateGetOptionSettlementHistoryResultSchema:
         """
         Get expired option settlement history for a subaccount
 
@@ -1645,13 +1723,14 @@ class PrivateAPI:
         url = self._endpoints.get_option_settlement_history
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateGetOptionSettlementHistoryResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateGetOptionSettlementHistoryResultSchema)
+        return result
 
     def get_subaccount_value_history(
         self,
         params: PrivateGetSubaccountValueHistoryParamsSchema,
-    ) -> PrivateGetSubaccountValueHistoryResponseSchema:
+    ) -> PrivateGetSubaccountValueHistoryResultSchema:
         """
         Get the value history of a subaccount
 
@@ -1661,13 +1740,14 @@ class PrivateAPI:
         url = self._endpoints.get_subaccount_value_history
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateGetSubaccountValueHistoryResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateGetSubaccountValueHistoryResultSchema)
+        return result
 
     def expired_and_cancelled_history(
         self,
         params: PrivateExpiredAndCancelledHistoryParamsSchema,
-    ) -> PrivateExpiredAndCancelledHistoryResponseSchema:
+    ) -> PrivateExpiredAndCancelledHistoryResultSchema:
         """
         Generate a list of URLs to retrieve archived orders
 
@@ -1677,13 +1757,14 @@ class PrivateAPI:
         url = self._endpoints.expired_and_cancelled_history
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateExpiredAndCancelledHistoryResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateExpiredAndCancelledHistoryResultSchema)
+        return result
 
     def get_funding_history(
         self,
         params: PrivateGetFundingHistoryParamsSchema,
-    ) -> PrivateGetFundingHistoryResponseSchema:
+    ) -> PrivateGetFundingHistoryResultSchema:
         """
         Get subaccount funding history.
 
@@ -1695,13 +1776,14 @@ class PrivateAPI:
         url = self._endpoints.get_funding_history
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateGetFundingHistoryResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateGetFundingHistoryResultSchema)
+        return result
 
     def get_interest_history(
         self,
         params: PrivateGetInterestHistoryParamsSchema,
-    ) -> PrivateGetInterestHistoryResponseSchema:
+    ) -> PrivateGetInterestHistoryResultSchema:
         """
         Get subaccount interest payment history.
 
@@ -1711,13 +1793,14 @@ class PrivateAPI:
         url = self._endpoints.get_interest_history
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateGetInterestHistoryResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateGetInterestHistoryResultSchema)
+        return result
 
     def get_erc20_transfer_history(
         self,
         params: PrivateGetErc20TransferHistoryParamsSchema,
-    ) -> PrivateGetErc20TransferHistoryResponseSchema:
+    ) -> PrivateGetErc20TransferHistoryResultSchema:
         """
         Get subaccount erc20 transfer history.
 
@@ -1730,13 +1813,14 @@ class PrivateAPI:
         url = self._endpoints.get_erc20_transfer_history
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateGetErc20TransferHistoryResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateGetErc20TransferHistoryResultSchema)
+        return result
 
     def get_liquidation_history(
         self,
         params: PrivateGetLiquidationHistoryParamsSchema,
-    ) -> PrivateGetLiquidationHistoryResponseSchema:
+    ) -> List[AuctionResultSchema]:
         """
         Required minimum session key permission level is `read_only`
         """
@@ -1744,13 +1828,14 @@ class PrivateAPI:
         url = self._endpoints.get_liquidation_history
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateGetLiquidationHistoryResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, list[AuctionResultSchema])
+        return result
 
     def liquidate(
         self,
         params: PrivateLiquidateParamsSchema,
-    ) -> PrivateLiquidateResponseSchema:
+    ) -> PrivateLiquidateResultSchema:
         """
         Liquidates a given subaccount using funds from another subaccount. This endpoint
         has a few limitations:
@@ -1769,13 +1854,14 @@ class PrivateAPI:
         url = self._endpoints.liquidate
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateLiquidateResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateLiquidateResultSchema)
+        return result
 
     def get_liquidator_history(
         self,
         params: PrivateGetLiquidatorHistoryParamsSchema,
-    ) -> PrivateGetLiquidatorHistoryResponseSchema:
+    ) -> PrivateGetLiquidatorHistoryResultSchema:
         """
         Returns a paginated history of auctions that the subaccount has participated in
         as a liquidator.
@@ -1786,13 +1872,14 @@ class PrivateAPI:
         url = self._endpoints.get_liquidator_history
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateGetLiquidatorHistoryResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateGetLiquidatorHistoryResultSchema)
+        return result
 
     def session_keys(
         self,
         params: PrivateSessionKeysParamsSchema,
-    ) -> PrivateSessionKeysResponseSchema:
+    ) -> PrivateSessionKeysResultSchema:
         """
         Required minimum session key permission level is `read_only`
         """
@@ -1800,13 +1887,14 @@ class PrivateAPI:
         url = self._endpoints.session_keys
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateSessionKeysResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateSessionKeysResultSchema)
+        return result
 
     def edit_session_key(
         self,
         params: PrivateEditSessionKeyParamsSchema,
-    ) -> PrivateEditSessionKeyResponseSchema:
+    ) -> PrivateEditSessionKeyResultSchema:
         """
         Edits session key parameters such as label and IP whitelist.
 
@@ -1820,13 +1908,14 @@ class PrivateAPI:
         url = self._endpoints.edit_session_key
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateEditSessionKeyResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateEditSessionKeyResultSchema)
+        return result
 
     def register_scoped_session_key(
         self,
         params: PrivateRegisterScopedSessionKeyParamsSchema,
-    ) -> PrivateRegisterScopedSessionKeyResponseSchema:
+    ) -> PrivateRegisterScopedSessionKeyResultSchema:
         """
         Registers a new session key bounded to a scope without a transaction attached.
 
@@ -1838,13 +1927,14 @@ class PrivateAPI:
         url = self._endpoints.register_scoped_session_key
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateRegisterScopedSessionKeyResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateRegisterScopedSessionKeyResultSchema)
+        return result
 
     def get_mmp_config(
         self,
         params: PrivateGetMmpConfigParamsSchema,
-    ) -> PrivateGetMmpConfigResponseSchema:
+    ) -> List[MMPConfigResultSchema]:
         """
         Get the current mmp config for a subaccount (optionally filtered by currency)
 
@@ -1854,13 +1944,14 @@ class PrivateAPI:
         url = self._endpoints.get_mmp_config
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateGetMmpConfigResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, list[MMPConfigResultSchema])
+        return result
 
     def set_mmp_config(
         self,
         params: PrivateSetMmpConfigParamsSchema,
-    ) -> PrivateSetMmpConfigResponseSchema:
+    ) -> PrivateSetMmpConfigResultSchema:
         """
         Set the mmp config for the subaccount and currency
 
@@ -1870,13 +1961,14 @@ class PrivateAPI:
         url = self._endpoints.set_mmp_config
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateSetMmpConfigResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, PrivateSetMmpConfigResultSchema)
+        return result
 
     def reset_mmp(
         self,
         params: PrivateResetMmpParamsSchema,
-    ) -> PrivateResetMmpResponseSchema:
+    ) -> Result:
         """
         Resets (unfreezes) the mmp state for a subaccount (optionally filtered by
         currency)
@@ -1887,13 +1979,14 @@ class PrivateAPI:
         url = self._endpoints.reset_mmp
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateResetMmpResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, Result)
+        return result
 
     def set_cancel_on_disconnect(
         self,
         params: PrivateSetCancelOnDisconnectParamsSchema,
-    ) -> PrivateSetCancelOnDisconnectResponseSchema:
+    ) -> Result:
         """
         Enables cancel on disconnect for the account
 
@@ -1903,5 +1996,6 @@ class PrivateAPI:
         url = self._endpoints.set_cancel_on_disconnect
         data = encode_json_exclude_none(params)
         message = self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, PrivateSetCancelOnDisconnectResponseSchema)
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, Result)
+        return result

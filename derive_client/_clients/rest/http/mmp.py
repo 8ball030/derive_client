@@ -38,8 +38,8 @@ class MMPOperations:
             subaccount_id=subaccount_id,
             currency=currency,
         )
-        response = self._subaccount._private_api.get_mmp_config(params=params)
-        return response.result
+        result = self._subaccount._private_api.get_mmp_config(params=params)
+        return result
 
     def set_config(
         self,
@@ -61,8 +61,8 @@ class MMPOperations:
             mmp_amount_limit=mmp_amount_limit,
             mmp_delta_limit=mmp_delta_limit,
         )
-        response = self._subaccount._private_api.set_mmp_config(params=params)
-        return response.result
+        result = self._subaccount._private_api.set_mmp_config(params=params)
+        return result
 
     def reset(self, *, currency: Optional[str] = None) -> Result:
         """Resets (unfreezes) the mmp state for a subaccount (optionally filtered by currency)."""
@@ -72,5 +72,5 @@ class MMPOperations:
             subaccount_id=subaccount_id,
             currency=currency,
         )
-        response = self._subaccount._private_api.reset_mmp(params=params)
-        return response.result
+        result = self._subaccount._private_api.reset_mmp(params=params)
+        return result

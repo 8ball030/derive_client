@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from derive_client._clients.rest.http.markets import MarketOperations
 
 
-StructT = TypeVar("StructT", bound=msgspec.Struct)
+T = TypeVar("T")
 InstrumentT = TypeVar("InstrumentT", LegUnpricedSchema, LegPricedSchema, PositionTransfer)
 
 
@@ -115,7 +115,7 @@ class DeriveJSONRPCError(Exception):
         return f"{base}  [data={self.rpc_error.data!r}]" if self.rpc_error.data is not None else base
 
 
-def try_cast_response(response: bytes, response_schema: type[StructT]) -> StructT:
+def try_cast_response(response: bytes, response_schema: type[T]) -> T:
     try:
         return msgspec.json.decode(response, type=response_schema)
     except msgspec.ValidationError:
@@ -171,18 +171,18 @@ class JSONRPCEnvelope(msgspec.Struct, omit_defaults=True):
     """
 
     # Request/response ID (absent for notifications)
-    id: str | int = msgspec.UNSET
+    id: str | int | msgspec.UnsetType = msgspec.UNSET
 
     # Protocol version
     jsonrpc: str = "2.0"
 
     # Server->client notifications/subscriptions
-    method: str = msgspec.UNSET
-    params: msgspec.Raw = msgspec.UNSET
+    method: str | msgspec.UnsetType = msgspec.UNSET
+    params: msgspec.Raw | msgspec.UnsetType = msgspec.UNSET
 
     # RPC response fields (mutually exclusive)
-    result: msgspec.Raw = msgspec.UNSET
-    error: msgspec.Raw = msgspec.UNSET
+    result: msgspec.Raw | msgspec.UnsetType = msgspec.UNSET
+    error: msgspec.Raw | msgspec.UnsetType = msgspec.UNSET
 
 
 def decode_envelope(data: bytes) -> JSONRPCEnvelope:
@@ -195,7 +195,7 @@ def decode_envelope(data: bytes) -> JSONRPCEnvelope:
     return msgspec.json.decode(data, type=JSONRPCEnvelope)
 
 
-def decode_result(envelope: JSONRPCEnvelope, result_schema: type[StructT]) -> StructT:
+def decode_result(envelope: JSONRPCEnvelope, result_schema: type[T]) -> T:
     """
     Deserialize RPC result field into typed schema.
 
@@ -214,11 +214,12 @@ def decode_result(envelope: JSONRPCEnvelope, result_schema: type[StructT]) -> St
         ValueError: If envelope has neither result nor error
     """
 
-    if envelope.error is not msgspec.UnsetType():
+    if envelope.error is not msgspec.UNSET:
         error = msgspec.json.decode(envelope.error, type=RPCErrorFormatSchema)
-        raise DeriveJSONRPCError(envelope.id, error)
+        message_id = envelope.id if envelope.id is not msgspec.UNSET else ""
+        raise DeriveJSONRPCError(message_id=message_id, rpc_error=error)
 
-    if envelope.result is None:
+    if envelope.result is msgspec.UNSET:
         raise ValueError(f"Envelope has neither result nor error (id={envelope.id})")
 
     return msgspec.json.decode(envelope.result, type=result_schema)

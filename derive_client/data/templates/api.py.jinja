@@ -2,10 +2,12 @@
 
 import msgspec
 
+from typing import Callable, Any, List
+
 from derive_client._clients.rest{% if is_async %}.async_http{% else %}.http{% endif %}.session import {% if is_async %}AsyncHTTPSession{% else %}HTTPSession{% endif %}
 from derive_client.config import PUBLIC_HEADERS
 from derive_client.data_types import EnvConfig
-from derive_client._clients.utils import try_cast_response, AuthContext, encode_json_exclude_none
+from derive_client._clients.utils import decode_envelope, decode_result, AuthContext, encode_json_exclude_none
 from derive_client._clients.rest.endpoints import PublicEndpoints, PrivateEndpoints
 from derive_client.data_types.generated_models import (
 {% for schema in schema_imports -%}
@@ -26,7 +28,7 @@ class {{ api_prefix }}PublicAPI:
         return PUBLIC_HEADERS
 
 {% for method in public_methods %}
-    {% if is_async %}async {% endif %}def {{ method.name }}(self, params: {{ method.request_type }},) -> {{ method.response_type }}:
+    {% if is_async %}async {% endif %}def {{ method.name }}(self, params: {{ method.request_type }},) -> {{ method.result_type }}:
         {% if method.description %}
         """
         {{ method.description | format_docstring }}
@@ -36,8 +38,9 @@ class {{ api_prefix }}PublicAPI:
         url = self._endpoints.{{ method.name }}
         data = encode_json_exclude_none(params)
         message = {% if is_async %}await {% endif %}self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, {{ method.response_type }})
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, {{ method.result_type | replace('List[', 'list[') }})
+        return result
 {% endfor %}
 
 
@@ -55,7 +58,7 @@ class {{ api_prefix }}PrivateAPI:
         return {**PUBLIC_HEADERS, **self._auth.signed_headers}
 
 {% for method in private_methods %}
-    {% if is_async %}async {% endif %}def {{ method.name }}(self, params: {{ method.request_type }},) -> {{ method.response_type }}:
+    {% if is_async %}async {% endif %}def {{ method.name }}(self, params: {{ method.request_type }},) -> {{ method.result_type }}:
         {% if method.description %}
         """
         {{ method.description | format_docstring }}
@@ -65,6 +68,7 @@ class {{ api_prefix }}PrivateAPI:
         url = self._endpoints.{{ method.name }}
         data = encode_json_exclude_none(params)
         message = {% if is_async %}await {% endif %}self._session._send_request(url, data, headers=self.headers)
-        response = try_cast_response(message, {{ method.response_type }})
-        return response
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, {{ method.result_type | replace('List[', 'list[') }})
+        return result
 {% endfor %}

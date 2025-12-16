@@ -9,7 +9,7 @@ import libcst as cst
 from jinja2 import Environment, FileSystemLoader
 
 PACKAGE_DIR = Path(__file__).parent.parent / "derive_client"
-OPENAPI_SPEC = Path("specs") / "openapi-spec.json"
+OPENAPI_SPEC = PACKAGE_DIR.parent / "openapi-spec.json"
 TEMPLATES_DIR = PACKAGE_DIR / "data" / "templates"
 OUTPUT_DIR = PACKAGE_DIR / "_clients"
 GENERATED_MODELS_PATH = PACKAGE_DIR / "data_types" / "generated_models.py"
@@ -66,20 +66,14 @@ class ResponseSchemaParser(cst.CSTVisitor):
         if not self.current_class:
             return
 
-        # target can be a Name, Attribute, Subscript, etc.
         target = node.target
-        if isinstance(target, cst.Name):
-            field_name = target.value
-        else:
-            # fallback to code for node (e.g., self.x)
-            field_name = self._annotation_to_string(target)
+        field_name = target.value if isinstance(target, cst.Name) else self._annotation_to_string(target)
 
         # annotation might be missing (rare), guard accordingly
         annotation_node = getattr(node, "annotation", None)
         if not annotation_node:
             return
 
-        # extract annotation expression (annotation_node.annotation is the expression)
         annot_expr = annotation_node.annotation
         field_type = self._annotation_to_string(annot_expr).strip()
 

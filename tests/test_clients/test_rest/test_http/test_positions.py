@@ -57,6 +57,7 @@ def test_position_transfer(client_owner_wallet_with_position):
     else:
         source = subaccount_a
         target = subaccount_b
+        initial_position = positions_a[0]
 
     with assert_api_calls(client_owner_wallet_with_position, expected=1):
         transfer = source.positions.transfer(
