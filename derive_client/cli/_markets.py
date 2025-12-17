@@ -143,46 +143,53 @@ def instrument(ctx, instrument_name, currency, type, expired):
 @click.option(
     "--currency",
     "-c",
-    help="Currency for bulk ticker query (requires --type)",
+    help="Currency (required for options, optional for perps/erc20s)",
 )
 @click.option(
     "--type",
     "-t",
     type=click.Choice([x.name for x in InstrumentType]),
-    help="Instrument type for bulk query",
+    help="Instrument type (required)",
+)
+@click.option(
+    "--expiry-date",
+    "-e",
+    help="Expiry date in YYYYMMDD format (required for options, not allowed for perps/erc20s)",
 )
 @click.option(
     "--expired",
+    is_flag=True,
     default=False,
     help="Include expired instruments (default: active only)",
 )
 @click.pass_context
-def ticker(ctx, instrument_name, currency, type, expired):
+def ticker(ctx, instrument_name, currency, type, expiry_date, expired):
     """Get ticker details.
 
-    Examples:
+    For a single instrument by name:
         drv market ticker BTC-PERP
-        drv market ticker --currency BTC --type option
+        drv market ticker ETH-20251218-3200-C
+
+    For multiple tickers by type:
+        drv market ticker --type erc20
+        drv market ticker --type perp
+        drv market ticker --type option --currency ETH --expiry-date 20251226
+
+    Note: For options, both --currency and --expiry-date are required.
+          For perps/erc20s, --expiry-date is not allowed.
     """
 
     client = ctx.obj["client"]
 
-    if instrument_name and (currency or type):
-        click.echo("Error: Cannot specify instrument name with --currency or --type")
-        ctx.exit(1)
-
-    if (currency or type) and not (currency and type):
-        click.echo("Error: --currency and --type must be used together")
-        ctx.exit(1)
-
-    if not instrument_name and not (currency and type):
-        click.echo("Error: Provide either instrument name or --currency and --type")
-        click.echo("Run 'drv market ticker --help' for examples")
-        ctx.exit(1)
-
     complex_cols = ["open_interest", "stats", "erc20_details", "perp_details", "option_details"]
 
+    # Single instrument query by name
     if instrument_name:
+        if currency or type or expiry_date:
+            click.echo("Error: Cannot specify --currency, --type, or --expiry-date with instrument name")
+            ctx.exit(1)
+
+        # Use deprecated get_ticker for single instrument lookup
         ticker = client.markets.get_ticker(instrument_name=instrument_name)
         series = struct_to_series(ticker)
 
@@ -206,15 +213,41 @@ def ticker(ctx, instrument_name, currency, type, expired):
         print("\n=== Stats ===")
         print(struct_to_series(series.stats).to_string(index=True))
 
+    # Bulk query using get_tickers
     else:
+        if not type:
+            click.echo("Error: --type is required when not specifying an instrument name")
+            click.echo("Run 'drv market ticker --help' for examples")
+            ctx.exit(1)
+
         instrument_type = InstrumentType[type]
-        click.echo(f"⚠ Fetching all {type} tickers for {currency} (this may take a while)...")
-        tickers = client.markets.get_all_tickers(
+
+        # Validate parameters based on instrument type
+        if instrument_type == InstrumentType.option:
+            if not currency:
+                click.echo("Error: --currency is required for options")
+                ctx.exit(1)
+            if not expiry_date:
+                click.echo("Error: --expiry-date is required for options")
+                ctx.exit(1)
+        elif instrument_type in [InstrumentType.perp, InstrumentType.erc20]:
+            if expiry_date:
+                click.echo(f"Error: --expiry-date is not allowed for {type}")
+                ctx.exit(1)
+
+        tickers_dict = client.markets.get_tickers(
             currency=currency,
-            expired=expired,
             instrument_type=instrument_type,
+            expiry_date=expiry_date,
         )
-        df = structs_to_dataframe(tickers)
+        df = structs_to_dataframe(tickers_dict.values())
 
         print("\n=== Tickers Info ===")
-        print(df)
+        print(df.drop(["stats", "option_pricing"], axis=1))
+
+        print("\n=== Tickers Stats ===")
+        print(structs_to_dataframe(df.stats))
+
+        if type == "option":
+            print("\n=== Options Pricing ===")
+            print(structs_to_dataframe(df.option_pricing))
