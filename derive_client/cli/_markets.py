@@ -246,8 +246,8 @@ def ticker(ctx, instrument_name, currency, type, expiry_date, expired):
         print(df.drop(["stats", "option_pricing"], axis=1))
 
         print("\n=== Tickers Stats ===")
-        print(structs_to_dataframe(df.stats))
+        print(structs_to_dataframe(df.stats.tolist()))
 
         if type == "option":
             print("\n=== Options Pricing ===")
-            print(structs_to_dataframe(df.option_pricing))
+            print(structs_to_dataframe(df.option_pricing.tolist()))
