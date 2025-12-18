@@ -63,102 +63,94 @@ def make_rotating_provider_middleware(
     initial_backoff: float = 1.0,
     max_backoff: float = 600.0,
     logger: Logger,
-) -> Callable[[Callable[[RPCEndpoint, Any], RPCResponse], AsyncWeb3], Any]:
+) -> Callable[[RPCEndpoint, Any], Coroutine[Any, Any, RPCResponse]]:
     """
-    v6.11-style middleware:
+    v7-style asynchronous middleware:
      - round-robin via a min-heap of `next_available` times
-     - on 429: exponential back-off for that endpoint, capped
+     - on error: exponential back-off for that endpoint, capped
     """
 
     heap: list[EndpointState] = [EndpointState(p) for p in endpoints]
     heapq.heapify(heap)
     lock = asyncio.Lock()
 
-    async def middleware_factory(
-        make_request: Callable[[RPCEndpoint, Any], RPCResponse],
-        w3: AsyncWeb3,
-    ) -> Callable[[RPCEndpoint, Any], Coroutine[Any, Any, RPCResponse]]:
-        async def rotating_backoff(method: RPCEndpoint, params: Any) -> RPCResponse:
-            now = time.monotonic()
+    async def rotating_backoff(method: RPCEndpoint, params: Any) -> RPCResponse:
+        now = time.monotonic()
 
-            while True:
-                # 1) grab the earlies-available endpoint
+        while True:
+            # 1) grab the earliest-available endpoint
+            async with lock:
+                state = heapq.heappop(heap)
+
+            # 2) if it's not yet ready, push back and error out
+            if state.next_available > now:
                 async with lock:
-                    state = heapq.heappop(heap)
+                    heapq.heappush(heap, state)
+                msg = "All RPC endpoints are cooling down. Try again in %.2f seconds." % (state.next_available - now)
+                logger.warning(msg)
+                raise NoAvailableRPC(msg)
 
-                # 2) if it's not yet ready, push back and error out
-                if state.next_available > now:
+            try:
+                # 3) attempt the request
+                resp = await state.provider.make_request(method, params)
+
+                # Json‑RPC error branch
+                if isinstance(resp, dict) and (error := resp.get("error")):
+                    state.backoff = state.backoff * 2 if state.backoff else initial_backoff
+                    state.backoff = min(state.backoff, max_backoff)
+                    state.next_available = now + state.backoff
                     async with lock:
                         heapq.heappush(heap, state)
-                    msg = "All RPC endpoints are cooling down. Try again in %.2f seconds."
-                    logger.warning(msg, state.next_available - now)
-                    raise NoAvailableRPC(msg)
 
-                try:
-                    # 3) attempt the request
-                    provider = cast(AsyncHTTPProvider, state.provider)
-                    resp = await provider.make_request(method, params)
-
-                    # Json‑RPC error branch
-                    if isinstance(resp, dict) and (error := resp.get("error")):
-                        state.backoff = state.backoff * 2 if state.backoff else initial_backoff
-                        state.backoff = min(state.backoff, max_backoff)
-                        state.next_available = now + state.backoff
-                        async with lock:
-                            heapq.heappush(heap, state)
-
-                        if isinstance(error, str):
-                            msg = error
-                        else:
-                            err_msg = error.get("message", "")
-                            err_code = error.get("code", "")
-                            msg = "RPC error on %s: %s (code: %s)→ backing off %.2fs"
-
+                    if isinstance(error, str):
+                        msg = error
+                    else:
+                        err_msg = error.get("message", "")
+                        err_code = error.get("code", "")
+                        msg = "RPC error on %s: %s (code: %s) → backing off %.2fs"
                         logger.info(msg, state.provider.endpoint_uri, err_msg, err_code, state.backoff)
-                        continue
+                    continue
 
-                    # 4) on success, reset its backoff and re-schedule immediately
-                    state.backoff = 0.0
-                    state.next_available = now
-                    async with lock:
-                        heapq.heappush(heap, state)
-                    return resp
+                # 4) on success, reset its backoff and re-schedule immediately
+                state.backoff = 0.0
+                state.next_available = now
+                async with lock:
+                    heapq.heappush(heap, state)
+                return resp
 
-                except (ClientResponseError, RequestException) as e:
-                    logger.debug("Endpoint %s failed: %s", state.provider.endpoint_uri, e)
+            except (ClientResponseError, RequestException) as e:
+                logger.debug("Endpoint %s failed: %s", state.provider.endpoint_uri, e)
 
-                    if isinstance(e, RequestException) and e.response:
-                        hdr = e.response.headers.get("Retry-After")
-                    else:
-                        hdr = None
+                hdr = e.response.headers.get("Retry-After") if isinstance(e, RequestException) and e.response else None
 
-                    # We retry on all exceptions
-                    if hdr is not None:
+                # We retry on all exceptions
+                if hdr is not None:
+                    try:
                         backoff = float(hdr)
-                    else:
+                    except (ValueError, TypeError):
                         backoff = state.backoff * 2 if state.backoff > 0 else initial_backoff
+                else:
+                    backoff = state.backoff * 2 if state.backoff > 0 else initial_backoff
 
-                    # cap backoff and schedule
-                    state.backoff = min(backoff, max_backoff)
-                    state.next_available = now + state.backoff
-                    async with lock:
-                        heapq.heappush(heap, state)
-                    msg = "Backing off %s for %.2fs"
-                    logger.info(msg, state.provider.endpoint_uri, backoff)
-                    continue
+                # cap backoff and schedule
+                state.backoff = min(backoff, max_backoff)
+                state.next_available = now + state.backoff
+                async with lock:
+                    heapq.heappush(heap, state)
+                msg = "Backing off %s for %.2fs"
+                logger.info(msg, state.provider.endpoint_uri, backoff)
+                continue
 
-                except Exception as e:
-                    msg = "Unexpected error calling %s %s on %s; backing off %.2fs and continuing"
-                    logger.exception(msg, method, params, state.provider.endpoint_uri, max_backoff, exc_info=e)
-                    state.backoff = max_backoff
-                    state.next_available = now + state.backoff
-                    async with lock:
-                        heapq.heappush(heap, state)
-                    continue
+            except Exception as e:
+                msg = "Unexpected error calling %s %s on %s; backing off %.2fs and continuing"
+                logger.exception(msg, method, params, state.provider.endpoint_uri, max_backoff, exc_info=e)
+                state.backoff = max_backoff
+                state.next_available = now + state.backoff
+                async with lock:
+                    heapq.heappush(heap, state)
+                continue
 
-        return rotating_backoff
-
-    return middleware_factory
+    return rotating_backoff
 
 
 def get_w3_connection(
@@ -183,7 +175,7 @@ def get_w3_connection(
         max_backoff=600.0,
         logger=logger,
     )
-    w3.middleware_onion.add(rotator, name="rotating_provider")
+    w3.provider.make_request = rotator
 
     return w3
 

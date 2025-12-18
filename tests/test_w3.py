@@ -6,7 +6,7 @@ from http import HTTPStatus
 import pytest
 from requests.exceptions import RequestException
 from web3 import Web3 as BaseWeb3
-from web3.exceptions import MethodUnavailable
+from web3.exceptions import MethodUnavailable, Web3RPCError
 from web3.providers.rpc import HTTPProvider
 from web3.types import (
     RPCEndpoint,
@@ -24,7 +24,7 @@ REQUIRED_METHODS = {
     "eth_chainId": [],
     "eth_getBalance": ["0x0000000000000000000000000000000000000000", "latest"],
     "eth_call": [{"to": "0x0000000000000000000000000000000000000000", "data": "0x"}, "latest"],
-    "eth_sendRawTransaction": ["0x"],
+    "eth_sendRawTransaction": ["0x" + "0" * 40],
     "eth_getLogs": [
         {"fromBlock": "latest", "toBlock": "latest"},
     ],
@@ -41,14 +41,14 @@ class TrackingHTTPProvider(HTTPProvider):
         with self.lock:
             self.used.add(self.endpoint_uri)
         # No-op, no call to super(), we only use this to test provider rotation
-        return {"result": {}}
+        return {"jsonrpc": "2.0", "id": 1, "result": {}}
 
 
 class Web3(BaseWeb3):
     provider: HTTPProvider
 
 
-@pytest.mark.flaky(reruns=3, reruns_delay=1)
+@pytest.mark.flaky(reruns=1, reruns_delay=1)
 @pytest.mark.parametrize("chain, rpc_endpoints", RPC_ENDPOINTS)
 def test_rpc_endpoints_reachability_and_chain_id(chain, rpc_endpoints):
     success = {}
@@ -92,7 +92,7 @@ def test_rpc_endpoints_reachability_and_chain_id(chain, rpc_endpoints):
         pytest.fail(f"[{chain}] Too many unresponsive endpoints ({len(rate_limited)}/{len(rpc_endpoints)}):\n{msg}")
 
 
-@pytest.mark.flaky(reruns=3, reruns_delay=1)
+@pytest.mark.flaky(reruns=0, reruns_delay=1)
 @pytest.mark.parametrize("chain, rpc_endpoints", RPC_ENDPOINTS)
 def test_rpc_methods_supported(chain, rpc_endpoints):
     missing = {}
@@ -113,6 +113,18 @@ def test_rpc_methods_supported(chain, rpc_endpoints):
                 # but the provider is choking on our dummy TX payload
                 if method != "eth_sendRawTransaction":
                     exceptions.setdefault(url, []).append((method, e))
+            except Web3RPCError as e:
+                # In v7, RPC errors are raised as Web3RPCError
+                # For eth_sendRawTransaction, any RPC error means the method exists
+                if method == "eth_sendRawTransaction":
+                    # for eth_sendRawTransaction, any error means it exists
+                    continue
+                # Check if it's a METHOD_NOT_FOUND error
+                if hasattr(e, 'args') and len(e.args) > 0:
+                    err = e.args[0]
+                    if isinstance(err, dict) and err.get("code") == EthereumJSONRPCErrorCode.METHOD_NOT_FOUND:
+                        missing.setdefault(url, []).append(method)
+                    # else: other RPC errors mean the method exists but failed for another reason
             except ValueError as e:
                 err = e.args[0]
                 if isinstance(err, dict) and err.get("code") == EthereumJSONRPCErrorCode.METHOD_NOT_FOUND:
@@ -133,7 +145,7 @@ def test_rpc_methods_supported(chain, rpc_endpoints):
 @pytest.mark.parametrize("chain, rpc_endpoints", RPC_ENDPOINTS)
 def test_rotating_middelware(chain, rpc_endpoints):
     # --------------------
-    # -- USAGE in v6.11 --
+    # -- USAGE in v7.14 --
     # --------------------
 
     # 1) Build your list of HTTPProvider, based on your RPCEndpoints
@@ -150,7 +162,7 @@ def test_rotating_middelware(chain, rpc_endpoints):
         max_backoff=30.0,
         logger=get_logger(),
     )
-    w3.middleware_onion.add(rotator)
+    w3.provider.make_request = rotator
 
     # 4) Test: rotation through all providers
     expected = {p.endpoint_uri for p in providers}
