@@ -535,8 +535,8 @@ def make_filter_params(
     argument_filters = argument_filters or {}
 
     filter_params_raw = event._get_event_filter_params(
-        fromBlock=from_block,
-        toBlock=to_block,
+        from_block=from_block,
+        to_block=to_block,
         argument_filters=argument_filters,
         abi=event.abi,
     )
