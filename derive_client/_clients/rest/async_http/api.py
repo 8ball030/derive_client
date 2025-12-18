@@ -402,6 +402,12 @@ class AsyncPublicAPI:
         Get tickers information (best bid / ask, stats, etc.) for a multiple
         instruments.
 
+        For options: currency is required and expiry_date is required.
+
+        For perps: currency is optional, expiry_date will throw an error.
+
+        For erc20s: currency is optional, expiry_date will throw an error.
+
         For most up to date stream of tickers, use the
         `ticker.<instrument_name>.<interval>` channels.
         """

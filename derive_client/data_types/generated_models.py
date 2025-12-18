@@ -512,6 +512,7 @@ class PublicSendQuoteDebugParamsSchema(Struct):
     signature_expiry_sec: int
     signer: str
     subaccount_id: int
+    client: str = ''
     label: str = ''
     mmp: bool = False
 
@@ -848,6 +849,7 @@ class PrivateReplaceQuoteParamsSchema(Struct):
     signature_expiry_sec: int
     signer: str
     subaccount_id: int
+    client: str = ''
     label: str = ''
     mmp: bool = False
     nonce_to_cancel: Optional[int] = None
@@ -1009,6 +1011,7 @@ class PublicExecuteQuoteDebugParamsSchema(Struct):
     signature_expiry_sec: int
     signer: str
     subaccount_id: int
+    client: str = ''
     enable_taker_protection: bool = False
     label: str = ''
 
@@ -1082,6 +1085,7 @@ class SpotFeedHistoryCandlesResponseSchema(Struct):
 class PrivateRfqGetBestQuoteParamsSchema(Struct):
     legs: List[LegUnpricedSchema]
     subaccount_id: int
+    client: str = ''
     counterparties: Optional[List[str]] = None
     direction: Direction = Direction('buy')
     label: str = ''
@@ -1278,6 +1282,7 @@ class PrivateOrderDebugParamsSchema(Struct):
     signature_expiry_sec: int
     signer: str
     subaccount_id: int
+    client: Optional[str] = ''
     is_atomic_signing: Optional[bool] = False
     label: str = ''
     mmp: bool = False
@@ -1313,6 +1318,7 @@ class PrivateReplaceParamsSchema(Struct):
     signature_expiry_sec: int
     signer: str
     subaccount_id: int
+    client: Optional[str] = ''
     expected_filled_amount: Optional[Decimal] = None
     is_atomic_signing: Optional[bool] = False
     label: str = ''
@@ -1337,8 +1343,8 @@ class PrivateReplaceResultSchema(Struct):
 
 
 class PublicGetTickersParamsSchema(Struct):
-    currency: str
     instrument_type: InstrumentType
+    currency: Optional[str] = None
     expiry_date: Optional[str] = None
 
 
@@ -1944,6 +1950,7 @@ class PublicGetInstrumentResultSchema(InstrumentPublicResponseSchema):
 class PrivateSendRfqParamsSchema(Struct):
     legs: List[LegUnpricedSchema]
     subaccount_id: int
+    client: str = ''
     counterparties: Optional[List[str]] = None
     label: str = ''
     max_total_cost: Optional[Decimal] = None

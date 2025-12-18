@@ -232,11 +232,17 @@ class MarketOperations:
     def get_tickers(
         self,
         *,
-        currency: str,
         instrument_type: InstrumentType,
+        currency: Optional[str] = None,
         expiry_date: Optional[str] = None,
     ) -> dict[str, TickerSlimSchema]:
-        """Get tickers information (best bid / ask, stats, etc.) for multiple instruments."""
+        """
+        Get tickers information (best bid / ask, stats, etc.) for multiple instruments.
+
+        For options: currency is required and expiry_date is required.
+        For perps: currency is optional, expiry_date will throw an error.
+        For erc20s: currency is optional, expiry_date will throw an error.
+        """
 
         params = PublicGetTickersParamsSchema(
             currency=currency,
