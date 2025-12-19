@@ -217,7 +217,7 @@ class PublicRPC:
         """
 
         method = "public/build_register_session_key_tx"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicBuildRegisterSessionKeyTxResultSchema)
 
         return result
@@ -238,7 +238,7 @@ class PublicRPC:
         """
 
         method = "public/register_session_key"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicRegisterSessionKeyResultSchema)
 
         return result
@@ -253,7 +253,7 @@ class PublicRPC:
         """
 
         method = "public/deregister_session_key"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicDeregisterSessionKeyResultSchema)
 
         return result
@@ -267,7 +267,7 @@ class PublicRPC:
         """
 
         method = "public/login"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, List[int])
 
         return result
@@ -281,7 +281,7 @@ class PublicRPC:
         """
 
         method = "public/statistics"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicStatisticsResultSchema)
 
         return result
@@ -297,7 +297,7 @@ class PublicRPC:
         """
 
         method = "public/get_all_currencies"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, List[CurrencyDetailedResponseSchema])
 
         return result
@@ -312,7 +312,7 @@ class PublicRPC:
         """
 
         method = "public/get_currency"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicGetCurrencyResultSchema)
 
         return result
@@ -326,7 +326,7 @@ class PublicRPC:
         """
 
         method = "public/get_instrument"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicGetInstrumentResultSchema)
 
         return result
@@ -340,7 +340,7 @@ class PublicRPC:
         """
 
         method = "public/get_all_instruments"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicGetAllInstrumentsResultSchema)
 
         return result
@@ -354,7 +354,7 @@ class PublicRPC:
         """
 
         method = "public/get_instruments"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, List[InstrumentPublicResponseSchema])
 
         return result
@@ -372,7 +372,7 @@ class PublicRPC:
         """
 
         method = "public/get_ticker"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicGetTickerResultSchema)
 
         return result
@@ -396,7 +396,7 @@ class PublicRPC:
         """
 
         method = "public/get_tickers"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicGetTickersResultSchema)
 
         return result
@@ -410,7 +410,7 @@ class PublicRPC:
         """
 
         method = "public/get_latest_signed_feeds"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicGetLatestSignedFeedsResultSchema)
 
         return result
@@ -424,7 +424,7 @@ class PublicRPC:
         """
 
         method = "public/get_option_settlement_prices"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicGetOptionSettlementPricesResultSchema)
 
         return result
@@ -440,7 +440,7 @@ class PublicRPC:
         """
 
         method = "public/get_spot_feed_history"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicGetSpotFeedHistoryResultSchema)
 
         return result
@@ -456,7 +456,7 @@ class PublicRPC:
         """
 
         method = "public/get_spot_feed_history_candles"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicGetSpotFeedHistoryCandlesResultSchema)
 
         return result
@@ -477,7 +477,7 @@ class PublicRPC:
         """
 
         method = "public/get_funding_rate_history"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicGetFundingRateHistoryResultSchema)
 
         return result
@@ -491,7 +491,7 @@ class PublicRPC:
         """
 
         method = "public/get_trade_history"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicGetTradeHistoryResultSchema)
 
         return result
@@ -505,7 +505,7 @@ class PublicRPC:
         """
 
         method = "public/get_option_settlement_history"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicGetOptionSettlementHistoryResultSchema)
 
         return result
@@ -528,7 +528,7 @@ class PublicRPC:
         """
 
         method = "public/get_liquidation_history"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicGetLiquidationHistoryResultSchema)
 
         return result
@@ -542,7 +542,7 @@ class PublicRPC:
         """
 
         method = "public/get_interest_rate_history"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicGetInterestRateHistoryResultSchema)
 
         return result
@@ -556,7 +556,7 @@ class PublicRPC:
         """
 
         method = "public/get_transaction"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicGetTransactionResultSchema)
 
         return result
@@ -573,7 +573,7 @@ class PublicRPC:
         """
 
         method = "public/get_margin"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicGetMarginResultSchema)
 
         return result
@@ -587,7 +587,7 @@ class PublicRPC:
         """
 
         method = "public/margin_watch"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicMarginWatchResultSchema)
 
         return result
@@ -605,7 +605,7 @@ class PublicRPC:
         """
 
         method = "public/get_vault_share"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicGetVaultShareResultSchema)
 
         return result
@@ -621,7 +621,7 @@ class PublicRPC:
         """
 
         method = "public/get_vault_statistics"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, List[VaultStatisticsResponseSchema])
 
         return result
@@ -638,7 +638,7 @@ class PublicRPC:
         """
 
         method = "public/get_vault_balances"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, List[VaultBalanceResponseSchema])
 
         return result
@@ -655,7 +655,7 @@ class PublicRPC:
         """
 
         method = "public/create_subaccount_debug"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicCreateSubaccountDebugResultSchema)
 
         return result
@@ -672,7 +672,7 @@ class PublicRPC:
         """
 
         method = "public/deposit_debug"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicDepositDebugResultSchema)
 
         return result
@@ -689,7 +689,7 @@ class PublicRPC:
         """
 
         method = "public/withdraw_debug"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicWithdrawDebugResultSchema)
 
         return result
@@ -705,7 +705,7 @@ class PublicRPC:
         """
 
         method = "public/send_quote_debug"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicSendQuoteDebugResultSchema)
 
         return result
@@ -721,7 +721,7 @@ class PublicRPC:
         """
 
         method = "public/execute_quote_debug"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicExecuteQuoteDebugResultSchema)
 
         return result
@@ -731,7 +731,7 @@ class PublicRPC:
         params: PublicGetTimeParamsSchema,
     ) -> int:
         method = "public/get_time"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, int)
 
         return result
@@ -741,7 +741,7 @@ class PublicRPC:
         params: PublicGetLiveIncidentsParamsSchema,
     ) -> PublicGetLiveIncidentsResultSchema:
         method = "public/get_live_incidents"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicGetLiveIncidentsResultSchema)
 
         return result
@@ -755,7 +755,7 @@ class PublicRPC:
         """
 
         method = "public/get_maker_programs"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, List[ProgramResponseSchema])
 
         return result
@@ -769,7 +769,7 @@ class PublicRPC:
         """
 
         method = "public/get_maker_program_scores"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicGetMakerProgramScoresResultSchema)
 
         return result
@@ -783,7 +783,7 @@ class PublicRPC:
         """
 
         method = "public/get_referral_performance"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PublicGetReferralPerformanceResultSchema)
 
         return result
@@ -803,7 +803,7 @@ class PrivateRPC:
         """
 
         method = "private/get_account"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateGetAccountResultSchema)
 
         return result
@@ -820,7 +820,7 @@ class PrivateRPC:
         """
 
         method = "private/create_subaccount"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateCreateSubaccountResultSchema)
 
         return result
@@ -833,7 +833,7 @@ class PrivateRPC:
         """
 
         method = "private/get_subaccount"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateGetSubaccountResultSchema)
 
         return result
@@ -846,7 +846,7 @@ class PrivateRPC:
         """
 
         method = "private/get_subaccounts"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateGetSubaccountsResultSchema)
 
         return result
@@ -859,7 +859,7 @@ class PrivateRPC:
         """
 
         method = "private/get_all_portfolios"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, List[PrivateGetSubaccountResultSchema])
 
         return result
@@ -874,7 +874,7 @@ class PrivateRPC:
         """
 
         method = "private/change_subaccount_label"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateChangeSubaccountLabelResultSchema)
 
         return result
@@ -887,7 +887,7 @@ class PrivateRPC:
         """
 
         method = "private/get_notifications"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateGetNotificationsResultSchema)
 
         return result
@@ -902,7 +902,7 @@ class PrivateRPC:
         """
 
         method = "private/update_notifications"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateUpdateNotificationsResultSchema)
 
         return result
@@ -918,7 +918,7 @@ class PrivateRPC:
         """
 
         method = "private/deposit"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateDepositResultSchema)
 
         return result
@@ -934,7 +934,7 @@ class PrivateRPC:
         """
 
         method = "private/withdraw"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateWithdrawResultSchema)
 
         return result
@@ -950,7 +950,7 @@ class PrivateRPC:
         """
 
         method = "private/transfer_erc20"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateTransferErc20ResultSchema)
 
         return result
@@ -978,7 +978,7 @@ class PrivateRPC:
         """
 
         method = "private/transfer_position"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateTransferPositionResultSchema)
 
         return result
@@ -1006,7 +1006,7 @@ class PrivateRPC:
         """
 
         method = "private/transfer_positions"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateTransferPositionsResultSchema)
 
         return result
@@ -1019,7 +1019,7 @@ class PrivateRPC:
         """
 
         method = "private/order"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateOrderResultSchema)
 
         return result
@@ -1038,7 +1038,7 @@ class PrivateRPC:
         """
 
         method = "private/replace"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateReplaceResultSchema)
 
         return result
@@ -1051,7 +1051,7 @@ class PrivateRPC:
         """
 
         method = "private/order_debug"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateOrderDebugResultSchema)
 
         return result
@@ -1065,7 +1065,7 @@ class PrivateRPC:
         """
 
         method = "private/get_order"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateGetOrderResultSchema)
 
         return result
@@ -1078,7 +1078,7 @@ class PrivateRPC:
         """
 
         method = "private/get_orders"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateGetOrdersResultSchema)
 
         return result
@@ -1091,7 +1091,7 @@ class PrivateRPC:
         """
 
         method = "private/get_open_orders"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateGetOpenOrdersResultSchema)
 
         return result
@@ -1106,7 +1106,7 @@ class PrivateRPC:
         """
 
         method = "private/cancel"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateCancelResultSchema)
 
         return result
@@ -1119,7 +1119,7 @@ class PrivateRPC:
         """
 
         method = "private/cancel_all"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, Result)
 
         return result
@@ -1133,7 +1133,7 @@ class PrivateRPC:
         """
 
         method = "private/cancel_by_label"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateCancelByLabelResultSchema)
 
         return result
@@ -1147,7 +1147,7 @@ class PrivateRPC:
         """
 
         method = "private/cancel_by_nonce"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateCancelByNonceResultSchema)
 
         return result
@@ -1162,7 +1162,7 @@ class PrivateRPC:
         """
 
         method = "private/cancel_by_instrument"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateCancelByInstrumentResultSchema)
 
         return result
@@ -1177,7 +1177,7 @@ class PrivateRPC:
         """
 
         method = "private/cancel_trigger_order"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateCancelTriggerOrderResultSchema)
 
         return result
@@ -1192,7 +1192,7 @@ class PrivateRPC:
         """
 
         method = "private/cancel_all_trigger_orders"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, Result)
 
         return result
@@ -1205,7 +1205,7 @@ class PrivateRPC:
         """
 
         method = "private/get_order_history"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateGetOrderHistoryResultSchema)
 
         return result
@@ -1218,7 +1218,7 @@ class PrivateRPC:
         """
 
         method = "private/get_trade_history"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateGetTradeHistoryResultSchema)
 
         return result
@@ -1231,7 +1231,7 @@ class PrivateRPC:
         """
 
         method = "private/get_deposit_history"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateGetDepositHistoryResultSchema)
 
         return result
@@ -1246,7 +1246,7 @@ class PrivateRPC:
         """
 
         method = "private/get_withdrawal_history"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateGetWithdrawalHistoryResultSchema)
 
         return result
@@ -1259,7 +1259,7 @@ class PrivateRPC:
         """
 
         method = "private/send_rfq"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateSendRfqResultSchema)
 
         return result
@@ -1272,7 +1272,7 @@ class PrivateRPC:
         """
 
         method = "private/cancel_rfq"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, Result)
 
         return result
@@ -1290,7 +1290,7 @@ class PrivateRPC:
         """
 
         method = "private/cancel_batch_rfqs"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateCancelBatchRfqsResultSchema)
 
         return result
@@ -1304,7 +1304,7 @@ class PrivateRPC:
         """
 
         method = "private/get_rfqs"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateGetRfqsResultSchema)
 
         return result
@@ -1318,7 +1318,7 @@ class PrivateRPC:
         """
 
         method = "private/poll_rfqs"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivatePollRfqsResultSchema)
 
         return result
@@ -1333,7 +1333,7 @@ class PrivateRPC:
         """
 
         method = "private/send_quote"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateSendQuoteResultSchema)
 
         return result
@@ -1352,7 +1352,7 @@ class PrivateRPC:
         """
 
         method = "private/replace_quote"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateReplaceQuoteResultSchema)
 
         return result
@@ -1365,7 +1365,7 @@ class PrivateRPC:
         """
 
         method = "private/cancel_quote"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateCancelQuoteResultSchema)
 
         return result
@@ -1382,7 +1382,7 @@ class PrivateRPC:
         """
 
         method = "private/cancel_batch_quotes"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateCancelBatchQuotesResultSchema)
 
         return result
@@ -1397,7 +1397,7 @@ class PrivateRPC:
         """
 
         method = "private/get_quotes"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateGetQuotesResultSchema)
 
         return result
@@ -1413,7 +1413,7 @@ class PrivateRPC:
         """
 
         method = "private/poll_quotes"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivatePollQuotesResultSchema)
 
         return result
@@ -1426,7 +1426,7 @@ class PrivateRPC:
         """
 
         method = "private/execute_quote"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateExecuteQuoteResultSchema)
 
         return result
@@ -1445,7 +1445,7 @@ class PrivateRPC:
         """
 
         method = "private/rfq_get_best_quote"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateRfqGetBestQuoteResultSchema)
 
         return result
@@ -1461,7 +1461,7 @@ class PrivateRPC:
         """
 
         method = "private/get_margin"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateGetMarginResultSchema)
 
         return result
@@ -1474,7 +1474,7 @@ class PrivateRPC:
         """
 
         method = "private/get_collaterals"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateGetCollateralsResultSchema)
 
         return result
@@ -1487,7 +1487,7 @@ class PrivateRPC:
         """
 
         method = "private/get_positions"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateGetPositionsResultSchema)
 
         return result
@@ -1502,7 +1502,7 @@ class PrivateRPC:
         """
 
         method = "private/get_option_settlement_history"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateGetOptionSettlementHistoryResultSchema)
 
         return result
@@ -1517,7 +1517,7 @@ class PrivateRPC:
         """
 
         method = "private/get_subaccount_value_history"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateGetSubaccountValueHistoryResultSchema)
 
         return result
@@ -1532,7 +1532,7 @@ class PrivateRPC:
         """
 
         method = "private/expired_and_cancelled_history"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateExpiredAndCancelledHistoryResultSchema)
 
         return result
@@ -1547,7 +1547,7 @@ class PrivateRPC:
         """
 
         method = "private/get_funding_history"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateGetFundingHistoryResultSchema)
 
         return result
@@ -1562,7 +1562,7 @@ class PrivateRPC:
         """
 
         method = "private/get_interest_history"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateGetInterestHistoryResultSchema)
 
         return result
@@ -1580,7 +1580,7 @@ class PrivateRPC:
         """
 
         method = "private/get_erc20_transfer_history"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateGetErc20TransferHistoryResultSchema)
 
         return result
@@ -1591,7 +1591,7 @@ class PrivateRPC:
         """
 
         method = "private/get_liquidation_history"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, List[AuctionResultSchema])
 
         return result
@@ -1613,7 +1613,7 @@ class PrivateRPC:
         """
 
         method = "private/liquidate"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateLiquidateResultSchema)
 
         return result
@@ -1629,7 +1629,7 @@ class PrivateRPC:
         """
 
         method = "private/get_liquidator_history"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateGetLiquidatorHistoryResultSchema)
 
         return result
@@ -1640,7 +1640,7 @@ class PrivateRPC:
         """
 
         method = "private/session_keys"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateSessionKeysResultSchema)
 
         return result
@@ -1657,7 +1657,7 @@ class PrivateRPC:
         """
 
         method = "private/edit_session_key"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateEditSessionKeyResultSchema)
 
         return result
@@ -1674,7 +1674,7 @@ class PrivateRPC:
         """
 
         method = "private/register_scoped_session_key"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateRegisterScopedSessionKeyResultSchema)
 
         return result
@@ -1687,7 +1687,7 @@ class PrivateRPC:
         """
 
         method = "private/get_mmp_config"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, List[MMPConfigResultSchema])
 
         return result
@@ -1700,7 +1700,7 @@ class PrivateRPC:
         """
 
         method = "private/set_mmp_config"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, PrivateSetMmpConfigResultSchema)
 
         return result
@@ -1714,7 +1714,7 @@ class PrivateRPC:
         """
 
         method = "private/reset_mmp"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, Result)
 
         return result
@@ -1727,7 +1727,7 @@ class PrivateRPC:
         """
 
         method = "private/set_cancel_on_disconnect"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, Result)
 
         return result

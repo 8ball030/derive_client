@@ -63,7 +63,7 @@ class {{ api_prefix }}PublicRPC:
         result = decode_result(envelope, {{ method.result_type | replace('List[', 'list[') }})
 {% else %}
         method = "public/{{ method.name }}"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, {{ method.result_type }})
 {% endif %}
         return result
@@ -100,7 +100,7 @@ class {{ api_prefix }}PrivateRPC:
         result = decode_result(envelope, {{ method.result_type | replace('List[', 'list[') }})
 {% else %}
         method = "private/{{ method.name }}"
-        envelope = self._session._send_rpc(method=method, params=params)
+        envelope = self._session._send_request(method=method, params=params)
         result = decode_result(envelope, {{ method.result_type }})
 {% endif %}
         return result
