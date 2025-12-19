@@ -90,17 +90,11 @@ generate-models:
 	poetry run ruff format derive_client/data_types/generated_models.py derive_client/data_types/channel_models.py
 	poetry run ruff check --fix derive_client/data_types/generated_models.py derive_client/data_types/channel_models.py
 
-.PHONY: generate-rest-api
-generate-rest-api:
-	python scripts/generate-rest-api.py
-	poetry run ruff format derive_client/_clients/rest/
-	poetry run ruff check --fix derive_client/_clients/rest/
-
-.PHONY: generate-websocket-api
-generate-websocket-api:
-	python scripts/generate-websocket-api.py
-	poetry run ruff format derive_client/_clients/websockets/
-	poetry run ruff check --fix derive_client/_clients/websockets/
+.PHONY: generate-api
+generate-api:
+	python scripts/generate-api.py
+	poetry run ruff format derive_client/_clients/
+	poetry run ruff check --fix derive_client/_clients/
 
 .PHONY: generate-rest-async-http
 generate-rest-async-http:
@@ -120,7 +114,7 @@ generate-channels:
 	poetry run ruff format derive_client/data_types/channels
 	poetry run ruff check --fix derive_client/data_types/channels
 
-codegen-all: generate-models generate-channels generate-rest-api generate-websocket-api generate-rest-async-http generate-sync-bridge-client fmt lint
+codegen-all: generate-models generate-channels generate-api generate-rest-async-http generate-sync-bridge-client fmt lint
 
 typecheck:
 	poetry run pyright derive_client tests
