@@ -149,7 +149,7 @@ class WebSocketSession:
         # Only send subscribe RPC if this is the first handler
         if is_first_handler:
             self._logger.info(f"Subscribing to channel: {channel}")
-            self._send_rpc("subscribe", {"channels": [channel]})
+            self._send_request("subscribe", {"channels": [channel]})
         else:
             self._logger.debug(f"Added handler for existing subscription: {channel}")
 
@@ -190,16 +190,18 @@ class WebSocketSession:
 
         if should_unsubscribe:
             self._logger.info(f"Unsubscribing from channel: {channel}")
-            self._send_rpc("unsubscribe", {"channels": [channel]})
+            self._send_request("unsubscribe", {"channels": [channel]})
 
-    def _send_rpc(self, method: str, params: msgspec.Struct) -> JSONRPCEnvelope:
+    def _send_request(self, method: str, params: msgspec.Struct) -> JSONRPCEnvelope:
         """Send RPC request and return decoded envelope"""
 
         if not self._ws:
             raise RuntimeError("WebSocket not connected")
 
         request_id = str(uuid.uuid4())
-        request = {"jsonrpc": "2.0", "method": method, "params": msgspec.to_builtins(params), "id": request_id}
+        params_dict = msgspec.structs.asdict(params)
+        params_filtered = {k: v for k, v in params_dict.items() if v is not None}
+        request = {"jsonrpc": "2.0", "method": method, "params": params_filtered, "id": request_id}
         data = msgspec.json.encode(request).decode("utf-8")
 
         response_queue: Queue = Queue(maxsize=1)
