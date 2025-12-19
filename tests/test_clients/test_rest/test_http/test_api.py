@@ -13,19 +13,19 @@ from derive_client.data_types.generated_models import (
 def test_public_get_ticker(client_admin_wallet):
     instrument_name = "ETH-PERP"
     params = PublicGetTickerParamsSchema(instrument_name=instrument_name)
-    result = client_admin_wallet._public_api.get_ticker(params=params)
+    result = client_admin_wallet._public_api.rpc.get_ticker(params=params)
     assert isinstance(result, PublicGetTickerResultSchema)
 
 
 def test_get_private_get_subaccounts(client_admin_wallet):
     wallet = client_admin_wallet._auth.wallet
     params = PrivateGetSubaccountsParamsSchema(wallet=wallet)
-    result = client_admin_wallet._private_api.get_subaccounts(params=params)
+    result = client_admin_wallet._private_api.rpc.get_subaccounts(params=params)
     assert isinstance(result, PrivateGetSubaccountsResultSchema)
 
 
 def test_get_private_get_orders(client_admin_wallet):
     subaccount_id = client_admin_wallet.active_subaccount.id
     params = PrivateGetOrdersParamsSchema(subaccount_id=subaccount_id)
-    result = client_admin_wallet._private_api.get_orders(params=params)
+    result = client_admin_wallet._private_api.rpc.get_orders(params=params)
     assert isinstance(result, PrivateGetOrdersResultSchema)
