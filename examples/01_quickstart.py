@@ -18,7 +18,7 @@ Prerequisites:
 from pathlib import Path
 
 from derive_client import HTTPClient
-from derive_client.data_types import D, Direction, OrderType
+from derive_client.data_types import D, Direction, InstrumentType, OrderType
 
 # Initialize client
 env_file = Path(__file__).parent.parent / ".env.template"
@@ -64,11 +64,14 @@ print("MARKET DATA")
 print("=" * 60)
 
 # View ETH perpetual market
-ticker = client.markets.get_ticker(instrument_name="ETH-PERP")
+# Using get_tickers instead of deprecated get_ticker
+tickers = client.markets.get_tickers(instrument_type=InstrumentType.perp, currency="ETH")
+ticker = tickers["ETH-PERP"]
+
 print("\nETH-PERP")
-print(f"  Bid: ${ticker.best_bid_price}")
-print(f"  Ask: ${ticker.best_ask_price}")
-print(f"  Mark: ${ticker.mark_price}")
+print(f"  Bid: ${ticker.b}")  # best_bid_price
+print(f"  Ask: ${ticker.a}")  # best_ask_price
+print(f"  Mark: ${ticker.M}")  # mark_price
 
 print("\n" + "=" * 60)
 print("PLACE ORDER")
@@ -78,7 +81,7 @@ print("=" * 60)
 order_result = client.orders.create(
     instrument_name="ETH-PERP",
     amount=D("0.10"),  # 0.10 ETH
-    limit_price=ticker.index_price * D(0.95),  # Buy at 95% of the index price
+    limit_price=ticker.I * D(0.95),  # Buy at 95% of the index price (ticker.I)
     direction=Direction.buy,
     order_type=OrderType.limit,
 )
