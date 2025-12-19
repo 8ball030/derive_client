@@ -59,7 +59,7 @@ class TradeOperations:
             tx_hash=tx_hash,
             tx_status=tx_status,
         )
-        result = self._subaccount._public_api.get_trade_history(params)
+        result = self._subaccount._public_api.rpc.get_trade_history(params)
         return result.trades
 
     def list_private(
@@ -85,5 +85,5 @@ class TradeOperations:
             to_timestamp=to_timestamp,
             wallet=self._subaccount._auth.wallet,
         )
-        result = self._subaccount._private_api.get_trade_history(params)
+        result = self._subaccount._private_api.rpc.get_trade_history(params)
         return result.trades

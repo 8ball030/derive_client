@@ -441,8 +441,14 @@ class DeriveBridge:
         }
 
         # Encode the token approval and withdrawToChain for the withdraw wrapper.
-        approve_data = context.source_token.encodeABI(fn_name="approve", args=[self.withdraw_wrapper.address, amount])
-        bridge_data = self.withdraw_wrapper.encodeABI(fn_name="withdrawToChain", args=list(kwargs.values()))
+        approve_data = context.source_token.encode_abi(
+            abi_element_identifier="approve",
+            args=[self.withdraw_wrapper.address, amount],
+        )
+        bridge_data = self.withdraw_wrapper.encode_abi(
+            abi_element_identifier="withdrawToChain",
+            args=list(kwargs.values()),
+        )
 
         # Build the batch execution call via the Light Account.
         func = self.light_account.functions.executeBatch(
@@ -521,8 +527,14 @@ class DeriveBridge:
             "destEID": destEID,
         }
 
-        approve_data = context.source_token.encodeABI(fn_name="approve", args=[withdraw_wrapper.address, amount])
-        bridge_data = withdraw_wrapper.encodeABI(fn_name="withdrawToChain", args=list(kwargs.values()))
+        approve_data = context.source_token.encode_abi(
+            abi_element_identifier="approve",
+            args=[withdraw_wrapper.address, amount],
+        )
+        bridge_data = withdraw_wrapper.encode_abi(
+            abi_element_identifier="withdrawToChain",
+            args=list(kwargs.values()),
+        )
 
         func = self.light_account.functions.executeBatch(
             dest=[context.source_token.address, withdraw_wrapper.address],

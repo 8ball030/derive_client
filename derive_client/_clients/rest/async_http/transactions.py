@@ -29,5 +29,5 @@ class TransactionOperations:
         """Get a transaction by its transaction id."""
 
         params = PublicGetTransactionParamsSchema(transaction_id=transaction_id)
-        result = await self._public_api.get_transaction(params)
+        result = await self._public_api.rpc.get_transaction(params)
         return result

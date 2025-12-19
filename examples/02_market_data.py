@@ -59,11 +59,18 @@ perp_names = ["ETH-PERP", "BTC-PERP"]
 spreads = []
 
 print("\nBid-Ask Spreads (lower = better liquidity):")
-for instrument in perp_names:
-    ticker = client.markets.get_ticker(instrument_name=instrument)
 
-    bid = Decimal(ticker.best_bid_price)
-    ask = Decimal(ticker.best_ask_price)
+# Fetch all perp tickers efficiently
+# Note: We need to fetch tickers per currency since get_tickers requires currency for perps
+eth_tickers = client.markets.get_tickers(instrument_type=InstrumentType.perp, currency="ETH")
+btc_tickers = client.markets.get_tickers(instrument_type=InstrumentType.perp, currency="BTC")
+all_tickers = {**eth_tickers, **btc_tickers}
+
+for instrument in perp_names:
+    ticker = all_tickers[instrument]
+
+    bid = ticker.b  # best_bid_price
+    ask = ticker.a  # best_ask_price
     mid = (bid + ask) / 2
     spread_bps = ((ask - bid) / mid) * 10_000  # Basis points
 
@@ -96,7 +103,7 @@ print("=" * 60)
 
 # Deep dive on specific instrument
 eth_perp = client.markets.get_instrument(instrument_name="ETH-PERP")
-ticker = client.markets.get_ticker(instrument_name="ETH-PERP")
+ticker = eth_tickers["ETH-PERP"]
 
 print(f"\n{eth_perp.instrument_name} Details:")
 print(f"  Base currency: {eth_perp.base_currency}")
@@ -106,14 +113,14 @@ print(f"  Min trade size: {eth_perp.minimum_amount}")
 print(f"  Max trade size: {eth_perp.maximum_amount}")
 
 print("\n  Current state:")
-print(f"    Mark price: ${ticker.mark_price:.2f}")
-print(f"    Index price: ${ticker.index_price}")
-print(f"    Funding rate: {ticker.perp_details.funding_rate * 100:.4f}%")
-print(f"    24h volume: ${ticker.stats.contract_volume:,.0f}")
-print(f"    Open interest: {ticker.stats.open_interest:.4f}")
+print(f"    Mark price: ${ticker.M:.2f}")  # mark_price
+print(f"    Index price: ${ticker.I}")  # index_price
+print(f"    Funding rate: {ticker.f * 100:.4f}%")  # funding_rate (perps only)
+print(f"    24h volume: ${ticker.stats.v:,.0f}")  # volume
+print(f"    Open interest: {ticker.stats.oi:.4f}")  # open_interest
 
 # Check if funding is favorable
-funding_rate = Decimal(ticker.perp_details.funding_rate)
+funding_rate = ticker.f
 if funding_rate > 0:
     print(f"\n  💡 Funding: Longs pay shorts ({funding_rate * 100:.4f}%)")
     print("     → Consider shorting for positive carry")

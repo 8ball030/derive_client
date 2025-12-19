@@ -18,8 +18,7 @@ ASYNC_OPERATION_MODULES = {
     "rfq",
     "mmp",
     "trades",
-    "_private_api",
-    "_public_api",
+    "rpc",
 }
 
 # Methods that should remain synchronous

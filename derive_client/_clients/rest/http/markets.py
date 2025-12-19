@@ -157,21 +157,21 @@ class MarketOperations:
         """Get currency related risk params, spot price 24hrs ago and lending details for a specific currency."""
 
         params = PublicGetCurrencyParamsSchema(currency=currency)
-        result = self._public_api.get_currency(params)
+        result = self._public_api.rpc.get_currency(params)
         return result
 
     def get_all_currencies(self) -> list[CurrencyDetailedResponseSchema]:
         """Get all active currencies with their spot price, spot price 24hrs ago."""
 
         params = PublicGetAllCurrenciesParamsSchema()
-        result = self._public_api.get_all_currencies(params)
+        result = self._public_api.rpc.get_all_currencies(params)
         return result
 
     def get_instrument(self, *, instrument_name: str) -> PublicGetInstrumentResultSchema:
         """Get single instrument by asset name."""
 
         params = PublicGetInstrumentParamsSchema(instrument_name=instrument_name)
-        result = self._public_api.get_instrument(params)
+        result = self._public_api.rpc.get_instrument(params)
         return result
 
     def get_instruments(
@@ -188,7 +188,7 @@ class MarketOperations:
             expired=expired,
             instrument_type=instrument_type,
         )
-        result = self._public_api.get_instruments(params)
+        result = self._public_api.rpc.get_instruments(params)
         return result
 
     def get_all_instruments(
@@ -209,7 +209,7 @@ class MarketOperations:
             page=page,
             page_size=page_size,
         )
-        result = self._public_api.get_all_instruments(params)
+        result = self._public_api.rpc.get_all_instruments(params)
         return result
 
     def get_ticker(self, *, instrument_name: str) -> PublicGetTickerResultSchema:
@@ -226,22 +226,28 @@ class MarketOperations:
         )
 
         params = PublicGetTickerParamsSchema(instrument_name=instrument_name)
-        result = self._public_api.get_ticker(params)
+        result = self._public_api.rpc.get_ticker(params)
         return result
 
     def get_tickers(
         self,
         *,
-        currency: str,
         instrument_type: InstrumentType,
+        currency: Optional[str] = None,
         expiry_date: Optional[str] = None,
     ) -> dict[str, TickerSlimSchema]:
-        """Get tickers information (best bid / ask, stats, etc.) for multiple instruments."""
+        """
+        Get tickers information (best bid / ask, stats, etc.) for multiple instruments.
+
+        For options: currency is required and expiry_date is required.
+        For perps: currency is optional, expiry_date will throw an error.
+        For erc20s: currency is optional, expiry_date will throw an error.
+        """
 
         params = PublicGetTickersParamsSchema(
             currency=currency,
             instrument_type=instrument_type,
             expiry_date=expiry_date,
         )
-        result = self._public_api.get_tickers(params)
+        result = self._public_api.rpc.get_tickers(params)
         return result.tickers

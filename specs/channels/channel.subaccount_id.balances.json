@@ -1,0 +1,140 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "SubaccountIdBalancesChannelSchema": {
+      "type": "object",
+      "properties": {
+        "subaccount_id": {
+          "title": "subaccount_id",
+          "type": "integer",
+          "description": "Subaccount ID"
+        }
+      },
+      "required": [
+        "subaccount_id"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdBalancesNotificationSchema": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "title": "method",
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdBalancesNotificationParamsSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "method",
+        "params"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdBalancesNotificationParamsSchema": {
+      "type": "object",
+      "properties": {
+        "channel": {
+          "title": "channel",
+          "type": "string",
+          "description": "Subscribed channel name"
+        },
+        "data": {
+          "title": "data",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/BalanceUpdateSchema",
+            "field_many": true
+          }
+        }
+      },
+      "required": [
+        "channel",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "BalanceUpdateSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "name",
+          "type": "string",
+          "description": "Name of colletaral asset or instrument"
+        },
+        "new_balance": {
+          "title": "new_balance",
+          "type": "string",
+          "format": "decimal",
+          "description": "Balance after update"
+        },
+        "previous_balance": {
+          "title": "previous_balance",
+          "type": "string",
+          "format": "decimal",
+          "description": "Balance before update"
+        },
+        "update_type": {
+          "title": "update_type",
+          "type": "string",
+          "enum": [
+            "trade",
+            "asset_deposit",
+            "asset_withdrawal",
+            "transfer",
+            "subaccount_deposit",
+            "subaccount_withdrawal",
+            "liquidation",
+            "liquidator",
+            "onchain_drift_fix",
+            "perp_settlement",
+            "option_settlement",
+            "interest_accrual",
+            "onchain_revert",
+            "double_revert"
+          ],
+          "description": "Type of transaction"
+        }
+      },
+      "required": [
+        "name",
+        "new_balance",
+        "previous_balance",
+        "update_type"
+      ],
+      "additionalProperties": false
+    },
+    "SubaccountIdBalancesPubSubSchema": {
+      "type": "object",
+      "properties": {
+        "channel_params": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdBalancesChannelSchema",
+          "field_many": false
+        },
+        "notification": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdBalancesNotificationSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "channel_params",
+        "notification"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "title": "{subaccount_id}.balances",
+  "description": "Subscribe to changes in user's positions for a given subaccount ID.<br /><br />For perpetuals, additional balance updates are emitted under the name Q-{ccy}-PERP where Q stands for \"quote\".<br />This balance is a proxy for an on-chain state of lastMarkPrice.<br />Because of a synchronization lag with the on-chain state, the orderbook instead keeps track of a running total cost of perpetual trades,<br /><br />For example:<br />Q-ETH-PERP balance of $6,600 and an ETH-PERP balance of 3 means the lastMarkPrice state is estimated to be $2,200.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/SubaccountIdBalancesPubSubSchema"
+    }
+  ]
+}
