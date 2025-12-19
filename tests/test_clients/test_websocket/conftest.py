@@ -48,7 +48,7 @@ def client_admin_wallet():
     )
     client.connect()
     yield client
-    # client.orders.cancel_all()
-    # client.rfq.cancel_batch_rfqs()
-    # client.rfq.cancel_batch_quotes()
+    client.orders.cancel_all()
+    client.rfq.cancel_batch_rfqs()
+    client.rfq.cancel_batch_quotes()
     client.disconnect()

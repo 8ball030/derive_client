@@ -12,17 +12,26 @@ from typing import Generator
 from pydantic import ConfigDict, validate_call
 from web3 import Web3
 
+from derive_client._clients.rest.http.account import LightAccount
+from derive_client._clients.rest.http.collateral import CollateralOperations
+from derive_client._clients.rest.http.markets import MarketOperations
+from derive_client._clients.rest.http.mmp import MMPOperations
+from derive_client._clients.rest.http.orders import OrderOperations
+from derive_client._clients.rest.http.positions import PositionOperations
+from derive_client._clients.rest.http.rfq import RFQOperations
+from derive_client._clients.rest.http.subaccount import Subaccount
+from derive_client._clients.rest.http.trades import TradeOperations
+from derive_client._clients.rest.http.transactions import TransactionOperations
 from derive_client._clients.utils import AuthContext, load_client_config
 from derive_client._clients.websockets.api import PrivateAPI, PublicAPI
 from derive_client._clients.websockets.session import WebSocketSession
 from derive_client.config import CONFIGS
 from derive_client.data_types import ChecksumAddress, Environment
-from derive_client.data_types.generated_models import PublicLoginParamsSchema
 from derive_client.utils.logger import get_logger
 
 
 class WebSocketClient:
-    """Synchronous WebSocket client for real-time data streams."""
+    """Synchronous WebSocket client for real-time data and operations."""
 
     @validate_call(config=ConfigDict(arbitrary_types_allowed=True))
     def __init__(
@@ -61,6 +70,12 @@ class WebSocketClient:
         self._public_api = PublicAPI(session=self._session)
         self._private_api = PrivateAPI(session=self._session)
 
+        self._markets = MarketOperations(public_api=self._public_api, logger=self._logger)
+        self._transactions = TransactionOperations(public_api=self._public_api, logger=self._logger)
+
+        self._light_account: LightAccount | None = None
+        self._subaccounts: dict[int, Subaccount] = {}
+
     @classmethod
     def from_env(
         cls,
@@ -73,23 +88,156 @@ class WebSocketClient:
         return cls(**config.model_dump())
 
     def connect(self) -> None:
-        """Establish WebSocket connection."""
+        """Connect to Derive via WebSocket and validate credentials."""
+
         self._session.open()
+
+        # Authenticate via WebSocket login
+        from derive_client.data_types.generated_models import PublicLoginParamsSchema
+
         params = PublicLoginParamsSchema(**self._auth.sign_ws_login())
         subaccount_ids = self._public_api.rpc.login(params=params)
-        self._logger.debug(f"Websocket login returned subaccount ids: {subaccount_ids}")
+        self._logger.debug(f"WebSocket login returned subaccount ids: {subaccount_ids}")
+
+        # Initialize account and markets (same as HTTP client)
+        self._light_account = self._instantiate_account()
+        self._markets.fetch_all_instruments(expired=False)
+
+        # Validate and cache active subaccount
+        if self._subaccount_id not in subaccount_ids:
+            self._logger.warning(
+                f"Subaccount {self._subaccount_id} does not exist for wallet {self._light_account.address}. "
+                f"Available subaccounts: {subaccount_ids}"
+            )
+            return
+
+        subaccount = self._instantiate_subaccount(self._subaccount_id)
+        self._subaccounts[subaccount.id] = subaccount
 
     def disconnect(self) -> None:
-        """Close WebSocket connection and clear subscriptions. Idempotent."""
+        """Close WebSocket connection and clear cached state. Idempotent."""
+
         self._session.close()
+        self._light_account = None
+        self._subaccounts.clear()
+        self._markets._erc20_instruments_cache.clear()
+        self._markets._perp_instruments_cache.clear()
+        self._markets._option_instruments_cache.clear()
 
-    def unsubscribe(self, channels: list[str] | str) -> None:
-        """Unsubscribe from a channel.
+    def _instantiate_account(self) -> LightAccount:
+        """Instantiate account using WebSocket API."""
+        return LightAccount.from_api(
+            auth=self._auth,
+            config=self._config,
+            logger=self._logger,
+            public_api=self._public_api,
+            private_api=self._private_api,
+        )
 
-        Args:
-            channels: Single channel name or list of channel names
-        """
-        self._session.unsubscribe(channels)
+    def _instantiate_subaccount(self, subaccount_id: int) -> Subaccount:
+        """Instantiate subaccount using WebSocket API."""
+        return Subaccount.from_api(
+            subaccount_id=subaccount_id,
+            auth=self._auth,
+            config=self._config,
+            logger=self._logger,
+            markets=self._markets,
+            transactions=self._transactions,
+            public_api=self._public_api,
+            private_api=self._private_api,
+        )
+
+    @property
+    def account(self) -> LightAccount:
+        """Get the LightAccount instance."""
+
+        if self._light_account is None:
+            self._light_account = self._instantiate_account()
+        return self._light_account
+
+    @property
+    def active_subaccount(self) -> Subaccount:
+        """Get the currently active subaccount."""
+
+        if (subaccount := self._subaccounts.get(self._subaccount_id)) is None:
+            subaccount = self.fetch_subaccount(subaccount_id=self._subaccount_id)
+        return subaccount
+
+    def fetch_subaccount(self, subaccount_id: int) -> Subaccount:
+        """Fetch a subaccount from API and cache it."""
+
+        self._subaccounts[subaccount_id] = self._instantiate_subaccount(subaccount_id)
+        return self._subaccounts[subaccount_id]
+
+    def fetch_subaccounts(self) -> list[Subaccount]:
+        """Fetch subaccounts from API and cache them."""
+
+        account_subaccounts = self.account.get_subaccounts()
+        return sorted(self.fetch_subaccount(sid) for sid in account_subaccounts.subaccount_ids)
+
+    @property
+    def cached_subaccounts(self) -> list[Subaccount]:
+        """Get all cached subaccounts."""
+
+        return sorted(self._subaccounts.values())
+
+    @property
+    def markets(self) -> MarketOperations:
+        """Access market data and instruments."""
+
+        return self._markets
+
+    @property
+    def transactions(self) -> TransactionOperations:
+        """Query transaction status and details."""
+
+        return self._transactions
+
+    @property
+    def collateral(self) -> CollateralOperations:
+        """Manage collateral and margin."""
+
+        return self.active_subaccount.collateral
+
+    @property
+    def orders(self) -> OrderOperations:
+        """Place and manage orders."""
+
+        return self.active_subaccount.orders
+
+    @property
+    def positions(self) -> PositionOperations:
+        """View and manage positions."""
+
+        return self.active_subaccount.positions
+
+    @property
+    def rfq(self) -> RFQOperations:
+        """Request for quote operations."""
+
+        return self.active_subaccount.rfq
+
+    @property
+    def trades(self) -> TradeOperations:
+        """View trade history."""
+
+        return self.active_subaccount.trades
+
+    @property
+    def mmp(self) -> MMPOperations:
+        """Market maker protection settings."""
+
+        return self.active_subaccount.mmp
+
+    @property
+    def public_channels(self):
+        """Access public channel subscriptions."""
+        return self._public_api.channels
+
+    @property
+    def private_channels(self):
+        """Access private channel subscriptions."""
+        return self._private_api.channels
 
     @contextlib.contextmanager
     def timeout(self, seconds: float) -> Generator[None, None, None]:

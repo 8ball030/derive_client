@@ -203,7 +203,4 @@ if __name__ == "__main__":
                 print(f"Conflict for enum {enum_name}:\nOpenAPI Model:\n{original}\nChannel Model:\n{new}\n")
         raise ValueError("Conflicting enums found between channel models and openapi models. See above for details.")
 
-    # print("Patching pagination fields to be optional...")
-
-    # patch_pagination_to_optional(output_path)
-    # print("Done.")
+    print("Done.")
