@@ -3,9 +3,27 @@
 from enum import Enum
 
 
+class Interval(Enum):
+    field_100 = '100'
+    field_1000 = '1000'
+
+
 class State(Enum):
     ongoing = 'ongoing'
     ended = 'ended'
+
+
+class Depth(Enum):
+    field_1 = '1'
+    field_10 = '10'
+    field_20 = '20'
+    field_100 = '100'
+
+
+class Group(Enum):
+    field_1 = '1'
+    field_10 = '10'
+    field_100 = '100'
 
 
 class UpdateType(Enum):
@@ -23,21 +41,3 @@ class UpdateType(Enum):
     interest_accrual = 'interest_accrual'
     onchain_revert = 'onchain_revert'
     double_revert = 'double_revert'
-
-
-class Interval(Enum):
-    field_100 = '100'
-    field_1000 = '1000'
-
-
-class Depth(Enum):
-    field_1 = '1'
-    field_10 = '10'
-    field_20 = '20'
-    field_100 = '100'
-
-
-class Group(Enum):
-    field_1 = '1'
-    field_10 = '10'
-    field_100 = '100'

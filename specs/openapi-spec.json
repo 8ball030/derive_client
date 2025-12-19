@@ -1493,7 +1493,7 @@
           "Private"
         ],
         "summary": "Get Order",
-        "description": "Get state of an order by order id\nRequired minimum session key permission level is `read_only`",
+        "description": "Get state of an order by order id.  If the order is an MMP order, it will not show up if cancelled/expired.\nRequired minimum session key permission level is `read_only`",
         "responses": {
           "200": {
             "description": "successful operation",

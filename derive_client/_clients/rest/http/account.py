@@ -95,13 +95,13 @@ class LightAccount:
         """
 
         params = PrivateGetAccountParamsSchema(wallet=auth.wallet)
-        result = private_api.get_account(params)
+        result = private_api.rpc.get_account(params)
         state = result
         logger.debug(f"LightAccount validated: {state.wallet}")
 
         # Check if the current signer is in the list of valid session keys
         session_keys_params = PrivateSessionKeysParamsSchema(wallet=auth.wallet)
-        session_keys_result = private_api.session_keys(session_keys_params)
+        session_keys_result = private_api.rpc.session_keys(session_keys_params)
 
         valid_signers = {key.public_session_key: key for key in session_keys_result.public_session_keys}
         signer_address = auth.account.address  # type: ignore[attr-defined]
@@ -135,7 +135,7 @@ class LightAccount:
     def refresh(self) -> LightAccount:
         """Refresh mutable state from API."""
         params = PrivateGetAccountParamsSchema(wallet=self._auth.wallet)
-        response = self._private_api.get_account(params)
+        response = self._private_api.rpc.get_account(params)
         self._state = response
         return self
 
@@ -225,7 +225,7 @@ class LightAccount:
             scope=scope,
             signed_raw_tx=signed_raw_tx,
         )
-        result = self._private_api.register_scoped_session_key(params)
+        result = self._private_api.rpc.register_scoped_session_key(params)
         return result
 
     def session_keys(self) -> PrivateSessionKeysResultSchema:
@@ -237,7 +237,7 @@ class LightAccount:
         """
 
         params = PrivateSessionKeysParamsSchema(wallet=self.address)
-        result = self._private_api.session_keys(params)
+        result = self._private_api.rpc.session_keys(params)
         return result
 
     def edit_session_key(
@@ -257,14 +257,14 @@ class LightAccount:
             ip_whitelist=ip_whitelist,
             label=label,
         )
-        result = self._private_api.edit_session_key(params)
+        result = self._private_api.rpc.edit_session_key(params)
         return result
 
     def get_all_portfolios(self) -> list[PrivateGetSubaccountResultSchema]:
         """Get all subaccount portfolios of a wallet"""
 
         params = PrivateGetAllPortfoliosParamsSchema(wallet=self.address)
-        result = self._private_api.get_all_portfolios(params)
+        result = self._private_api.rpc.get_all_portfolios(params)
         return result
 
     def create_subaccount(
@@ -326,21 +326,21 @@ class LightAccount:
             signer=signed_action.signer,
             wallet=self.address,
         )
-        result = self._private_api.create_subaccount(params)
+        result = self._private_api.rpc.create_subaccount(params)
         return result
 
     def get_subaccounts(self) -> PrivateGetSubaccountsResultSchema:
         """Get all subaccount IDs of an account / wallet"""
 
         params = PrivateGetSubaccountsParamsSchema(wallet=self.address)
-        result = self._private_api.get_subaccounts(params)
+        result = self._private_api.rpc.get_subaccounts(params)
         return result
 
     def get(self) -> PrivateGetAccountResultSchema:
         """Account details getter"""
 
         params = PrivateGetAccountParamsSchema(wallet=self.address)
-        result = self._private_api.get_account(params)
+        result = self._private_api.rpc.get_account(params)
         return result
 
     def __repr__(self) -> str:
