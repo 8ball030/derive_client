@@ -1,54 +1,81 @@
-"""Auto-generated API classes from OpenAPI spec"""
+"""Auto-generated API classes{% if client_type == 'websocket' %} for WebSocket{% endif %}"""
 
+{% if client_type == 'http' %}
 import msgspec
+{% endif %}
 
 from typing import Callable, Any, List
 
+{% if client_type == 'http' %}
 from derive_client._clients.rest{% if is_async %}.async_http{% else %}.http{% endif %}.session import {% if is_async %}AsyncHTTPSession{% else %}HTTPSession{% endif %}
 from derive_client.config import PUBLIC_HEADERS
 from derive_client.data_types import EnvConfig
 from derive_client._clients.utils import decode_envelope, decode_result, AuthContext, encode_json_exclude_none
 from derive_client._clients.rest.endpoints import PublicEndpoints, PrivateEndpoints
+{% else %}
+from derive_client._clients.utils import decode_result
+from derive_client._clients.rest.endpoints import PublicEndpoints, PrivateEndpoints
+{% endif %}
 from derive_client.data_types.generated_models import (
-{% for schema in schema_imports -%}
+{% for schema in rpc_schema_imports -%}
     {{ schema }},
 {% endfor %}
 )
+{% if client_type == 'websocket' %}
+from derive_client.data_types.channel_models import (
+{% for schema in channel_schema_imports -%}
+    {{ schema }},
+{% endfor %}
+)
+{% endif %}
 
-class {{ api_prefix }}PublicAPI:
-    """{{ api_prefix }} public API methods"""
 
-    def __init__(self, session: {% if is_async %}AsyncHTTPSession{% else %}HTTPSession{% endif %}, config: EnvConfig):
+# ============================================================================
+# RPC API Classes
+# ============================================================================
+
+class {{ api_prefix }}PublicRPC:
+    """{{ api_prefix }} public RPC methods"""
+
+    def __init__(self, session{% if client_type == 'http' %}: {% if is_async %}AsyncHTTPSession{% else %}HTTPSession{% endif %}, config: EnvConfig{% endif %}):
         self._session = session
+{% if client_type == 'http' %}
         self._config = config
         self._endpoints = PublicEndpoints(config.base_url)
 
     @property
     def headers(self) -> dict:
         return PUBLIC_HEADERS
+{% endif %}
 
-{% for method in public_methods %}
+{% for method in public_rpc_methods %}
     {% if is_async %}async {% endif %}def {{ method.name }}(self, params: {{ method.request_type }},) -> {{ method.result_type }}:
         {% if method.description %}
         """
         {{ method.description | format_docstring }}
         """
         {% endif %}
-
+{% if client_type == 'http' %}
         url = self._endpoints.{{ method.name }}
         data = encode_json_exclude_none(params)
         message = {% if is_async %}await {% endif %}self._session._send_request(url, data, headers=self.headers)
         envelope = decode_envelope(message)
         result = decode_result(envelope, {{ method.result_type | replace('List[', 'list[') }})
+{% else %}
+        method = "public/{{ method.name }}"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, {{ method.result_type }})
+{% endif %}
         return result
 {% endfor %}
 
 
-class {{ api_prefix }}PrivateAPI:
-    """{{ api_prefix }} private API methods"""
-    
-    def __init__(self, session: {% if is_async %}AsyncHTTPSession{% else %}HTTPSession{% endif %}, config: EnvConfig, auth: AuthContext):
+class {{ api_prefix }}PrivateRPC:
+    """{{ api_prefix }} private RPC methods"""
+
+    def __init__(self, session{% if client_type == 'http' %}: {% if is_async %}AsyncHTTPSession{% else %}HTTPSession{% endif %}, config: EnvConfig, auth: AuthContext{% endif %}):
         self._session = session
+{% if client_type == 'http' %}
         self._config = config
         self._auth = auth
         self._endpoints = PrivateEndpoints(config.base_url)
@@ -56,19 +83,131 @@ class {{ api_prefix }}PrivateAPI:
     @property
     def headers(self) -> dict:
         return {**PUBLIC_HEADERS, **self._auth.signed_headers}
+{% endif %}
 
-{% for method in private_methods %}
-    {% if is_async %}async {% endif %}def {{ method.name }}(self, params: {{ method.request_type }},) -> {{ method.result_type }}:
+{% for method in private_rpc_methods %}
+    {% if is_async %}async {% endif %}def {{ method.name }}(self, params: {{ method.request_type }}) -> {{ method.result_type }}:
         {% if method.description %}
         """
         {{ method.description | format_docstring }}
         """
         {% endif %}
-
+{% if client_type == 'http' %}
         url = self._endpoints.{{ method.name }}
         data = encode_json_exclude_none(params)
         message = {% if is_async %}await {% endif %}self._session._send_request(url, data, headers=self.headers)
         envelope = decode_envelope(message)
         result = decode_result(envelope, {{ method.result_type | replace('List[', 'list[') }})
+{% else %}
+        method = "private/{{ method.name }}"
+        envelope = self._session._send_rpc(method=method, params=params)
+        result = decode_result(envelope, {{ method.result_type }})
+{% endif %}
         return result
 {% endfor %}
+
+{% if client_type == 'websocket' %}
+
+# ============================================================================
+# Channel Subscription Classes
+# ============================================================================
+
+class {{ api_prefix }}PublicChannels:
+    """{{ api_prefix }} public channel subscriptions"""
+
+    def __init__(self, session):
+        self._session = session
+
+{% for channel in public_channels %}
+    def {{ channel.name }}(
+        self,
+        {% for param in channel.params -%}
+        {{ param }}: str,
+        {% endfor -%}
+        callback: Callable[[Any], None],
+    ) -> str:
+        {% if channel.description %}
+        """
+        {{ channel.description | format_docstring }}
+
+        Args:
+            {% for param in channel.params -%}
+            {{ param }}: {{ param | replace('_', ' ') | title }}
+            {% endfor -%}
+            callback: Callback function to handle notifications
+
+        Returns:
+            Channel name for unsubscribing
+        """
+        {% endif %}
+        channel = "{{ channel.channel_pattern }}".format(
+            {% for param in channel.params -%}
+            {{ param }}={{ param }},
+            {% endfor -%}
+        )
+        self._session.subscribe(channel, callback)
+        return channel
+
+{% endfor %}
+
+class {{ api_prefix }}PrivateChannels:
+    """{{ api_prefix }} private channel subscriptions"""
+
+    def __init__(self, session):
+        self._session = session
+
+{% for channel in private_channels %}
+    def {{ channel.name }}(
+        self,
+        {% for param in channel.params -%}
+        {{ param }}: {% if param == 'subaccount_id' %}int{% else %}str{% endif %},
+        {% endfor -%}
+        callback: Callable[[Any], None],
+    ) -> str:
+        {% if channel.description %}
+        """
+        {{ channel.description | format_docstring }}
+
+        Args:
+            {% for param in channel.params -%}
+            {{ param }}: {{ param | replace('_', ' ') | title }}
+            {% endfor -%}
+            callback: Callback function to handle notifications
+
+        Returns:
+            Channel name for unsubscribing
+        """
+        {% endif %}
+        channel = "{{ channel.channel_pattern }}".format(
+            {% for param in channel.params -%}
+            {{ param }}={{ param }},
+            {% endfor -%}
+        )
+        self._session.subscribe(channel, callback)
+        return channel
+
+{% endfor %}
+{% endif %}
+
+# ============================================================================
+# Combined API Classes
+# ============================================================================
+
+class {{ api_prefix }}PublicAPI:
+    """Combined {{ api_prefix }} public API{% if client_type == 'websocket' %} - RPC and channels{% endif %}"""
+
+    def __init__(self, session{% if client_type == 'http' %}: {% if is_async %}AsyncHTTPSession{% else %}HTTPSession{% endif %}, config: EnvConfig{% endif %}):
+        self.rpc = {{ api_prefix }}PublicRPC(session{% if client_type == 'http' %}, config{% endif %})
+{% if client_type == 'websocket' %}
+        self.channels = {{ api_prefix }}PublicChannels(session)
+{% endif %}
+
+
+class {{ api_prefix }}PrivateAPI:
+    """Combined {{ api_prefix }} private API{% if client_type == 'websocket' %} - RPC and channels{% endif %}"""
+
+    def __init__(self, session{% if client_type == 'http' %}: {% if is_async %}AsyncHTTPSession{% else %}HTTPSession{% endif %}, config: EnvConfig, auth: AuthContext{% endif %}):
+        self.rpc = {{ api_prefix }}PrivateRPC(session{% if client_type == 'http' %}, config, auth{% endif %})
+{% if client_type == 'websocket' %}
+        self.channels = {{ api_prefix }}PrivateChannels(session)
+{% endif %}
