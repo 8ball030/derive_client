@@ -146,10 +146,21 @@ class WebSocketSession:
             is_first_handler = not self._handlers[channel]
             self._handlers[channel].append(handler)
 
+        class Subscribe(msgspec.Struct):
+            channels: list[str]
+
+        params = Subscribe(channels=[channel])
+
         # Only send subscribe RPC if this is the first handler
         if is_first_handler:
             self._logger.info(f"Subscribing to channel: {channel}")
-            self._send_request("subscribe", {"channels": [channel]})
+            try:
+                envelope = self._send_request("subscribe", params=params)
+                self._logger.debug(f"Subscribe RPC response for {channel}: {envelope}")
+                return envelope
+            except Exception:
+                self._logger.exception(f"Subscribe RPC failed for {channel}")
+                raise
         else:
             self._logger.debug(f"Added handler for existing subscription: {channel}")
 
@@ -190,7 +201,15 @@ class WebSocketSession:
 
         if should_unsubscribe:
             self._logger.info(f"Unsubscribing from channel: {channel}")
-            self._send_request("unsubscribe", {"channels": [channel]})
+            try:
+                envelope = self._send_request("unsubscribe", {"channels": [channel]})
+                self._logger.debug(f"Unsubscribe RPC response for {channel}: {envelope}")
+                return envelope
+            except Exception:
+                self._logger.exception(f"Unsubscribe RPC failed for {channel}")
+                raise
+
+        return None
 
     def _send_request(self, method: str, params: msgspec.Struct) -> JSONRPCEnvelope:
         """Send RPC request and return decoded envelope"""
@@ -263,7 +282,9 @@ class WebSocketSession:
         """
 
         envelope = decode_envelope(data)
-        if envelope.id is not None:
+
+        # RPC response message
+        if envelope.id is not msgspec.UNSET:
             with self._requests_lock:
                 queue = self._pending_requests.get(envelope.id)
 
