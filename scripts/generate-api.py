@@ -3,7 +3,7 @@
 import json
 import re
 import textwrap
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
@@ -17,6 +17,7 @@ CHANNELS_DIR = Path("specs") / "channels"
 TEMPLATES_DIR = PACKAGE_DIR / "data" / "templates"
 OUTPUT_DIR = PACKAGE_DIR / "_clients"
 GENERATED_MODELS_PATH = PACKAGE_DIR / "data_types" / "generated_models.py"
+CHANNEL_MODELS_DIR = PACKAGE_DIR / "data_types" / "channels"
 
 # Channel classifications from docs
 PUBLIC_CHANNELS = {
@@ -52,13 +53,19 @@ class MethodInfo:
 
 
 @dataclass
+class ParamInfo:
+    name: str
+    type_annotation: str
+
+
+@dataclass
 class ChannelInfo:
     name: str  # Python method name
     channel_pattern: str  # e.g., "{subaccount_id}.best.quotes"
     params_type: str  # ChannelParamsSchema
     notification_type: str  # NotificationSchema
     description: str
-    params: list[str]  # e.g., ["subaccount_id", "instrument_name"]
+    params: list[ParamInfo] = field(default_factory=list)  # Changed to list[ParamInfo]
 
 
 class ResponseSchemaParser(cst.CSTVisitor):
@@ -148,6 +155,97 @@ class ResponseSchemaParser(cst.CSTVisitor):
             if result_type:
                 return result_type
         return None
+
+
+class ChannelModelParser(cst.CSTVisitor):
+    """Parse generated channel model files to extract schema and enum types."""
+
+    def __init__(self):
+        self.schemas: dict[str, dict[str, str]] = {}  # class_name -> {field_name: type}
+        self.enums: set[str] = set()
+        self.current_class: Optional[str] = None
+
+    def visit_ClassDef(self, node: cst.ClassDef) -> None:
+        class_name = node.name.value
+        self.current_class = class_name
+
+        # Check if it's an Enum
+        for base in node.bases:
+            try:
+                base_name = self._annotation_to_string(base.value)
+                if "Enum" in base_name:
+                    self.enums.add(class_name)
+                    return
+            except Exception:
+                continue
+
+        # It's a Struct schema
+        self.schemas.setdefault(class_name, {})
+
+    def leave_ClassDef(self, node: cst.ClassDef) -> None:
+        self.current_class = None
+
+    def visit_AnnAssign(self, node: cst.AnnAssign) -> None:
+        if not self.current_class or self.current_class in self.enums:
+            return
+
+        target = node.target
+        field_name = target.value if isinstance(target, cst.Name) else self._annotation_to_string(target)
+
+        annotation_node = getattr(node, "annotation", None)
+        if not annotation_node:
+            return
+
+        annot_expr = annotation_node.annotation
+        field_type = self._annotation_to_string(annot_expr).strip()
+
+        if (field_type.startswith("'") and field_type.endswith("'")) or (
+            field_type.startswith('"') and field_type.endswith('"')
+        ):
+            field_type = field_type[1:-1]
+
+        self.schemas[self.current_class][field_name] = field_type
+
+    def _annotation_to_string(self, node: cst.BaseExpression) -> str:
+        try:
+            text = cst.Module([]).code_for_node(node)
+            return text.strip()
+        except Exception:
+            return repr(node)
+
+
+def parse_channel_models(channels_dir: Path) -> tuple[dict[str, dict[str, str]], set[str]]:
+    """Parse all generated channel model files to extract schemas and enums."""
+
+    parser = ChannelModelParser()
+
+    # Parse public channel models
+    public_dir = channels_dir / "public"
+    if public_dir.exists():
+        for model_file in public_dir.glob("*.py"):
+            if model_file.name == "__init__.py":
+                continue
+            try:
+                source = model_file.read_text()
+                tree = cst.parse_module(source)
+                tree.visit(parser)
+            except Exception as e:
+                print(f"  ⚠️  Error parsing {model_file}: {e}")
+
+    # Parse private channel models
+    private_dir = channels_dir / "private"
+    if private_dir.exists():
+        for model_file in private_dir.glob("*.py"):
+            if model_file.name == "__init__.py":
+                continue
+            try:
+                source = model_file.read_text()
+                tree = cst.parse_module(source)
+                tree.visit(parser)
+            except Exception as e:
+                print(f"  ⚠️  Error parsing {model_file}: {e}")
+
+    return parser.schemas, parser.enums
 
 
 def extract_schema_names_from_type(type_annotation: str) -> set[str]:
@@ -248,6 +346,7 @@ def parse_channel_name(filename: str) -> tuple[str, list[str]]:
         "group",
         "depth",
         "interval",
+        "tx_status",
     }
 
     for part in parts:
@@ -306,7 +405,22 @@ def extract_schema_types(schema_data: dict) -> tuple[str, str]:
     return params_type, notification_type
 
 
-def parse_channel_schemas(channels_dir: Path):
+def get_param_type_annotation(
+    param_name: str, params_schema_name: str, channel_schemas: dict[str, dict[str, str]], channel_enums: set[str]
+) -> str:
+    """Get the type annotation for a channel parameter from the generated schema."""
+
+    # Check if we have a schema for the params
+    if params_schema_name in channel_schemas:
+        param_fields = channel_schemas[params_schema_name]
+        if param_name in param_fields:
+            return param_fields[param_name]
+
+    # Fallback to str for unknown types
+    return "str"
+
+
+def parse_channel_schemas(channels_dir: Path, channel_schemas: dict[str, dict[str, str]], channel_enums: set[str]):
     """Parse all channel JSON schemas."""
 
     public_channels = []
@@ -319,18 +433,29 @@ def parse_channel_schemas(channels_dir: Path):
         if filename in {"subscribe.json", "unsubscribe.json"}:
             continue
 
-        channel_name, params = parse_channel_name(filename)
+        channel_name, param_names = parse_channel_name(filename)
         method_name = to_python_method_name(channel_name)
 
         channel_pattern = channel_name
-        for param in params:
+        for param in param_names:
             channel_pattern = channel_pattern.replace(param, f"{{{param}}}")
 
         schema_data = json.loads(schema_file.read_text())
         params_type, notification_type = extract_schema_types(schema_data)
 
+        # Build params list with proper type annotations
+        params = []
+        for param_name in param_names:
+            type_annotation = get_param_type_annotation(param_name, params_type, channel_schemas, channel_enums)
+            params.append(ParamInfo(name=param_name, type_annotation=type_annotation))
+
+        # Track schema imports
         if params_type != "dict":
             schema_imports.add(params_type)
+            # Also add any types used in the params
+            for param in params:
+                schema_imports.update(extract_schema_names_from_type(param.type_annotation))
+
         if notification_type != "dict":
             schema_imports.add(notification_type)
 
@@ -473,8 +598,15 @@ def generate_all_files():
 
     # Parse channels for WebSocket
     if CHANNELS_DIR.exists():
+        print("\nParsing channel model files...")
+        channel_schemas, channel_enums = parse_channel_models(CHANNEL_MODELS_DIR)
+        print(f"  → Found {len(channel_schemas)} channel schemas")
+        print(f"  → Found {len(channel_enums)} channel enums")
+
         print("\nParsing channel schemas...")
-        public_channels, private_channels, channel_schema_imports = parse_channel_schemas(CHANNELS_DIR)
+        public_channels, private_channels, channel_schema_imports = parse_channel_schemas(
+            CHANNELS_DIR, channel_schemas, channel_enums
+        )
         print(f"  → {len(public_channels)} public channels")
         print(f"  → {len(private_channels)} private channels")
         print(f"  → {len(channel_schema_imports)} channel schema imports")

@@ -1,10 +1,8 @@
 """Auto-generated API classes{% if client_type == 'websocket' %} for WebSocket{% endif %}"""
 
-{% if client_type == 'http' %}
-import msgspec
-{% endif %}
-
 from typing import Callable, Any, List
+
+import msgspec
 
 {% if client_type == 'http' %}
 from derive_client._clients.rest{% if is_async %}.async_http{% else %}.http{% endif %}.session import {% if is_async %}AsyncHTTPSession{% else %}HTTPSession{% endif %}
@@ -13,8 +11,8 @@ from derive_client.data_types import EnvConfig
 from derive_client._clients.utils import decode_envelope, decode_result, AuthContext, encode_json_exclude_none
 from derive_client._clients.rest.endpoints import PublicEndpoints, PrivateEndpoints
 {% else %}
-from derive_client._clients.utils import decode_result
-from derive_client._clients.rest.endpoints import PublicEndpoints, PrivateEndpoints
+from derive_client._clients.websockets.session import WebSocketSession
+from derive_client._clients.utils import decode_envelope, decode_result, encode_json_exclude_none
 {% endif %}
 from derive_client.data_types.generated_models import (
 {% for schema in rpc_schema_imports -%}
@@ -30,6 +28,11 @@ from derive_client.data_types.channel_models import (
 {% endif %}
 
 
+class SubscriptionResult(msgspec.Struct):
+    status: dict[str, str]
+    current_subscriptions: list[str]
+
+
 # ============================================================================
 # RPC API Classes
 # ============================================================================
@@ -37,7 +40,7 @@ from derive_client.data_types.channel_models import (
 class {{ api_prefix }}PublicRPC:
     """{{ api_prefix }} public RPC methods"""
 
-    def __init__(self, session{% if client_type == 'http' %}: {% if is_async %}AsyncHTTPSession{% else %}HTTPSession{% endif %}, config: EnvConfig{% endif %}):
+    def __init__(self, session{% if client_type == 'http' %}: {% if is_async %}AsyncHTTPSession{% else %}HTTPSession{% endif %}, config: EnvConfig{% else %}: WebSocketSession{% endif %}):
         self._session = session
 {% if client_type == 'http' %}
         self._config = config
@@ -60,12 +63,13 @@ class {{ api_prefix }}PublicRPC:
         data = encode_json_exclude_none(params)
         message = {% if is_async %}await {% endif %}self._session._send_request(url, data, headers=self.headers)
         envelope = decode_envelope(message)
-        result = decode_result(envelope, {{ method.result_type | replace('List[', 'list[') }})
 {% else %}
         method = "public/{{ method.name }}"
-        envelope = self._session._send_request(method=method, params=params)
-        result = decode_result(envelope, {{ method.result_type }})
+        # data = encode_json_exclude_none(params)
+        # message = self._session._send_request(method, data)
+        envelope = self._session._send_request(method, params=params)
 {% endif %}
+        result = decode_result(envelope, {{ method.result_type | replace('List[', 'list[') }})
         return result
 {% endfor %}
 
@@ -73,7 +77,7 @@ class {{ api_prefix }}PublicRPC:
 class {{ api_prefix }}PrivateRPC:
     """{{ api_prefix }} private RPC methods"""
 
-    def __init__(self, session{% if client_type == 'http' %}: {% if is_async %}AsyncHTTPSession{% else %}HTTPSession{% endif %}, config: EnvConfig, auth: AuthContext{% endif %}):
+    def __init__(self, session{% if client_type == 'http' %}: {% if is_async %}AsyncHTTPSession{% else %}HTTPSession{% endif %}, config: EnvConfig, auth: AuthContext{% else %}: WebSocketSession{% endif %}):
         self._session = session
 {% if client_type == 'http' %}
         self._config = config
@@ -86,7 +90,7 @@ class {{ api_prefix }}PrivateRPC:
 {% endif %}
 
 {% for method in private_rpc_methods %}
-    {% if is_async %}async {% endif %}def {{ method.name }}(self, params: {{ method.request_type }}) -> {{ method.result_type }}:
+    {% if is_async %}async {% endif %}def {{ method.name }}(self, params: {{ method.request_type }},) -> {{ method.result_type }}:
         {% if method.description %}
         """
         {{ method.description | format_docstring }}
@@ -97,12 +101,13 @@ class {{ api_prefix }}PrivateRPC:
         data = encode_json_exclude_none(params)
         message = {% if is_async %}await {% endif %}self._session._send_request(url, data, headers=self.headers)
         envelope = decode_envelope(message)
-        result = decode_result(envelope, {{ method.result_type | replace('List[', 'list[') }})
 {% else %}
         method = "private/{{ method.name }}"
-        envelope = self._session._send_request(method=method, params=params)
-        result = decode_result(envelope, {{ method.result_type }})
+        # data = encode_json_exclude_none(params)
+        # message = self._session._send_request(method, data)
+        envelope = self._session._send_request(method, params=params)
 {% endif %}
+        result = decode_result(envelope, {{ method.result_type | replace('List[', 'list[') }})
         return result
 {% endfor %}
 
@@ -115,24 +120,24 @@ class {{ api_prefix }}PrivateRPC:
 class {{ api_prefix }}PublicChannels:
     """{{ api_prefix }} public channel subscriptions"""
 
-    def __init__(self, session):
+    def __init__(self, session: WebSocketSession):
         self._session = session
 
 {% for channel in public_channels %}
     def {{ channel.name }}(
         self,
         {% for param in channel.params -%}
-        {{ param }}: str,
+        {{ param.name }}: {{ param.type_annotation }},
         {% endfor -%}
         callback: Callable[[Any], None],
-    ) -> str:
+    ) -> SubscriptionResult:
         {% if channel.description %}
         """
         {{ channel.description | format_docstring }}
 
         Args:
             {% for param in channel.params -%}
-            {{ param }}: {{ param | replace('_', ' ') | title }}
+            {{ param.name }}: {{ param.name | replace('_', ' ') | title }}
             {% endfor -%}
             callback: Callback function to handle notifications
 
@@ -142,35 +147,36 @@ class {{ api_prefix }}PublicChannels:
         {% endif %}
         channel = "{{ channel.channel_pattern }}".format(
             {% for param in channel.params -%}
-            {{ param }}={{ param }},
+            {{ param.name }}={{ param.name }},
             {% endfor -%}
         )
-        self._session.subscribe(channel, callback)
-        return channel
+        envelope = self._session.subscribe(channel, callback)
+        result = decode_result(envelope, SubscriptionResult)
+        return result
 
 {% endfor %}
 
 class {{ api_prefix }}PrivateChannels:
     """{{ api_prefix }} private channel subscriptions"""
 
-    def __init__(self, session):
+    def __init__(self, session: WebSocketSession):
         self._session = session
 
 {% for channel in private_channels %}
     def {{ channel.name }}(
         self,
         {% for param in channel.params -%}
-        {{ param }}: {% if param == 'subaccount_id' %}int{% else %}str{% endif %},
+        {{ param.name }}: {{ param.type_annotation }},
         {% endfor -%}
         callback: Callable[[Any], None],
-    ) -> str:
+    ) -> SubscriptionResult:
         {% if channel.description %}
         """
         {{ channel.description | format_docstring }}
 
         Args:
             {% for param in channel.params -%}
-            {{ param }}: {{ param | replace('_', ' ') | title }}
+            {{ param.name }}: {{ param.name | replace('_', ' ') | title }}
             {% endfor -%}
             callback: Callback function to handle notifications
 
@@ -180,11 +186,12 @@ class {{ api_prefix }}PrivateChannels:
         {% endif %}
         channel = "{{ channel.channel_pattern }}".format(
             {% for param in channel.params -%}
-            {{ param }}={{ param }},
+            {{ param.name }}={{ param.name }},
             {% endfor -%}
         )
-        self._session.subscribe(channel, callback)
-        return channel
+        envelope = self._session.subscribe(channel, callback)
+        result = decode_result(envelope, SubscriptionResult)
+        return result
 
 {% endfor %}
 {% endif %}
@@ -196,7 +203,7 @@ class {{ api_prefix }}PrivateChannels:
 class {{ api_prefix }}PublicAPI:
     """Combined {{ api_prefix }} public API{% if client_type == 'websocket' %} - RPC and channels{% endif %}"""
 
-    def __init__(self, session{% if client_type == 'http' %}: {% if is_async %}AsyncHTTPSession{% else %}HTTPSession{% endif %}, config: EnvConfig{% endif %}):
+    def __init__(self, session{% if client_type == 'http' %}: {% if is_async %}AsyncHTTPSession{% else %}HTTPSession{% endif %}, config: EnvConfig{% else %}: WebSocketSession{% endif %}):
         self.rpc = {{ api_prefix }}PublicRPC(session{% if client_type == 'http' %}, config{% endif %})
 {% if client_type == 'websocket' %}
         self.channels = {{ api_prefix }}PublicChannels(session)
@@ -206,7 +213,7 @@ class {{ api_prefix }}PublicAPI:
 class {{ api_prefix }}PrivateAPI:
     """Combined {{ api_prefix }} private API{% if client_type == 'websocket' %} - RPC and channels{% endif %}"""
 
-    def __init__(self, session{% if client_type == 'http' %}: {% if is_async %}AsyncHTTPSession{% else %}HTTPSession{% endif %}, config: EnvConfig, auth: AuthContext{% endif %}):
+    def __init__(self, session{% if client_type == 'http' %}: {% if is_async %}AsyncHTTPSession{% else %}HTTPSession{% endif %}, config: EnvConfig, auth: AuthContext{% else %}: WebSocketSession{% endif %}):
         self.rpc = {{ api_prefix }}PrivateRPC(session{% if client_type == 'http' %}, config, auth{% endif %})
 {% if client_type == 'websocket' %}
         self.channels = {{ api_prefix }}PrivateChannels(session)
