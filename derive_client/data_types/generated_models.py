@@ -155,6 +155,7 @@ class OrderResponseSchema(Struct):
     subaccount_id: int
     time_in_force: TimeInForce
     quote_id: Optional[str] = None
+    extra_fee: Optional[Decimal] = Decimal('0')
     replaced_order_id: Optional[str] = None
     trigger_price: Optional[Decimal] = None
     trigger_price_type: Optional[TriggerPriceType] = None
@@ -229,6 +230,7 @@ class PrivateGetTradeHistoryParamsSchema(Struct):
 class TradeResponseSchema(Struct):
     direction: Direction
     expected_rebate: Decimal
+    extra_fee: Decimal
     index_price: Decimal
     instrument_name: str
     is_transfer: bool
@@ -279,6 +281,7 @@ class PublicGetTradeHistoryParamsSchema(Struct):
 class TradeSettledPublicResponseSchema(Struct):
     direction: Direction
     expected_rebate: Decimal
+    extra_fee: Decimal
     index_price: Decimal
     instrument_name: str
     liquidity_role: LiquidityRole
@@ -1283,6 +1286,7 @@ class PrivateOrderDebugParamsSchema(Struct):
     signer: str
     subaccount_id: int
     client: Optional[str] = ''
+    extra_fee: Decimal = Decimal('0')
     is_atomic_signing: Optional[bool] = False
     label: str = ''
     mmp: bool = False
@@ -1320,6 +1324,7 @@ class PrivateReplaceParamsSchema(Struct):
     subaccount_id: int
     client: Optional[str] = ''
     expected_filled_amount: Optional[Decimal] = None
+    extra_fee: Decimal = Decimal('0')
     is_atomic_signing: Optional[bool] = False
     label: str = ''
     mmp: bool = False
@@ -1345,7 +1350,7 @@ class PrivateReplaceResultSchema(Struct):
 class PublicGetTickersParamsSchema(Struct):
     instrument_type: InstrumentType
     currency: Optional[str] = None
-    expiry_date: Optional[str] = None
+    expiry_date: Optional[Union[str, int]] = None
 
 
 class OptionPricingSlimSchema(Struct):
@@ -2105,6 +2110,7 @@ class PrivateGetAccountResultSchema(Struct):
     websocket_non_matching_tps: int
     websocket_option_tps: int
     websocket_perp_tps: int
+    creation_timestamp_sec: Optional[int] = None
     referral_code: Optional[str] = None
 
 
