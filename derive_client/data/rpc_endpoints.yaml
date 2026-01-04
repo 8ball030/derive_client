@@ -12,7 +12,7 @@ OPTIMISM:
   - https://optimism.drpc.org
   - https://mainnet.optimism.io
   - https://optimism-rpc.publicnode.com
-  - https://0xrpc.io/op
+  # - https://0xrpc.io/op
   - https://op-pokt.nodies.app
   - https://optimism.gateway.tenderly.co
   - https://optimism.api.onfinality.io/public
