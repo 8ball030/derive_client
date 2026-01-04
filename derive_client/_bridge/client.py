@@ -1,7 +1,6 @@
 """Async bridge client - unified interface for all bridge operations."""
 
 from decimal import Decimal
-from logging import Logger
 
 from eth_account.signers.local import LocalAccount
 from returns.io import IOResult
@@ -15,6 +14,7 @@ from derive_client.data_types import (
     ChecksumAddress,
     Currency,
     Environment,
+    LoggerType,
     PreparedBridgeTx,
 )
 from derive_client.exceptions import BridgePrimarySignerRequiredError, NotConnectedError
@@ -32,7 +32,7 @@ class BridgeClient:
     - Multiple chains: BASE, ARBITRUM, OPTIMISM, ETH
     """
 
-    def __init__(self, env: Environment, account: LocalAccount, wallet: ChecksumAddress, logger: Logger):
+    def __init__(self, env: Environment, account: LocalAccount, wallet: ChecksumAddress, logger: LoggerType):
         self._env = env
         self._account = account
         self._wallet = wallet

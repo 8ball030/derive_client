@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import warnings
-from logging import Logger
 from typing import Optional
 
 from derive_client._clients.rest.async_http.api import AsyncPublicAPI
 from derive_client._clients.utils import async_fetch_all_pages_of_instrument_type, infer_instrument_type
+from derive_client.data_types import LoggerType
 from derive_client.data_types.generated_models import (
     CurrencyDetailedResponseSchema,
     InstrumentPublicResponseSchema,
@@ -30,7 +30,7 @@ from derive_client.data_types.generated_models import (
 class MarketOperations:
     """Market data queries."""
 
-    def __init__(self, *, public_api: AsyncPublicAPI, logger: Logger):
+    def __init__(self, *, public_api: AsyncPublicAPI, logger: LoggerType):
         """
         Initialize market data queries.
 

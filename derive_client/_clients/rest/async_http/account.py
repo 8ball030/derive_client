@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from logging import Logger
 from typing import Optional
 
 from derive_action_signing import DepositModuleData
@@ -11,7 +10,7 @@ from derive_action_signing import DepositModuleData
 from derive_client._clients.rest.async_http.api import AsyncPrivateAPI, AsyncPublicAPI
 from derive_client._clients.utils import AuthContext
 from derive_client.config import CURRENCY_DECIMALS
-from derive_client.data_types import ChecksumAddress, Currency, EnvConfig
+from derive_client.data_types import ChecksumAddress, Currency, EnvConfig, LoggerType
 from derive_client.data_types.generated_models import (
     MarginType,
     PrivateCreateSubaccountParamsSchema,
@@ -43,7 +42,7 @@ class LightAccount:
         *,
         auth: AuthContext,
         config: EnvConfig,
-        logger: Logger,
+        logger: LoggerType,
         public_api: AsyncPublicAPI,
         private_api: AsyncPrivateAPI,
         _state: PrivateGetAccountResultSchema | None = None,
@@ -71,7 +70,7 @@ class LightAccount:
         *,
         auth: AuthContext,
         config: EnvConfig,
-        logger: Logger,
+        logger: LoggerType,
         public_api: AsyncPublicAPI,
         private_api: AsyncPrivateAPI,
     ) -> LightAccount:

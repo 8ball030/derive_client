@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from logging import Logger
-
 from derive_client._clients.rest.async_http.api import AsyncPublicAPI
+from derive_client.data_types import LoggerType
 from derive_client.data_types.generated_models import (
     PublicGetTransactionParamsSchema,
     PublicGetTransactionResultSchema,
@@ -14,7 +13,7 @@ from derive_client.data_types.generated_models import (
 class TransactionOperations:
     """High-level transaction operations."""
 
-    def __init__(self, *, public_api: AsyncPublicAPI, logger: Logger):
+    def __init__(self, *, public_api: AsyncPublicAPI, logger: LoggerType):
         """
         Initialize transactions operations.
 

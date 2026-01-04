@@ -3,7 +3,6 @@ import heapq
 import json
 import statistics
 import time
-from logging import Logger
 from typing import Any, AsyncGenerator, Callable, Coroutine, Literal
 from typing import cast as trust_me_bro
 
@@ -32,6 +31,7 @@ from derive_client.data_types import (
     FeeEstimates,
     FeeHistory,
     GasPriority,
+    LoggerType,
     RPCEndpoints,
     TxHash,
     TxStatus,
@@ -63,7 +63,7 @@ def make_rotating_provider_middleware(
     *,
     initial_backoff: float = 1.0,
     max_backoff: float = 600.0,
-    logger: Logger,
+    logger: LoggerType,
 ) -> Callable[[RPCEndpoint, Any], Coroutine[Any, Any, RPCResponse]]:
     """
     v7-style asynchronous middleware:
@@ -159,7 +159,7 @@ def get_w3_connection(
     chain_id: ChainID,
     *,
     rpc_endpoints: RPCEndpoints | None = None,
-    logger: Logger | None = None,
+    logger: LoggerType | None = None,
 ) -> AsyncWeb3:
     rpc_endpoints = rpc_endpoints or load_rpc_endpoints(DEFAULT_RPC_ENDPOINTS)
     providers = [AsyncHTTPProvider(str(url)) for url in rpc_endpoints[chain_id]]
@@ -218,7 +218,7 @@ async def ensure_token_allowance(
     spender: ChecksumAddress,
     amount: int,
     private_key: str,
-    logger: Logger,
+    logger: LoggerType,
 ):
     allowance = await token_contract.functions.allowance(owner, spender).call()
     if amount > allowance:
@@ -241,7 +241,7 @@ async def _increase_token_allowance(
     spender: ChecksumAddress,
     amount: int,
     private_key: str,
-    logger: Logger,
+    logger: LoggerType,
 ) -> None:
     func = erc20_contract.functions.approve(spender, amount)
     tx = await build_standard_transaction(func=func, account=from_account, w3=w3, logger=logger)
@@ -308,7 +308,7 @@ async def build_standard_transaction(
     func,
     account: LocalAccount,
     w3: AsyncWeb3,
-    logger: Logger,
+    logger: LoggerType,
     value: int = 0,
     gas_blocks: int = 30,
     gas_priority: GasPriority = GasPriority.MEDIUM,
@@ -350,7 +350,7 @@ async def build_standard_transaction(
 async def wait_for_tx_finality(
     w3: AsyncWeb3,
     tx_hash: str,
-    logger: Logger,
+    logger: LoggerType,
     finality_blocks: int = 10,
     timeout: float = 300.0,
     poll_interval: float = 1.0,
@@ -462,7 +462,7 @@ async def iter_events(
     max_block_range: int = 10_000,
     poll_interval: float = 5.0,
     timeout: float | None = None,
-    logger: Logger,
+    logger: LoggerType,
 ) -> AsyncGenerator[TypedLogReceipt, None]:
     """Stream matching logs over a fixed or live block window. Optionally raises TimeoutError."""
 
@@ -513,7 +513,7 @@ async def wait_for_bridge_event(
     max_block_range: int = 10_000,
     poll_interval: float = 5.0,
     timeout: float = 300.0,
-    logger: Logger,
+    logger: LoggerType,
 ) -> TypedLogReceipt:
     """Wait for the first matching bridge-related log on the target chain or raise BridgeEventTimeout."""
 

@@ -5,7 +5,6 @@ from __future__ import annotations
 import functools
 import json
 from decimal import Decimal
-from logging import Logger
 from typing import TypeGuard, cast
 
 from eth_account.signers.local import LocalAccount
@@ -51,6 +50,7 @@ from derive_client.data_types import (
     ChainID,
     ChecksumAddress,
     Currency,
+    LoggerType,
     MintableTokenData,
     NonMintableTokenData,
     PreparedBridgeTx,
@@ -131,7 +131,7 @@ def _get_min_fees(
 class DeriveBridge:
     """Bridge ERC-20 tokens and Derive's native token (DRV) to and from Derive."""
 
-    def __init__(self, account: LocalAccount, wallet: ChecksumAddress, logger: Logger):
+    def __init__(self, account: LocalAccount, wallet: ChecksumAddress, logger: LoggerType):
         """
         Initialize Derive bridge.
 

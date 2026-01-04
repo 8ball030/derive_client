@@ -1,5 +1,7 @@
 """Enums and Models used in the derive_client module"""
 
+from logging import Logger, LoggerAdapter
+
 from .enums import (
     BridgeDirection,
     BridgeType,
@@ -44,8 +46,12 @@ from .models import (
 )
 from .utils import D
 
+LoggerType = Logger | LoggerAdapter
+
+
 __all__ = [
     "D",
+    "LoggerType",
     "ChecksumAddress",
     "ChainID",
     "TxStatus",

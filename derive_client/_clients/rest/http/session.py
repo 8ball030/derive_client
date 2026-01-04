@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 import weakref
-from logging import Logger
 
 import requests
 from requests.adapters import HTTPAdapter, Retry
+
+from derive_client.data_types import LoggerType
 
 
 class HTTPSession:
     """HTTP session."""
 
-    def __init__(self, request_timeout: float, logger: Logger):
+    def __init__(self, request_timeout: float, logger: LoggerType):
         self._request_timeout = request_timeout
         self._logger = logger
 
