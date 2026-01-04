@@ -1,9 +1,10 @@
 import asyncio
 import contextvars
 import weakref
-from logging import Logger
 
 import aiohttp
+
+from derive_client.data_types import LoggerType
 
 # Context-local timeout (task-scoped) used to temporarily override session timeout.
 _request_timeout_override: contextvars.ContextVar[float | None] = contextvars.ContextVar(
@@ -12,7 +13,7 @@ _request_timeout_override: contextvars.ContextVar[float | None] = contextvars.Co
 
 
 class AsyncHTTPSession:
-    def __init__(self, request_timeout: float, logger: Logger):
+    def __init__(self, request_timeout: float, logger: LoggerType):
         self._request_timeout = request_timeout
         self._logger = logger
 
