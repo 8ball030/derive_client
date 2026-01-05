@@ -56,6 +56,7 @@ class MethodInfo:
 class ParamInfo:
     name: str
     type_annotation: str
+    is_enum: bool = False
 
 
 @dataclass
@@ -64,8 +65,9 @@ class ChannelInfo:
     channel_pattern: str  # e.g., "{subaccount_id}.best.quotes"
     params_type: str  # ChannelParamsSchema
     notification_type: str  # NotificationSchema
-    description: str
-    params: list[ParamInfo] = field(default_factory=list)  # Changed to list[ParamInfo]
+    notification_data_type: str = "Any"  # Actual data payload type
+    description: str = ""
+    params: list[ParamInfo] = field(default_factory=list)
 
 
 class ResponseSchemaParser(cst.CSTVisitor):
@@ -164,6 +166,11 @@ class ChannelModelParser(cst.CSTVisitor):
         self.schemas: dict[str, dict[str, str]] = {}  # class_name -> {field_name: type}
         self.enums: set[str] = set()
         self.current_class: Optional[str] = None
+        self.current_file_enums: set[str] = set()  # Track enums in current file
+
+    def visit_Module(self, node: cst.Module) -> None:
+        """Reset file-level enum tracking for each module."""
+        self.current_file_enums = set()
 
     def visit_ClassDef(self, node: cst.ClassDef) -> None:
         class_name = node.name.value
@@ -175,6 +182,7 @@ class ChannelModelParser(cst.CSTVisitor):
                 base_name = self._annotation_to_string(base.value)
                 if "Enum" in base_name:
                     self.enums.add(class_name)
+                    self.current_file_enums.add(class_name)
                     return
             except Exception:
                 continue
@@ -405,19 +413,100 @@ def extract_schema_types(schema_data: dict) -> tuple[str, str]:
     return params_type, notification_type
 
 
+def get_notification_data_type(
+    notification_schema_name: str,
+    channel_schemas: dict[str, dict[str, str]],
+) -> str:
+    """Extract the actual data type from notification.params.data path."""
+
+    # Navigate: NotificationSchema -> params field -> NotificationParamsSchema -> data field
+    if notification_schema_name not in channel_schemas:
+        return "Any"
+
+    # Get the params field type from NotificationSchema
+    notification_fields = channel_schemas[notification_schema_name]
+    params_type = notification_fields.get("params", "")
+
+    if not params_type or params_type not in channel_schemas:
+        return "Any"
+
+    # Get the data field type from NotificationParamsSchema
+    params_fields = channel_schemas[params_type]
+    data_type = params_fields.get("data", "")
+
+    if not data_type:
+        return "Any"
+
+    return data_type
+
+
 def get_param_type_annotation(
     param_name: str, params_schema_name: str, channel_schemas: dict[str, dict[str, str]], channel_enums: set[str]
-) -> str:
-    """Get the type annotation for a channel parameter from the generated schema."""
+) -> tuple[str, bool]:
+    """Get the type annotation for a channel parameter from the generated schema.
+
+    Returns:
+        tuple: (type_annotation, is_enum)
+    """
 
     # Check if we have a schema for the params
     if params_schema_name in channel_schemas:
         param_fields = channel_schemas[params_schema_name]
         if param_name in param_fields:
-            return param_fields[param_name]
+            type_str = param_fields[param_name]
+
+            # Extract all type names from the annotation (handles Optional, Union, etc.)
+            type_names = extract_schema_names_from_type(type_str)
+
+            # Check if any of the types is an enum
+            for type_name in type_names:
+                if type_name in channel_enums:
+                    # Return the actual type annotation with the enum
+                    return type_str, True
+
+            # Not an enum
+            return type_str, False
 
     # Fallback to str for unknown types
-    return "str"
+    return "str", False
+
+
+def collect_all_channel_imports(
+    params_type: str,
+    notification_type: str,
+    params: list[ParamInfo],
+    notification_data_type: str,
+    channel_schemas: dict[str, dict[str, str]],
+    channel_enums: set[str],
+) -> set[str]:
+    """Collect all necessary imports for a channel, including nested types."""
+
+    imports = set()
+
+    # Add the main schemas
+    if params_type != "dict":
+        imports.add(params_type)
+
+    if notification_type != "dict":
+        imports.add(notification_type)
+
+    # Add the notification params schema (intermediate type)
+    if notification_type in channel_schemas:
+        params_field = channel_schemas[notification_type].get("params", "")
+        if params_field and params_field != "dict":
+            imports.add(params_field)
+
+    # Add the actual data type from notification
+    if notification_data_type != "Any":
+        imports.update(extract_schema_names_from_type(notification_data_type))
+
+    # Add enum types from parameters
+    for param in params:
+        param_types = extract_schema_names_from_type(param.type_annotation)
+        # Add all extracted types (this includes enums)
+        imports.update(param_types)
+
+    return imports
 
 
 def parse_channel_schemas(channels_dir: Path, channel_schemas: dict[str, dict[str, str]], channel_enums: set[str]):
@@ -446,18 +535,24 @@ def parse_channel_schemas(channels_dir: Path, channel_schemas: dict[str, dict[st
         # Build params list with proper type annotations
         params = []
         for param_name in param_names:
-            type_annotation = get_param_type_annotation(param_name, params_type, channel_schemas, channel_enums)
-            params.append(ParamInfo(name=param_name, type_annotation=type_annotation))
+            type_annotation, is_enum = get_param_type_annotation(
+                param_name, params_type, channel_schemas, channel_enums
+            )
+            params.append(ParamInfo(name=param_name, type_annotation=type_annotation, is_enum=is_enum))
 
-        # Track schema imports
-        if params_type != "dict":
-            schema_imports.add(params_type)
-            # Also add any types used in the params
-            for param in params:
-                schema_imports.update(extract_schema_names_from_type(param.type_annotation))
+        # Get the actual notification data type
+        notification_data_type = get_notification_data_type(notification_type, channel_schemas)
 
-        if notification_type != "dict":
-            schema_imports.add(notification_type)
+        # Collect all imports for this channel
+        channel_imports = collect_all_channel_imports(
+            params_type,
+            notification_type,
+            params,
+            notification_data_type,
+            channel_schemas,
+            channel_enums,
+        )
+        schema_imports.update(channel_imports)
 
         description = schema_data.get("description", "")
 
@@ -466,6 +561,7 @@ def parse_channel_schemas(channels_dir: Path, channel_schemas: dict[str, dict[st
             channel_pattern=channel_pattern,
             params_type=params_type,
             notification_type=notification_type,
+            notification_data_type=notification_data_type,
             description=description,
             params=params,
         )

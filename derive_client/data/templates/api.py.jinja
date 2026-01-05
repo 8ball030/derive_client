@@ -1,5 +1,6 @@
 """Auto-generated API classes{% if client_type == 'websocket' %} for WebSocket{% endif %}"""
 
+from enum import Enum
 from typing import Callable, Any, List
 
 import msgspec
@@ -19,7 +20,7 @@ from derive_client.data_types.generated_models import (
     {{ schema }},
 {% endfor %}
 )
-{% if client_type == 'websocket' %}
+{% if client_type == 'websocket' and channel_schema_imports %}
 from derive_client.data_types.channel_models import (
 {% for schema in channel_schema_imports -%}
     {{ schema }},
@@ -65,8 +66,6 @@ class {{ api_prefix }}PublicRPC:
         envelope = decode_envelope(message)
 {% else %}
         method = "public/{{ method.name }}"
-        # data = encode_json_exclude_none(params)
-        # message = self._session._send_request(method, data)
         envelope = self._session._send_request(method, params=params)
 {% endif %}
         result = decode_result(envelope, {{ method.result_type | replace('List[', 'list[') }})
@@ -103,8 +102,6 @@ class {{ api_prefix }}PrivateRPC:
         envelope = decode_envelope(message)
 {% else %}
         method = "private/{{ method.name }}"
-        # data = encode_json_exclude_none(params)
-        # message = self._session._send_request(method, data)
         envelope = self._session._send_request(method, params=params)
 {% endif %}
         result = decode_result(envelope, {{ method.result_type | replace('List[', 'list[') }})
@@ -129,7 +126,7 @@ class {{ api_prefix }}PublicChannels:
         {% for param in channel.params -%}
         {{ param.name }}: {{ param.type_annotation }},
         {% endfor -%}
-        callback: Callable[[Any], None],
+        callback: Callable[[{{ channel.notification_data_type }}], None],
     ) -> SubscriptionResult:
         {% if channel.description %}
         """
@@ -142,15 +139,15 @@ class {{ api_prefix }}PublicChannels:
             callback: Callback function to handle notifications
 
         Returns:
-            Channel name for unsubscribing
+            Subscription result with status and current subscriptions
         """
         {% endif %}
         channel = "{{ channel.channel_pattern }}".format(
             {% for param in channel.params -%}
-            {{ param.name }}={{ param.name }},
+            {{ param.name }}={{ param.name }}.value if isinstance({{ param.name }}, Enum) else {{ param.name }},
             {% endfor -%}
         )
-        envelope = self._session.subscribe(channel, callback)
+        envelope = self._session.subscribe(channel, callback, {{ channel.notification_data_type }})
         result = decode_result(envelope, SubscriptionResult)
         return result
 
@@ -168,7 +165,7 @@ class {{ api_prefix }}PrivateChannels:
         {% for param in channel.params -%}
         {{ param.name }}: {{ param.type_annotation }},
         {% endfor -%}
-        callback: Callable[[Any], None],
+        callback: Callable[[{{ channel.notification_data_type }}], None],
     ) -> SubscriptionResult:
         {% if channel.description %}
         """
@@ -181,15 +178,15 @@ class {{ api_prefix }}PrivateChannels:
             callback: Callback function to handle notifications
 
         Returns:
-            Channel name for unsubscribing
+            Subscription result with status and current subscriptions
         """
         {% endif %}
         channel = "{{ channel.channel_pattern }}".format(
             {% for param in channel.params -%}
-            {{ param.name }}={{ param.name }},
+            {{ param.name }}={{ param.name }}.value if isinstance({{ param.name }}, Enum) else {{ param.name }},
             {% endfor -%}
         )
-        envelope = self._session.subscribe(channel, callback)
+        envelope = self._session.subscribe(channel, callback, {{ channel.notification_data_type }})
         result = decode_result(envelope, SubscriptionResult)
         return result
 
