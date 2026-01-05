@@ -398,20 +398,20 @@ def get_notification_data_type(
 
     # Navigate: NotificationSchema -> params field -> NotificationParamsSchema -> data field
     if notification_schema_name not in channel_schemas:
-        return "Any"
+        raise ValueError(f"Notification schema {notification_schema_name} not found in channel_schemas")
 
     # Get the params field type from NotificationSchema
     notification_fields = channel_schemas[notification_schema_name]
     params_type = notification_fields.get("params", "")
 
-    if not params_type or params_type not in channel_schemas:
-        return "Any"
+    if (params_type := notification_fields.get("params")) not in channel_schemas:
+        raise ValueError(f"Params type {params_type} not found in channel_schemas")
 
     # Get the data field type from NotificationParamsSchema
     params_fields = channel_schemas[params_type]
     data_type = params_fields.get("data", "")
 
-    if not data_type:
+    if not data_type:  # TODO: should never occur
         return "Any"
 
     return data_type
