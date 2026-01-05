@@ -3,7 +3,7 @@ import heapq
 import json
 import statistics
 import time
-from typing import cast, Any, AsyncGenerator, Callable, Coroutine, Literal
+from typing import Any, AsyncGenerator, Callable, Coroutine, Literal, cast
 
 from aiohttp import ClientResponseError
 from eth_abi.abi import encode
