@@ -3,6 +3,9 @@
   "definitions": {
     "SubaccountIdBestQuotesChannelSchema": {
       "type": "object",
+      "required": [
+        "subaccount_id"
+      ],
       "properties": {
         "subaccount_id": {
           "title": "subaccount_id",
@@ -10,13 +13,14 @@
           "description": "Subaccount ID to get best quote state updates for"
         }
       },
-      "required": [
-        "subaccount_id"
-      ],
       "additionalProperties": false
     },
     "SubaccountIdBestQuotesNotificationSchema": {
       "type": "object",
+      "required": [
+        "method",
+        "params"
+      ],
       "properties": {
         "method": {
           "title": "method",
@@ -28,14 +32,14 @@
           "field_many": false
         }
       },
-      "required": [
-        "method",
-        "params"
-      ],
       "additionalProperties": false
     },
     "SubaccountIdBestQuotesNotificationParamsSchema": {
       "type": "object",
+      "required": [
+        "channel",
+        "data"
+      ],
       "properties": {
         "channel": {
           "title": "channel",
@@ -52,14 +56,13 @@
           }
         }
       },
-      "required": [
-        "channel",
-        "data"
-      ],
       "additionalProperties": false
     },
     "BestQuoteChannelResultSchema": {
       "type": "object",
+      "required": [
+        "rfq_id"
+      ],
       "properties": {
         "error": {
           "oneOf": [
@@ -88,11 +91,11 @@
               "description": "Best quote result for the RFQ, if not an error",
               "default": {
                 "post_liquidation_price": null,
-                "orderbook_total_cost": null,
-                "down_liquidation_price": null,
-                "best_quote": null,
                 "up_liquidation_price": null,
-                "invalid_reason": null
+                "best_quote": null,
+                "orderbook_total_cost": null,
+                "invalid_reason": null,
+                "down_liquidation_price": null
               }
             },
             {
@@ -109,13 +112,14 @@
           "description": "RFQ ID for which the best quote is being published"
         }
       },
-      "required": [
-        "rfq_id"
-      ],
       "additionalProperties": false
     },
     "RPCErrorFormatSchema": {
       "type": "object",
+      "required": [
+        "code",
+        "message"
+      ],
       "properties": {
         "code": {
           "title": "code",
@@ -134,14 +138,28 @@
           "type": "string"
         }
       },
-      "required": [
-        "code",
-        "message"
-      ],
       "additionalProperties": false
     },
     "RFQGetBestQuoteResultSchema": {
       "type": "object",
+      "required": [
+        "best_quote",
+        "direction",
+        "down_liquidation_price",
+        "estimated_fee",
+        "estimated_realized_pnl",
+        "estimated_realized_pnl_excl_fees",
+        "estimated_total_cost",
+        "filled_pct",
+        "invalid_reason",
+        "is_valid",
+        "orderbook_total_cost",
+        "post_initial_margin",
+        "post_liquidation_price",
+        "pre_initial_margin",
+        "suggested_max_fee",
+        "up_liquidation_price"
+      ],
       "properties": {
         "best_quote": {
           "oneOf": [
@@ -151,8 +169,8 @@
               "field_many": false,
               "description": "Best quote for the RFQ (or null if RFQ is not created yet or quotes do not exist). This object should be used to sign a taker quote and call into `execute_quote` RPC.",
               "default": {
-                "tx_status": null,
-                "tx_hash": null
+                "tx_hash": null,
+                "tx_status": null
               }
             },
             {
@@ -283,28 +301,27 @@
           "description": "Liquidation price if the trade were to be filled and the market moves up."
         }
       },
-      "required": [
-        "best_quote",
-        "direction",
-        "down_liquidation_price",
-        "estimated_fee",
-        "estimated_realized_pnl",
-        "estimated_realized_pnl_excl_fees",
-        "estimated_total_cost",
-        "filled_pct",
-        "invalid_reason",
-        "is_valid",
-        "orderbook_total_cost",
-        "post_initial_margin",
-        "post_liquidation_price",
-        "pre_initial_margin",
-        "suggested_max_fee",
-        "up_liquidation_price"
-      ],
       "additionalProperties": false
     },
     "QuoteResultPublicSchema": {
       "type": "object",
+      "required": [
+        "cancel_reason",
+        "creation_timestamp",
+        "direction",
+        "fill_pct",
+        "last_update_timestamp",
+        "legs",
+        "legs_hash",
+        "liquidity_role",
+        "quote_id",
+        "rfq_id",
+        "status",
+        "subaccount_id",
+        "tx_hash",
+        "tx_status",
+        "wallet"
+      ],
       "properties": {
         "cancel_reason": {
           "title": "cancel_reason",
@@ -432,27 +449,16 @@
           "description": "Wallet address of the quote sender"
         }
       },
-      "required": [
-        "cancel_reason",
-        "creation_timestamp",
-        "direction",
-        "fill_pct",
-        "last_update_timestamp",
-        "legs",
-        "legs_hash",
-        "liquidity_role",
-        "quote_id",
-        "rfq_id",
-        "status",
-        "subaccount_id",
-        "tx_hash",
-        "tx_status",
-        "wallet"
-      ],
       "additionalProperties": false
     },
     "LegPricedSchema": {
       "type": "object",
+      "required": [
+        "amount",
+        "direction",
+        "instrument_name",
+        "price"
+      ],
       "properties": {
         "amount": {
           "title": "amount",
@@ -481,16 +487,14 @@
           "description": "Leg price"
         }
       },
-      "required": [
-        "amount",
-        "direction",
-        "instrument_name",
-        "price"
-      ],
       "additionalProperties": false
     },
     "SubaccountIdBestQuotesPubSubSchema": {
       "type": "object",
+      "required": [
+        "channel_params",
+        "notification"
+      ],
       "properties": {
         "channel_params": {
           "type": "object",
@@ -503,10 +507,6 @@
           "field_many": false
         }
       },
-      "required": [
-        "channel_params",
-        "notification"
-      ],
       "additionalProperties": false
     }
   },

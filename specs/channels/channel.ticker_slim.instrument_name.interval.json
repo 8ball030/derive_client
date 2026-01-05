@@ -1,0 +1,370 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "TickerSlimInstrumentNameIntervalChannelSchema": {
+      "type": "object",
+      "required": [
+        "instrument_name",
+        "interval"
+      ],
+      "properties": {
+        "instrument_name": {
+          "title": "instrument_name",
+          "type": "string",
+          "description": "Instrument name"
+        },
+        "interval": {
+          "title": "interval",
+          "type": "string",
+          "enum": [
+            "100",
+            "1000"
+          ],
+          "description": "Interval in milliseconds"
+        }
+      },
+      "additionalProperties": false
+    },
+    "TickerSlimInstrumentNameIntervalNotificationSchema": {
+      "type": "object",
+      "required": [
+        "method",
+        "params"
+      ],
+      "properties": {
+        "method": {
+          "title": "method",
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "$ref": "#/definitions/TickerSlimInstrumentNameIntervalNotificationParamsSchema",
+          "field_many": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "TickerSlimInstrumentNameIntervalNotificationParamsSchema": {
+      "type": "object",
+      "required": [
+        "channel",
+        "data"
+      ],
+      "properties": {
+        "channel": {
+          "title": "channel",
+          "type": "string",
+          "description": "Subscribed channel name"
+        },
+        "data": {
+          "type": "object",
+          "$ref": "#/definitions/TickerSlimInstrumentNameIntervalPublisherDataSchema",
+          "field_many": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "TickerSlimInstrumentNameIntervalPublisherDataSchema": {
+      "type": "object",
+      "required": [
+        "instrument_ticker",
+        "timestamp"
+      ],
+      "properties": {
+        "instrument_ticker": {
+          "type": "object",
+          "$ref": "#/definitions/TickerSlimSchema",
+          "field_many": false,
+          "description": "Instrument of the ticker snapshot"
+        },
+        "timestamp": {
+          "title": "timestamp",
+          "type": "integer",
+          "description": "Timestamp of the ticker feed snapshot"
+        }
+      },
+      "additionalProperties": false
+    },
+    "TickerSlimSchema": {
+      "type": "object",
+      "required": [
+        "A",
+        "B",
+        "I",
+        "M",
+        "a",
+        "b",
+        "f",
+        "maxp",
+        "minp",
+        "option_pricing",
+        "stats",
+        "t"
+      ],
+      "properties": {
+        "A": {
+          "title": "A",
+          "type": "string",
+          "format": "decimal",
+          "description": "Amount of contracts / tokens available at best ask price"
+        },
+        "B": {
+          "title": "B",
+          "type": "string",
+          "format": "decimal",
+          "description": "Amount of contracts / tokens available at best bid price"
+        },
+        "I": {
+          "title": "I",
+          "type": "string",
+          "format": "decimal",
+          "description": "Index price"
+        },
+        "M": {
+          "title": "M",
+          "type": "string",
+          "format": "decimal",
+          "description": "Mark price"
+        },
+        "a": {
+          "title": "a",
+          "type": "string",
+          "format": "decimal",
+          "description": "Best ask price"
+        },
+        "b": {
+          "title": "b",
+          "type": "string",
+          "format": "decimal",
+          "description": "Best bid price"
+        },
+        "f": {
+          "title": "f",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "decimal",
+          "default": null,
+          "description": "Current hourly funding rate"
+        },
+        "maxp": {
+          "title": "maxp",
+          "type": "string",
+          "format": "decimal",
+          "description": "Maximum price at which an agressive buyer can be matched. Any portion of a market order that would execute above this price will be cancelled. A limit buy order with limit price above this value is treated as post only (i.e. it will be rejected if it would cross any existing resting order)."
+        },
+        "minp": {
+          "title": "minp",
+          "type": "string",
+          "format": "decimal",
+          "description": "Minimum price at which an agressive seller can be matched. Any portion of a market order that would execute below this price will be cancelled. A limit sell order with limit price below this value is treated as post only (i.e. it will be rejected if it would cross any existing resting order)."
+        },
+        "option_pricing": {
+          "oneOf": [
+            {
+              "type": "object",
+              "$ref": "#/definitions/OptionPricingSlimSchema",
+              "field_many": false,
+              "description": "Greeks, forward price, iv and mark price of the instrument (options only)",
+              "default": {}
+            },
+            {
+              "type": "null",
+              "title": ""
+            }
+          ],
+          "description": "Greeks, forward price, iv and mark price of the instrument (options only)"
+        },
+        "stats": {
+          "type": "object",
+          "$ref": "#/definitions/AggregateTradingStatsSlimSchema",
+          "field_many": false,
+          "description": "Aggregate trading stats for the last 24 hours"
+        },
+        "t": {
+          "title": "t",
+          "type": "integer",
+          "description": "Creation timestamp of the snapshot in milliseconds"
+        }
+      },
+      "additionalProperties": false
+    },
+    "OptionPricingSlimSchema": {
+      "type": "object",
+      "required": [
+        "ai",
+        "bi",
+        "d",
+        "df",
+        "f",
+        "g",
+        "i",
+        "m",
+        "r",
+        "t",
+        "v"
+      ],
+      "properties": {
+        "ai": {
+          "title": "ai",
+          "type": "string",
+          "format": "decimal",
+          "description": "Implied volatility of the current best ask"
+        },
+        "bi": {
+          "title": "bi",
+          "type": "string",
+          "format": "decimal",
+          "description": "Implied volatility of the current best bid"
+        },
+        "d": {
+          "title": "d",
+          "type": "string",
+          "format": "decimal",
+          "description": "Delta of the option"
+        },
+        "df": {
+          "title": "df",
+          "type": "string",
+          "format": "decimal",
+          "description": "Discount factor used to calculate option premium"
+        },
+        "f": {
+          "title": "f",
+          "type": "string",
+          "format": "decimal",
+          "description": "Forward price used to calculate option premium"
+        },
+        "g": {
+          "title": "g",
+          "type": "string",
+          "format": "decimal",
+          "description": "Gamma of the option"
+        },
+        "i": {
+          "title": "i",
+          "type": "string",
+          "format": "decimal",
+          "description": "Implied volatility of the option"
+        },
+        "m": {
+          "title": "m",
+          "type": "string",
+          "format": "decimal",
+          "description": "Mark price of the option"
+        },
+        "r": {
+          "title": "r",
+          "type": "string",
+          "format": "decimal",
+          "description": "Rho of the option"
+        },
+        "t": {
+          "title": "t",
+          "type": "string",
+          "format": "decimal",
+          "description": "Theta of the option"
+        },
+        "v": {
+          "title": "v",
+          "type": "string",
+          "format": "decimal",
+          "description": "Vega of the option"
+        }
+      },
+      "additionalProperties": false
+    },
+    "AggregateTradingStatsSlimSchema": {
+      "type": "object",
+      "required": [
+        "c",
+        "h",
+        "l",
+        "n",
+        "oi",
+        "p",
+        "pr",
+        "v"
+      ],
+      "properties": {
+        "c": {
+          "title": "c",
+          "type": "string",
+          "format": "decimal",
+          "description": "Number of contracts traded during last 24 hours"
+        },
+        "h": {
+          "title": "h",
+          "type": "string",
+          "format": "decimal",
+          "description": "Highest trade price during last 24h"
+        },
+        "l": {
+          "title": "l",
+          "type": "string",
+          "format": "decimal",
+          "description": "Lowest trade price during last 24h"
+        },
+        "n": {
+          "title": "n",
+          "type": "integer",
+          "description": "Number of trades during last 24h "
+        },
+        "oi": {
+          "title": "oi",
+          "type": "string",
+          "format": "decimal",
+          "description": "Current total open interest"
+        },
+        "p": {
+          "title": "p",
+          "type": "string",
+          "format": "decimal",
+          "description": "Options: 24hr percent change in premium; Perps: 24hr percent change in mark price"
+        },
+        "pr": {
+          "title": "pr",
+          "type": "string",
+          "format": "decimal",
+          "description": "Premium volume traded during last 24 hours"
+        },
+        "v": {
+          "title": "v",
+          "type": "string",
+          "format": "decimal",
+          "description": "Notional volume traded during last 24 hours"
+        }
+      },
+      "additionalProperties": false
+    },
+    "TickerSlimInstrumentNameIntervalPubSubSchema": {
+      "type": "object",
+      "required": [
+        "channel_params",
+        "notification"
+      ],
+      "properties": {
+        "channel_params": {
+          "type": "object",
+          "$ref": "#/definitions/TickerSlimInstrumentNameIntervalChannelSchema",
+          "field_many": false
+        },
+        "notification": {
+          "type": "object",
+          "$ref": "#/definitions/TickerSlimInstrumentNameIntervalNotificationSchema",
+          "field_many": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "title": "ticker_slim.{instrument_name}.{interval}",
+  "description": "Periodically publishes ticker info (best bid / ask, instrument contraints, fees, etc.) for a single instrument.<br /><br />The 100ms ticker emits at 1s intervals if best bid / ask are not changing, otherwise emits at 100ms interval.<br />The 1s ticker always emits at 1s intervals.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/TickerSlimInstrumentNameIntervalPubSubSchema"
+    }
+  ]
+}

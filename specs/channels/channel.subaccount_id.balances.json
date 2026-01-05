@@ -3,6 +3,9 @@
   "definitions": {
     "SubaccountIdBalancesChannelSchema": {
       "type": "object",
+      "required": [
+        "subaccount_id"
+      ],
       "properties": {
         "subaccount_id": {
           "title": "subaccount_id",
@@ -10,13 +13,14 @@
           "description": "Subaccount ID"
         }
       },
-      "required": [
-        "subaccount_id"
-      ],
       "additionalProperties": false
     },
     "SubaccountIdBalancesNotificationSchema": {
       "type": "object",
+      "required": [
+        "method",
+        "params"
+      ],
       "properties": {
         "method": {
           "title": "method",
@@ -28,14 +32,14 @@
           "field_many": false
         }
       },
-      "required": [
-        "method",
-        "params"
-      ],
       "additionalProperties": false
     },
     "SubaccountIdBalancesNotificationParamsSchema": {
       "type": "object",
+      "required": [
+        "channel",
+        "data"
+      ],
       "properties": {
         "channel": {
           "title": "channel",
@@ -52,14 +56,16 @@
           }
         }
       },
-      "required": [
-        "channel",
-        "data"
-      ],
       "additionalProperties": false
     },
     "BalanceUpdateSchema": {
       "type": "object",
+      "required": [
+        "name",
+        "new_balance",
+        "previous_balance",
+        "update_type"
+      ],
       "properties": {
         "name": {
           "title": "name",
@@ -100,16 +106,14 @@
           "description": "Type of transaction"
         }
       },
-      "required": [
-        "name",
-        "new_balance",
-        "previous_balance",
-        "update_type"
-      ],
       "additionalProperties": false
     },
     "SubaccountIdBalancesPubSubSchema": {
       "type": "object",
+      "required": [
+        "channel_params",
+        "notification"
+      ],
       "properties": {
         "channel_params": {
           "type": "object",
@@ -122,10 +126,6 @@
           "field_many": false
         }
       },
-      "required": [
-        "channel_params",
-        "notification"
-      ],
       "additionalProperties": false
     }
   },

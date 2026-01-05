@@ -8,6 +8,10 @@
     },
     "MarginWatchNotificationSchema": {
       "type": "object",
+      "required": [
+        "method",
+        "params"
+      ],
       "properties": {
         "method": {
           "title": "method",
@@ -19,14 +23,14 @@
           "field_many": false
         }
       },
-      "required": [
-        "method",
-        "params"
-      ],
       "additionalProperties": false
     },
     "MarginWatchNotificationParamsSchema": {
       "type": "object",
+      "required": [
+        "channel",
+        "data"
+      ],
       "properties": {
         "channel": {
           "title": "channel",
@@ -43,14 +47,21 @@
           }
         }
       },
-      "required": [
-        "channel",
-        "data"
-      ],
       "additionalProperties": false
     },
     "MarginWatchResultSchema": {
       "type": "object",
+      "required": [
+        "collaterals",
+        "currency",
+        "initial_margin",
+        "maintenance_margin",
+        "margin_type",
+        "positions",
+        "subaccount_id",
+        "subaccount_value",
+        "valuation_timestamp"
+      ],
       "properties": {
         "collaterals": {
           "title": "collaterals",
@@ -116,21 +127,19 @@
           "description": "Timestamp (in seconds since epoch) of when margin and MtM were computed."
         }
       },
-      "required": [
-        "collaterals",
-        "currency",
-        "initial_margin",
-        "maintenance_margin",
-        "margin_type",
-        "positions",
-        "subaccount_id",
-        "subaccount_value",
-        "valuation_timestamp"
-      ],
       "additionalProperties": false
     },
     "CollateralPublicResponseSchema": {
       "type": "object",
+      "required": [
+        "amount",
+        "asset_name",
+        "asset_type",
+        "initial_margin",
+        "maintenance_margin",
+        "mark_price",
+        "mark_value"
+      ],
       "properties": {
         "amount": {
           "title": "amount",
@@ -178,19 +187,25 @@
           "description": "USD value of the collateral (amount * mark price)"
         }
       },
-      "required": [
-        "amount",
-        "asset_name",
-        "asset_type",
-        "initial_margin",
-        "maintenance_margin",
-        "mark_price",
-        "mark_value"
-      ],
       "additionalProperties": false
     },
     "PositionPublicResponseSchema": {
       "type": "object",
+      "required": [
+        "amount",
+        "delta",
+        "gamma",
+        "index_price",
+        "initial_margin",
+        "instrument_name",
+        "instrument_type",
+        "liquidation_price",
+        "maintenance_margin",
+        "mark_price",
+        "mark_value",
+        "theta",
+        "vega"
+      ],
       "properties": {
         "amount": {
           "title": "amount",
@@ -278,25 +293,14 @@
           "description": "Asset vega (zero for non-options)"
         }
       },
-      "required": [
-        "amount",
-        "delta",
-        "gamma",
-        "index_price",
-        "initial_margin",
-        "instrument_name",
-        "instrument_type",
-        "liquidation_price",
-        "maintenance_margin",
-        "mark_price",
-        "mark_value",
-        "theta",
-        "vega"
-      ],
       "additionalProperties": false
     },
     "MarginWatchPubSubSchema": {
       "type": "object",
+      "required": [
+        "channel_params",
+        "notification"
+      ],
       "properties": {
         "channel_params": {
           "type": "object",
@@ -309,10 +313,6 @@
           "field_many": false
         }
       },
-      "required": [
-        "channel_params",
-        "notification"
-      ],
       "additionalProperties": false
     }
   },

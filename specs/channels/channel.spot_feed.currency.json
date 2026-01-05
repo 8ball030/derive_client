@@ -3,6 +3,9 @@
   "definitions": {
     "SpotFeedCurrencyChannelSchema": {
       "type": "object",
+      "required": [
+        "currency"
+      ],
       "properties": {
         "currency": {
           "title": "currency",
@@ -10,13 +13,14 @@
           "description": "Currency"
         }
       },
-      "required": [
-        "currency"
-      ],
       "additionalProperties": false
     },
     "SpotFeedCurrencyNotificationSchema": {
       "type": "object",
+      "required": [
+        "method",
+        "params"
+      ],
       "properties": {
         "method": {
           "title": "method",
@@ -28,14 +32,14 @@
           "field_many": false
         }
       },
-      "required": [
-        "method",
-        "params"
-      ],
       "additionalProperties": false
     },
     "SpotFeedCurrencyNotificationParamsSchema": {
       "type": "object",
+      "required": [
+        "channel",
+        "data"
+      ],
       "properties": {
         "channel": {
           "title": "channel",
@@ -48,14 +52,14 @@
           "field_many": false
         }
       },
-      "required": [
-        "channel",
-        "data"
-      ],
       "additionalProperties": false
     },
     "SpotFeedCurrencyPublisherDataSchema": {
       "type": "object",
+      "required": [
+        "feeds",
+        "timestamp"
+      ],
       "properties": {
         "feeds": {
           "title": "feeds",
@@ -73,14 +77,17 @@
           "description": "Timestamp of the spot feed snapshot"
         }
       },
-      "required": [
-        "feeds",
-        "timestamp"
-      ],
       "additionalProperties": false
     },
     "SpotFeedSnapshotSchema": {
       "type": "object",
+      "required": [
+        "confidence",
+        "confidence_prev_daily",
+        "price",
+        "price_prev_daily",
+        "timestamp_prev_daily"
+      ],
       "properties": {
         "confidence": {
           "title": "confidence",
@@ -112,17 +119,14 @@
           "description": "Unix timestamp of the price 24 hours ago"
         }
       },
-      "required": [
-        "confidence",
-        "confidence_prev_daily",
-        "price",
-        "price_prev_daily",
-        "timestamp_prev_daily"
-      ],
       "additionalProperties": false
     },
     "SpotFeedCurrencyPubSubSchema": {
       "type": "object",
+      "required": [
+        "channel_params",
+        "notification"
+      ],
       "properties": {
         "channel_params": {
           "type": "object",
@@ -135,10 +139,6 @@
           "field_many": false
         }
       },
-      "required": [
-        "channel_params",
-        "notification"
-      ],
       "additionalProperties": false
     }
   },

@@ -3,6 +3,11 @@
   "definitions": {
     "OrderbookInstrumentNameGroupDepthChannelSchema": {
       "type": "object",
+      "required": [
+        "depth",
+        "group",
+        "instrument_name"
+      ],
       "properties": {
         "depth": {
           "title": "depth",
@@ -31,15 +36,14 @@
           "description": "Instrument name"
         }
       },
-      "required": [
-        "depth",
-        "group",
-        "instrument_name"
-      ],
       "additionalProperties": false
     },
     "OrderbookInstrumentNameGroupDepthNotificationSchema": {
       "type": "object",
+      "required": [
+        "method",
+        "params"
+      ],
       "properties": {
         "method": {
           "title": "method",
@@ -51,14 +55,14 @@
           "field_many": false
         }
       },
-      "required": [
-        "method",
-        "params"
-      ],
       "additionalProperties": false
     },
     "OrderbookInstrumentNameGroupDepthNotificationParamsSchema": {
       "type": "object",
+      "required": [
+        "channel",
+        "data"
+      ],
       "properties": {
         "channel": {
           "title": "channel",
@@ -71,14 +75,17 @@
           "field_many": false
         }
       },
-      "required": [
-        "channel",
-        "data"
-      ],
       "additionalProperties": false
     },
     "OrderbookInstrumentNameGroupDepthPublisherDataSchema": {
       "type": "object",
+      "required": [
+        "asks",
+        "bids",
+        "instrument_name",
+        "publish_id",
+        "timestamp"
+      ],
       "properties": {
         "asks": {
           "title": "asks",
@@ -124,17 +131,14 @@
           "description": "Timestamp of the orderbook snapshot"
         }
       },
-      "required": [
-        "asks",
-        "bids",
-        "instrument_name",
-        "publish_id",
-        "timestamp"
-      ],
       "additionalProperties": false
     },
     "OrderbookInstrumentNameGroupDepthPubSubSchema": {
       "type": "object",
+      "required": [
+        "channel_params",
+        "notification"
+      ],
       "properties": {
         "channel_params": {
           "type": "object",
@@ -147,15 +151,11 @@
           "field_many": false
         }
       },
-      "required": [
-        "channel_params",
-        "notification"
-      ],
       "additionalProperties": false
     }
   },
   "title": "orderbook.{instrument_name}.{group}.{depth}",
-  "description": "Periodically publishes bids and asks for an instrument.",
+  "description": "Periodically publishes bids and asks for an instrument.<br /><br />The 100ms orderbook emits at 1s intervals if the orderbook is not changing, otherwise emits at 100ms intervals.",
   "type": "object",
   "allOf": [
     {

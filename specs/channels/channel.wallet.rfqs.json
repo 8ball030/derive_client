@@ -3,6 +3,9 @@
   "definitions": {
     "WalletRfqsChannelSchema": {
       "type": "object",
+      "required": [
+        "wallet"
+      ],
       "properties": {
         "wallet": {
           "title": "wallet",
@@ -10,13 +13,14 @@
           "description": "Account (wallet) of RFQ market maker"
         }
       },
-      "required": [
-        "wallet"
-      ],
       "additionalProperties": false
     },
     "WalletRfqsNotificationSchema": {
       "type": "object",
+      "required": [
+        "method",
+        "params"
+      ],
       "properties": {
         "method": {
           "title": "method",
@@ -28,14 +32,14 @@
           "field_many": false
         }
       },
-      "required": [
-        "method",
-        "params"
-      ],
       "additionalProperties": false
     },
     "WalletRfqsNotificationParamsSchema": {
       "type": "object",
+      "required": [
+        "channel",
+        "data"
+      ],
       "properties": {
         "channel": {
           "title": "channel",
@@ -52,14 +56,27 @@
           }
         }
       },
-      "required": [
-        "channel",
-        "data"
-      ],
       "additionalProperties": false
     },
     "RFQResultPublicSchema": {
       "type": "object",
+      "required": [
+        "cancel_reason",
+        "creation_timestamp",
+        "fill_rate",
+        "filled_direction",
+        "filled_pct",
+        "last_update_timestamp",
+        "legs",
+        "partial_fill_step",
+        "recent_fill_rate",
+        "rfq_id",
+        "status",
+        "subaccount_id",
+        "total_cost",
+        "valid_until",
+        "wallet"
+      ],
       "properties": {
         "cancel_reason": {
           "title": "cancel_reason",
@@ -82,6 +99,16 @@
           "title": "creation_timestamp",
           "type": "integer",
           "description": "Creation timestamp in ms since Unix epoch"
+        },
+        "fill_rate": {
+          "title": "fill_rate",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "decimal",
+          "default": null,
+          "description": "Average taker fill rate, from 0 to 1. Returns null for users with insufficient RFQ history."
         },
         "filled_direction": {
           "title": "filled_direction",
@@ -123,6 +150,16 @@
           "format": "decimal",
           "description": "Step size for partial fills (default: 1)"
         },
+        "recent_fill_rate": {
+          "title": "recent_fill_rate",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "decimal",
+          "default": null,
+          "description": "Taker fill rate, weighted towards the recent several days of activity, from 0 to 1. Returns null for users with insufficient recent RFQ history."
+        },
         "rfq_id": {
           "title": "rfq_id",
           "type": "string",
@@ -159,26 +196,22 @@
           "title": "valid_until",
           "type": "integer",
           "description": "RFQ expiry timestamp in ms since Unix epoch"
+        },
+        "wallet": {
+          "title": "wallet",
+          "type": "string",
+          "description": "Wallet address of the RFQ sender"
         }
       },
-      "required": [
-        "cancel_reason",
-        "creation_timestamp",
-        "filled_direction",
-        "filled_pct",
-        "last_update_timestamp",
-        "legs",
-        "partial_fill_step",
-        "rfq_id",
-        "status",
-        "subaccount_id",
-        "total_cost",
-        "valid_until"
-      ],
       "additionalProperties": false
     },
     "LegUnpricedSchema": {
       "type": "object",
+      "required": [
+        "amount",
+        "direction",
+        "instrument_name"
+      ],
       "properties": {
         "amount": {
           "title": "amount",
@@ -201,15 +234,14 @@
           "description": "Instrument name"
         }
       },
-      "required": [
-        "amount",
-        "direction",
-        "instrument_name"
-      ],
       "additionalProperties": false
     },
     "WalletRfqsPubSubSchema": {
       "type": "object",
+      "required": [
+        "channel_params",
+        "notification"
+      ],
       "properties": {
         "channel_params": {
           "type": "object",
@@ -222,10 +254,6 @@
           "field_many": false
         }
       },
-      "required": [
-        "channel_params",
-        "notification"
-      ],
       "additionalProperties": false
     }
   },

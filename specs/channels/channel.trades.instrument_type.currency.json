@@ -3,6 +3,10 @@
   "definitions": {
     "TradesInstrumentTypeCurrencyChannelSchema": {
       "type": "object",
+      "required": [
+        "currency",
+        "instrument_type"
+      ],
       "properties": {
         "currency": {
           "title": "currency",
@@ -20,14 +24,14 @@
           "description": "Instrument type"
         }
       },
-      "required": [
-        "currency",
-        "instrument_type"
-      ],
       "additionalProperties": false
     },
     "TradesInstrumentTypeCurrencyNotificationSchema": {
       "type": "object",
+      "required": [
+        "method",
+        "params"
+      ],
       "properties": {
         "method": {
           "title": "method",
@@ -39,14 +43,14 @@
           "field_many": false
         }
       },
-      "required": [
-        "method",
-        "params"
-      ],
       "additionalProperties": false
     },
     "TradesInstrumentTypeCurrencyNotificationParamsSchema": {
       "type": "object",
+      "required": [
+        "channel",
+        "data"
+      ],
       "properties": {
         "channel": {
           "title": "channel",
@@ -63,14 +67,21 @@
           }
         }
       },
-      "required": [
-        "channel",
-        "data"
-      ],
       "additionalProperties": false
     },
     "TradePublicResponseSchema": {
       "type": "object",
+      "required": [
+        "direction",
+        "index_price",
+        "instrument_name",
+        "mark_price",
+        "quote_id",
+        "timestamp",
+        "trade_amount",
+        "trade_id",
+        "trade_price"
+      ],
       "properties": {
         "direction": {
           "title": "direction",
@@ -131,21 +142,14 @@
           "description": "Price at which the trade was filled"
         }
       },
-      "required": [
-        "direction",
-        "index_price",
-        "instrument_name",
-        "mark_price",
-        "quote_id",
-        "timestamp",
-        "trade_amount",
-        "trade_id",
-        "trade_price"
-      ],
       "additionalProperties": false
     },
     "TradesInstrumentTypeCurrencyPubSubSchema": {
       "type": "object",
+      "required": [
+        "channel_params",
+        "notification"
+      ],
       "properties": {
         "channel_params": {
           "type": "object",
@@ -158,10 +162,6 @@
           "field_many": false
         }
       },
-      "required": [
-        "channel_params",
-        "notification"
-      ],
       "additionalProperties": false
     }
   },

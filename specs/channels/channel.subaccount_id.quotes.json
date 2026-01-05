@@ -3,6 +3,9 @@
   "definitions": {
     "SubaccountIdQuotesChannelSchema": {
       "type": "object",
+      "required": [
+        "subaccount_id"
+      ],
       "properties": {
         "subaccount_id": {
           "title": "subaccount_id",
@@ -10,13 +13,14 @@
           "description": "Subaccount ID to get quote state updates for"
         }
       },
-      "required": [
-        "subaccount_id"
-      ],
       "additionalProperties": false
     },
     "SubaccountIdQuotesNotificationSchema": {
       "type": "object",
+      "required": [
+        "method",
+        "params"
+      ],
       "properties": {
         "method": {
           "title": "method",
@@ -28,14 +32,14 @@
           "field_many": false
         }
       },
-      "required": [
-        "method",
-        "params"
-      ],
       "additionalProperties": false
     },
     "SubaccountIdQuotesNotificationParamsSchema": {
       "type": "object",
+      "required": [
+        "channel",
+        "data"
+      ],
       "properties": {
         "channel": {
           "title": "channel",
@@ -52,14 +56,35 @@
           }
         }
       },
-      "required": [
-        "channel",
-        "data"
-      ],
       "additionalProperties": false
     },
     "QuoteResultSchema": {
       "type": "object",
+      "required": [
+        "cancel_reason",
+        "creation_timestamp",
+        "direction",
+        "fee",
+        "fill_pct",
+        "is_transfer",
+        "label",
+        "last_update_timestamp",
+        "legs",
+        "legs_hash",
+        "liquidity_role",
+        "max_fee",
+        "mmp",
+        "nonce",
+        "quote_id",
+        "rfq_id",
+        "signature",
+        "signature_expiry_sec",
+        "signer",
+        "status",
+        "subaccount_id",
+        "tx_hash",
+        "tx_status"
+      ],
       "properties": {
         "cancel_reason": {
           "title": "cancel_reason",
@@ -229,35 +254,16 @@
           "description": "Blockchain transaction status (only for executed quotes)"
         }
       },
-      "required": [
-        "cancel_reason",
-        "creation_timestamp",
-        "direction",
-        "fee",
-        "fill_pct",
-        "is_transfer",
-        "label",
-        "last_update_timestamp",
-        "legs",
-        "legs_hash",
-        "liquidity_role",
-        "max_fee",
-        "mmp",
-        "nonce",
-        "quote_id",
-        "rfq_id",
-        "signature",
-        "signature_expiry_sec",
-        "signer",
-        "status",
-        "subaccount_id",
-        "tx_hash",
-        "tx_status"
-      ],
       "additionalProperties": false
     },
     "LegPricedSchema": {
       "type": "object",
+      "required": [
+        "amount",
+        "direction",
+        "instrument_name",
+        "price"
+      ],
       "properties": {
         "amount": {
           "title": "amount",
@@ -286,16 +292,14 @@
           "description": "Leg price"
         }
       },
-      "required": [
-        "amount",
-        "direction",
-        "instrument_name",
-        "price"
-      ],
       "additionalProperties": false
     },
     "SubaccountIdQuotesPubSubSchema": {
       "type": "object",
+      "required": [
+        "channel_params",
+        "notification"
+      ],
       "properties": {
         "channel_params": {
           "type": "object",
@@ -308,10 +312,6 @@
           "field_many": false
         }
       },
-      "required": [
-        "channel_params",
-        "notification"
-      ],
       "additionalProperties": false
     }
   },

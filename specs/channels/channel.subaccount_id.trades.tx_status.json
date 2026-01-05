@@ -3,6 +3,10 @@
   "definitions": {
     "SubaccountIdTradesTxStatusChannelSchema": {
       "type": "object",
+      "required": [
+        "subaccount_id",
+        "tx_status"
+      ],
       "properties": {
         "subaccount_id": {
           "title": "subaccount_id",
@@ -20,14 +24,14 @@
           "description": "Transaction status (`settled` or `reverted`)"
         }
       },
-      "required": [
-        "subaccount_id",
-        "tx_status"
-      ],
       "additionalProperties": false
     },
     "SubaccountIdTradesTxStatusNotificationSchema": {
       "type": "object",
+      "required": [
+        "method",
+        "params"
+      ],
       "properties": {
         "method": {
           "title": "method",
@@ -39,14 +43,14 @@
           "field_many": false
         }
       },
-      "required": [
-        "method",
-        "params"
-      ],
       "additionalProperties": false
     },
     "SubaccountIdTradesTxStatusNotificationParamsSchema": {
       "type": "object",
+      "required": [
+        "channel",
+        "data"
+      ],
       "properties": {
         "channel": {
           "title": "channel",
@@ -63,14 +67,33 @@
           }
         }
       },
-      "required": [
-        "channel",
-        "data"
-      ],
       "additionalProperties": false
     },
     "TradeResponseSchema": {
       "type": "object",
+      "required": [
+        "direction",
+        "expected_rebate",
+        "index_price",
+        "instrument_name",
+        "is_transfer",
+        "label",
+        "liquidity_role",
+        "mark_price",
+        "order_id",
+        "quote_id",
+        "realized_pnl",
+        "realized_pnl_excl_fees",
+        "subaccount_id",
+        "timestamp",
+        "trade_amount",
+        "trade_fee",
+        "trade_id",
+        "trade_price",
+        "transaction_id",
+        "tx_hash",
+        "tx_status"
+      ],
       "properties": {
         "direction": {
           "title": "direction",
@@ -211,33 +234,14 @@
           "description": "Blockchain transaction status"
         }
       },
-      "required": [
-        "direction",
-        "expected_rebate",
-        "index_price",
-        "instrument_name",
-        "is_transfer",
-        "label",
-        "liquidity_role",
-        "mark_price",
-        "order_id",
-        "quote_id",
-        "realized_pnl",
-        "realized_pnl_excl_fees",
-        "subaccount_id",
-        "timestamp",
-        "trade_amount",
-        "trade_fee",
-        "trade_id",
-        "trade_price",
-        "transaction_id",
-        "tx_hash",
-        "tx_status"
-      ],
       "additionalProperties": false
     },
     "SubaccountIdTradesTxStatusPubSubSchema": {
       "type": "object",
+      "required": [
+        "channel_params",
+        "notification"
+      ],
       "properties": {
         "channel_params": {
           "type": "object",
@@ -250,10 +254,6 @@
           "field_many": false
         }
       },
-      "required": [
-        "channel_params",
-        "notification"
-      ],
       "additionalProperties": false
     }
   },

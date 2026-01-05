@@ -3,6 +3,9 @@
   "definitions": {
     "SubaccountIdOrdersChannelSchema": {
       "type": "object",
+      "required": [
+        "subaccount_id"
+      ],
       "properties": {
         "subaccount_id": {
           "title": "subaccount_id",
@@ -10,13 +13,14 @@
           "description": "Subaccount ID"
         }
       },
-      "required": [
-        "subaccount_id"
-      ],
       "additionalProperties": false
     },
     "SubaccountIdOrdersNotificationSchema": {
       "type": "object",
+      "required": [
+        "method",
+        "params"
+      ],
       "properties": {
         "method": {
           "title": "method",
@@ -28,14 +32,14 @@
           "field_many": false
         }
       },
-      "required": [
-        "method",
-        "params"
-      ],
       "additionalProperties": false
     },
     "SubaccountIdOrdersNotificationParamsSchema": {
       "type": "object",
+      "required": [
+        "channel",
+        "data"
+      ],
       "properties": {
         "channel": {
           "title": "channel",
@@ -52,14 +56,36 @@
           }
         }
       },
-      "required": [
-        "channel",
-        "data"
-      ],
       "additionalProperties": false
     },
     "OrderResponseSchema": {
       "type": "object",
+      "required": [
+        "amount",
+        "average_price",
+        "cancel_reason",
+        "creation_timestamp",
+        "direction",
+        "filled_amount",
+        "instrument_name",
+        "is_transfer",
+        "label",
+        "last_update_timestamp",
+        "limit_price",
+        "max_fee",
+        "mmp",
+        "nonce",
+        "order_fee",
+        "order_id",
+        "order_status",
+        "order_type",
+        "quote_id",
+        "signature",
+        "signature_expiry_sec",
+        "signer",
+        "subaccount_id",
+        "time_in_force"
+      ],
       "properties": {
         "amount": {
           "title": "amount",
@@ -283,36 +309,14 @@
           "description": "(Required for trigger orders) Stop-loss or Take-profit."
         }
       },
-      "required": [
-        "amount",
-        "average_price",
-        "cancel_reason",
-        "creation_timestamp",
-        "direction",
-        "filled_amount",
-        "instrument_name",
-        "is_transfer",
-        "label",
-        "last_update_timestamp",
-        "limit_price",
-        "max_fee",
-        "mmp",
-        "nonce",
-        "order_fee",
-        "order_id",
-        "order_status",
-        "order_type",
-        "quote_id",
-        "signature",
-        "signature_expiry_sec",
-        "signer",
-        "subaccount_id",
-        "time_in_force"
-      ],
       "additionalProperties": false
     },
     "SubaccountIdOrdersPubSubSchema": {
       "type": "object",
+      "required": [
+        "channel_params",
+        "notification"
+      ],
       "properties": {
         "channel_params": {
           "type": "object",
@@ -325,10 +329,6 @@
           "field_many": false
         }
       },
-      "required": [
-        "channel_params",
-        "notification"
-      ],
       "additionalProperties": false
     }
   },

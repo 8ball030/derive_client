@@ -8,6 +8,10 @@
     },
     "AuctionsWatchNotificationSchema": {
       "type": "object",
+      "required": [
+        "method",
+        "params"
+      ],
       "properties": {
         "method": {
           "title": "method",
@@ -19,14 +23,14 @@
           "field_many": false
         }
       },
-      "required": [
-        "method",
-        "params"
-      ],
       "additionalProperties": false
     },
     "AuctionsWatchNotificationParamsSchema": {
       "type": "object",
+      "required": [
+        "channel",
+        "data"
+      ],
       "properties": {
         "channel": {
           "title": "channel",
@@ -43,14 +47,16 @@
           }
         }
       },
-      "required": [
-        "channel",
-        "data"
-      ],
       "additionalProperties": false
     },
     "AuctionResultSchema": {
       "type": "object",
+      "required": [
+        "details",
+        "state",
+        "subaccount_id",
+        "timestamp"
+      ],
       "properties": {
         "details": {
           "oneOf": [
@@ -90,16 +96,22 @@
           "description": "Timestamp of the auction result (in milliseconds since epoch)."
         }
       },
-      "required": [
-        "details",
-        "state",
-        "subaccount_id",
-        "timestamp"
-      ],
       "additionalProperties": false
     },
     "AuctionDetailsSchema": {
       "type": "object",
+      "required": [
+        "currency",
+        "estimated_bid_price",
+        "estimated_discount_pnl",
+        "estimated_mtm",
+        "estimated_percent_bid",
+        "last_seen_trade_id",
+        "margin_type",
+        "min_cash_transfer",
+        "min_price_limit",
+        "subaccount_balances"
+      ],
       "properties": {
         "currency": {
           "title": "currency",
@@ -172,22 +184,14 @@
           }
         }
       },
-      "required": [
-        "currency",
-        "estimated_bid_price",
-        "estimated_discount_pnl",
-        "estimated_mtm",
-        "estimated_percent_bid",
-        "last_seen_trade_id",
-        "margin_type",
-        "min_cash_transfer",
-        "min_price_limit",
-        "subaccount_balances"
-      ],
       "additionalProperties": false
     },
     "AuctionsWatchPubSubSchema": {
       "type": "object",
+      "required": [
+        "channel_params",
+        "notification"
+      ],
       "properties": {
         "channel_params": {
           "type": "object",
@@ -200,10 +204,6 @@
           "field_many": false
         }
       },
-      "required": [
-        "channel_params",
-        "notification"
-      ],
       "additionalProperties": false
     }
   },
