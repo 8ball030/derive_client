@@ -16,25 +16,47 @@ Prerequisites:
 from pathlib import Path
 
 from derive_client import HTTPClient
-from derive_client.data_types import D, Direction, OrderType
-from derive_client.data_types.generated_models import TimeInForce
+from derive_client.data_types import D, Direction, InstrumentType, OrderType
+from derive_client.data_types.generated_models import TickerSlimSchema, TimeInForce
 
 # Setup
 env_file = Path(__file__).parent.parent / ".env.template"
 client = HTTPClient.from_env(env_file=env_file)
 client.connect()
 
-INSTRUMENT = "ETH-PERP"
+CURRENCY = "ETH"
+INSTRUMENT_TYPE = InstrumentType.perp
+INSTRUMENT = f"{CURRENCY}-PERP"
 MINIMUM_AMOUNT = D("0.10")
+
+
+def get_ticker_data(ticker_slim: TickerSlimSchema):
+    """Helper to extract readable data from TickerSlimSchema."""
+
+    return {
+        'best_bid_price': ticker_slim.b,
+        'best_ask_price': ticker_slim.a,
+        'best_bid_amount': ticker_slim.B,
+        'best_ask_amount': ticker_slim.A,
+        'mark_price': ticker_slim.M,
+        'index_price': ticker_slim.I,
+        'max_price': ticker_slim.maxp,
+        'min_price': ticker_slim.minp,
+        'timestamp': ticker_slim.t,
+        'funding_rate': ticker_slim.f,  # perps only
+    }
 
 
 print("=" * 60)
 print("1. LIMIT ORDERS")
 print("=" * 60)
 
-# Get current market price
-ticker = client.markets.get_ticker(instrument_name=INSTRUMENT)
-mid_price = (D(ticker.best_bid_price) + D(ticker.best_ask_price)) / 2
+# Get current market price using new get_tickers API
+tickers = client.markets.get_tickers(instrument_type=INSTRUMENT_TYPE, currency=CURRENCY)
+ticker_slim = tickers[INSTRUMENT]
+ticker_data = get_ticker_data(ticker_slim)
+
+mid_price = (ticker_data['best_bid_price'] + ticker_data['best_ask_price']) / 2
 print(f"\nCurrent mid price: ${mid_price:.2f}")
 
 # Place limit buy order below market
@@ -156,35 +178,88 @@ print("\n" + "=" * 60)
 print("7. MARKET ORDERS (Immediate Execution)")
 print("=" * 60)
 
-# Market orders execute immediately at best available price
-# It is necessary to ensure that there is a limit price which is the
-# Absolute Worst price acceptable by the trader.
-market_order = client.orders.create(
-    instrument_name=INSTRUMENT,
-    amount=MINIMUM_AMOUNT,
-    direction=Direction.buy,
-    limit_price=ticker.best_ask_price,
-    order_type=OrderType.market,
-)
-print("\nMarket order executed:")
-print(f"  Order ID: {market_order.order_id}")
-print(f"  Status: {market_order.order_status}")
-# if market_order.trades:
-#     avg_price = sum(t.price * t.amount for t in market_order.trades) / sum(t.amount for t in market_order.trades)
-#     print(f"  Avg fill price: ${avg_price:.2f}")
-#     print(f"  Fills: {len(market_order.trades)}")
 
-# Close the position we just opened
-close_order = client.orders.create(
-    instrument_name=INSTRUMENT,
-    amount=MINIMUM_AMOUNT,
-    direction=Direction.sell,
-    limit_price=ticker.best_bid_price * D("0.99"),  # Acceptable worst price
-    order_type=OrderType.market,
-)
-print(f"\nPosition closed: {close_order.order_id}")
-print(f"  Order ID: {close_order.order_id}")
-print(f"  Status: {close_order.order_status}")
+# Check liquidity before attempting market orders
+def has_sufficient_liquidity(ticker_slim: TickerSlimSchema, direction: Direction, amount: D) -> tuple[bool, str]:
+    """Check if there's sufficient liquidity for a market order."""
+    ticker_data = get_ticker_data(ticker_slim)
+
+    if direction == Direction.buy:
+        available = ticker_data['best_ask_amount']
+        price = ticker_data['best_ask_price']
+        side = "ask"
+    else:
+        available = ticker_data['best_bid_amount']
+        price = ticker_data['best_bid_price']
+        side = "bid"
+
+    # Check if there's any liquidity
+    if available == 0 or price == 0:
+        return False, f"No liquidity on {side} side"
+
+    # Check if there's enough for our order
+    if available < amount:
+        return False, f"Insufficient liquidity: {available} available, {amount} needed"
+
+    # Check for unreasonably wide spread (indicates thin market)
+    if ticker_data['best_bid_price'] > 0 and ticker_data['best_ask_price'] > 0:
+        spread_pct = (
+            (ticker_data['best_ask_price'] - ticker_data['best_bid_price']) / ticker_data['best_bid_price'] * 100
+        )
+        if spread_pct > 5:  # More than 5% spread
+            return False, f"Spread too wide ({spread_pct:.1f}%), market likely illiquid"
+
+    return True, "Sufficient liquidity"
+
+
+# Refresh ticker to get latest market data
+tickers = client.markets.get_tickers(instrument_type=INSTRUMENT_TYPE, currency=CURRENCY)
+ticker_slim = tickers[INSTRUMENT]
+ticker_data = get_ticker_data(ticker_slim)
+
+# Check liquidity for buy order
+can_buy, buy_msg = has_sufficient_liquidity(ticker_slim, Direction.buy, MINIMUM_AMOUNT)
+print("\nLiquidity check for BUY:")
+print(f"  Best ask: ${ticker_data['best_ask_price']} x {ticker_data['best_ask_amount']}")
+print(f"  Best bid: ${ticker_data['best_bid_price']} x {ticker_data['best_bid_amount']}")
+print(f"  Status: {buy_msg}")
+
+if can_buy:
+    # Market orders execute immediately at best available price
+    # It is necessary to ensure that there is a limit price which is the
+    # Absolute Worst price acceptable by the trader.
+    market_order = client.orders.create(
+        instrument_name=INSTRUMENT,
+        amount=MINIMUM_AMOUNT,
+        direction=Direction.buy,
+        limit_price=ticker_data['best_ask_price'],
+        order_type=OrderType.market,
+    )
+    print("\n✓ Market BUY order executed:")
+    print(f"  Order ID: {market_order.order_id}")
+    print(f"  Status: {market_order.order_status}")
+
+    # Check liquidity for sell order to close position
+    can_sell, sell_msg = has_sufficient_liquidity(ticker_slim, Direction.sell, MINIMUM_AMOUNT)
+
+    if can_sell:
+        # Close the position we just opened
+        close_order = client.orders.create(
+            instrument_name=INSTRUMENT,
+            amount=MINIMUM_AMOUNT,
+            direction=Direction.sell,
+            limit_price=ticker_data['best_bid_price'] * D("0.99"),  # Acceptable worst price
+            order_type=OrderType.market,
+        )
+        print(f"\n✓ Position closed: {close_order.order_id}")
+        print(f"  Status: {close_order.order_status}")
+    else:
+        print(f"\n⚠ Cannot close position: {sell_msg}")
+        print("  Position remains open - close manually or wait for liquidity")
+else:
+    print("\n⚠ Skipping market orders - insufficient liquidity")
+    print("  This is common on testnets with limited market makers")
+    print("  In production, check liquidity before market orders or use limit orders")
 
 client.disconnect()
 

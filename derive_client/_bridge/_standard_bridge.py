@@ -3,7 +3,6 @@
 import asyncio
 import json
 from decimal import Decimal
-from logging import Logger
 from typing import cast
 
 from eth_account.signers.local import LocalAccount
@@ -30,6 +29,7 @@ from derive_client.data_types import (
     ChainID,
     ChecksumAddress,
     Currency,
+    LoggerType,
     PreparedBridgeTx,
     TxHash,
     TxResult,
@@ -83,7 +83,7 @@ def _load_l2_cross_domain_messenger_proxy(w3: AsyncWeb3) -> AsyncContract:
 class StandardBridge:
     """Bridge tokens using Optimism's native standard bridge."""
 
-    def __init__(self, account: LocalAccount, logger: Logger):
+    def __init__(self, account: LocalAccount, logger: LoggerType):
         """
         Initialize Standard bridge.
 

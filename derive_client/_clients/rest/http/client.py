@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import contextlib
-from logging import Logger
 from pathlib import Path
 from typing import Generator
 
@@ -23,7 +22,7 @@ from derive_client._clients.rest.http.trades import TradeOperations
 from derive_client._clients.rest.http.transactions import TransactionOperations
 from derive_client._clients.utils import AuthContext, load_client_config
 from derive_client.config import CONFIGS
-from derive_client.data_types import ChecksumAddress, Environment
+from derive_client.data_types import ChecksumAddress, Environment, LoggerType
 from derive_client.exceptions import BridgePrimarySignerRequiredError, NotConnectedError
 from derive_client.utils.logger import get_logger
 
@@ -39,7 +38,7 @@ class HTTPClient:
         session_key: str,
         subaccount_id: int,
         env: Environment,
-        logger: Logger | None = None,
+        logger: LoggerType | None = None,
         request_timeout: float = 10.0,
     ):
         config = CONFIGS[env]
