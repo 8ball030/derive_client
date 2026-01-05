@@ -3,8 +3,7 @@ import heapq
 import json
 import statistics
 import time
-from typing import Any, AsyncGenerator, Callable, Coroutine, Literal
-from typing import cast as trust_me_bro
+from typing import Any, AsyncGenerator, Callable, Coroutine, Literal, cast
 
 from aiohttp import ClientResponseError
 from eth_abi.abi import encode
@@ -93,7 +92,7 @@ def make_rotating_provider_middleware(
 
             try:
                 # 3) attempt the request
-                state.provider = trust_me_bro(AsyncHTTPProvider, state.provider)
+                state.provider = cast(AsyncHTTPProvider, state.provider)
                 resp = await state.provider.make_request(method, params)
 
                 # Json‑RPC error branch
@@ -379,7 +378,7 @@ async def wait_for_tx_finality(
     """
 
     block_number = -1
-    tx_hash = trust_me_bro(HexStr, tx_hash)
+    tx_hash = cast(HexStr, tx_hash)
     start_time = time.monotonic()
 
     while True:
@@ -486,8 +485,8 @@ async def iter_events(
             end = min(upper, cursor + max_block_range - 1)
 
             # Convert to hex strings for RPC call - some providers require this
-            rpc_filter_params["fromBlock"] = trust_me_bro(HexStr, hex(cursor))
-            rpc_filter_params["toBlock"] = trust_me_bro(HexStr, hex(end))
+            rpc_filter_params["fromBlock"] = cast(HexStr, hex(cursor))
+            rpc_filter_params["toBlock"] = cast(HexStr, hex(end))
 
             # For example, when rotating providers are out of sync
             retry_get_logs = exp_backoff_retry(w3.eth.get_logs, attempts=EVENT_LOG_RETRIES)
