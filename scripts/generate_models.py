@@ -314,7 +314,8 @@ def extract_models_from_file(file_path: Path) -> dict[str, ModelDefinition]:
 
 
 def find_duplicates(
-    source_models: dict[str, ModelDefinition], target_models: dict[str, ModelDefinition]
+    source_models: dict[str, ModelDefinition],
+    target_models: dict[str, ModelDefinition],
 ) -> list[DeduplicationStrategy]:
     """
     Find models in target that are identical to models in source.
@@ -480,26 +481,28 @@ def remove_redefined_classes(module: cst.Module, imported_names: set[str]) -> cs
     return updated
 
 
-def deduplicate_websocket_models(
-    generated_models_path: Path, websocket_models_path: Path, output_path: Path | None = None
+def deduplicate_channel_models(
+    generated_models_path: Path,
+    channel_models_path: Path,
+    output_path: Path | None = None,
 ) -> None:
     """
     Main deduplication function.
 
     Args:
         generated_models_path: Path to generated_models.py (OpenAPI)
-        websocket_models_path: Path to websocket_models.py
-        output_path: Optional output path (defaults to overwriting websocket_models_path)
+        channel_models_path: Path to channel_models.py
+        output_path: Optional output path (defaults to overwriting channel_models_path)
     """
     if output_path is None:
-        output_path = websocket_models_path
+        output_path = channel_models_path
 
     print("Extracting models from generated_models.py...")
     source_models = extract_models_from_file(generated_models_path)
     print(f"  Found {len(source_models)} models")
 
-    print("\nExtracting models from websocket_models.py...")
-    target_models = extract_models_from_file(websocket_models_path)
+    print("\nExtracting models from channel_models.py...")
+    target_models = extract_models_from_file(channel_models_path)
     print(f"  Found {len(target_models)} models")
 
     print("\nFinding duplicates...")
@@ -510,8 +513,8 @@ def deduplicate_websocket_models(
         print("\n✓ No duplicates found, nothing to do!")
         return
 
-    print("\nRewriting websocket_models.py...")
-    code = websocket_models_path.read_text()
+    print("\nRewriting channel_models.py...")
+    code = channel_models_path.read_text()
     module = cst.parse_module(code)
 
     deduplicator = ModelDeduplicator(strategies)
@@ -525,7 +528,7 @@ def deduplicate_websocket_models(
     updated_module = remove_redefined_classes(updated_module, imports_to_add)
     output_path.write_text(updated_module.code)
 
-    print("\n✓ Deduplicated websocket_models.py")
+    print("\n✓ Deduplicated channel_models.py")
     print(f"  Removed {len(deduplicator.removed_classes)} duplicate classes")
     print(f"  Converted {len(deduplicator.inherited_classes)} classes to inheritance")
     print(f"  Added imports for {len(imports_to_add)} models from generated_models.py")
@@ -564,9 +567,9 @@ if __name__ == "__main__":
     patch_file(output_path)
 
     ws_input = repo_root / "specs" / "websocket-channels.json"
-    ws_output = repo_root / "derive_client" / "data_types" / "websocket_models.py"
+    ws_output = repo_root / "derive_client" / "data_types" / "channel_models.py"
     generate_models(input_path=ws_input, output_path=ws_output, input_file_type=InputFileType.JsonSchema)
-    deduplicate_websocket_models(generated_models_path=output_path, websocket_models_path=ws_output)
+    deduplicate_channel_models(generated_models_path=output_path, channel_models_path=ws_output)
     patch_file(ws_output)
 
     print("Done.")
