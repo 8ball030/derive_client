@@ -17,12 +17,12 @@ CHANNELS_DIR = Path("specs") / "channels"
 TEMPLATES_DIR = PACKAGE_DIR / "data" / "templates"
 OUTPUT_DIR = PACKAGE_DIR / "_clients"
 GENERATED_MODELS_PATH = PACKAGE_DIR / "data_types" / "generated_models.py"
-CHANNEL_MODELS_DIR = PACKAGE_DIR / "data_types" / "channels"
+CHANNEL_MODELS_PATH = PACKAGE_DIR / "data_types" / "channel_models.py"
 
 # Channel classifications from docs
 PUBLIC_CHANNELS = {
     "orderbook.instrument_name.group.depth",
-    "ticker.instrument_name.interval",
+    "ticker_slim.instrument_name.interval",
     "spot_feed.currency",
     "trades.instrument_name",
     "trades.instrument_type.currency",
@@ -222,36 +222,13 @@ class ChannelModelParser(cst.CSTVisitor):
             return repr(node)
 
 
-def parse_channel_models(channels_dir: Path) -> tuple[dict[str, dict[str, str]], set[str]]:
+def parse_channel_models(channels_models_path: Path) -> tuple[dict[str, dict[str, str]], set[str]]:
     """Parse all generated channel model files to extract schemas and enums."""
 
     parser = ChannelModelParser()
-
-    # Parse public channel models
-    public_dir = channels_dir / "public"
-    if public_dir.exists():
-        for model_file in public_dir.glob("*.py"):
-            if model_file.name == "__init__.py":
-                continue
-            try:
-                source = model_file.read_text()
-                tree = cst.parse_module(source)
-                tree.visit(parser)
-            except Exception as e:
-                print(f"  ⚠️  Error parsing {model_file}: {e}")
-
-    # Parse private channel models
-    private_dir = channels_dir / "private"
-    if private_dir.exists():
-        for model_file in private_dir.glob("*.py"):
-            if model_file.name == "__init__.py":
-                continue
-            try:
-                source = model_file.read_text()
-                tree = cst.parse_module(source)
-                tree.visit(parser)
-            except Exception as e:
-                print(f"  ⚠️  Error parsing {model_file}: {e}")
+    source = channels_models_path.read_text()
+    tree = cst.parse_module(source)
+    tree.visit(parser)
 
     return parser.schemas, parser.enums
 
@@ -536,7 +513,10 @@ def parse_channel_schemas(channels_dir: Path, channel_schemas: dict[str, dict[st
         params = []
         for param_name in param_names:
             type_annotation, is_enum = get_param_type_annotation(
-                param_name, params_type, channel_schemas, channel_enums
+                param_name,
+                params_type,
+                channel_schemas,
+                channel_enums,
             )
             params.append(ParamInfo(name=param_name, type_annotation=type_annotation, is_enum=is_enum))
 
@@ -695,7 +675,7 @@ def generate_all_files():
     # Parse channels for WebSocket
     if CHANNELS_DIR.exists():
         print("\nParsing channel model files...")
-        channel_schemas, channel_enums = parse_channel_models(CHANNEL_MODELS_DIR)
+        channel_schemas, channel_enums = parse_channel_models(CHANNEL_MODELS_PATH)
         print(f"  → Found {len(channel_schemas)} channel schemas")
         print(f"  → Found {len(channel_enums)} channel enums")
 
