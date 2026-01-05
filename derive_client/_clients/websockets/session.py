@@ -10,7 +10,7 @@ import weakref
 from collections import defaultdict
 from logging import Logger
 from queue import Empty, Full, Queue
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, Optional, Type, TypeVar
 
 import msgspec
 from websockets.sync.client import ClientConnection, connect
@@ -34,6 +34,9 @@ class WebSocketSession:
         self._url = url
         self._request_timeout = request_timeout
         self._logger = logger if logger is not None else get_logger()
+
+        self._channel_types: dict[str, Type] = {}
+        self._channel_types_lock = threading.Lock()
 
         # Connection state
         self._ws: ClientConnection | None = None
@@ -127,6 +130,7 @@ class WebSocketSession:
         self,
         channel: str,
         handler: Handler,
+        notification_type: Optional[Type] = None,
     ) -> None:
         """
         Subscribe to a channel with a handler.
@@ -145,6 +149,8 @@ class WebSocketSession:
         with self._handlers_lock:
             is_first_handler = not self._handlers[channel]
             self._handlers[channel].append(handler)
+            if notification_type:
+                self._channel_types[channel] = notification_type
 
         class Subscribe(msgspec.Struct):
             channels: list[str]
@@ -304,7 +310,6 @@ class WebSocketSession:
                 return
 
             # Decode minimal channel info for routing
-            # Assuming params is {"channel": "...", "data": {...}}
             params_dict = msgspec.json.decode(envelope.params)
             channel = params_dict.get("channel")
 
@@ -314,6 +319,7 @@ class WebSocketSession:
 
             with self._handlers_lock:
                 handlers = list(self._handlers.get(channel, []))
+                notification_type = self._channel_types.get(channel)
 
             if not handlers:
                 self._logger.debug(f"No handlers for channel: {channel}")
@@ -321,9 +327,12 @@ class WebSocketSession:
 
             # Pass raw data to handlers - they decode based on channel schema
             data_raw = params_dict.get("data")
+            data_bytes = msgspec.json.encode(data_raw)
+            notification = msgspec.json.decode(data_bytes, type=notification_type)
+
             for handler in handlers:
                 try:
-                    handler(data_raw)
+                    handler(notification)
                 except Exception as e:
                     self._logger.error(f"Handler error for {channel}: {e}", exc_info=True)
             return

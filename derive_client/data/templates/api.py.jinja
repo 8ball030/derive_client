@@ -64,11 +64,12 @@ class {{ api_prefix }}PublicRPC:
         data = encode_json_exclude_none(params)
         message = {% if is_async %}await {% endif %}self._session._send_request(url, data, headers=self.headers)
         envelope = decode_envelope(message)
-{% else %}
+{%- else %}
         method = "public/{{ method.name }}"
         envelope = self._session._send_request(method, params=params)
-{% endif %}
+{%- endif %}
         result = decode_result(envelope, {{ method.result_type | replace('List[', 'list[') }})
+
         return result
 {% endfor %}
 
@@ -100,11 +101,12 @@ class {{ api_prefix }}PrivateRPC:
         data = encode_json_exclude_none(params)
         message = {% if is_async %}await {% endif %}self._session._send_request(url, data, headers=self.headers)
         envelope = decode_envelope(message)
-{% else %}
+{%- else %}
         method = "private/{{ method.name }}"
         envelope = self._session._send_request(method, params=params)
-{% endif %}
+{%- endif %}
         result = decode_result(envelope, {{ method.result_type | replace('List[', 'list[') }})
+
         return result
 {% endfor %}
 
@@ -149,6 +151,7 @@ class {{ api_prefix }}PublicChannels:
         )
         envelope = self._session.subscribe(channel, callback, {{ channel.notification_data_type }})
         result = decode_result(envelope, SubscriptionResult)
+
         return result
 
 {% endfor %}
@@ -188,6 +191,7 @@ class {{ api_prefix }}PrivateChannels:
         )
         envelope = self._session.subscribe(channel, callback, {{ channel.notification_data_type }})
         result = decode_result(envelope, SubscriptionResult)
+
         return result
 
 {% endfor %}
