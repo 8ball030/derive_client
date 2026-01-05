@@ -5,8 +5,7 @@ import time
 from decimal import Decimal
 from logging import Logger
 from pathlib import Path
-from typing import Any, Callable
-from typing import cast as trust_me_bro
+from typing import Any, Callable, cast
 
 import yaml
 from requests import RequestException
@@ -155,7 +154,7 @@ def get_w3_connection(
         max_backoff=600.0,
         logger=logger,
     )
-    w3.provider = trust_me_bro(HTTPProvider, w3.provider)
+    w3.provider = cast(HTTPProvider, w3.provider)
     w3.provider.make_request = rotator
     return w3
 
