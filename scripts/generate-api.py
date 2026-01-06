@@ -222,6 +222,29 @@ class ChannelModelParser(cst.CSTVisitor):
             return repr(node)
 
 
+def detect_import_conflicts(
+    rpc_schema_imports: set[str],
+    channel_schema_imports: set[str],
+) -> tuple[dict[str, str], dict[str, str]]:
+    """Detect naming conflicts between RPC and channel schemas.
+
+    Returns:
+        tuple: (rpc_aliases, channel_aliases) where keys are original names
+               and values are aliased names
+    """
+    conflicts = rpc_schema_imports & channel_schema_imports
+
+    rpc_aliases = {}
+    channel_aliases = {}
+
+    for name in conflicts:
+        # Use suffixes to distinguish between RPC and Channel versions
+        rpc_aliases[name] = f"{name}RPC"
+        channel_aliases[name] = f"{name}Channel"
+
+    return rpc_aliases, channel_aliases
+
+
 def parse_channel_models(channels_models_path: Path) -> tuple[dict[str, dict[str, str]], set[str]]:
     """Parse all generated channel model files to extract schemas and enums."""
 
@@ -590,6 +613,8 @@ def generate_api_file(
     public_channels: list[ChannelInfo] = None,
     private_channels: list[ChannelInfo] = None,
     channel_schema_imports: set[str] = None,
+    rpc_import_aliases: dict[str, str] = None,
+    channel_import_aliases: dict[str, str] = None,
 ):
     """Generate a single API file from unified template."""
 
@@ -608,10 +633,31 @@ def generate_api_file(
         public_channels=public_channels or [],
         private_channels=private_channels or [],
         channel_schema_imports=sorted(channel_schema_imports or set()),
+        rpc_import_aliases=rpc_import_aliases or {},
+        channel_import_aliases=channel_import_aliases or {},
     )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(output)
+
+
+def apply_type_aliases(type_str: str, aliases: dict[str, str]) -> str:
+    """Apply import aliases to type annotations.
+
+    For example, if type_str is "List[AuctionResultSchema]" and
+    aliases is {"AuctionResultSchema": "AuctionResultSchemaRPC"},
+    returns "List[AuctionResultSchemaRPC]"
+    """
+    if not aliases:
+        return type_str
+
+    result = type_str
+    # Sort by length descending to handle longer names first
+    for original, aliased in sorted(aliases.items(), key=lambda x: len(x[0]), reverse=True):
+        # Use word boundaries to avoid partial replacements
+        result = re.sub(rf'\b{re.escape(original)}\b', aliased, result)
+
+    return result
 
 
 def generate_all_files():
@@ -688,6 +734,21 @@ def generate_all_files():
         print(f"  → {len(private_channels)} private channels")
         print(f"  → {len(channel_schema_imports)} channel schema imports")
 
+        # NEW: Detect and resolve import conflicts
+        print("\nDetecting import conflicts...")
+        rpc_aliases, channel_aliases = detect_import_conflicts(rpc_schema_imports, channel_schema_imports)
+        if rpc_aliases:
+            print(f"  → Found {len(rpc_aliases)} conflicts: {', '.join(rpc_aliases.keys())}")
+
+            # Apply aliases to method result types
+            for method in public_methods + private_methods:
+                method.result_type = apply_type_aliases(method.result_type, rpc_aliases)
+                method.request_type = rpc_aliases.get(method.request_type, method.request_type)
+
+            # Apply aliases to channel notification types
+            for channel in public_channels + private_channels:
+                channel.notification_data_type = apply_type_aliases(channel.notification_data_type, channel_aliases)
+
         # Generate WebSocket API
         print("\nGenerating websockets/api.py...")
         generate_api_file(
@@ -702,6 +763,8 @@ def generate_all_files():
             public_channels=public_channels,
             private_channels=private_channels,
             channel_schema_imports=channel_schema_imports,
+            rpc_import_aliases=rpc_aliases,  # NEW
+            channel_import_aliases=channel_aliases,  # NEW
         )
     else:
         print(f"\n⚠️  Channels directory not found: {CHANNELS_DIR}")

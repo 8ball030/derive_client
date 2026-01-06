@@ -17,13 +17,21 @@ from derive_client._clients.utils import decode_envelope, decode_result, encode_
 {% endif %}
 from derive_client.data_types.generated_models import (
 {% for schema in rpc_schema_imports -%}
+    {% if schema in rpc_import_aliases -%}
+    {{ schema }} as {{ rpc_import_aliases[schema] }},
+    {% else -%}
     {{ schema }},
+    {% endif -%}
 {% endfor %}
 )
 {% if client_type == 'websocket' and channel_schema_imports %}
 from derive_client.data_types.channel_models import (
 {% for schema in channel_schema_imports -%}
+    {% if schema in channel_import_aliases -%}
+    {{ schema }} as {{ channel_import_aliases[schema] }},
+    {% else -%}
     {{ schema }},
+    {% endif -%}
 {% endfor %}
 )
 {% endif %}
@@ -53,7 +61,7 @@ class {{ api_prefix }}PublicRPC:
 {% endif %}
 
 {% for method in public_rpc_methods %}
-    {% if is_async %}async {% endif %}def {{ method.name }}(self, params: {{ method.request_type }},) -> {{ method.result_type }}:
+    {% if is_async %}async {% endif %}def {{ method.name }}(self, params: {{ method.request_type if method.request_type not in rpc_import_aliases else rpc_import_aliases[method.request_type] }},) -> {{ method.result_type | replace('List[', 'list[') }}:
         {% if method.description %}
         """
         {{ method.description | format_docstring }}
