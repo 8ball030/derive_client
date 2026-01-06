@@ -1,5 +1,3 @@
-import time
-
 import pytest
 
 from derive_client._clients.websockets.client import WebSocketClient
@@ -7,12 +5,7 @@ from derive_client.data_types import Environment
 from tests.conftest import ADMIN_TEST_WALLET, OWNER_TEST_WALLET, SESSION_KEY_PRIVATE_KEY
 
 
-@pytest.fixture(autouse=True)
-def slow_down_every_test(request):
-    time.sleep(1)
-
-
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def client_owner_wallet():
     """
     Client connected to a wallet where the session key is the owner.
@@ -33,7 +26,7 @@ def client_owner_wallet():
     client.disconnect()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def client_admin_wallet():
     """
     Client connected to a wallet where the session key is registered as admin.
