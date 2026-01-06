@@ -2322,19 +2322,23 @@ class PrivateChannels:
 
     def rfqs_by_wallet(
         self,
+        wallet: str,
         callback: Callable[[List[RFQResultPublicSchema]], None],
     ) -> SubscriptionResult:
         """
         Subscribe to RFQs directed to a given wallet.
 
         Args:
+            wallet: Wallet
             callback: Callback function to handle notifications
 
         Returns:
             Subscription result with status and current subscriptions
         """
 
-        channel = "wallet.rfqs".format()
+        channel = "{wallet}.rfqs".format(
+            wallet=wallet.value if isinstance(wallet, Enum) else wallet,
+        )
         envelope = self._session.subscribe(channel, callback, List[RFQResultPublicSchema])
         result = decode_result(envelope, SubscriptionResult)
 

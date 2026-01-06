@@ -324,6 +324,7 @@ def parse_channel_name(filename: str) -> tuple[str, list[str]]:
     parts = name.split(".")
 
     param_patterns = {
+        "wallet",
         "subaccount_id",
         "instrument_name",
         "instrument_type",
