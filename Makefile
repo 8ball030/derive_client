@@ -108,7 +108,18 @@ generate-sync-bridge-client:
 	poetry run ruff format derive_client/_bridge/client.py
 	poetry run ruff check --fix derive_client/_bridge/client.py
 
-codegen-all: generate-models generate-api generate-rest-async-http generate-sync-bridge-client fmt lint
+.PHONY: sync-ws-tests
+sync-ws-tests:
+	@echo "Syncing http tests -> websocket tests"
+	@rsync -av --no-perms --omit-dir-times \
+		--exclude='__init__.py' \
+		--exclude='conftest.py' \
+		--exclude='test_api.py' \
+		tests/test_clients/test_rest/test_http/ \
+		tests/test_clients/test_websocket/
+	@echo "Done."
+
+codegen-all: generate-models generate-api generate-rest-async-http generate-sync-bridge-client sync-ws-tests fmt lint
 
 typecheck:
 	poetry run pyright derive_client tests
