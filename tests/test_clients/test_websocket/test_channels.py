@@ -22,6 +22,7 @@ def noop(result: msgspec.Struct) -> None:
     return None
 
 
+## Public channels
 def test_public_auctions_watch(client_admin_wallet):
     subscription_result = client_admin_wallet.public_channels.auctions_watch(
         callback=noop,
@@ -118,3 +119,76 @@ def test_public_trades_tx_status_by_instrument_type(client_admin_wallet):
     )
 
     assert subscription_result.status["trades.option.ETH.settled"] == SUBSCRIPTION_OK
+
+
+## Private channels
+def test_private_balances_by_subaccount_id(client_admin_wallet):
+    subaccount_id = client_admin_wallet.active_subaccount.id
+    subscription_result = client_admin_wallet.private_channels.balances_by_subaccount_id(
+        subaccount_id=subaccount_id,
+        callback=noop,
+    )
+
+    assert subscription_result.status[f"{subaccount_id}.balances"] == SUBSCRIPTION_OK
+
+
+def test_private_best_quotes_by_subaccount_id(client_admin_wallet):
+    subaccount_id = client_admin_wallet.active_subaccount.id
+    subscription_result = client_admin_wallet.private_channels.best_quotes_by_subaccount_id(
+        subaccount_id=subaccount_id,
+        callback=noop,
+    )
+
+    assert subscription_result.status[f"{subaccount_id}.best.quotes"] == SUBSCRIPTION_OK
+
+
+def test_private_orders_by_subaccount_id(client_admin_wallet):
+    subaccount_id = client_admin_wallet.active_subaccount.id
+    subscription_result = client_admin_wallet.private_channels.orders_by_subaccount_id(
+        subaccount_id=subaccount_id,
+        callback=noop,
+    )
+
+    assert subscription_result.status[f"{subaccount_id}.orders"] == SUBSCRIPTION_OK
+
+
+def test_private_quotes_by_subaccount_id(client_admin_wallet):
+    subaccount_id = client_admin_wallet.active_subaccount.id
+    subscription_result = client_admin_wallet.private_channels.quotes_by_subaccount_id(
+        subaccount_id=subaccount_id,
+        callback=noop,
+    )
+
+    assert subscription_result.status[f"{subaccount_id}.quotes"] == SUBSCRIPTION_OK
+
+
+def test_private_trades_by_subaccount_id(client_admin_wallet):
+    subaccount_id = client_admin_wallet.active_subaccount.id
+    subscription_result = client_admin_wallet.private_channels.trades_by_subaccount_id(
+        subaccount_id=subaccount_id,
+        callback=noop,
+    )
+
+    assert subscription_result.status[f"{subaccount_id}.trades"] == SUBSCRIPTION_OK
+
+
+def test_private_trades_tx_status_by_subaccount_id(client_admin_wallet):
+    subaccount_id = client_admin_wallet.active_subaccount.id
+    tx_status = TxStatus2.settled
+    subscription_result = client_admin_wallet.private_channels.trades_tx_status_by_subaccount_id(
+        subaccount_id=subaccount_id,
+        tx_status=TxStatus2.settled,
+        callback=noop,
+    )
+
+    assert subscription_result.status[f"{subaccount_id}.trades.{tx_status.name}"] == SUBSCRIPTION_OK
+
+
+def test_private_rfqs_by_wallet(client_admin_wallet):
+    wallet = client_admin_wallet.account.address
+    subscription_result = client_admin_wallet.private_channels.rfqs_by_wallet(
+        wallet=wallet,
+        callback=noop,
+    )
+
+    assert subscription_result.status[f"{wallet}.rfqs"] == SUBSCRIPTION_OK
