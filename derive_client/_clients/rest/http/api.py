@@ -286,7 +286,7 @@ class PublicRPC:
     def login(
         self,
         params: PublicLoginParamsSchema,
-    ) -> List[int]:
+    ) -> list[int]:
         """
         Authenticate a websocket connection. Unavailable via HTTP.
         """
@@ -318,7 +318,7 @@ class PublicRPC:
     def get_all_currencies(
         self,
         params: PublicGetAllCurrenciesParamsSchema,
-    ) -> List[CurrencyDetailedResponseSchema]:
+    ) -> list[CurrencyDetailedResponseSchema]:
         """
         Get all active currencies with their spot price, spot price 24hrs ago.
 
@@ -385,7 +385,7 @@ class PublicRPC:
     def get_instruments(
         self,
         params: PublicGetInstrumentsParamsSchema,
-    ) -> List[InstrumentPublicResponseSchema]:
+    ) -> list[InstrumentPublicResponseSchema]:
         """
         Get all active instruments for a given `currency` and `type`.
         """
@@ -682,7 +682,7 @@ class PublicRPC:
     def get_vault_statistics(
         self,
         params: PublicGetVaultStatisticsParamsSchema,
-    ) -> List[VaultStatisticsResponseSchema]:
+    ) -> list[VaultStatisticsResponseSchema]:
         """
         Gets all the latest vault shareRate, totalSupply and TVL values for all vaults.
 
@@ -700,7 +700,7 @@ class PublicRPC:
     def get_vault_balances(
         self,
         params: PublicGetVaultBalancesParamsSchema,
-    ) -> List[VaultBalanceResponseSchema]:
+    ) -> list[VaultBalanceResponseSchema]:
         """
         Get all vault assets held by user. Can query by smart contract address or smart
         contract owner.
@@ -836,7 +836,7 @@ class PublicRPC:
     def get_maker_programs(
         self,
         params: PublicGetMakerProgramsParamsSchema,
-    ) -> List[ProgramResponseSchema]:
+    ) -> list[ProgramResponseSchema]:
         """
         Get all maker programs, including past / historical ones.
         """

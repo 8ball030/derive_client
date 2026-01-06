@@ -8,7 +8,9 @@ import msgspec
 from derive_client._clients.utils import decode_result
 from derive_client._clients.websockets.session import WebSocketSession
 from derive_client.data_types.channel_models import (
-    AuctionResultSchema,
+    AuctionResultSchema as AuctionResultSchemaChannel,
+)
+from derive_client.data_types.channel_models import (
     BalanceUpdateSchema,
     BestQuoteChannelResultSchema,
     Depth,
@@ -28,7 +30,9 @@ from derive_client.data_types.channel_models import (
     TxStatus2,
 )
 from derive_client.data_types.generated_models import (
-    AuctionResultSchema,
+    AuctionResultSchema as AuctionResultSchemaRPC,
+)
+from derive_client.data_types.generated_models import (
     CurrencyDetailedResponseSchema,
     InstrumentPublicResponseSchema,
     MMPConfigResultSchema,
@@ -291,7 +295,7 @@ class PublicRPC:
     def login(
         self,
         params: PublicLoginParamsSchema,
-    ) -> List[int]:
+    ) -> list[int]:
         """
         Authenticate a websocket connection. Unavailable via HTTP.
         """
@@ -319,7 +323,7 @@ class PublicRPC:
     def get_all_currencies(
         self,
         params: PublicGetAllCurrenciesParamsSchema,
-    ) -> List[CurrencyDetailedResponseSchema]:
+    ) -> list[CurrencyDetailedResponseSchema]:
         """
         Get all active currencies with their spot price, spot price 24hrs ago.
 
@@ -378,7 +382,7 @@ class PublicRPC:
     def get_instruments(
         self,
         params: PublicGetInstrumentsParamsSchema,
-    ) -> List[InstrumentPublicResponseSchema]:
+    ) -> list[InstrumentPublicResponseSchema]:
         """
         Get all active instruments for a given `currency` and `type`.
         """
@@ -643,7 +647,7 @@ class PublicRPC:
     def get_vault_statistics(
         self,
         params: PublicGetVaultStatisticsParamsSchema,
-    ) -> List[VaultStatisticsResponseSchema]:
+    ) -> list[VaultStatisticsResponseSchema]:
         """
         Gets all the latest vault shareRate, totalSupply and TVL values for all vaults.
 
@@ -659,7 +663,7 @@ class PublicRPC:
     def get_vault_balances(
         self,
         params: PublicGetVaultBalancesParamsSchema,
-    ) -> List[VaultBalanceResponseSchema]:
+    ) -> list[VaultBalanceResponseSchema]:
         """
         Get all vault assets held by user. Can query by smart contract address or smart
         contract owner.
@@ -779,7 +783,7 @@ class PublicRPC:
     def get_maker_programs(
         self,
         params: PublicGetMakerProgramsParamsSchema,
-    ) -> List[ProgramResponseSchema]:
+    ) -> list[ProgramResponseSchema]:
         """
         Get all maker programs, including past / historical ones.
         """
@@ -1754,14 +1758,14 @@ class PrivateRPC:
     def get_liquidation_history(
         self,
         params: PrivateGetLiquidationHistoryParamsSchema,
-    ) -> List[AuctionResultSchema]:
+    ) -> List[AuctionResultSchemaRPC]:
         """
         Required minimum session key permission level is `read_only`
         """
 
         method = "private/get_liquidation_history"
         envelope = self._session._send_request(method, params=params)
-        result = decode_result(envelope, list[AuctionResultSchema])
+        result = decode_result(envelope, list[AuctionResultSchemaRPC])
 
         return result
 
@@ -1938,7 +1942,7 @@ class PublicChannels:
 
     def auctions_watch(
         self,
-        callback: Callable[[List[AuctionResultSchema]], None],
+        callback: Callable[[List[AuctionResultSchemaChannel]], None],
     ) -> SubscriptionResult:
         """
         Subscribe to state of ongoing auctions.
@@ -1951,7 +1955,7 @@ class PublicChannels:
         """
 
         channel = "auctions.watch".format()
-        envelope = self._session.subscribe(channel, callback, List[AuctionResultSchema])
+        envelope = self._session.subscribe(channel, callback, List[AuctionResultSchemaChannel])
         result = decode_result(envelope, SubscriptionResult)
 
         return result
