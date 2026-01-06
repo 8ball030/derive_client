@@ -22,6 +22,10 @@ MessageT = TypeVar('MessageT')
 Handler = Callable[[MessageT], None]
 
 
+class Subscribe(msgspec.Struct):
+    channels: list[str]
+
+
 class WebSocketSession:
     """Synchronous WebSocket session with background receiver thread."""
 
@@ -151,9 +155,6 @@ class WebSocketSession:
             self._handlers[channel].append(handler)
             if notification_type:
                 self._channel_types[channel] = notification_type
-
-        class Subscribe(msgspec.Struct):
-            channels: list[str]
 
         params = Subscribe(channels=[channel])
 
