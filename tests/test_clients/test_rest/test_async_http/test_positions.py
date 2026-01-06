@@ -39,6 +39,7 @@ async def _wait_for_tx_settlement(
     raise TimeoutError(f"on transaction settlement: transaction_id={transaction_id} timeout={timeout}s")
 
 
+@pytest.mark.skip("Requires liquidity on testnet for market orders.")
 @pytest.mark.asyncio
 async def test_position_transfer(client_owner_wallet_with_position):
     instrument_name = "ETH-PERP"
@@ -84,6 +85,7 @@ async def test_position_transfer(client_owner_wallet_with_position):
     assert target_positions
 
 
+@pytest.mark.skip("Requires liquidity on testnet for market orders.")
 @pytest.mark.asyncio
 async def test_position_transfer_batch(client_owner_wallet_with_position):
     await client_owner_wallet_with_position.fetch_subaccounts()

@@ -2,6 +2,8 @@
 
 import time
 
+import pytest
+
 from derive_client._clients.rest.http.subaccount import Subaccount
 from derive_client._clients.utils import PositionTransfer
 from derive_client.data_types.generated_models import (
@@ -37,6 +39,7 @@ def _wait_for_tx_settlement(
     raise TimeoutError(f"on transaction settlement: transaction_id={transaction_id} timeout={timeout}s")
 
 
+@pytest.mark.skip("Requires liquidity on testnet for market orders.")
 def test_position_transfer(client_owner_wallet_with_position):
     instrument_name = "ETH-PERP"
 
@@ -81,6 +84,7 @@ def test_position_transfer(client_owner_wallet_with_position):
     assert target_positions
 
 
+@pytest.mark.skip("Requires liquidity on testnet for market orders.")
 def test_position_transfer_batch(client_owner_wallet_with_position):
     client_owner_wallet_with_position.fetch_subaccounts()
     subaccount_a, subaccount_b = client_owner_wallet_with_position.cached_subaccounts[1:3]
