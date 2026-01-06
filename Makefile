@@ -108,13 +108,7 @@ generate-sync-bridge-client:
 	poetry run ruff format derive_client/_bridge/client.py
 	poetry run ruff check --fix derive_client/_bridge/client.py
 
-.PHONEY: generate-channels
-generate-channels:
-	poetry run python scripts/generate-channel-models.py
-	poetry run ruff format derive_client/data_types/channels
-	poetry run ruff check --fix derive_client/data_types/channels
-
-codegen-all: generate-models generate-channels generate-api generate-rest-async-http generate-sync-bridge-client fmt lint
+codegen-all: generate-models generate-api generate-rest-async-http generate-sync-bridge-client fmt lint
 
 typecheck:
 	poetry run pyright derive_client tests
