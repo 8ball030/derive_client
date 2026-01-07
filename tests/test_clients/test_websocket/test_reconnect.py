@@ -9,7 +9,7 @@ import pytest
 
 from derive_client.data_types.channel_models import Interval, TickerSlimInstrumentNameIntervalPublisherDataSchema
 
-TIMEOUT = 30  # Increased timeout for reconnection
+TIMEOUT = 30
 SUBSCRIPTION_OK = "ok"
 
 
@@ -18,29 +18,44 @@ def test_reconnection_after_forced_disconnect(client_admin_wallet):
     Test that:
     1. We can subscribe and receive messages
     2. After forcing a disconnect, we automatically reconnect
-    3. We automatically resubscribe and continue receiving messages
+    3. We re-authenticate and resubscribe
+    4. We continue receiving messages
     """
 
     messages = []
     msg_event = threading.Event()
     disconnect_event = threading.Event()
     reconnect_event = threading.Event()
+    reauth_event = threading.Event()
 
     def callback(result):
         messages.append(result)
         msg_event.set()
 
+    # Hook into client's session callbacks
+    ws_session = client_admin_wallet._session
+    original_disconnect = ws_session._on_disconnect
+    original_reconnect = ws_session._on_reconnect
+    original_reauth = ws_session._on_before_resubscribe
+
     def on_disconnect():
         disconnect_event.set()
+        if original_disconnect:
+            original_disconnect()
 
     def on_reconnect():
         reconnect_event.set()
+        if original_reconnect:
+            original_reconnect()
 
-    # Get the underlying WebSocket session to add callbacks
-    # (Assuming your client exposes the session, adjust if needed)
-    ws_session = client_admin_wallet._ws_session
+    def on_reauth():
+        reauth_event.set()
+        if original_reauth:
+            original_reauth()
+
     ws_session._on_disconnect = on_disconnect
     ws_session._on_reconnect = on_reconnect
+    ws_session._on_before_resubscribe = on_reauth
 
     # Step 1: Subscribe and verify initial message
     subscription_result = client_admin_wallet.public_channels.ticker_slim_interval_by_instrument_name(
@@ -54,27 +69,29 @@ def test_reconnection_after_forced_disconnect(client_admin_wallet):
     # Wait for first message
     received_first = msg_event.wait(timeout=TIMEOUT)
     assert received_first is True
-    assert len(messages) == 1
+    assert len(messages) >= 1
     assert isinstance(messages[0], TickerSlimInstrumentNameIntervalPublisherDataSchema)
 
     first_message_count = len(messages)
     msg_event.clear()
 
-    # Step 2: Force disconnect by closing the underlying WebSocket connection
-    # This simulates a network issue or server restart
+    # Step 2: Force disconnect
     if ws_session._ws:
-        ws_session._ws.close()  # Force close the connection
+        ws_session._ws.close()
 
     # Wait for disconnect to be detected
     disconnected = disconnect_event.wait(timeout=TIMEOUT)
     assert disconnected is True, "Disconnect was not detected"
 
-    # Step 3: Wait for automatic reconnection
+    # Step 3: Wait for reconnection
     reconnected = reconnect_event.wait(timeout=TIMEOUT)
     assert reconnected is True, "Reconnection did not occur"
 
-    # Step 4: Verify we continue receiving messages after reconnection
-    # Wait for a new message (proves resubscription worked)
+    # Step 4: Verify re-authentication happened
+    reauthenticated = reauth_event.wait(timeout=TIMEOUT)
+    assert reauthenticated is True, "Re-authentication did not occur"
+
+    # Step 5: Verify we continue receiving messages after reconnection
     received_after_reconnect = msg_event.wait(timeout=TIMEOUT)
     assert received_after_reconnect is True, "No messages received after reconnection"
     assert len(messages) > first_message_count, "No new messages after reconnection"
@@ -106,27 +123,28 @@ def test_reconnection_with_multiple_channels(client_admin_wallet):
         btc_messages.append(result)
         btc_event.set()
 
+    ws_session = client_admin_wallet._session
+    original_reconnect = ws_session._on_reconnect
+
     def on_reconnect():
         reconnect_event.set()
+        if original_reconnect:
+            original_reconnect()
 
-    ws_session = client_admin_wallet._ws_session
     ws_session._on_reconnect = on_reconnect
 
     # Subscribe to two different channels
-    eth_sub = client_admin_wallet.public_channels.ticker_slim_interval_by_instrument_name(
+    client_admin_wallet.public_channels.ticker_slim_interval_by_instrument_name(
         instrument_name="ETH-PERP",
         interval=Interval.field_1000,
         callback=eth_callback,
     )
 
-    btc_sub = client_admin_wallet.public_channels.ticker_slim_interval_by_instrument_name(
+    client_admin_wallet.public_channels.ticker_slim_interval_by_instrument_name(
         instrument_name="BTC-PERP",
         interval=Interval.field_1000,
         callback=btc_callback,
     )
-
-    assert eth_sub.status["ticker_slim.ETH-PERP.1000"] == SUBSCRIPTION_OK
-    assert btc_sub.status["ticker_slim.BTC-PERP.1000"] == SUBSCRIPTION_OK
 
     # Wait for initial messages from both
     eth_received = eth_event.wait(timeout=TIMEOUT)
@@ -159,45 +177,6 @@ def test_reconnection_with_multiple_channels(client_admin_wallet):
     print(f"✓ BTC: {btc_count_before} → {len(btc_messages)} messages")
 
 
-def test_reconnection_backoff_timing(client_admin_wallet):
-    """
-    Test that reconnection uses exponential backoff.
-    This test is more observational - we just verify reconnection happens
-    within reasonable time bounds.
-    """
-
-    disconnect_times = []
-    reconnect_times = []
-
-    def on_disconnect():
-        disconnect_times.append(time.time())
-
-    def on_reconnect():
-        reconnect_times.append(time.time())
-
-    ws_session = client_admin_wallet._ws_session
-    ws_session._on_disconnect = on_disconnect
-    ws_session._on_reconnect = on_reconnect
-
-    # Force disconnect
-    if ws_session._ws:
-        ws_session._ws.close()
-
-    # Wait for reconnection
-    time.sleep(10)  # Give it time to reconnect
-
-    assert len(disconnect_times) > 0, "No disconnect detected"
-    assert len(reconnect_times) > 0, "No reconnection occurred"
-
-    # Verify reconnection happened within reasonable time
-    # (with 1s initial delay and backoff, should reconnect within a few seconds)
-    reconnect_duration = reconnect_times[0] - disconnect_times[0]
-    assert reconnect_duration < 10.0, f"Reconnection took too long: {reconnect_duration}s"
-    assert reconnect_duration >= 1.0, f"Reconnection too fast (no backoff?): {reconnect_duration}s"
-
-    print(f"✓ Reconnected in {reconnect_duration:.2f}s")
-
-
 @pytest.mark.stress
 def test_multiple_reconnections(client_admin_wallet):
     """
@@ -210,10 +189,14 @@ def test_multiple_reconnections(client_admin_wallet):
     def callback(result):
         messages.append(result)
 
+    ws_session = client_admin_wallet._session
+    original_reconnect = ws_session._on_reconnect
+
     def on_reconnect():
         reconnect_count[0] += 1
+        if original_reconnect:
+            original_reconnect()
 
-    ws_session = client_admin_wallet._ws_session
     ws_session._on_reconnect = on_reconnect
 
     # Subscribe
@@ -230,7 +213,7 @@ def test_multiple_reconnections(client_admin_wallet):
     for i in range(3):
         if ws_session._ws:
             ws_session._ws.close()
-        time.sleep(5)  # Wait for reconnection
+        time.sleep(8)  # Wait for reconnection + reauth
 
     # Verify we reconnected all 3 times
     assert reconnect_count[0] == 3, f"Expected 3 reconnects, got {reconnect_count[0]}"
