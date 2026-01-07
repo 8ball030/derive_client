@@ -68,6 +68,9 @@ def _create_priced_legs(client, rfq):
         # Use mark price (more realistic than index for options)
         # Add a small buffer to ensure quote is profitable
         base_price = ticker.mark_price
+        if base_price == Decimal("0.0"):
+            base_price = ticker.index_price
+
         if unpriced_leg.direction == Direction.buy:
             # Maker is selling - quote ask side (higher)
             price = base_price * Decimal("1.02")  # 2% above mark

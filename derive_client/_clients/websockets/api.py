@@ -1,7 +1,7 @@
 """Auto-generated API classes for WebSocket"""
 
 from enum import Enum
-from typing import Any, Callable, List
+from typing import Callable, List
 
 import msgspec
 
@@ -2073,7 +2073,7 @@ class PublicChannels:
     def trades_by_instrument_name(
         self,
         instrument_name: str,
-        callback: Callable[[Any], None],
+        callback: Callable[[List[TradePublicResponseSchema]], None],
     ) -> SubscriptionResult:
         """
         Subscribe to trades (order executions) for a given instrument name.
@@ -2089,7 +2089,7 @@ class PublicChannels:
         channel = "trades.{instrument_name}".format(
             instrument_name=instrument_name.value if isinstance(instrument_name, Enum) else instrument_name,
         )
-        envelope = self._session.subscribe(channel, callback, Any)
+        envelope = self._session.subscribe(channel, callback, List[TradePublicResponseSchema])
         result = decode_result(envelope, SubscriptionResult)
 
         return result
@@ -2276,7 +2276,7 @@ class PrivateChannels:
     def trades_by_subaccount_id(
         self,
         subaccount_id: str,
-        callback: Callable[[Any], None],
+        callback: Callable[[List[TradeResponseSchema]], None],
     ) -> SubscriptionResult:
         """
         Subscribe to user's trades (order executions) for a given subaccount ID.
@@ -2292,7 +2292,7 @@ class PrivateChannels:
         channel = "{subaccount_id}.trades".format(
             subaccount_id=subaccount_id.value if isinstance(subaccount_id, Enum) else subaccount_id,
         )
-        envelope = self._session.subscribe(channel, callback, Any)
+        envelope = self._session.subscribe(channel, callback, List[TradeResponseSchema])
         result = decode_result(envelope, SubscriptionResult)
 
         return result

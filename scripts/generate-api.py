@@ -187,8 +187,20 @@ class ChannelModelParser(cst.CSTVisitor):
             except Exception:
                 continue
 
-        # It's a Struct schema
+        # It's a Struct schema - initialize with empty dict
         self.schemas.setdefault(class_name, {})
+
+        # Check for inheritance from other schema classes
+        for base in node.bases:
+            try:
+                base_name = self._annotation_to_string(base.value)
+                # Skip base classes like Struct, Enum, or standard Python classes
+                if base_name not in ("Struct", "Enum") and base_name in self.schemas:
+                    # Copy parent fields to child
+                    self.schemas[class_name] = self.schemas[base_name].copy()
+                    break  # Assuming single inheritance for schemas
+            except Exception:
+                continue
 
     def leave_ClassDef(self, node: cst.ClassDef) -> None:
         self.current_class = None
