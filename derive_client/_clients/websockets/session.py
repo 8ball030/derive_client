@@ -13,6 +13,7 @@ from queue import Empty, Full, Queue
 from typing import Any, Callable, Optional, Type, TypeVar
 
 import msgspec
+from websockets import Data
 from websockets.exceptions import ConnectionClosed
 from websockets.sync.client import ClientConnection, connect
 
@@ -109,7 +110,7 @@ class WebSocketSession:
         self._handlers_lock = threading.RLock()
 
         # RPC tracking
-        self._pending_requests: dict[str, Queue] = {}
+        self._pending_requests: dict[str | int, Queue] = {}
         self._requests_lock = threading.Lock()
 
         # Background threads
@@ -439,7 +440,7 @@ class WebSocketSession:
         finally:
             self._logger.info("Receiver thread stopped")
 
-    def _dispatch_message(self, data: bytes) -> None:
+    def _dispatch_message(self, data: Data) -> None:
         """Dispatch message to appropriate handler."""
         envelope = decode_envelope(data)
 
@@ -459,7 +460,7 @@ class WebSocketSession:
 
         # Subscription notification
         if envelope.method == "subscription":
-            if envelope.params is None:
+            if envelope.params is msgspec.UNSET:
                 self._logger.warning("Subscription message missing params")
                 return
 

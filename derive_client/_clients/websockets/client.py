@@ -27,6 +27,7 @@ from derive_client._clients.websockets.api import PrivateAPI, PublicAPI
 from derive_client._clients.websockets.session import WebSocketSession
 from derive_client.config import CONFIGS
 from derive_client.data_types import ChecksumAddress, Environment
+from derive_client.data_types.generated_models import PublicLoginParamsSchema
 from derive_client.utils.logger import get_logger
 
 
@@ -74,8 +75,8 @@ class WebSocketClient:
         self._public_api = PublicAPI(session=self._session)
         self._private_api = PrivateAPI(session=self._session)
 
-        self._markets = MarketOperations(public_api=self._public_api, logger=self._logger)
-        self._transactions = TransactionOperations(public_api=self._public_api, logger=self._logger)
+        self._markets = MarketOperations(public_api=self._public_api, logger=self._logger)  # type: ignore
+        self._transactions = TransactionOperations(public_api=self._public_api, logger=self._logger)  # type: ignore
 
         self._light_account: LightAccount | None = None
         self._subaccounts: dict[int, Subaccount] = {}
@@ -99,7 +100,6 @@ class WebSocketClient:
 
     def _authenticate(self) -> None:
         """Perform WebSocket authentication."""
-        from derive_client.data_types.generated_models import PublicLoginParamsSchema
 
         params = PublicLoginParamsSchema(**self._auth.sign_ws_login())
         subaccount_ids = self._public_api.rpc.login(params=params)
@@ -108,7 +108,7 @@ class WebSocketClient:
         # Validate subaccount
         if self._subaccount_id not in subaccount_ids:
             self._logger.warning(
-                f"Subaccount {self._subaccount_id} does not exist for wallet {self._light_account.address}. "
+                f"Subaccount {self._subaccount_id} does not exist for wallet {self._auth.wallet}. "
                 f"Available subaccounts: {subaccount_ids}"
             )
 
@@ -151,8 +151,8 @@ class WebSocketClient:
             auth=self._auth,
             config=self._config,
             logger=self._logger,
-            public_api=self._public_api,
-            private_api=self._private_api,
+            public_api=self._public_api,  # type: ignore
+            private_api=self._private_api,  # type: ignore
         )
 
     def _instantiate_subaccount(self, subaccount_id: int) -> Subaccount:
@@ -164,8 +164,8 @@ class WebSocketClient:
             logger=self._logger,
             markets=self._markets,
             transactions=self._transactions,
-            public_api=self._public_api,
-            private_api=self._private_api,
+            public_api=self._public_api,  # type: ignore
+            private_api=self._private_api,  # type: ignore
         )
 
     @property

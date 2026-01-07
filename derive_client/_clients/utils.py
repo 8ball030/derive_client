@@ -26,6 +26,8 @@ from derive_client.data_types.generated_models import (
 )
 
 if TYPE_CHECKING:
+    from websockets import Data
+
     from derive_client._clients.rest.async_http.markets import MarketOperations as AsyncMarketOperations
     from derive_client._clients.rest.http.markets import MarketOperations
 
@@ -76,7 +78,7 @@ class AuthContext:
 
     def sign_ws_login(self) -> dict[str, str]:
         return sign_ws_login(
-            web3_client=self.w3,
+            web3_client=self.w3,  # type: ignore
             smart_contract_wallet=self.wallet,
             session_key_or_wallet_private_key=HexBytes(self.account.key).to_0x_hex(),
         )
@@ -192,7 +194,7 @@ class JSONRPCEnvelope(msgspec.Struct, omit_defaults=True):
     error: msgspec.Raw | msgspec.UnsetType = msgspec.UNSET
 
 
-def decode_envelope(data: bytes) -> JSONRPCEnvelope:
+def decode_envelope(data: Data) -> JSONRPCEnvelope:
     """
     Fast first-pass decode of JSON-RPC envelope.
 
