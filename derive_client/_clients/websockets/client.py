@@ -65,6 +65,10 @@ class WebSocketClient:
             url=config.ws_address,
             request_timeout=request_timeout,
             logger=self._logger,
+            reconnect=True,
+            on_disconnect=self._handle_disconnect,
+            on_reconnect=self._handle_reconnect,
+            on_before_resubscribe=self._handle_before_resubscribe,  # Re-authentication hook
         )
 
         self._public_api = PublicAPI(session=self._session)
@@ -89,30 +93,47 @@ class WebSocketClient:
 
     def connect(self) -> None:
         """Connect to Derive via WebSocket and validate credentials."""
-
         self._session.open()
+        self._authenticate()
+        self._initialize_account_and_markets()
 
-        # Authenticate via WebSocket login
+    def _authenticate(self) -> None:
+        """Perform WebSocket authentication."""
         from derive_client.data_types.generated_models import PublicLoginParamsSchema
 
         params = PublicLoginParamsSchema(**self._auth.sign_ws_login())
         subaccount_ids = self._public_api.rpc.login(params=params)
         self._logger.debug(f"WebSocket login returned subaccount ids: {subaccount_ids}")
 
-        # Initialize account and markets (same as HTTP client)
-        self._light_account = self._instantiate_account()
-        self._markets.fetch_all_instruments(expired=False)
-
-        # Validate and cache active subaccount
+        # Validate subaccount
         if self._subaccount_id not in subaccount_ids:
             self._logger.warning(
                 f"Subaccount {self._subaccount_id} does not exist for wallet {self._light_account.address}. "
                 f"Available subaccounts: {subaccount_ids}"
             )
-            return
 
-        subaccount = self._instantiate_subaccount(self._subaccount_id)
-        self._subaccounts[subaccount.id] = subaccount
+    def _initialize_account_and_markets(self) -> None:
+        """Initialize account and fetch market data."""
+        self._light_account = self._instantiate_account()
+        self._markets.fetch_all_instruments(expired=False)
+
+        if self._subaccount_id in self._light_account.state.subaccount_ids:
+            subaccount = self._instantiate_subaccount(self._subaccount_id)
+            self._subaccounts[subaccount.id] = subaccount
+
+    def _handle_disconnect(self) -> None:
+        """Called when WebSocket disconnects."""
+        self._logger.warning("WebSocket client detected disconnect")
+
+    def _handle_reconnect(self) -> None:
+        """Called after WebSocket reconnects (before resubscribe)."""
+        self._logger.info("WebSocket client reconnected")
+
+    def _handle_before_resubscribe(self) -> None:
+        """Called before resubscribing - perform re-authentication here."""
+        self._logger.info("Re-authenticating after reconnection")
+        self._authenticate()
+        self._logger.info("Re-authentication successful")
 
     def disconnect(self) -> None:
         """Close WebSocket connection and clear cached state. Idempotent."""

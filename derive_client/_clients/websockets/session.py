@@ -1,5 +1,5 @@
 """
-Synchronous WebSocket session with automatic reconnection.
+Synchronous WebSocket session with automatic reconnection and auth hook.
 """
 
 from __future__ import annotations
@@ -70,7 +70,20 @@ class WebSocketSession:
         logger: Logger | None = None,
         on_disconnect: Callable[[], None] | None = None,
         on_reconnect: Callable[[], None] | None = None,
+        on_before_resubscribe: Callable[[], None] | None = None,
     ):
+        """
+        Args:
+            url: WebSocket URL
+            request_timeout: RPC request timeout in seconds
+            reconnect: Enable automatic reconnection
+            reconnect_delay: Initial reconnection delay in seconds
+            max_reconnect_delay: Maximum reconnection delay (for backoff)
+            logger: Logger instance
+            on_disconnect: Callback when disconnection is detected
+            on_reconnect: Callback after successful reconnection (before resubscribe)
+            on_before_resubscribe: Callback before resubscribing channels (for re-auth)
+        """
         self._url = url
         self._request_timeout = request_timeout
         self._logger = logger if logger is not None else get_logger()
@@ -81,6 +94,7 @@ class WebSocketSession:
         self._max_reconnect_delay = max_reconnect_delay
         self._on_disconnect = on_disconnect
         self._on_reconnect = on_reconnect
+        self._on_before_resubscribe = on_before_resubscribe
 
         # Channel type registry
         self._channel_types: dict[str, Type] = {}
@@ -137,7 +151,6 @@ class WebSocketSession:
 
         # Clear state
         self._state.set_disconnected()
-        self._handlers.clear()
 
         # Cancel pending requests
         with self._requests_lock:
@@ -160,7 +173,7 @@ class WebSocketSession:
         Subscribe to a channel with a handler.
 
         Only one handler allowed per channel. If channel already has a handler,
-        raises ValueError.
+        replaces it and logs a warning.
 
         Args:
             channel: Channel name (e.g., "BTC-PERP.trades")
@@ -175,8 +188,9 @@ class WebSocketSession:
 
         with self._handlers_lock:
             if channel in self._handlers:
-                raise ValueError(
-                    f"Channel {channel} already has a handler. Use unsubscribe() first or implement your own fan-out."
+                self._logger.warning(
+                    f"Channel {channel} already has a handler - replacing it. "
+                    "Consider using unsubscribe() first for explicit control."
                 )
 
             self._handlers[channel] = handler
@@ -308,15 +322,24 @@ class WebSocketSession:
                 # Establish new connection
                 self._connect()
 
-                # Resubscribe to all channels
-                self._resubscribe_all()
-
-                # Notify user callback
+                # Call reconnect callback (for re-auth, etc.)
                 if self._on_reconnect:
                     try:
                         self._on_reconnect()
                     except Exception as e:
                         self._logger.error(f"Error in on_reconnect callback: {e}")
+                        # Don't fail reconnection if callback fails
+
+                # Call before_resubscribe callback (for re-authentication)
+                if self._on_before_resubscribe:
+                    try:
+                        self._on_before_resubscribe()
+                    except Exception as e:
+                        self._logger.error(f"Error in on_before_resubscribe callback: {e}")
+                        raise  # Re-auth failure should trigger retry
+
+                # Resubscribe to all channels
+                self._resubscribe_all()
 
                 self._logger.info(f"Reconnected successfully after {attempt} attempts")
                 return
