@@ -569,7 +569,7 @@ if __name__ == "__main__":
     ws_input = repo_root / "specs" / "websocket-channels.json"
     ws_output = repo_root / "derive_client" / "data_types" / "channel_models.py"
     generate_models(input_path=ws_input, output_path=ws_output, input_file_type=InputFileType.JsonSchema)
-    deduplicate_channel_models(generated_models_path=output_path, channel_models_path=ws_output)
     patch_file(ws_output)
+    deduplicate_channel_models(generated_models_path=output_path, channel_models_path=ws_output)
 
     print("Done.")

@@ -86,6 +86,7 @@ release:
 generate-models:
 	curl https://docs.derive.xyz/openapi/rest-api.json | jq > specs/openapi-spec.json
 	poetry run python scripts/patch_spec.py specs/openapi-spec.json
+	poetry run python scripts/merge-websocket-channels.py
 	poetry run python scripts/generate_models.py
 	poetry run ruff format derive_client/data_types/generated_models.py derive_client/data_types/channel_models.py
 	poetry run ruff check --fix derive_client/data_types/generated_models.py derive_client/data_types/channel_models.py

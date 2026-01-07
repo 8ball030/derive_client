@@ -192,9 +192,9 @@ class OrderResponseSchema(Struct):
     quote_id: Optional[str] = None
     replaced_order_id: Optional[str] = None
     trigger_price: Optional[Decimal] = None
-    trigger_price_type: TriggerPriceType = None
+    trigger_price_type: Optional[TriggerPriceType] = None
     trigger_reject_message: Optional[str] = None
-    trigger_type: TriggerType = None
+    trigger_type: Optional[TriggerType] = None
 
 
 class SubaccountIdQuotesChannelSchema(SubaccountIdBalancesChannelSchema):

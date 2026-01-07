@@ -284,6 +284,7 @@
             "mark",
             "index"
           ],
+          "nullable": true,
           "description": "(Required for trigger orders) Trigger with Index or Mark Price"
         },
         "trigger_reject_message": {
@@ -306,6 +307,7 @@
             "stoploss",
             "takeprofit"
           ],
+          "nullable": true,
           "description": "(Required for trigger orders) Stop-loss or Take-profit."
         }
       },
