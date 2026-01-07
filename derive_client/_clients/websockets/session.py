@@ -7,7 +7,6 @@ from __future__ import annotations
 import threading
 import uuid
 import weakref
-from collections import defaultdict
 from logging import Logger
 from queue import Empty, Full, Queue
 from typing import Any, Callable, Optional, Type, TypeVar
@@ -47,7 +46,7 @@ class WebSocketSession:
         self._connected = threading.Event()
 
         # Message routing - multiple handlers per channel
-        self._handlers: dict[str, list[Callable[[Any], None]]] = defaultdict(list)
+        self._handlers: dict[str, Callable[[Any], None]] = {}
         self._handlers_lock = threading.RLock()
 
         # RPC tracking (for subscribe/unsubscribe responses)
@@ -135,88 +134,73 @@ class WebSocketSession:
         channel: str,
         handler: Handler,
         notification_type: Optional[Type] = None,
-    ) -> None:
+    ) -> JSONRPCEnvelope:
         """
         Subscribe to a channel with a handler.
 
-        Multiple handlers can be registered for the same channel.
-        Only sends subscribe RPC if this is the first handler for the channel.
+        Only one handler allowed per channel. If channel already has a handler,
+        raises ValueError.
 
         Args:
             channel: Channel name (e.g., "BTC-PERP.trades")
             handler: Callback function(data) to handle messages
+            notification_type: Type to decode notifications into
+
+        Returns:
+            JSONRPCEnvelope with subscription confirmation
         """
 
-        if not self._connected.is_set():
-            raise RuntimeError("WebSocket not connected. Call open() first.")
-
         with self._handlers_lock:
-            is_first_handler = not self._handlers[channel]
-            self._handlers[channel].append(handler)
+            if channel in self._handlers:
+                raise ValueError(
+                    f"Channel {channel} already has a handler. "
+                    "Use unsubscribe() first or implement your own fan-out."
+                )
+
+            self._handlers[channel] = handler
             if notification_type:
-                self._channel_types[channel] = notification_type
+                with self._channel_types_lock:
+                    self._channel_types[channel] = notification_type
 
         params = Subscribe(channels=[channel])
 
-        # Only send subscribe RPC if this is the first handler
-        if is_first_handler:
-            self._logger.info(f"Subscribing to channel: {channel}")
-            try:
-                envelope = self._send_request("subscribe", params=params)
-                self._logger.debug(f"Subscribe RPC response for {channel}: {envelope}")
-                return envelope
-            except Exception:
-                self._logger.exception(f"Subscribe RPC failed for {channel}")
-                raise
-        else:
-            self._logger.debug(f"Added handler for existing subscription: {channel}")
+        self._logger.info(f"Subscribing to channel: {channel}")
+        try:
+            envelope = self._send_request("subscribe", params=params)
+            self._logger.debug(f"Subscribe RPC response for {channel}: {envelope}")
+            return envelope
+        except Exception:
+            # Rollback handler registration on failure
+            with self._handlers_lock:
+                self._handlers.pop(channel, None)
+            self._logger.exception(f"Subscribe RPC failed for {channel}")
+            raise
 
-    def unsubscribe(
-        self,
-        channel: str,
-        handler: Handler | None = None,
-    ) -> None:
+    def unsubscribe(self, channel: str) -> JSONRPCEnvelope | None:
         """
-        Unsubscribe from a channel.
-
-        If handler is provided, only removes that handler.
-        If handler is None, removes all handlers for the channel.
-        Only sends unsubscribe RPC when last handler is removed.
+        Unsubscribe from a channel and remove its handler.
 
         Args:
             channel: Channel name
-            handler: Specific handler to remove (or None for all)
-        """
 
+        Returns:
+            JSONRPCEnvelope with unsubscribe confirmation
+        """
         with self._handlers_lock:
             if channel not in self._handlers:
                 self._logger.warning(f"Not subscribed to channel: {channel}")
-                return
+                return None
 
-            if handler is None:
-                del self._handlers[channel]
-                should_unsubscribe = True
-            else:
-                try:
-                    self._handlers[channel].remove(handler)
-                    should_unsubscribe = len(self._handlers[channel]) == 0
-                    if should_unsubscribe:
-                        del self._handlers[channel]
-                except ValueError:
-                    self._logger.warning(f"Handler not found for channel: {channel}")
-                    return
+            del self._handlers[channel]
 
-        if should_unsubscribe:
-            self._logger.info(f"Unsubscribing from channel: {channel}")
-            try:
-                envelope = self._send_request("unsubscribe", {"channels": [channel]})
-                self._logger.debug(f"Unsubscribe RPC response for {channel}: {envelope}")
-                return envelope
-            except Exception:
-                self._logger.exception(f"Unsubscribe RPC failed for {channel}")
-                raise
-
-        return None
+        self._logger.info(f"Unsubscribing from channel: {channel}")
+        try:
+            envelope = self._send_request("unsubscribe", {"channels": [channel]})
+            self._logger.debug(f"Unsubscribe RPC response for {channel}: {envelope}")
+            return envelope
+        except Exception:
+            self._logger.exception(f"Unsubscribe RPC failed for {channel}")
+            raise
 
     def _send_request(self, method: str, params: msgspec.Struct) -> JSONRPCEnvelope:
         """Send RPC request and return decoded envelope"""
@@ -319,10 +303,10 @@ class WebSocketSession:
                 return
 
             with self._handlers_lock:
-                handlers = list(self._handlers.get(channel, []))
+                handler = self._handlers.get(channel, [])
                 notification_type = self._channel_types.get(channel)
 
-            if not handlers:
+            if not handler:
                 self._logger.debug(f"No handlers for channel: {channel}")
                 return
 
@@ -331,12 +315,10 @@ class WebSocketSession:
             data_bytes = msgspec.json.encode(data_raw)
             notification = msgspec.json.decode(data_bytes, type=notification_type)
 
-            for handler in handlers:
-                try:
-                    handler(notification)
-                except Exception as e:
-                    self._logger.error(f"Handler error for {channel}: {e}", exc_info=True)
-            return
+            try:
+                handler(notification)
+            except Exception as e:
+                self._logger.error(f"Handler error for {channel}: {e}", exc_info=True)
 
         # Other notification
         self._logger.debug(f"Unhandled notification: {envelope.method}")
