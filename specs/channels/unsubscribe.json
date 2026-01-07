@@ -1,0 +1,146 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "UnsubscribeRequestSchema": {
+      "type": "object",
+      "properties": {
+        "httpMethod": {
+          "title": "httpMethod",
+          "type": "string",
+          "const": null
+        },
+        "id": {
+          "oneOf": [
+            {
+              "title": "",
+              "type": "string"
+            },
+            {
+              "title": "",
+              "type": "integer"
+            }
+          ]
+        },
+        "method": {
+          "title": "method",
+          "type": "string",
+          "const": "unsubscribe"
+        },
+        "params": {
+          "type": "object",
+          "$ref": "#/definitions/UnsubscribeParamsSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "httpMethod",
+        "method",
+        "params"
+      ],
+      "additionalProperties": false
+    },
+    "UnsubscribeParamsSchema": {
+      "type": "object",
+      "properties": {
+        "channels": {
+          "title": "channels",
+          "type": [
+            "array",
+            "null"
+          ],
+          "default": null,
+          "description": "A list of channels names to unsubscribe from.<br />If not provided, unsubscribe from all channels.",
+          "items": {
+            "title": "channels",
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "UnsubscribeResponseSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "oneOf": [
+            {
+              "title": "",
+              "type": "string"
+            },
+            {
+              "title": "",
+              "type": "integer"
+            }
+          ]
+        },
+        "result": {
+          "type": "object",
+          "$ref": "#/definitions/UnsubscribeResultSchema",
+          "field_many": false,
+          "description": ""
+        }
+      },
+      "required": [
+        "id",
+        "result"
+      ],
+      "additionalProperties": false
+    },
+    "UnsubscribeResultSchema": {
+      "type": "object",
+      "properties": {
+        "remaining_subscriptions": {
+          "title": "remaining_subscriptions",
+          "type": "array",
+          "description": "A list of channels still subscribed to after the unsubscribe operation.",
+          "items": {
+            "title": "remaining_subscriptions",
+            "type": "string"
+          }
+        },
+        "status": {
+          "title": "status",
+          "type": "object",
+          "description": "A mapping of `channel`&nbsp;&#11106;&nbsp;`status`.<br />Successfully unsubscribed channels will have status `ok`.",
+          "additionalProperties": {
+            "title": "status",
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "remaining_subscriptions",
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "UnsubscribeJSONRPCSchema": {
+      "type": "object",
+      "properties": {
+        "request": {
+          "type": "object",
+          "$ref": "#/definitions/UnsubscribeRequestSchema",
+          "field_many": false
+        },
+        "response": {
+          "type": "object",
+          "$ref": "#/definitions/UnsubscribeResponseSchema",
+          "field_many": false
+        }
+      },
+      "required": [
+        "request",
+        "response"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "title": "unsubscribe",
+  "description": "Unsubscribe from a list of channels, or all channels.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/UnsubscribeJSONRPCSchema"
+    }
+  ]
+}

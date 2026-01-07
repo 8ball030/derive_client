@@ -84,17 +84,18 @@ release:
 
 .PHONY: generate-models
 generate-models:
-	curl https://docs.derive.xyz/openapi/rest-api.json | jq > openapi-spec.json
-	poetry run python scripts/patch_spec.py openapi-spec.json
-	poetry run python scripts/generate-models.py
-	poetry run ruff format derive_client/data_types/generated_models.py
-	poetry run ruff check --fix derive_client/data_types/generated_models.py
+	curl https://docs.derive.xyz/openapi/rest-api.json | jq > specs/openapi-spec.json
+	poetry run python scripts/patch_spec.py specs/openapi-spec.json
+	poetry run python scripts/merge-websocket-channels.py
+	poetry run python scripts/generate_models.py
+	poetry run ruff format derive_client/data_types/generated_models.py derive_client/data_types/channel_models.py
+	poetry run ruff check --fix derive_client/data_types/generated_models.py derive_client/data_types/channel_models.py
 
-.PHONY: generate-rest-api
-generate-rest-api:
-	python scripts/generate-rest-api.py
-	poetry run ruff format derive_client/_clients/rest/
-	poetry run ruff check --fix derive_client/_clients/rest/
+.PHONY: generate-api
+generate-api:
+	python scripts/generate-api.py
+	poetry run ruff format derive_client/_clients/
+	poetry run ruff check --fix derive_client/_clients/
 
 .PHONY: generate-rest-async-http
 generate-rest-async-http:
@@ -108,8 +109,18 @@ generate-sync-bridge-client:
 	poetry run ruff format derive_client/_bridge/client.py
 	poetry run ruff check --fix derive_client/_bridge/client.py
 
+.PHONY: sync-ws-tests
+sync-ws-tests:
+	@echo "Syncing http tests -> websocket tests"
+	@rsync -av --no-perms --omit-dir-times \
+		--exclude='__init__.py' \
+		--exclude='conftest.py' \
+		--exclude='test_api.py' \
+		tests/test_clients/test_rest/test_http/ \
+		tests/test_clients/test_websocket/
+	@echo "Done."
 
-codegen-all: generate-models generate-rest-api generate-rest-async-http generate-sync-bridge-client fmt lint
+codegen-all: generate-models generate-api generate-rest-async-http generate-sync-bridge-client sync-ws-tests fmt lint
 
 typecheck:
 	poetry run pyright derive_client tests

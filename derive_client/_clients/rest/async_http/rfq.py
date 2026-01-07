@@ -84,7 +84,7 @@ class RFQOperations:
             min_total_cost=min_total_cost,
             partial_fill_step=partial_fill_step,
         )
-        result = await self._subaccount._private_api.send_rfq(params)
+        result = await self._subaccount._private_api.rpc.send_rfq(params)
         return result
 
     async def get_rfqs(
@@ -111,7 +111,7 @@ class RFQOperations:
             status=status,
             to_timestamp=to_timestamp,
         )
-        result = await self._subaccount._private_api.get_rfqs(params)
+        result = await self._subaccount._private_api.rpc.get_rfqs(params)
         return result
 
     async def cancel_rfq(self, *, rfq_id: str) -> Result:
@@ -119,7 +119,7 @@ class RFQOperations:
 
         subaccount_id = self._subaccount.id
         params = PrivateCancelRfqParamsSchema(rfq_id=rfq_id, subaccount_id=subaccount_id)
-        result = await self._subaccount._private_api.cancel_rfq(params)
+        result = await self._subaccount._private_api.rpc.cancel_rfq(params)
         return result
 
     async def cancel_batch_rfqs(
@@ -144,7 +144,7 @@ class RFQOperations:
             nonce=nonce,
             rfq_id=rfq_id,
         )
-        result = await self._subaccount._private_api.cancel_batch_rfqs(params)
+        result = await self._subaccount._private_api.rpc.cancel_batch_rfqs(params)
         return result
 
     async def poll_rfqs(
@@ -175,7 +175,7 @@ class RFQOperations:
             status=status,
             to_timestamp=to_timestamp,
         )
-        result = await self._subaccount._private_api.poll_rfqs(params)
+        result = await self._subaccount._private_api.rpc.poll_rfqs(params)
         return result
 
     async def send_quote(
@@ -242,7 +242,7 @@ class RFQOperations:
             label=label,
             mmp=mmp,
         )
-        result = await self._subaccount._private_api.send_quote(params)
+        result = await self._subaccount._private_api.rpc.send_quote(params)
         return result
 
     async def cancel_quote(self, quote_id: str) -> PrivateCancelQuoteResultSchema:
@@ -253,7 +253,7 @@ class RFQOperations:
             quote_id=quote_id,
             subaccount_id=subaccount_id,
         )
-        result = await self._subaccount._private_api.cancel_quote(params)
+        result = await self._subaccount._private_api.rpc.cancel_quote(params)
         return result
 
     async def cancel_batch_quotes(
@@ -279,7 +279,7 @@ class RFQOperations:
             quote_id=quote_id,
             rfq_id=rfq_id,
         )
-        result = await self._subaccount._private_api.cancel_batch_quotes(params)
+        result = await self._subaccount._private_api.rpc.cancel_batch_quotes(params)
         return result
 
     async def get_quotes(
@@ -309,7 +309,7 @@ class RFQOperations:
             status=status,
             to_timestamp=to_timestamp,
         )
-        result = await self._subaccount._private_api.get_quotes(params)
+        result = await self._subaccount._private_api.rpc.get_quotes(params)
         return result
 
     async def poll_quotes(
@@ -340,7 +340,7 @@ class RFQOperations:
             status=status,
             to_timestamp=to_timestamp,
         )
-        result = await self._subaccount._private_api.poll_quotes(params)
+        result = await self._subaccount._private_api.rpc.poll_quotes(params)
         return result
 
     async def execute_quote(
@@ -404,7 +404,7 @@ class RFQOperations:
             signer=signed_action.signer,
             label=label,
         )
-        result = await self._subaccount._private_api.execute_quote(params)
+        result = await self._subaccount._private_api.rpc.execute_quote(params)
         return result
 
     async def get_best_quote(
@@ -439,5 +439,5 @@ class RFQOperations:
             partial_fill_step=partial_fill_step,
             rfq_id=rfq_id,
         )
-        result = await self._subaccount._private_api.rfq_get_best_quote(params)
+        result = await self._subaccount._private_api.rpc.rfq_get_best_quote(params)
         return result

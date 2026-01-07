@@ -1,0 +1,268 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "WalletRfqsChannelSchema": {
+      "type": "object",
+      "required": [
+        "wallet"
+      ],
+      "properties": {
+        "wallet": {
+          "title": "wallet",
+          "type": "string",
+          "description": "Account (wallet) of RFQ market maker"
+        }
+      },
+      "additionalProperties": false
+    },
+    "WalletRfqsNotificationSchema": {
+      "type": "object",
+      "required": [
+        "method",
+        "params"
+      ],
+      "properties": {
+        "method": {
+          "title": "method",
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "$ref": "#/definitions/WalletRfqsNotificationParamsSchema",
+          "field_many": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "WalletRfqsNotificationParamsSchema": {
+      "type": "object",
+      "required": [
+        "channel",
+        "data"
+      ],
+      "properties": {
+        "channel": {
+          "title": "channel",
+          "type": "string",
+          "description": "Subscribed channel name"
+        },
+        "data": {
+          "title": "data",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/RFQResultPublicSchema",
+            "field_many": true
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "RFQResultPublicSchema": {
+      "type": "object",
+      "required": [
+        "cancel_reason",
+        "creation_timestamp",
+        "fill_rate",
+        "filled_direction",
+        "filled_pct",
+        "last_update_timestamp",
+        "legs",
+        "partial_fill_step",
+        "recent_fill_rate",
+        "rfq_id",
+        "status",
+        "subaccount_id",
+        "total_cost",
+        "valid_until",
+        "wallet"
+      ],
+      "properties": {
+        "cancel_reason": {
+          "title": "cancel_reason",
+          "type": "string",
+          "enum": [
+            "",
+            "user_request",
+            "insufficient_margin",
+            "signed_max_fee_too_low",
+            "mmp_trigger",
+            "cancel_on_disconnect",
+            "session_key_deregistered",
+            "subaccount_withdrawn",
+            "rfq_no_longer_open",
+            "compliance"
+          ],
+          "description": "Cancel reason, if any"
+        },
+        "creation_timestamp": {
+          "title": "creation_timestamp",
+          "type": "integer",
+          "description": "Creation timestamp in ms since Unix epoch"
+        },
+        "fill_rate": {
+          "title": "fill_rate",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "decimal",
+          "default": null,
+          "description": "Average taker fill rate, from 0 to 1. Returns null for users with insufficient RFQ history."
+        },
+        "filled_direction": {
+          "title": "filled_direction",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "enum": [
+            "buy",
+            "sell"
+          ],
+          "description": "Direction at which the RFQ was filled (only if filled)"
+        },
+        "filled_pct": {
+          "title": "filled_pct",
+          "type": "string",
+          "format": "decimal",
+          "description": "Percentage of the RFQ that has been filled, from 0 to 1."
+        },
+        "last_update_timestamp": {
+          "title": "last_update_timestamp",
+          "type": "integer",
+          "description": "Last update timestamp in ms since Unix epoch"
+        },
+        "legs": {
+          "title": "legs",
+          "type": "array",
+          "description": "RFQ legs",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/LegUnpricedSchema",
+            "field_many": true
+          }
+        },
+        "partial_fill_step": {
+          "title": "partial_fill_step",
+          "type": "string",
+          "format": "decimal",
+          "description": "Step size for partial fills (default: 1)"
+        },
+        "recent_fill_rate": {
+          "title": "recent_fill_rate",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "decimal",
+          "default": null,
+          "description": "Taker fill rate, weighted towards the recent several days of activity, from 0 to 1. Returns null for users with insufficient recent RFQ history."
+        },
+        "rfq_id": {
+          "title": "rfq_id",
+          "type": "string",
+          "format": "uuid",
+          "description": "RFQ ID"
+        },
+        "status": {
+          "title": "status",
+          "type": "string",
+          "enum": [
+            "open",
+            "filled",
+            "cancelled",
+            "expired"
+          ],
+          "description": "Status"
+        },
+        "subaccount_id": {
+          "title": "subaccount_id",
+          "type": "integer",
+          "description": "Subaccount ID"
+        },
+        "total_cost": {
+          "title": "total_cost",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "decimal",
+          "default": null,
+          "description": "Total cost for the RFQ (only if filled)"
+        },
+        "valid_until": {
+          "title": "valid_until",
+          "type": "integer",
+          "description": "RFQ expiry timestamp in ms since Unix epoch"
+        },
+        "wallet": {
+          "title": "wallet",
+          "type": "string",
+          "description": "Wallet address of the RFQ sender"
+        }
+      },
+      "additionalProperties": false
+    },
+    "LegUnpricedSchema": {
+      "type": "object",
+      "required": [
+        "amount",
+        "direction",
+        "instrument_name"
+      ],
+      "properties": {
+        "amount": {
+          "title": "amount",
+          "type": "string",
+          "format": "decimal",
+          "description": "Amount in units of the base"
+        },
+        "direction": {
+          "title": "direction",
+          "type": "string",
+          "enum": [
+            "buy",
+            "sell"
+          ],
+          "description": "Leg direction"
+        },
+        "instrument_name": {
+          "title": "instrument_name",
+          "type": "string",
+          "description": "Instrument name"
+        }
+      },
+      "additionalProperties": false
+    },
+    "WalletRfqsPubSubSchema": {
+      "type": "object",
+      "required": [
+        "channel_params",
+        "notification"
+      ],
+      "properties": {
+        "channel_params": {
+          "type": "object",
+          "$ref": "#/definitions/WalletRfqsChannelSchema",
+          "field_many": false
+        },
+        "notification": {
+          "type": "object",
+          "$ref": "#/definitions/WalletRfqsNotificationSchema",
+          "field_many": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "title": "{wallet}.rfqs",
+  "description": "Subscribe to RFQs directed to a given wallet.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/WalletRfqsPubSubSchema"
+    }
+  ]
+}

@@ -38,7 +38,7 @@ class MMPOperations:
             subaccount_id=subaccount_id,
             currency=currency,
         )
-        result = await self._subaccount._private_api.get_mmp_config(params=params)
+        result = await self._subaccount._private_api.rpc.get_mmp_config(params=params)
         return result
 
     async def set_config(
@@ -61,7 +61,7 @@ class MMPOperations:
             mmp_amount_limit=mmp_amount_limit,
             mmp_delta_limit=mmp_delta_limit,
         )
-        result = await self._subaccount._private_api.set_mmp_config(params=params)
+        result = await self._subaccount._private_api.rpc.set_mmp_config(params=params)
         return result
 
     async def reset(self, *, currency: Optional[str] = None) -> Result:
@@ -72,5 +72,5 @@ class MMPOperations:
             subaccount_id=subaccount_id,
             currency=currency,
         )
-        result = await self._subaccount._private_api.reset_mmp(params=params)
+        result = await self._subaccount._private_api.rpc.reset_mmp(params=params)
         return result

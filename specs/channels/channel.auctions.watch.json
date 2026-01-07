@@ -1,0 +1,218 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "AuctionsWatchChannelSchema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "AuctionsWatchNotificationSchema": {
+      "type": "object",
+      "required": [
+        "method",
+        "params"
+      ],
+      "properties": {
+        "method": {
+          "title": "method",
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "$ref": "#/definitions/AuctionsWatchNotificationParamsSchema",
+          "field_many": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "AuctionsWatchNotificationParamsSchema": {
+      "type": "object",
+      "required": [
+        "channel",
+        "data"
+      ],
+      "properties": {
+        "channel": {
+          "title": "channel",
+          "type": "string",
+          "description": "Subscribed channel name"
+        },
+        "data": {
+          "title": "data",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/AuctionResultSchema",
+            "field_many": true
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "AuctionResultSchema": {
+      "type": "object",
+      "required": [
+        "details",
+        "state",
+        "subaccount_id",
+        "timestamp"
+      ],
+      "properties": {
+        "details": {
+          "oneOf": [
+            {
+              "type": "object",
+              "$ref": "#/definitions/AuctionDetailsSchema",
+              "field_many": false,
+              "description": "Details of the auction, if ongoing.",
+              "default": {
+                "currency": null
+              }
+            },
+            {
+              "type": "null",
+              "title": ""
+            }
+          ],
+          "description": "Details of the auction, if ongoing."
+        },
+        "state": {
+          "title": "state",
+          "type": "string",
+          "enum": [
+            "ongoing",
+            "ended"
+          ],
+          "description": "State of the auction."
+        },
+        "subaccount_id": {
+          "title": "subaccount_id",
+          "type": "integer",
+          "description": "Subaccount ID being auctioned off."
+        },
+        "timestamp": {
+          "title": "timestamp",
+          "type": "integer",
+          "description": "Timestamp of the auction result (in milliseconds since epoch)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "AuctionDetailsSchema": {
+      "type": "object",
+      "required": [
+        "currency",
+        "estimated_bid_price",
+        "estimated_discount_pnl",
+        "estimated_mtm",
+        "estimated_percent_bid",
+        "last_seen_trade_id",
+        "margin_type",
+        "min_cash_transfer",
+        "min_price_limit",
+        "subaccount_balances"
+      ],
+      "properties": {
+        "currency": {
+          "title": "currency",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "Currency of subaccount (for PM margin type)."
+        },
+        "estimated_bid_price": {
+          "title": "estimated_bid_price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Estimated bid price for this liquidation. This value is not scaled by the bid percent, and instead represents the discounted mark value of the whole subaccount. This value will be negative for insolvent auctions."
+        },
+        "estimated_discount_pnl": {
+          "title": "estimated_discount_pnl",
+          "type": "string",
+          "format": "decimal",
+          "description": "Estimated profit relative to `estimated_mtm` if the liquidation is successful, assuming execution at `estimated_percent_bid` and `estimated_bid_price`."
+        },
+        "estimated_mtm": {
+          "title": "estimated_mtm",
+          "type": "string",
+          "format": "decimal",
+          "description": "Estimated mark-to-market value of the subaccount being auctioned off. This value is not scaled by the bid percent, and instead represents the un-discounted mark value of the whole subaccount."
+        },
+        "estimated_percent_bid": {
+          "title": "estimated_percent_bid",
+          "type": "string",
+          "format": "decimal",
+          "description": "An estimate for the maximum percent of the subaccount that can be liquidated."
+        },
+        "last_seen_trade_id": {
+          "title": "last_seen_trade_id",
+          "type": "integer",
+          "description": "Last trade ID for the account being auctioned off (to use in the `private/liquidate` endpoint). This value is used to ensure that the state of balances reported in `subaccount_balances` is in sync. A trade ID error from `private/liquidate` indicates that the channel is currently out of sync with the on-chain state of the subaccount due to a pending bid."
+        },
+        "margin_type": {
+          "title": "margin_type",
+          "type": "string",
+          "enum": [
+            "PM",
+            "SM",
+            "PM2"
+          ],
+          "description": "Margin type of the subaccount being auctioned off. It is recommended to bid on subaccounts using the same margin type and currency as to not run into unsupported currency errors or maximum account size limits."
+        },
+        "min_cash_transfer": {
+          "title": "min_cash_transfer",
+          "type": "string",
+          "format": "decimal",
+          "description": "Suggested minimum amount of cash to transfer to a newly created subaccount for bidding (to use in the `private/liquidate` endpoint). Any unused cash will get returned back to the original subaccount. If the bidder plans to bid less than the `estimated_percent_bid`, they may scale this value down accordingly."
+        },
+        "min_price_limit": {
+          "title": "min_price_limit",
+          "type": "string",
+          "format": "decimal",
+          "description": "Estimated minimum `price_limit` (to use in the `private/liquidate` endpoint). This is the minimum amount of cash that would be required to buy out the percent of the subaccount. If the bidder plans to bid less than the `estimated_percent_bid`, they may scale this value down accordingly."
+        },
+        "subaccount_balances": {
+          "title": "subaccount_balances",
+          "type": "object",
+          "description": "Current balances of the subaccount being auctioned off. The bidder should expect to receive a percentage of these balances proportional to the `estimated_percent_bid`, and pay `estimated_bid_price * estimated_percent_bid` for them. These balances already include any pending perp settlements and funding payments into the USDC balance.",
+          "additionalProperties": {
+            "title": "subaccount_balances",
+            "type": "string",
+            "format": "decimal"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "AuctionsWatchPubSubSchema": {
+      "type": "object",
+      "required": [
+        "channel_params",
+        "notification"
+      ],
+      "properties": {
+        "channel_params": {
+          "type": "object",
+          "$ref": "#/definitions/AuctionsWatchChannelSchema",
+          "field_many": false
+        },
+        "notification": {
+          "type": "object",
+          "$ref": "#/definitions/AuctionsWatchNotificationSchema",
+          "field_many": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "title": "auctions.watch",
+  "description": "Subscribe to state of ongoing auctions.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/AuctionsWatchPubSubSchema"
+    }
+  ]
+}

@@ -1,0 +1,165 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "OrderbookInstrumentNameGroupDepthChannelSchema": {
+      "type": "object",
+      "required": [
+        "depth",
+        "group",
+        "instrument_name"
+      ],
+      "properties": {
+        "depth": {
+          "title": "depth",
+          "type": "string",
+          "enum": [
+            "1",
+            "10",
+            "20",
+            "100"
+          ],
+          "description": "Number of price levels returned"
+        },
+        "group": {
+          "title": "group",
+          "type": "string",
+          "enum": [
+            "1",
+            "10",
+            "100"
+          ],
+          "description": "Price grouping (rounding)"
+        },
+        "instrument_name": {
+          "title": "instrument_name",
+          "type": "string",
+          "description": "Instrument name"
+        }
+      },
+      "additionalProperties": false
+    },
+    "OrderbookInstrumentNameGroupDepthNotificationSchema": {
+      "type": "object",
+      "required": [
+        "method",
+        "params"
+      ],
+      "properties": {
+        "method": {
+          "title": "method",
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "$ref": "#/definitions/OrderbookInstrumentNameGroupDepthNotificationParamsSchema",
+          "field_many": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "OrderbookInstrumentNameGroupDepthNotificationParamsSchema": {
+      "type": "object",
+      "required": [
+        "channel",
+        "data"
+      ],
+      "properties": {
+        "channel": {
+          "title": "channel",
+          "type": "string",
+          "description": "Subscribed channel name"
+        },
+        "data": {
+          "type": "object",
+          "$ref": "#/definitions/OrderbookInstrumentNameGroupDepthPublisherDataSchema",
+          "field_many": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "OrderbookInstrumentNameGroupDepthPublisherDataSchema": {
+      "type": "object",
+      "required": [
+        "asks",
+        "bids",
+        "instrument_name",
+        "publish_id",
+        "timestamp"
+      ],
+      "properties": {
+        "asks": {
+          "title": "asks",
+          "type": "array",
+          "description": "List of asks as [price, amount] tuples optionally grouped into price buckets",
+          "items": {
+            "title": "asks",
+            "type": "array",
+            "items": {
+              "title": "asks",
+              "type": "string",
+              "format": "decimal"
+            }
+          }
+        },
+        "bids": {
+          "title": "bids",
+          "type": "array",
+          "description": "List of bids as [price, amount] tuples optionally grouped into price buckets",
+          "items": {
+            "title": "bids",
+            "type": "array",
+            "items": {
+              "title": "bids",
+              "type": "string",
+              "format": "decimal"
+            }
+          }
+        },
+        "instrument_name": {
+          "title": "instrument_name",
+          "type": "string",
+          "description": "Instrument name"
+        },
+        "publish_id": {
+          "title": "publish_id",
+          "type": "integer",
+          "description": "Publish ID, incremented for each publish"
+        },
+        "timestamp": {
+          "title": "timestamp",
+          "type": "integer",
+          "description": "Timestamp of the orderbook snapshot"
+        }
+      },
+      "additionalProperties": false
+    },
+    "OrderbookInstrumentNameGroupDepthPubSubSchema": {
+      "type": "object",
+      "required": [
+        "channel_params",
+        "notification"
+      ],
+      "properties": {
+        "channel_params": {
+          "type": "object",
+          "$ref": "#/definitions/OrderbookInstrumentNameGroupDepthChannelSchema",
+          "field_many": false
+        },
+        "notification": {
+          "type": "object",
+          "$ref": "#/definitions/OrderbookInstrumentNameGroupDepthNotificationSchema",
+          "field_many": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "title": "orderbook.{instrument_name}.{group}.{depth}",
+  "description": "Periodically publishes bids and asks for an instrument.<br /><br />The 100ms orderbook emits at 1s intervals if the orderbook is not changing, otherwise emits at 100ms intervals.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/OrderbookInstrumentNameGroupDepthPubSubSchema"
+    }
+  ]
+}

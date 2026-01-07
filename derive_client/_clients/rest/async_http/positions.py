@@ -48,7 +48,7 @@ class PositionOperations:
         """Get all positions"""
 
         params = PrivateGetPositionsParamsSchema(subaccount_id=self._subaccount.id)
-        result = await self._subaccount._private_api.get_positions(params)
+        result = await self._subaccount._private_api.rpc.get_positions(params)
         intermediate = (
             result.positions if is_open is None else [p for p in result.positions if (p.amount != 0) == is_open]
         )
@@ -155,7 +155,7 @@ class PositionOperations:
             taker_params=taker_params,
             wallet=self._subaccount._auth.wallet,
         )
-        result = await self._subaccount._private_api.transfer_position(params)
+        result = await self._subaccount._private_api.rpc.transfer_position(params)
         return result
 
     async def transfer_batch(
@@ -274,5 +274,5 @@ class PositionOperations:
             taker_params=taker_params,
             wallet=self._subaccount._auth.wallet,
         )
-        result = await self._subaccount._private_api.transfer_positions(params)
+        result = await self._subaccount._private_api.rpc.transfer_positions(params)
         return result

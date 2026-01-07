@@ -1,0 +1,521 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "SubaccountIdBestQuotesChannelSchema": {
+      "type": "object",
+      "required": [
+        "subaccount_id"
+      ],
+      "properties": {
+        "subaccount_id": {
+          "title": "subaccount_id",
+          "type": "integer",
+          "description": "Subaccount ID to get best quote state updates for"
+        }
+      },
+      "additionalProperties": false
+    },
+    "SubaccountIdBestQuotesNotificationSchema": {
+      "type": "object",
+      "required": [
+        "method",
+        "params"
+      ],
+      "properties": {
+        "method": {
+          "title": "method",
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdBestQuotesNotificationParamsSchema",
+          "field_many": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "SubaccountIdBestQuotesNotificationParamsSchema": {
+      "type": "object",
+      "required": [
+        "channel",
+        "data"
+      ],
+      "properties": {
+        "channel": {
+          "title": "channel",
+          "type": "string",
+          "description": "Subscribed channel name"
+        },
+        "data": {
+          "title": "data",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/BestQuoteChannelResultSchema",
+            "field_many": true
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "BestQuoteChannelResultSchema": {
+      "type": "object",
+      "required": [
+        "rfq_id"
+      ],
+      "properties": {
+        "error": {
+          "oneOf": [
+            {
+              "type": "object",
+              "$ref": "#/definitions/RPCErrorFormatSchema",
+              "field_many": false,
+              "description": "Error if the the `rfq_get_best_quote` RPC call failed",
+              "default": {
+                "data": null
+              }
+            },
+            {
+              "type": "null",
+              "title": ""
+            }
+          ],
+          "description": "Error if the the `rfq_get_best_quote` RPC call failed"
+        },
+        "result": {
+          "oneOf": [
+            {
+              "type": "object",
+              "$ref": "#/definitions/RFQGetBestQuoteResultSchema",
+              "field_many": false,
+              "description": "Best quote result for the RFQ, if not an error",
+              "default": {
+                "post_liquidation_price": null,
+                "up_liquidation_price": null,
+                "best_quote": null,
+                "orderbook_total_cost": null,
+                "invalid_reason": null,
+                "down_liquidation_price": null
+              }
+            },
+            {
+              "type": "null",
+              "title": ""
+            }
+          ],
+          "description": "Best quote result for the RFQ, if not an error"
+        },
+        "rfq_id": {
+          "title": "rfq_id",
+          "type": "string",
+          "format": "uuid",
+          "description": "RFQ ID for which the best quote is being published"
+        }
+      },
+      "additionalProperties": false
+    },
+    "RPCErrorFormatSchema": {
+      "type": "object",
+      "required": [
+        "code",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "title": "code",
+          "type": "integer"
+        },
+        "data": {
+          "title": "data",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "message": {
+          "title": "message",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "RFQGetBestQuoteResultSchema": {
+      "type": "object",
+      "required": [
+        "best_quote",
+        "direction",
+        "down_liquidation_price",
+        "estimated_fee",
+        "estimated_realized_pnl",
+        "estimated_realized_pnl_excl_fees",
+        "estimated_total_cost",
+        "filled_pct",
+        "invalid_reason",
+        "is_valid",
+        "orderbook_total_cost",
+        "post_initial_margin",
+        "post_liquidation_price",
+        "pre_initial_margin",
+        "suggested_max_fee",
+        "up_liquidation_price"
+      ],
+      "properties": {
+        "best_quote": {
+          "oneOf": [
+            {
+              "type": "object",
+              "$ref": "#/definitions/QuoteResultPublicSchema",
+              "field_many": false,
+              "description": "Best quote for the RFQ (or null if RFQ is not created yet or quotes do not exist). This object should be used to sign a taker quote and call into `execute_quote` RPC.",
+              "default": {
+                "tx_hash": null,
+                "tx_status": null
+              }
+            },
+            {
+              "type": "null",
+              "title": ""
+            }
+          ],
+          "description": "Best quote for the RFQ (or null if RFQ is not created yet or quotes do not exist). This object should be used to sign a taker quote and call into `execute_quote` RPC."
+        },
+        "direction": {
+          "title": "direction",
+          "type": "string",
+          "enum": [
+            "buy",
+            "sell"
+          ],
+          "description": "RFQ direction."
+        },
+        "down_liquidation_price": {
+          "title": "down_liquidation_price",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "decimal",
+          "default": null,
+          "description": "Liquidation price if the trade were to be filled and the market moves down."
+        },
+        "estimated_fee": {
+          "title": "estimated_fee",
+          "type": "string",
+          "format": "decimal",
+          "description": "An estimate for how much the user will pay in fees ($ for the whole trade)."
+        },
+        "estimated_realized_pnl": {
+          "title": "estimated_realized_pnl",
+          "type": "string",
+          "format": "decimal",
+          "description": "An estimate for the realized PnL of the trade."
+        },
+        "estimated_realized_pnl_excl_fees": {
+          "title": "estimated_realized_pnl_excl_fees",
+          "type": "string",
+          "format": "decimal",
+          "description": "An estimate for the realized PnL of the trade. with cost basis calculated without considering fees."
+        },
+        "estimated_total_cost": {
+          "title": "estimated_total_cost",
+          "type": "string",
+          "format": "decimal",
+          "description": "An estimate for the total $ cost of the trade."
+        },
+        "filled_pct": {
+          "title": "filled_pct",
+          "type": "string",
+          "format": "decimal",
+          "description": "Percentage of the RFQ that has already been filled, from 0 to 1."
+        },
+        "invalid_reason": {
+          "title": "invalid_reason",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "enum": [
+            "Account is currently under maintenance margin requirements, trading is frozen.",
+            "This order would cause account to fall under maintenance margin requirements.",
+            "Insufficient buying power, only a single risk-reducing open order is allowed.",
+            "Insufficient buying power, consider reducing order size.",
+            "Insufficient buying power, consider reducing order size or canceling other orders.",
+            "Consider canceling other limit orders or using IOC, FOK, or market orders. This order is risk-reducing, but if filled with other open orders, buying power might be insufficient.",
+            "Insufficient buying power."
+          ],
+          "description": "Reason for the RFQ being invalid, if any."
+        },
+        "is_valid": {
+          "title": "is_valid",
+          "type": "boolean",
+          "description": "`True` if RFQ is expected to pass margin requirements."
+        },
+        "orderbook_total_cost": {
+          "title": "orderbook_total_cost",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "decimal",
+          "default": null,
+          "description": "Total cost of  the RFQ if it were to be filled at current orderbook prices (same direction as the RFQ). If lower than `estimated_total_cost`, the user may want to use the orderbook instead of RFQs for this order. Will return null if any of the legs do not have orderbook data or enough liquidity for the full fill."
+        },
+        "post_initial_margin": {
+          "title": "post_initial_margin",
+          "type": "string",
+          "format": "decimal",
+          "description": "User's hypothetical margin balance if the trade were to get executed."
+        },
+        "post_liquidation_price": {
+          "title": "post_liquidation_price",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "decimal",
+          "default": null,
+          "description": "Liquidation price if the trade were to be filled. If both upside and downside liquidation prices exist, returns the closest one to the current index price."
+        },
+        "pre_initial_margin": {
+          "title": "pre_initial_margin",
+          "type": "string",
+          "format": "decimal",
+          "description": "User's initial margin balance before the trade."
+        },
+        "suggested_max_fee": {
+          "title": "suggested_max_fee",
+          "type": "string",
+          "format": "decimal",
+          "description": "Recommended value for `max_fee` of the trade."
+        },
+        "up_liquidation_price": {
+          "title": "up_liquidation_price",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "decimal",
+          "default": null,
+          "description": "Liquidation price if the trade were to be filled and the market moves up."
+        }
+      },
+      "additionalProperties": false
+    },
+    "QuoteResultPublicSchema": {
+      "type": "object",
+      "required": [
+        "cancel_reason",
+        "creation_timestamp",
+        "direction",
+        "fill_pct",
+        "last_update_timestamp",
+        "legs",
+        "legs_hash",
+        "liquidity_role",
+        "quote_id",
+        "rfq_id",
+        "status",
+        "subaccount_id",
+        "tx_hash",
+        "tx_status",
+        "wallet"
+      ],
+      "properties": {
+        "cancel_reason": {
+          "title": "cancel_reason",
+          "type": "string",
+          "enum": [
+            "",
+            "user_request",
+            "insufficient_margin",
+            "signed_max_fee_too_low",
+            "mmp_trigger",
+            "cancel_on_disconnect",
+            "session_key_deregistered",
+            "subaccount_withdrawn",
+            "rfq_no_longer_open",
+            "compliance"
+          ],
+          "description": "Cancel reason, if any"
+        },
+        "creation_timestamp": {
+          "title": "creation_timestamp",
+          "type": "integer",
+          "description": "Creation timestamp in ms since Unix epoch"
+        },
+        "direction": {
+          "title": "direction",
+          "type": "string",
+          "enum": [
+            "buy",
+            "sell"
+          ],
+          "description": "Quote direction"
+        },
+        "fill_pct": {
+          "title": "fill_pct",
+          "type": "string",
+          "format": "decimal",
+          "description": "Percentage of the RFQ that this quote would fill, from 0 to 1."
+        },
+        "last_update_timestamp": {
+          "title": "last_update_timestamp",
+          "type": "integer",
+          "description": "Last update timestamp in ms since Unix epoch"
+        },
+        "legs": {
+          "title": "legs",
+          "type": "array",
+          "description": "Quote legs",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/LegPricedSchema",
+            "field_many": true
+          }
+        },
+        "legs_hash": {
+          "title": "legs_hash",
+          "type": "string",
+          "description": "Hash of the legs of the best quote to be signed by the taker."
+        },
+        "liquidity_role": {
+          "title": "liquidity_role",
+          "type": "string",
+          "enum": [
+            "maker",
+            "taker"
+          ],
+          "description": "Liquidity role"
+        },
+        "quote_id": {
+          "title": "quote_id",
+          "type": "string",
+          "format": "uuid",
+          "description": "Quote ID"
+        },
+        "rfq_id": {
+          "title": "rfq_id",
+          "type": "string",
+          "format": "uuid",
+          "description": "RFQ ID"
+        },
+        "status": {
+          "title": "status",
+          "type": "string",
+          "enum": [
+            "open",
+            "filled",
+            "cancelled",
+            "expired"
+          ],
+          "description": "Status"
+        },
+        "subaccount_id": {
+          "title": "subaccount_id",
+          "type": "integer",
+          "description": "Subaccount ID"
+        },
+        "tx_hash": {
+          "title": "tx_hash",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "Blockchain transaction hash (only for executed quotes)"
+        },
+        "tx_status": {
+          "title": "tx_status",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "enum": [
+            "requested",
+            "pending",
+            "settled",
+            "reverted",
+            "ignored",
+            "timed_out"
+          ],
+          "description": "Blockchain transaction status (only for executed quotes)"
+        },
+        "wallet": {
+          "title": "wallet",
+          "type": "string",
+          "description": "Wallet address of the quote sender"
+        }
+      },
+      "additionalProperties": false
+    },
+    "LegPricedSchema": {
+      "type": "object",
+      "required": [
+        "amount",
+        "direction",
+        "instrument_name",
+        "price"
+      ],
+      "properties": {
+        "amount": {
+          "title": "amount",
+          "type": "string",
+          "format": "decimal",
+          "description": "Amount in units of the base"
+        },
+        "direction": {
+          "title": "direction",
+          "type": "string",
+          "enum": [
+            "buy",
+            "sell"
+          ],
+          "description": "Leg direction"
+        },
+        "instrument_name": {
+          "title": "instrument_name",
+          "type": "string",
+          "description": "Instrument name"
+        },
+        "price": {
+          "title": "price",
+          "type": "string",
+          "format": "decimal",
+          "description": "Leg price"
+        }
+      },
+      "additionalProperties": false
+    },
+    "SubaccountIdBestQuotesPubSubSchema": {
+      "type": "object",
+      "required": [
+        "channel_params",
+        "notification"
+      ],
+      "properties": {
+        "channel_params": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdBestQuotesChannelSchema",
+          "field_many": false
+        },
+        "notification": {
+          "type": "object",
+          "$ref": "#/definitions/SubaccountIdBestQuotesNotificationSchema",
+          "field_many": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "title": "{subaccount_id}.best.quotes",
+  "description": "Subscribe to best quote state for a given subaccount ID.<br />This will notify the user about the best quote available for the RFQ they have sent.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/SubaccountIdBestQuotesPubSubSchema"
+    }
+  ]
+}
