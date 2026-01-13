@@ -112,6 +112,18 @@ def _ensure_referral_default(node: ast.ClassDef) -> bool:
     ast.fix_missing_locations(node)
 
 
+def _ensure_client_default(node: ast.ClassDef) -> bool:
+    client = "'8baller-python-sdk'"
+    for stmt in node.body:
+        if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name) and stmt.target.id == "client":
+            stmt.value = ast.parse(client).body[0].value
+            ast.fix_missing_locations(node)
+            return
+    ann_node = ast.parse(f"client: str = {client}").body[0]
+    node.body.insert(0, ann_node)
+    ast.fix_missing_locations(node)
+
+
 def update_get_tx_result_schema(node: ast.ClassDef) -> None:
     """Update fields annotated in OpenAPI spec as "str", but are deserialized into dict."""
 
@@ -130,6 +142,7 @@ class OptionalRewriter(ast.NodeTransformer):
 
         if node.name in {"PrivateOrderParamsSchema", "PrivateReplaceParamsSchema"}:
             _ensure_referral_default(node)
+            _ensure_client_default(node)
 
         if node.name == "PublicGetTransactionResultSchema":
             update_get_tx_result_schema(node)

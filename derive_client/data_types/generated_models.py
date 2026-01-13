@@ -1322,7 +1322,7 @@ class PrivateReplaceParamsSchema(Struct):
     signature_expiry_sec: int
     signer: str
     subaccount_id: int
-    client: Optional[str] = ''
+    client: Optional[str] = '8baller-python-sdk'
     expected_filled_amount: Optional[Decimal] = None
     extra_fee: Decimal = Decimal('0')
     is_atomic_signing: Optional[bool] = False
@@ -1813,6 +1813,7 @@ class PrivateGetOrdersResultSchema(PrivateGetOrderHistoryResultSchema):
 
 
 class PrivateOrderParamsSchema(PrivateOrderDebugParamsSchema):
+    client: str = '8baller-python-sdk'
     referral_code: str = '0x9135BA0f495244dc0A5F029b25CDE95157Db89AD'
     pass
 

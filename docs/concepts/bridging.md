@@ -19,6 +19,8 @@ The Derive client handles three different bridge protocols automatically, so you
 - Purpose: fund the Derive EOA with native ETH to cover gas for bridging operations.
 - Currently restricted to ETH-only. Other assets and chains may be supported in the future.
 
+> **Alternative:** You can also bridge ETH manually using [SmolRefuel](https://smolrefuel.com/?outboundChain=957), which provides a simple interface for bridging from Ethereum mainnet to Derive.
+
 ### 2. Socket Superbridge
 
 - Used for transferring **ERC20 tokens** (e.g. USDC, WETH, etc.) between
