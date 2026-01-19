@@ -34,13 +34,13 @@ Or use an existing key
 1. Visit [derive.xyz](https://derive.xyz)
 2. Connect your wallet and create an account
 3. This creates your **LightAccount** (funding wallet)
-4. Copy the LightAccount address from the Developer section
+4. Copy the LightAccount address from the [Developer](../assets/1_Developer_Wallet.png) section
 
 ---
 
 ## Step 3: Create a Subaccount
 
-1. Go to the [Developers](https://www.derive.xyz/developers) section
+1. Go to the [Developers](https://app.derive.xyz/developers) section
 2. Click **Create Subaccount**
 3. Select your margin type: _Standard_ or _Portfolio_
 4. Name the subaccount
@@ -50,11 +50,12 @@ Or use an existing key
 
 ## Step 4: Register a Session Key
 
-1. In the [Developers](https://www.derive.xyz/developers) section
-2. Click **Register Session Key**
+1. In the [Developers](https://app.derive.xyz/developers) section
+2. Click [**Register Session Key**](../assets/2_Developer_SessionKey.png)
 3. Provide the EOA you want to use as a session key (can be the owner or a secondary signer)
 4. Select permissions (Admin / Account / Read-only) and expiry
-5. Note your **Subaccount ID**
+5. Navigate to [Subaccounts](https://app.derive.xyz/subaccounts)
+5. Note your [**Subaccount ID**](../assets/3_Subaccount_ID.png)
 
 > ⚠️ Important:
 >
