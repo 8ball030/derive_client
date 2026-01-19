@@ -3,13 +3,13 @@ import threading
 import msgspec
 
 from derive_client.data_types.channel_models import (
+    AssetType,
     Depth,
     Group,
-    InstrumentType,
     Interval,
     OrderbookInstrumentNameGroupDepthPublisherDataSchema,
     TickerSlimInstrumentNameIntervalPublisherDataSchema,
-    TxStatus2,
+    TxStatus4,
 )
 
 TIMEOUT = 5
@@ -102,7 +102,7 @@ def test_public_trades_by_instrument_name(client_admin_wallet):
 
 def test_public_trades_by_instrument_type(client_admin_wallet):
     subscription_result = client_admin_wallet.public_channels.trades_by_instrument_type(
-        instrument_type=InstrumentType.erc20,
+        instrument_type=AssetType.erc20,
         currency="ETH",
         callback=noop,
     )
@@ -112,9 +112,9 @@ def test_public_trades_by_instrument_type(client_admin_wallet):
 
 def test_public_trades_tx_status_by_instrument_type(client_admin_wallet):
     subscription_result = client_admin_wallet.public_channels.trades_tx_status_by_instrument_type(
-        instrument_type=InstrumentType.option,
+        instrument_type=AssetType.option,
         currency="ETH",
-        tx_status=TxStatus2.settled,
+        tx_status=TxStatus4.settled,
         callback=noop,
     )
 
@@ -174,10 +174,10 @@ def test_private_trades_by_subaccount_id(client_admin_wallet):
 
 def test_private_trades_tx_status_by_subaccount_id(client_admin_wallet):
     subaccount_id = client_admin_wallet.active_subaccount.id
-    tx_status = TxStatus2.settled
+    tx_status = TxStatus4.settled
     subscription_result = client_admin_wallet.private_channels.trades_tx_status_by_subaccount_id(
         subaccount_id=subaccount_id,
-        tx_status=TxStatus2.settled,
+        tx_status=TxStatus4.settled,
         callback=noop,
     )
 

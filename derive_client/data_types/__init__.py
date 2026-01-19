@@ -14,8 +14,8 @@ from .enums import (
     TxStatus,
 )
 from .generated_models import (
+    AssetType,
     Direction,
-    InstrumentType,
     OrderType,
 )
 from .models import (
@@ -63,7 +63,7 @@ __all__ = [
     "EnvConfig",
     "TxResult",
     "Currency",
-    "InstrumentType",
+    "AssetType",
     "EthereumJSONRPCErrorCode",
     "DeriveJSONRPCErrorCode",
     "DeriveContractAddresses",

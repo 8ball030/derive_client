@@ -10,7 +10,7 @@ from derive_client._clients.utils import AuthContext, decode_envelope, decode_re
 from derive_client.config import PUBLIC_HEADERS
 from derive_client.data_types import EnvConfig
 from derive_client.data_types.generated_models import (
-    AuctionResultSchema,
+    AuctionHistoryResultSchema,
     CurrencyDetailedResponseSchema,
     InstrumentPublicResponseSchema,
     MMPConfigResultSchema,
@@ -1929,7 +1929,7 @@ class AsyncPrivateRPC:
     async def get_liquidation_history(
         self,
         params: PrivateGetLiquidationHistoryParamsSchema,
-    ) -> List[AuctionResultSchema]:
+    ) -> List[AuctionHistoryResultSchema]:
         """
         Required minimum session key permission level is `read_only`
         """
@@ -1938,7 +1938,7 @@ class AsyncPrivateRPC:
         data = encode_json_exclude_none(params)
         message = await self._session._send_request(url, data, headers=self.headers)
         envelope = decode_envelope(message)
-        result = decode_result(envelope, list[AuctionResultSchema])
+        result = decode_result(envelope, list[AuctionHistoryResultSchema])
 
         return result
 

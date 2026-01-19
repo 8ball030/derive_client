@@ -9,9 +9,9 @@ from derive_client._clients.rest.async_http.api import AsyncPublicAPI
 from derive_client._clients.utils import async_fetch_all_pages_of_instrument_type, infer_instrument_type
 from derive_client.data_types import LoggerType
 from derive_client.data_types.generated_models import (
+    AssetType,
     CurrencyDetailedResponseSchema,
     InstrumentPublicResponseSchema,
-    InstrumentType,
     PublicGetAllCurrenciesParamsSchema,
     PublicGetAllInstrumentsParamsSchema,
     PublicGetAllInstrumentsResultSchema,
@@ -77,7 +77,7 @@ class MarketOperations:
     async def fetch_instruments(
         self,
         *,
-        instrument_type: InstrumentType,
+        instrument_type: AssetType,
         expired: bool = False,
     ) -> dict[str, InstrumentPublicResponseSchema]:
         """
@@ -122,21 +122,21 @@ class MarketOperations:
         """
 
         all_instruments = {}
-        for instrument_type in InstrumentType:
+        for instrument_type in AssetType:
             instruments = await self.fetch_instruments(instrument_type=instrument_type, expired=expired)
             all_instruments.update(instruments)
 
         return all_instruments
 
-    def _get_cache_for_type(self, instrument_type: InstrumentType) -> dict[str, InstrumentPublicResponseSchema]:
+    def _get_cache_for_type(self, instrument_type: AssetType) -> dict[str, InstrumentPublicResponseSchema]:
         """Get the cache for a specific instrument type."""
 
         match instrument_type:
-            case InstrumentType.erc20:
+            case AssetType.erc20:
                 return self._erc20_instruments_cache
-            case InstrumentType.perp:
+            case AssetType.perp:
                 return self._perp_instruments_cache
-            case InstrumentType.option:
+            case AssetType.option:
                 return self._option_instruments_cache
             case _:
                 raise TypeError(f"Unsupported instrument_type: {instrument_type!r}")
@@ -183,7 +183,7 @@ class MarketOperations:
         *,
         currency: str,
         expired: bool,
-        instrument_type: InstrumentType,
+        instrument_type: AssetType,
     ) -> list[InstrumentPublicResponseSchema]:
         """Get all active instruments for a given `currency` and `type`."""
 
@@ -199,7 +199,7 @@ class MarketOperations:
         self,
         *,
         expired: bool,
-        instrument_type: InstrumentType,
+        instrument_type: AssetType,
         currency: Optional[str] = None,
         page: int = 1,
         page_size: int = 100,
@@ -236,7 +236,7 @@ class MarketOperations:
     async def get_tickers(
         self,
         *,
-        instrument_type: InstrumentType,
+        instrument_type: AssetType,
         currency: Optional[str] = None,
         expiry_date: Optional[str] = None,
     ) -> dict[str, TickerSlimSchema]:

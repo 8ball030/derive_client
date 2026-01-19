@@ -18,8 +18,8 @@ from web3 import AsyncWeb3, Web3
 
 from derive_client.data_types import ChecksumAddress, ClientConfig, EnvConfig, Environment, PositionTransfer
 from derive_client.data_types.generated_models import (
+    AssetType,
     InstrumentPublicResponseSchema,
-    InstrumentType,
     LegPricedSchema,
     LegUnpricedSchema,
     RPCErrorFormatSchema,
@@ -248,7 +248,7 @@ def encode_json_exclude_none(obj: msgspec.Struct) -> bytes:
 
 def fetch_all_pages_of_instrument_type(
     markets: MarketOperations,
-    instrument_type: InstrumentType,
+    instrument_type: AssetType,
     expired: bool,
 ) -> list[InstrumentPublicResponseSchema]:
     """Fetch all instruments of a type, handling pagination."""
@@ -274,7 +274,7 @@ def fetch_all_pages_of_instrument_type(
 
 async def async_fetch_all_pages_of_instrument_type(
     markets: AsyncMarketOperations,
-    instrument_type: InstrumentType,
+    instrument_type: AssetType,
     expired: bool,
 ) -> list[InstrumentPublicResponseSchema]:
     """Fetch all instruments of a type, handling pagination."""
@@ -298,7 +298,7 @@ async def async_fetch_all_pages_of_instrument_type(
     return instruments
 
 
-def infer_instrument_type(*, instrument_name: str) -> InstrumentType:
+def infer_instrument_type(*, instrument_name: str) -> AssetType:
     """
     Infer instrument type from name pattern.
 
@@ -308,11 +308,11 @@ def infer_instrument_type(*, instrument_name: str) -> InstrumentType:
     - ERC20: Everything else (typically short token pairs like 'ETH-USDC')
     """
     if instrument_name.endswith("-PERP"):
-        return InstrumentType.perp
+        return AssetType.perp
     elif instrument_name.endswith("-P") or instrument_name.endswith("-C"):
-        return InstrumentType.option
+        return AssetType.option
     else:
-        return InstrumentType.erc20
+        return AssetType.erc20
 
 
 def load_client_config(session_key_path: Optional[Path] = None, env_file: Optional[Path] = None) -> ClientConfig:

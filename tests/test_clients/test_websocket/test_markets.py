@@ -1,9 +1,9 @@
 """Tests for Market module."""
 
 from derive_client.data_types.generated_models import (
+    AssetType,
     CurrencyDetailedResponseSchema,
     InstrumentPublicResponseSchema,
-    InstrumentType,
     PublicGetAllInstrumentsResultSchema,
     PublicGetCurrencyResultSchema,
     PublicGetInstrumentResultSchema,
@@ -33,7 +33,7 @@ def test_markets_get_instrument(client_admin_wallet):
 def test_markets_get_instruments(client_admin_wallet):
     currency = "ETH"
     expired = False
-    instrument_type = InstrumentType.option
+    instrument_type = AssetType.option
     instruments = client_admin_wallet.markets.get_instruments(
         currency=currency,
         expired=expired,
@@ -45,7 +45,7 @@ def test_markets_get_instruments(client_admin_wallet):
 
 def test_markets_get_all_instruments(client_admin_wallet):
     expired = False
-    instrument_type = InstrumentType.perp
+    instrument_type = AssetType.perp
     currency = None
     all_instruments = client_admin_wallet.markets.get_all_instruments(
         expired=expired,
@@ -64,7 +64,7 @@ def test_markets_get_ticker(client_admin_wallet):
 def test_markets_get_tickers(client_admin_wallet):
     currency = "ETH"
     expired = False
-    instrument_type = InstrumentType.option
+    instrument_type = AssetType.option
     instruments = client_admin_wallet.markets.get_instruments(
         currency=currency,
         expired=expired,

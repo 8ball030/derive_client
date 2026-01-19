@@ -8,10 +8,10 @@ from typing import Any, Dict, List, Optional
 from msgspec import Struct
 
 from derive_client.data_types.generated_models import (
+    AssetType,
     CancelReason,
     CancelReason1,
     Direction,
-    InstrumentType,
     InvalidReason,
     LegPricedSchema,
     LegUnpricedSchema,
@@ -19,11 +19,11 @@ from derive_client.data_types.generated_models import (
     MarginType,
     OrderStatus,
     OrderType,
-    PrivateGetOpenOrdersParamsSchema,
-    PrivateGetSubaccountsParamsSchema,
+    PrivateGetAllPortfoliosParamsSchema,
+    PrivateGetCollateralsParamsSchema,
     PublicGetAllCurrenciesParamsSchema,
-    PublicGetCurrencyParamsSchema,
     PublicGetInstrumentParamsSchema,
+    PublicGetOptionSettlementPricesParamsSchema,
     PublicMarginWatchResultSchema,
     RPCErrorFormatSchema,
     Status,
@@ -32,7 +32,7 @@ from derive_client.data_types.generated_models import (
     TriggerPriceType,
     TriggerType,
     TxStatus,
-    TxStatus2,
+    TxStatus4,
 )
 
 DeriveWebsocketChannelSchemas = Any
@@ -64,32 +64,6 @@ class MarginWatchChannelSchema(AuctionsWatchChannelSchema):
     pass
 
 
-class CollateralPublicResponseSchema(Struct):
-    amount: Decimal
-    asset_name: str
-    asset_type: InstrumentType
-    initial_margin: Decimal
-    maintenance_margin: Decimal
-    mark_price: Decimal
-    mark_value: Decimal
-
-
-class PositionPublicResponseSchema(Struct):
-    amount: Decimal
-    delta: Decimal
-    gamma: Decimal
-    index_price: Decimal
-    initial_margin: Decimal
-    instrument_name: str
-    instrument_type: InstrumentType
-    maintenance_margin: Decimal
-    mark_price: Decimal
-    mark_value: Decimal
-    theta: Decimal
-    vega: Decimal
-    liquidation_price: Optional[Decimal] = None
-
-
 class Depth(Enum):
     field_1 = '1'
     field_10 = '10'
@@ -117,7 +91,7 @@ class OrderbookInstrumentNameGroupDepthPublisherDataSchema(Struct):
     timestamp: int
 
 
-class SpotFeedCurrencyChannelSchema(PublicGetCurrencyParamsSchema):
+class SpotFeedCurrencyChannelSchema(PublicGetOptionSettlementPricesParamsSchema):
     pass
 
 
@@ -129,7 +103,7 @@ class SpotFeedSnapshotSchema(Struct):
     timestamp_prev_daily: int
 
 
-class SubaccountIdBalancesChannelSchema(PrivateGetOpenOrdersParamsSchema):
+class SubaccountIdBalancesChannelSchema(PrivateGetCollateralsParamsSchema):
     pass
 
 
@@ -168,7 +142,7 @@ class SubaccountIdOrdersChannelSchema(SubaccountIdBalancesChannelSchema):
 class OrderResponseSchema(Struct):
     amount: Decimal
     average_price: Decimal
-    cancel_reason: CancelReason
+    cancel_reason: CancelReason1
     creation_timestamp: int
     direction: Direction
     filled_amount: Decimal
@@ -202,7 +176,7 @@ class SubaccountIdQuotesChannelSchema(SubaccountIdBalancesChannelSchema):
 
 
 class QuoteResultSchema(Struct):
-    cancel_reason: CancelReason1
+    cancel_reason: CancelReason
     creation_timestamp: int
     direction: Direction
     fee: Decimal
@@ -257,7 +231,7 @@ class TradeResponseSchema(Struct):
 
 class SubaccountIdTradesTxStatusChannelSchema(Struct):
     subaccount_id: int
-    tx_status: TxStatus2
+    tx_status: TxStatus4
 
 
 class SubaccountIdTradesTxStatusNotificationParamsSchema(Struct):
@@ -293,7 +267,7 @@ class TradePublicResponseSchema(Struct):
 
 class TradesInstrumentTypeCurrencyChannelSchema(Struct):
     currency: str
-    instrument_type: InstrumentType
+    instrument_type: AssetType
 
 
 class TradesInstrumentTypeCurrencyNotificationParamsSchema(Struct):
@@ -303,8 +277,8 @@ class TradesInstrumentTypeCurrencyNotificationParamsSchema(Struct):
 
 class TradesInstrumentTypeCurrencyTxStatusChannelSchema(Struct):
     currency: str
-    instrument_type: InstrumentType
-    tx_status: TxStatus2
+    instrument_type: AssetType
+    tx_status: TxStatus4
 
 
 class TradeSettledPublicResponseSchema(Struct):
@@ -323,12 +297,12 @@ class TradeSettledPublicResponseSchema(Struct):
     trade_id: str
     trade_price: Decimal
     tx_hash: str
-    tx_status: TxStatus2
+    tx_status: TxStatus4
     wallet: str
     quote_id: Optional[str] = None
 
 
-class WalletRfqsChannelSchema(PrivateGetSubaccountsParamsSchema):
+class WalletRfqsChannelSchema(PrivateGetAllPortfoliosParamsSchema):
     pass
 
 
@@ -359,7 +333,7 @@ class SubaccountIdBalancesNotificationParamsSchema(Struct):
 
 
 class QuoteResultPublicSchema(Struct):
-    cancel_reason: CancelReason1
+    cancel_reason: CancelReason
     creation_timestamp: int
     direction: Direction
     fill_pct: Decimal
@@ -420,7 +394,7 @@ class TradesInstrumentTypeCurrencyTxStatusNotificationParamsSchema(Struct):
 
 
 class RFQResultPublicSchema(Struct):
-    cancel_reason: CancelReason1
+    cancel_reason: CancelReason
     creation_timestamp: int
     filled_direction: Direction
     filled_pct: Decimal

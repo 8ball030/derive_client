@@ -16,7 +16,7 @@ Prerequisites:
 from pathlib import Path
 
 from derive_client import HTTPClient
-from derive_client.data_types import D, Direction, InstrumentType, OrderType
+from derive_client.data_types import AssetType, D, Direction, OrderType
 from derive_client.data_types.generated_models import TickerSlimSchema, TimeInForce
 
 # Setup
@@ -25,7 +25,7 @@ client = HTTPClient.from_env(env_file=env_file)
 client.connect()
 
 CURRENCY = "ETH"
-INSTRUMENT_TYPE = InstrumentType.perp
+INSTRUMENT_TYPE = AssetType.perp
 INSTRUMENT = f"{CURRENCY}-PERP"
 MINIMUM_AMOUNT = D("0.10")
 

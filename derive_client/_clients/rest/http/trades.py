@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING
 
 from derive_client.config import INT64_MAX
 from derive_client.data_types.generated_models import (
-    InstrumentType,
+    AssetType,
     PrivateGetTradeHistoryParamsSchema,
     PublicGetTradeHistoryParamsSchema,
     TradeResponseSchema,
     TradeSettledPublicResponseSchema,
-    TxStatus2,
+    TxStatus4,
 )
 
 if TYPE_CHECKING:
@@ -35,14 +35,14 @@ class TradeOperations:
         currency: str | None = None,
         from_timestamp: int = 0,
         instrument_name: str | None = None,
-        instrument_type: InstrumentType | None = None,
+        instrument_type: AssetType | None = None,
         page: int = 1,
         page_size: int = 100,
         subaccount_id: int | None = None,
         to_timestamp: int = INT64_MAX,
         trade_id: str | None = None,
         tx_hash: str | None = None,
-        tx_status: TxStatus2 = TxStatus2('settled'),
+        tx_status: TxStatus4 = TxStatus4('settled'),
     ) -> list[TradeSettledPublicResponseSchema]:
         """Get trade history for a subaccount, with filter parameters."""
 
