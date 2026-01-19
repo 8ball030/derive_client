@@ -15,7 +15,7 @@ from derive_action_signing.module_data import RFQExecuteModuleData, RFQQuoteDeta
 
 from derive_client import DeriveClient
 from derive_client.data_types import Environment
-from derive_client.data_types.enums import InstrumentType, OrderSide, UnderlyingCurrency
+from derive_client.data_types.enums import AssetType, OrderSide, UnderlyingCurrency
 from tests.conftest import OWNER_TEST_WALLET, TEST_PRIVATE_KEY
 
 
@@ -66,12 +66,12 @@ def rfq():
 @click.option(
     '-it',
     '--instrument-type',
-    type=InstrumentType,
+    type=AssetType,
     required=False,
-    default=InstrumentType.OPTION,
+    default=AssetType.OPTION,
     help="Instrument name to use for the RFQ (e.g. ETH-30JUN23-1500-C)",
 )
-def create(side: str, amount: float, instrument: str, instrument_type: InstrumentType = InstrumentType.OPTION):
+def create(side: str, amount: float, instrument: str, instrument_type: AssetType = AssetType.OPTION):
     """
     Sample of polling for RFQs and printing their status.
     """
@@ -97,7 +97,7 @@ def create(side: str, amount: float, instrument: str, instrument_type: Instrumen
             print(f"No market found for instrument {instrument}. Please check the instrument name and try again.")
             return
 
-    if not instrument and instrument_type == InstrumentType.OPTION:
+    if not instrument and instrument_type == AssetType.OPTION:
         sorted_markets = sorted(markets, key=lambda m: (m['option_details']['expiry']))
 
         zero_day_markets = list(

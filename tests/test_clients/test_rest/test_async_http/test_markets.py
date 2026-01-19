@@ -3,9 +3,9 @@
 import pytest
 
 from derive_client.data_types.generated_models import (
+    AssetType,
     CurrencyDetailedResponseSchema,
     InstrumentPublicResponseSchema,
-    InstrumentType,
     PublicGetAllInstrumentsResultSchema,
     PublicGetCurrencyResultSchema,
     PublicGetInstrumentResultSchema,
@@ -39,7 +39,7 @@ async def test_markets_get_instrument(client_admin_wallet):
 async def test_markets_get_instruments(client_admin_wallet):
     currency = "ETH"
     expired = False
-    instrument_type = InstrumentType.option
+    instrument_type = AssetType.option
     instruments = await client_admin_wallet.markets.get_instruments(
         currency=currency,
         expired=expired,
@@ -52,7 +52,7 @@ async def test_markets_get_instruments(client_admin_wallet):
 @pytest.mark.asyncio
 async def test_markets_get_all_instruments(client_admin_wallet):
     expired = False
-    instrument_type = InstrumentType.perp
+    instrument_type = AssetType.perp
     currency = None
     all_instruments = await client_admin_wallet.markets.get_all_instruments(
         expired=expired,
@@ -73,7 +73,7 @@ async def test_markets_get_ticker(client_admin_wallet):
 async def test_markets_get_tickers(client_admin_wallet):
     currency = "ETH"
     expired = False
-    instrument_type = InstrumentType.option
+    instrument_type = AssetType.option
     instruments = await client_admin_wallet.markets.get_instruments(
         currency=currency,
         expired=expired,
