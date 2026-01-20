@@ -2,23 +2,18 @@
 Create an rfq using the REST API.
 """
 
-import json
-import sys
-from datetime import datetime
-from decimal import Decimal
-from enum import Enum
+from datetime import UTC, datetime
 from time import sleep
+from typing import List
 
 import rich_click as click
-from derive_action_signing.module_data import RFQExecuteModuleData, RFQQuoteDetails
+from config import OWNER_TEST_WALLET, SESSION_KEY_PRIVATE_KEY, TAKER_SUBACCOUNT_ID
 
 from derive_client import WebSocketClient
 from derive_client.data_types import Environment
-from derive_client.data_types.generated_models import Direction, AssetType, LegUnpricedSchema
+from derive_client.data_types.channel_models import BestQuoteChannelResultSchema
+from derive_client.data_types.generated_models import AssetType, Direction, LegUnpricedSchema
 from derive_client.data_types.utils import D
-from tests.conftest import OWNER_TEST_WALLET, SESSION_KEY_PRIVATE_KEY
-
-
 
 SLEEP_TIME = 1
 
@@ -65,13 +60,15 @@ def create(side: str, amount: float, instrument: str, instrument_type: AssetType
     """
     Sample of polling for RFQs and printing their status.
     """
-    click.echo(f"Creating RFQ: side={side}, amount={amount}, instrument={instrument}, instrument_type={instrument_type}")
+    click.echo(
+        f"Creating RFQ: side={side}, amount={amount}, instrument={instrument}, instrument_type={instrument_type}"
+    )
 
     client: WebSocketClient = WebSocketClient(
         session_key=SESSION_KEY_PRIVATE_KEY,
         wallet=OWNER_TEST_WALLET,
         env=Environment.TEST,
-        subaccount_id=137626,
+        subaccount_id=TAKER_SUBACCOUNT_ID,
     )
     client.connect()
 
@@ -87,122 +84,38 @@ def create(side: str, amount: float, instrument: str, instrument_type: AssetType
             click.echo(f"No market found for instrument {instrument}. Please check the instrument name and try again.")
             return
 
-
     request_direction: Direction = Direction.buy if side.lower() == 'buy' else Direction.sell
 
     result = client.rfq.send_rfq(
-        legs=[LegUnpricedSchema(
-            amount=D(amount),
-            instrument_name=instrument,
-            direction=request_direction,
-        )],
+        legs=[
+            LegUnpricedSchema(
+                amount=D(amount),
+                instrument_name=instrument,
+                direction=request_direction,
+            )
+        ],
     )
     print("RFQ created with id:", result.rfq_id)
 
+    def on_new_quote(quotes: List[BestQuoteChannelResultSchema]):
+        """
+        Handle a new quote received for the RFQ.
+        """
+        for quote in quotes:
+            if quote.result and quote.result.best_quote:
+                print(f"New best quote received: {quote.result.best_quote}")
 
-    # start_time = datetime.utcnow().timestamp()
-    # end_time = start_time + auction_duration
+    client.private_channels.best_quotes_by_subaccount_id(
+        subaccount_id=str(client._subaccount_id), callback=on_new_quote
+    )
 
-    # current_quotes = []
-    # while True:
-    #     quotes = client.poll_quotes(
-    #         rfq_id=rfq['rfq_id'],
-    #     )
-    #     if quotes.get('quotes'):
-    #         quotes = quotes['quotes']
-    #         new_quotes = [q for q in quotes if q not in current_quotes]
-    #         for q in new_quotes:
-    #             on_new_quote(client, q)
-    #         current_quotes.extend(new_quotes)
-    #     # check the time
-    #     current_time = datetime.utcnow().timestamp()
-    #     if current_time > end_time:
-    #         print("Timeout reached, exiting")
-    #         break
-    # print("Final quotes:")
-    # current_quotes = [f for f in current_quotes if f['status'] == 'open']
-    # print(json.dumps(current_quotes, indent=2))
-    # # we now select the best price.
+    start_time = datetime.now(UTC).timestamp()
+    end_time = start_time + 30  # run for 30 seconds
 
-    # def pricer(quote: dict) -> float:
-    #     """
-    #     we need to get the total price of the quote
-    #     """
-    #     total_price = 0.0
-    #     for leg in quote['legs']:
-    #         total_price += float(leg['price']) * float(leg['amount'])
-    #     return total_price
-
-    # if not current_quotes:
-    #     print("No quotes received, exiting")
-    #     return
-    # print(rfq)
-    # ordered_quotes = sorted(current_quotes, key=lambda q: pricer(q), reverse=True)
-    # print("Best quote is:")
-    # print("Total quotes received:", len(ordered_quotes))
-    # # print(json.dumps(ordered_quotes[0], indent=2))
-    # print("Best price is:", pricer(ordered_quotes[0]))
-
-    # best_quote = ordered_quotes[0]
-    # # use display a spinner for a few seconds
-    # if accept := input("Do you want to accept this quote? (y/n): ") == 'y':
-    #     if not accept:
-    #         print("Quote not accepted, exiting")
-    #         return
-
-    #     for leg, quote in zip(request.legs, best_quote['legs']):
-    #         leg.price = Decimal(str(quote['price']))
-
-    #     accepted_quote = client.execute_quote(
-    #         quote=request,
-    #         quote_id=best_quote['quote_id'],
-    #         rfq_id=best_quote['rfq_id'],
-    #     )
-    #     print("Accepted quote:", json.dumps(accepted_quote['quote_id'], indent=2))
-    #     is_filled = False
-    #     is_finalised = False
-
-    #     while not is_filled:
-    #         polled_quote = client.poll_quotes(quote_id=accepted_quote['quote_id'])
-    #         for quote in polled_quote.get('quotes', []):
-    #             quote_price = sum(float(leg['price']) * float(leg['amount']) for leg in quote['legs'])
-    #             print(f"Quote ID: {quote['quote_id']} Status: {quote['status']}, Price: {quote_price}")
-    #             if quote['status'] in ['accepted', 'expired', 'rejected', 'cancelled', "filled"]:
-    #                 print(f"Quote ID: {quote['quote_id']} final status: {quote['status']}")
-    #                 is_filled = quote['status'] == 'filled'
-    #                 is_finalised = False
-    #                 break
-
-    #     print("Waiting for quote to be finalised...")
-    #     failed_status = ['reverted']
-    #     success_status = ['settled']
-    #     while not is_finalised:
-    #         polled_quote = client.poll_quotes(quote_id=accepted_quote['quote_id'])
-    #         for quote in polled_quote.get('quotes', []):
-    #             tx_hash, tx_status = quote.get('tx_hash'), quote.get('tx_status')
-    #             print(
-    #                 f"Quote ID: {quote['quote_id']} Status: {quote['status']}, Tx Hash: {tx_hash}, Tx Status: {tx_status}"  # noqa: E501
-    #             )
-    #             if tx_hash and tx_status in (success_status + failed_status):
-    #                 is_finalised = True
-    #                 break
-    #         if not is_finalised:
-    #             print("Waiting before next poll...")
-    #         sleep(SLEEP_TIME)
-    #     print("Quote finalised.")
-
-    #     if quote['tx_status'] in success_status:
-    #         print("Quote executed successfully with status:", quote['tx_status'])
-    #     elif quote['tx_status'] in failed_status:
-    #         print("Quote execution failed with status:", quote['tx_status'])
-    #         sys.exit(1)
-    #         return
-
-    # else:
-    #     print("Quote not accepted, exiting")
-
+    while datetime.now(UTC).timestamp() < end_time:
+        sleep(1)
+    print("Final quotes:")
     click.echo("RFQ process completed.")
-
 
 
 if __name__ == "__main__":

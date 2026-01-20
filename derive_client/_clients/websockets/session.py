@@ -13,6 +13,7 @@ from queue import Empty, Full, Queue
 from typing import Any, Callable, Optional, Type, TypeVar
 
 import msgspec
+from msgspec import ValidationError
 from websockets import Data
 from websockets.exceptions import ConnectionClosed
 from websockets.sync.client import ClientConnection, connect
@@ -482,8 +483,11 @@ class WebSocketSession:
 
             # Decode and invoke handler
             data_raw = params_dict.get("data")
-            data_bytes = msgspec.json.encode(data_raw)
-            notification = msgspec.json.decode(data_bytes, type=notification_type)
+            try:
+                notification = msgspec.convert(data_raw, type=notification_type)
+            except ValidationError as e:
+                self._logger.error(f"Notification decode error for {channel}: {e} data: {data_raw}", exc_info=True)
+                return
 
             try:
                 handler(notification)

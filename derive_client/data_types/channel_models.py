@@ -12,7 +12,6 @@ from derive_client.data_types.generated_models import (
     CancelReason,
     CancelReason1,
     Direction,
-    InvalidReason,
     LegPricedSchema,
     LegUnpricedSchema,
     LiquidityRole,
@@ -21,6 +20,7 @@ from derive_client.data_types.generated_models import (
     OrderType,
     PrivateGetAllPortfoliosParamsSchema,
     PrivateGetCollateralsParamsSchema,
+    PrivateRfqGetBestQuoteResultSchema,
     PublicGetAllCurrenciesParamsSchema,
     PublicGetInstrumentParamsSchema,
     PublicGetOptionSettlementPricesParamsSchema,
@@ -446,23 +446,8 @@ class SubaccountIdBalancesPubSubSchema(Struct):
     notification: SubaccountIdBalancesNotificationSchema
 
 
-class RFQGetBestQuoteResultSchema(Struct):
-    direction: Direction
-    estimated_fee: Decimal
-    estimated_realized_pnl: Decimal
-    estimated_realized_pnl_excl_fees: Decimal
-    estimated_total_cost: Decimal
-    filled_pct: Decimal
-    invalid_reason: InvalidReason
-    is_valid: bool
-    post_initial_margin: Decimal
-    pre_initial_margin: Decimal
-    suggested_max_fee: Decimal
-    best_quote: Optional[QuoteResultPublicSchema] = None
-    down_liquidation_price: Optional[Decimal] = None
-    orderbook_total_cost: Optional[Decimal] = None
-    post_liquidation_price: Optional[Decimal] = None
-    up_liquidation_price: Optional[Decimal] = None
+class RFQGetBestQuoteResultSchema(PrivateRfqGetBestQuoteResultSchema):
+    pass
 
 
 class SubaccountIdOrdersNotificationSchema(Struct):
