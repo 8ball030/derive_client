@@ -288,7 +288,7 @@ class PublicRPC:
 
         return result
 
-    def login(
+    async def login(
         self,
         params: PublicLoginParamsSchema,
     ) -> list[int]:
@@ -297,7 +297,7 @@ class PublicRPC:
         """
 
         method = "public/login"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, list[int])
 
         return result
@@ -361,7 +361,7 @@ class PublicRPC:
 
         return result
 
-    def get_all_instruments(
+    async def get_all_instruments(
         self,
         params: PublicGetAllInstrumentsParamsSchema,
     ) -> PublicGetAllInstrumentsResultSchema:
@@ -370,7 +370,7 @@ class PublicRPC:
         """
 
         method = "public/get_all_instruments"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicGetAllInstrumentsResultSchema)
 
         return result
@@ -389,7 +389,7 @@ class PublicRPC:
 
         return result
 
-    def get_ticker(
+    async def get_ticker(
         self,
         params: PublicGetTickerParamsSchema,
     ) -> PublicGetTickerResultSchema:
@@ -402,7 +402,7 @@ class PublicRPC:
         """
 
         method = "public/get_ticker"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicGetTickerResultSchema)
 
         return result
@@ -825,7 +825,7 @@ class PrivateRPC:
     def __init__(self, session: WebSocketSession):
         self._session = session
 
-    def get_account(
+    async def get_account(
         self,
         params: PrivateGetAccountParamsSchema,
     ) -> PrivateGetAccountResultSchema:
@@ -836,7 +836,7 @@ class PrivateRPC:
         """
 
         method = "private/get_account"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateGetAccountResultSchema)
 
         return result
@@ -861,7 +861,7 @@ class PrivateRPC:
 
         return result
 
-    def get_subaccount(
+    async def get_subaccount(
         self,
         params: PrivateGetSubaccountParamsSchema,
     ) -> PrivateGetSubaccountResultSchema:
@@ -872,7 +872,7 @@ class PrivateRPC:
         """
 
         method = "private/get_subaccount"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateGetSubaccountResultSchema)
 
         return result
@@ -1361,7 +1361,7 @@ class PrivateRPC:
 
         return result
 
-    def send_rfq(
+    async def send_rfq(
         self,
         params: PrivateSendRfqParamsSchema,
     ) -> PrivateSendRfqResultSchema:
@@ -1372,7 +1372,7 @@ class PrivateRPC:
         """
 
         method = "private/send_rfq"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateSendRfqResultSchema)
 
         return result
@@ -1431,7 +1431,7 @@ class PrivateRPC:
 
         return result
 
-    def poll_rfqs(
+    async def poll_rfqs(
         self,
         params: PrivatePollRfqsParamsSchema,
     ) -> PrivatePollRfqsResultSchema:
@@ -1443,12 +1443,12 @@ class PrivateRPC:
         """
 
         method = "private/poll_rfqs"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivatePollRfqsResultSchema)
 
         return result
 
-    def send_quote(
+    async def send_quote(
         self,
         params: PrivateSendQuoteParamsSchema,
     ) -> PrivateSendQuoteResultSchema:
@@ -1461,7 +1461,7 @@ class PrivateRPC:
         """
 
         method = "private/send_quote"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateSendQuoteResultSchema)
 
         return result
@@ -1807,7 +1807,7 @@ class PrivateRPC:
 
         return result
 
-    def session_keys(
+    async def session_keys(
         self,
         params: PrivateSessionKeysParamsSchema,
     ) -> PrivateSessionKeysResultSchema:
@@ -1816,7 +1816,7 @@ class PrivateRPC:
         """
 
         method = "private/session_keys"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateSessionKeysResultSchema)
 
         return result
@@ -2033,7 +2033,7 @@ class PublicChannels:
 
         return result
 
-    def ticker_slim_interval_by_instrument_name(
+    async def ticker_slim_interval_by_instrument_name(
         self,
         instrument_name: str,
         interval: Interval,
@@ -2061,7 +2061,7 @@ class PublicChannels:
             instrument_name=instrument_name.value if isinstance(instrument_name, Enum) else instrument_name,
             interval=interval.value if isinstance(interval, Enum) else interval,
         )
-        envelope = self._session.subscribe(channel, callback, TickerSlimInstrumentNameIntervalPublisherDataSchema)
+        envelope = await self._session.subscribe(channel, callback, TickerSlimInstrumentNameIntervalPublisherDataSchema)
         result = decode_result(envelope, SubscriptionResult)
 
         return result
@@ -2192,7 +2192,7 @@ class PrivateChannels:
 
         return result
 
-    def best_quotes_by_subaccount_id(
+    async def best_quotes_by_subaccount_id(
         self,
         subaccount_id: str,
         callback: Callable[[List[BestQuoteChannelResultSchema]], None],
@@ -2214,7 +2214,7 @@ class PrivateChannels:
         channel = "{subaccount_id}.best.quotes".format(
             subaccount_id=subaccount_id.value if isinstance(subaccount_id, Enum) else subaccount_id,
         )
-        envelope = self._session.subscribe(channel, callback, List[BestQuoteChannelResultSchema])
+        envelope = await self._session.subscribe(channel, callback, List[BestQuoteChannelResultSchema])
         result = decode_result(envelope, SubscriptionResult)
 
         return result

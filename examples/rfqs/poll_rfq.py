@@ -2,6 +2,7 @@
 Example of how to poll RFQ (Request for Quote) status and handle transfers between subaccount and funding account.
 """
 
+import asyncio
 from time import sleep
 
 from config import ADMIN_TEST_WALLET as TEST_WALLET
@@ -23,11 +24,11 @@ SLEEP_TIME = 1
 SUBACCOUNT_ID = 31049
 
 
-def create_priced_legs(client, rfq):
+async def create_priced_legs(client: WebSocketClient, rfq):
     # Price legs using current market prices
     priced_legs = []
     for unpriced_leg in rfq.legs:
-        ticker = client.markets.get_ticker(instrument_name=unpriced_leg.instrument_name)
+        ticker = await client.markets.get_ticker(instrument_name=unpriced_leg.instrument_name)
 
         base_price = ticker.index_price
 
@@ -45,7 +46,7 @@ def create_priced_legs(client, rfq):
     return priced_legs
 
 
-def main():
+async def main():
     """
     Sample of polling for RFQs and printing their status.
     """
@@ -57,32 +58,37 @@ def main():
         subaccount_id=SUBACCOUNT_ID,
     )
 
-    def on_rfq(rfq: RFQResultPublicSchema):
+    async def on_rfq(rfq: RFQResultPublicSchema):
         # here we get a price for the rfq.
         # we first get the index price for the instrument
         print(f"Received RFQ: {rfq}")
-        priced_legs = create_priced_legs(client, rfq)
+        priced_legs = await create_priced_legs(client, rfq)
         print(f"Total legs price: {sum([leg.price * leg.amount for leg in priced_legs])}")
         try:
-            client.rfq.send_quote(rfq_id=rfq.rfq_id, legs=create_priced_legs(client, rfq), direction=Direction.sell)
+            await client.rfq.send_quote(rfq_id=rfq.rfq_id, legs=priced_legs, direction=Direction.sell)
         except DeriveJSONRPCError as e:
             print(f"Error creating quote for RFQ {rfq.rfq_id}: {e}")
             return
 
-    client.connect()
+    await client.connect()
 
     rfqs = []
     from_timestamp = 0
     while True:
-        new_rfqs = client.rfq.poll_rfqs(from_timestamp=from_timestamp)
-        rfqs.extend(new_rfqs.rfqs)
+        new_rfqs = await client.rfq.poll_rfqs(from_timestamp=from_timestamp)
         for rfq in new_rfqs.rfqs:
             if rfq.last_update_timestamp > from_timestamp:
                 from_timestamp = rfq.last_update_timestamp + 1
             if rfq.status is Status.open:
-                on_rfq(rfq)
+                task = asyncio.create_task(on_rfq(rfq))
+                rfqs.append(task)
+        for task in rfqs:
+            if task.done():
+                rfqs.remove(task)
+
         sleep(SLEEP_TIME)
 
 
 if __name__ == "__main__":
-    main()
+
+    asyncio.run(main())

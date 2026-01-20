@@ -2,6 +2,7 @@
 Create an rfq using the REST API.
 """
 
+import asyncio
 from datetime import UTC, datetime
 from time import sleep
 from typing import List
@@ -11,12 +12,83 @@ from config import OWNER_TEST_WALLET, SESSION_KEY_PRIVATE_KEY, TAKER_SUBACCOUNT_
 
 from derive_client import WebSocketClient
 from derive_client.data_types import Environment
-from derive_client.data_types.channel_models import BestQuoteChannelResultSchema
+from derive_client.data_types.channel_models import BestQuoteChannelResultSchema, Interval
 from derive_client.data_types.generated_models import AssetType, Direction, LegUnpricedSchema
 from derive_client.data_types.utils import D
 
 SLEEP_TIME = 1
 
+
+
+async def main(
+    side: str,
+    amount: float,
+    instrument: str,
+    instrument_type: AssetType = AssetType.option,
+):
+    """
+    Sample of polling for RFQs and printing their status.
+    """
+    client: WebSocketClient = WebSocketClient(
+        session_key=SESSION_KEY_PRIVATE_KEY,
+        wallet=OWNER_TEST_WALLET,
+        env=Environment.TEST,
+        subaccount_id=TAKER_SUBACCOUNT_ID,
+    )
+    await client.connect()
+
+    # we get an option market
+    markets = await client.markets.fetch_instruments(
+        instrument_type=instrument_type,
+        expired=False,
+    )
+
+    if instrument:
+        markets = [m for m in markets if m == instrument]
+        if not markets:
+            click.echo(f"No market found for instrument {instrument}. Please check the instrument name and try again.")
+            return
+
+    request_direction: Direction = Direction.buy if side.lower() == 'buy' else Direction.sell
+
+    result = await client.rfq.send_rfq(
+        legs=[
+            LegUnpricedSchema(
+                amount=D(amount),
+                instrument_name=instrument,
+                direction=request_direction,
+            )
+        ],
+    )
+    print("RFQ created with id:", result.rfq_id)
+
+    def on_new_quote(quotes: List[BestQuoteChannelResultSchema]):
+        """
+        Handle a new quote received for the RFQ.
+        """
+        print(f"Received {len(quotes)} quotes")
+        for quote in quotes:
+            if quote.result and quote.result.best_quote:
+                print(f"New best quote received: {quote.result.best_quote}")
+
+    def on_ticker_update(ticker):
+        """
+        Handle ticker updates.
+        """
+        print(f"Ticker update: {ticker}")
+
+    await client.public_channels.ticker_slim_interval_by_instrument_name(
+        interval=Interval.field_100,
+        instrument_name=instrument, callback=on_ticker_update
+    )
+
+
+    start_time = datetime.now(UTC).timestamp()
+    end_time = start_time + 30  # run for 30 seconds
+
+    while datetime.now(UTC).timestamp() < end_time:
+        sleep(1)
+    print("Final quotes:")
 
 @click.group()
 def rfq():
@@ -64,57 +136,15 @@ def create(side: str, amount: float, instrument: str, instrument_type: AssetType
         f"Creating RFQ: side={side}, amount={amount}, instrument={instrument}, instrument_type={instrument_type}"
     )
 
-    client: WebSocketClient = WebSocketClient(
-        session_key=SESSION_KEY_PRIVATE_KEY,
-        wallet=OWNER_TEST_WALLET,
-        env=Environment.TEST,
-        subaccount_id=TAKER_SUBACCOUNT_ID,
-    )
-    client.connect()
-
-    # we get an option market
-    markets = client.markets.fetch_instruments(
-        instrument_type=instrument_type,
-        expired=False,
+    asyncio.run(
+        main(
+            side=side,
+            amount=amount,
+            instrument=instrument,
+            instrument_type=instrument_type,
+        )
     )
 
-    if instrument:
-        markets = [m for m in markets if m == instrument]
-        if not markets:
-            click.echo(f"No market found for instrument {instrument}. Please check the instrument name and try again.")
-            return
-
-    request_direction: Direction = Direction.buy if side.lower() == 'buy' else Direction.sell
-
-    result = client.rfq.send_rfq(
-        legs=[
-            LegUnpricedSchema(
-                amount=D(amount),
-                instrument_name=instrument,
-                direction=request_direction,
-            )
-        ],
-    )
-    print("RFQ created with id:", result.rfq_id)
-
-    def on_new_quote(quotes: List[BestQuoteChannelResultSchema]):
-        """
-        Handle a new quote received for the RFQ.
-        """
-        for quote in quotes:
-            if quote.result and quote.result.best_quote:
-                print(f"New best quote received: {quote.result.best_quote}")
-
-    client.private_channels.best_quotes_by_subaccount_id(
-        subaccount_id=str(client._subaccount_id), callback=on_new_quote
-    )
-
-    start_time = datetime.now(UTC).timestamp()
-    end_time = start_time + 30  # run for 30 seconds
-
-    while datetime.now(UTC).timestamp() < end_time:
-        sleep(1)
-    print("Final quotes:")
     click.echo("RFQ process completed.")
 
 
