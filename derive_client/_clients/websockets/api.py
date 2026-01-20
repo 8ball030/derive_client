@@ -238,7 +238,7 @@ class PublicRPC:
     def __init__(self, session: WebSocketSession):
         self._session = session
 
-    def build_register_session_key_tx(
+    async def build_register_session_key_tx(
         self,
         params: PublicBuildRegisterSessionKeyTxParamsSchema,
     ) -> PublicBuildRegisterSessionKeyTxResultSchema:
@@ -247,12 +247,12 @@ class PublicRPC:
         """
 
         method = "public/build_register_session_key_tx"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicBuildRegisterSessionKeyTxResultSchema)
 
         return result
 
-    def register_session_key(
+    async def register_session_key(
         self,
         params: PublicRegisterSessionKeyParamsSchema,
     ) -> PublicRegisterSessionKeyResultSchema:
@@ -268,12 +268,12 @@ class PublicRPC:
         """
 
         method = "public/register_session_key"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicRegisterSessionKeyResultSchema)
 
         return result
 
-    def deregister_session_key(
+    async def deregister_session_key(
         self,
         params: PublicDeregisterSessionKeyParamsSchema,
     ) -> PublicDeregisterSessionKeyResultSchema:
@@ -283,7 +283,7 @@ class PublicRPC:
         """
 
         method = "public/deregister_session_key"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicDeregisterSessionKeyResultSchema)
 
         return result
@@ -302,7 +302,7 @@ class PublicRPC:
 
         return result
 
-    def statistics(
+    async def statistics(
         self,
         params: PublicStatisticsParamsSchema,
     ) -> PublicStatisticsResultSchema:
@@ -311,12 +311,12 @@ class PublicRPC:
         """
 
         method = "public/statistics"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicStatisticsResultSchema)
 
         return result
 
-    def get_all_currencies(
+    async def get_all_currencies(
         self,
         params: PublicGetAllCurrenciesParamsSchema,
     ) -> list[CurrencyDetailedResponseSchema]:
@@ -327,12 +327,12 @@ class PublicRPC:
         """
 
         method = "public/get_all_currencies"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, list[CurrencyDetailedResponseSchema])
 
         return result
 
-    def get_currency(
+    async def get_currency(
         self,
         params: PublicGetCurrencyParamsSchema,
     ) -> PublicGetCurrencyResultSchema:
@@ -342,12 +342,12 @@ class PublicRPC:
         """
 
         method = "public/get_currency"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicGetCurrencyResultSchema)
 
         return result
 
-    def get_instrument(
+    async def get_instrument(
         self,
         params: PublicGetInstrumentParamsSchema,
     ) -> PublicGetInstrumentResultSchema:
@@ -356,7 +356,7 @@ class PublicRPC:
         """
 
         method = "public/get_instrument"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicGetInstrumentResultSchema)
 
         return result
@@ -375,7 +375,7 @@ class PublicRPC:
 
         return result
 
-    def get_instruments(
+    async def get_instruments(
         self,
         params: PublicGetInstrumentsParamsSchema,
     ) -> list[InstrumentPublicResponseSchema]:
@@ -384,7 +384,7 @@ class PublicRPC:
         """
 
         method = "public/get_instruments"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, list[InstrumentPublicResponseSchema])
 
         return result
@@ -407,7 +407,7 @@ class PublicRPC:
 
         return result
 
-    def get_tickers(
+    async def get_tickers(
         self,
         params: PublicGetTickersParamsSchema,
     ) -> PublicGetTickersResultSchema:
@@ -426,12 +426,12 @@ class PublicRPC:
         """
 
         method = "public/get_tickers"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicGetTickersResultSchema)
 
         return result
 
-    def get_latest_signed_feeds(
+    async def get_latest_signed_feeds(
         self,
         params: PublicGetLatestSignedFeedsParamsSchema,
     ) -> PublicGetLatestSignedFeedsResultSchema:
@@ -440,12 +440,12 @@ class PublicRPC:
         """
 
         method = "public/get_latest_signed_feeds"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicGetLatestSignedFeedsResultSchema)
 
         return result
 
-    def get_option_settlement_prices(
+    async def get_option_settlement_prices(
         self,
         params: PublicGetOptionSettlementPricesParamsSchema,
     ) -> PublicGetOptionSettlementPricesResultSchema:
@@ -454,12 +454,12 @@ class PublicRPC:
         """
 
         method = "public/get_option_settlement_prices"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicGetOptionSettlementPricesResultSchema)
 
         return result
 
-    def get_spot_feed_history(
+    async def get_spot_feed_history(
         self,
         params: PublicGetSpotFeedHistoryParamsSchema,
     ) -> PublicGetSpotFeedHistoryResultSchema:
@@ -470,12 +470,12 @@ class PublicRPC:
         """
 
         method = "public/get_spot_feed_history"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicGetSpotFeedHistoryResultSchema)
 
         return result
 
-    def get_spot_feed_history_candles(
+    async def get_spot_feed_history_candles(
         self,
         params: PublicGetSpotFeedHistoryCandlesParamsSchema,
     ) -> PublicGetSpotFeedHistoryCandlesResultSchema:
@@ -486,12 +486,12 @@ class PublicRPC:
         """
 
         method = "public/get_spot_feed_history_candles"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicGetSpotFeedHistoryCandlesResultSchema)
 
         return result
 
-    def get_funding_rate_history(
+    async def get_funding_rate_history(
         self,
         params: PublicGetFundingRateHistoryParamsSchema,
     ) -> PublicGetFundingRateHistoryResultSchema:
@@ -507,12 +507,12 @@ class PublicRPC:
         """
 
         method = "public/get_funding_rate_history"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicGetFundingRateHistoryResultSchema)
 
         return result
 
-    def get_trade_history(
+    async def get_trade_history(
         self,
         params: PublicGetTradeHistoryParamsSchema,
     ) -> PublicGetTradeHistoryResultSchema:
@@ -521,12 +521,12 @@ class PublicRPC:
         """
 
         method = "public/get_trade_history"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicGetTradeHistoryResultSchema)
 
         return result
 
-    def get_option_settlement_history(
+    async def get_option_settlement_history(
         self,
         params: PublicGetOptionSettlementHistoryParamsSchema,
     ) -> PublicGetOptionSettlementHistoryResultSchema:
@@ -535,12 +535,12 @@ class PublicRPC:
         """
 
         method = "public/get_option_settlement_history"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicGetOptionSettlementHistoryResultSchema)
 
         return result
 
-    def get_liquidation_history(
+    async def get_liquidation_history(
         self,
         params: PublicGetLiquidationHistoryParamsSchema,
     ) -> PublicGetLiquidationHistoryResultSchema:
@@ -558,12 +558,12 @@ class PublicRPC:
         """
 
         method = "public/get_liquidation_history"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicGetLiquidationHistoryResultSchema)
 
         return result
 
-    def get_interest_rate_history(
+    async def get_interest_rate_history(
         self,
         params: PublicGetInterestRateHistoryParamsSchema,
     ) -> PublicGetInterestRateHistoryResultSchema:
@@ -572,12 +572,12 @@ class PublicRPC:
         """
 
         method = "public/get_interest_rate_history"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicGetInterestRateHistoryResultSchema)
 
         return result
 
-    def get_transaction(
+    async def get_transaction(
         self,
         params: PublicGetTransactionParamsSchema,
     ) -> PublicGetTransactionResultSchema:
@@ -586,12 +586,12 @@ class PublicRPC:
         """
 
         method = "public/get_transaction"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicGetTransactionResultSchema)
 
         return result
 
-    def get_margin(
+    async def get_margin(
         self,
         params: PublicGetMarginParamsSchema,
     ) -> PublicGetMarginResultSchema:
@@ -603,12 +603,12 @@ class PublicRPC:
         """
 
         method = "public/get_margin"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicGetMarginResultSchema)
 
         return result
 
-    def margin_watch(
+    async def margin_watch(
         self,
         params: PublicMarginWatchParamsSchema,
     ) -> PublicMarginWatchResultSchema:
@@ -617,12 +617,12 @@ class PublicRPC:
         """
 
         method = "public/margin_watch"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicMarginWatchResultSchema)
 
         return result
 
-    def get_vault_share(
+    async def get_vault_share(
         self,
         params: PublicGetVaultShareParamsSchema,
     ) -> PublicGetVaultShareResultSchema:
@@ -635,12 +635,12 @@ class PublicRPC:
         """
 
         method = "public/get_vault_share"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicGetVaultShareResultSchema)
 
         return result
 
-    def get_vault_statistics(
+    async def get_vault_statistics(
         self,
         params: PublicGetVaultStatisticsParamsSchema,
     ) -> list[VaultStatisticsResponseSchema]:
@@ -651,12 +651,12 @@ class PublicRPC:
         """
 
         method = "public/get_vault_statistics"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, list[VaultStatisticsResponseSchema])
 
         return result
 
-    def get_vault_balances(
+    async def get_vault_balances(
         self,
         params: PublicGetVaultBalancesParamsSchema,
     ) -> list[VaultBalanceResponseSchema]:
@@ -668,12 +668,12 @@ class PublicRPC:
         """
 
         method = "public/get_vault_balances"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, list[VaultBalanceResponseSchema])
 
         return result
 
-    def create_subaccount_debug(
+    async def create_subaccount_debug(
         self,
         params: PublicCreateSubaccountDebugParamsSchema,
     ) -> PublicCreateSubaccountDebugResultSchema:
@@ -685,12 +685,12 @@ class PublicRPC:
         """
 
         method = "public/create_subaccount_debug"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicCreateSubaccountDebugResultSchema)
 
         return result
 
-    def deposit_debug(
+    async def deposit_debug(
         self,
         params: PublicDepositDebugParamsSchema,
     ) -> PublicDepositDebugResultSchema:
@@ -702,12 +702,12 @@ class PublicRPC:
         """
 
         method = "public/deposit_debug"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicDepositDebugResultSchema)
 
         return result
 
-    def withdraw_debug(
+    async def withdraw_debug(
         self,
         params: PublicWithdrawDebugParamsSchema,
     ) -> PublicWithdrawDebugResultSchema:
@@ -719,12 +719,12 @@ class PublicRPC:
         """
 
         method = "public/withdraw_debug"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicWithdrawDebugResultSchema)
 
         return result
 
-    def send_quote_debug(
+    async def send_quote_debug(
         self,
         params: PublicSendQuoteDebugParamsSchema,
     ) -> PublicSendQuoteDebugResultSchema:
@@ -735,12 +735,12 @@ class PublicRPC:
         """
 
         method = "public/send_quote_debug"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicSendQuoteDebugResultSchema)
 
         return result
 
-    def execute_quote_debug(
+    async def execute_quote_debug(
         self,
         params: PublicExecuteQuoteDebugParamsSchema,
     ) -> PublicExecuteQuoteDebugResultSchema:
@@ -751,32 +751,32 @@ class PublicRPC:
         """
 
         method = "public/execute_quote_debug"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicExecuteQuoteDebugResultSchema)
 
         return result
 
-    def get_time(
+    async def get_time(
         self,
         params: PublicGetTimeParamsSchema,
     ) -> int:
         method = "public/get_time"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, int)
 
         return result
 
-    def get_live_incidents(
+    async def get_live_incidents(
         self,
         params: PublicGetLiveIncidentsParamsSchema,
     ) -> PublicGetLiveIncidentsResultSchema:
         method = "public/get_live_incidents"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicGetLiveIncidentsResultSchema)
 
         return result
 
-    def get_maker_programs(
+    async def get_maker_programs(
         self,
         params: PublicGetMakerProgramsParamsSchema,
     ) -> list[ProgramResponseSchema]:
@@ -785,12 +785,12 @@ class PublicRPC:
         """
 
         method = "public/get_maker_programs"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, list[ProgramResponseSchema])
 
         return result
 
-    def get_maker_program_scores(
+    async def get_maker_program_scores(
         self,
         params: PublicGetMakerProgramScoresParamsSchema,
     ) -> PublicGetMakerProgramScoresResultSchema:
@@ -799,12 +799,12 @@ class PublicRPC:
         """
 
         method = "public/get_maker_program_scores"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicGetMakerProgramScoresResultSchema)
 
         return result
 
-    def get_referral_performance(
+    async def get_referral_performance(
         self,
         params: PublicGetReferralPerformanceParamsSchema,
     ) -> PublicGetReferralPerformanceResultSchema:
@@ -813,7 +813,7 @@ class PublicRPC:
         """
 
         method = "public/get_referral_performance"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PublicGetReferralPerformanceResultSchema)
 
         return result
@@ -841,7 +841,7 @@ class PrivateRPC:
 
         return result
 
-    def create_subaccount(
+    async def create_subaccount(
         self,
         params: PrivateCreateSubaccountParamsSchema,
     ) -> PrivateCreateSubaccountResultSchema:
@@ -856,7 +856,7 @@ class PrivateRPC:
         """
 
         method = "private/create_subaccount"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateCreateSubaccountResultSchema)
 
         return result
@@ -877,7 +877,7 @@ class PrivateRPC:
 
         return result
 
-    def get_subaccounts(
+    async def get_subaccounts(
         self,
         params: PrivateGetSubaccountsParamsSchema,
     ) -> PrivateGetSubaccountsResultSchema:
@@ -888,12 +888,12 @@ class PrivateRPC:
         """
 
         method = "private/get_subaccounts"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateGetSubaccountsResultSchema)
 
         return result
 
-    def get_all_portfolios(
+    async def get_all_portfolios(
         self,
         params: PrivateGetAllPortfoliosParamsSchema,
     ) -> List[PrivateGetSubaccountResultSchema]:
@@ -904,12 +904,12 @@ class PrivateRPC:
         """
 
         method = "private/get_all_portfolios"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, list[PrivateGetSubaccountResultSchema])
 
         return result
 
-    def change_subaccount_label(
+    async def change_subaccount_label(
         self,
         params: PrivateChangeSubaccountLabelParamsSchema,
     ) -> PrivateChangeSubaccountLabelResultSchema:
@@ -920,12 +920,12 @@ class PrivateRPC:
         """
 
         method = "private/change_subaccount_label"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateChangeSubaccountLabelResultSchema)
 
         return result
 
-    def get_notifications(
+    async def get_notifications(
         self,
         params: PrivateGetNotificationsParamsSchema,
     ) -> PrivateGetNotificationsResultSchema:
@@ -936,12 +936,12 @@ class PrivateRPC:
         """
 
         method = "private/get_notifications"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateGetNotificationsResultSchema)
 
         return result
 
-    def update_notifications(
+    async def update_notifications(
         self,
         params: PrivateUpdateNotificationsParamsSchema,
     ) -> PrivateUpdateNotificationsResultSchema:
@@ -952,12 +952,12 @@ class PrivateRPC:
         """
 
         method = "private/update_notifications"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateUpdateNotificationsResultSchema)
 
         return result
 
-    def deposit(
+    async def deposit(
         self,
         params: PrivateDepositParamsSchema,
     ) -> PrivateDepositResultSchema:
@@ -971,12 +971,12 @@ class PrivateRPC:
         """
 
         method = "private/deposit"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateDepositResultSchema)
 
         return result
 
-    def withdraw(
+    async def withdraw(
         self,
         params: PrivateWithdrawParamsSchema,
     ) -> PrivateWithdrawResultSchema:
@@ -990,12 +990,12 @@ class PrivateRPC:
         """
 
         method = "private/withdraw"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateWithdrawResultSchema)
 
         return result
 
-    def transfer_erc20(
+    async def transfer_erc20(
         self,
         params: PrivateTransferErc20ParamsSchema,
     ) -> PrivateTransferErc20ResultSchema:
@@ -1009,12 +1009,12 @@ class PrivateRPC:
         """
 
         method = "private/transfer_erc20"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateTransferErc20ResultSchema)
 
         return result
 
-    def transfer_position(
+    async def transfer_position(
         self,
         params: PrivateTransferPositionParamsSchema,
     ) -> PrivateTransferPositionResultSchema:
@@ -1040,12 +1040,12 @@ class PrivateRPC:
         """
 
         method = "private/transfer_position"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateTransferPositionResultSchema)
 
         return result
 
-    def transfer_positions(
+    async def transfer_positions(
         self,
         params: PrivateTransferPositionsParamsSchema,
     ) -> PrivateTransferPositionsResultSchema:
@@ -1071,12 +1071,12 @@ class PrivateRPC:
         """
 
         method = "private/transfer_positions"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateTransferPositionsResultSchema)
 
         return result
 
-    def order(
+    async def order(
         self,
         params: PrivateOrderParamsSchema,
     ) -> PrivateOrderResultSchema:
@@ -1087,12 +1087,12 @@ class PrivateRPC:
         """
 
         method = "private/order"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateOrderResultSchema)
 
         return result
 
-    def replace(
+    async def replace(
         self,
         params: PrivateReplaceParamsSchema,
     ) -> PrivateReplaceResultSchema:
@@ -1109,12 +1109,12 @@ class PrivateRPC:
         """
 
         method = "private/replace"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateReplaceResultSchema)
 
         return result
 
-    def order_debug(
+    async def order_debug(
         self,
         params: PrivateOrderDebugParamsSchema,
     ) -> PrivateOrderDebugResultSchema:
@@ -1125,12 +1125,12 @@ class PrivateRPC:
         """
 
         method = "private/order_debug"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateOrderDebugResultSchema)
 
         return result
 
-    def get_order(
+    async def get_order(
         self,
         params: PrivateGetOrderParamsSchema,
     ) -> PrivateGetOrderResultSchema:
@@ -1142,12 +1142,12 @@ class PrivateRPC:
         """
 
         method = "private/get_order"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateGetOrderResultSchema)
 
         return result
 
-    def get_orders(
+    async def get_orders(
         self,
         params: PrivateGetOrdersParamsSchema,
     ) -> PrivateGetOrdersResultSchema:
@@ -1158,12 +1158,12 @@ class PrivateRPC:
         """
 
         method = "private/get_orders"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateGetOrdersResultSchema)
 
         return result
 
-    def get_open_orders(
+    async def get_open_orders(
         self,
         params: PrivateGetOpenOrdersParamsSchema,
     ) -> PrivateGetOpenOrdersResultSchema:
@@ -1174,12 +1174,12 @@ class PrivateRPC:
         """
 
         method = "private/get_open_orders"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateGetOpenOrdersResultSchema)
 
         return result
 
-    def cancel(
+    async def cancel(
         self,
         params: PrivateCancelParamsSchema,
     ) -> PrivateCancelResultSchema:
@@ -1192,12 +1192,12 @@ class PrivateRPC:
         """
 
         method = "private/cancel"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateCancelResultSchema)
 
         return result
 
-    def cancel_all(
+    async def cancel_all(
         self,
         params: PrivateCancelAllParamsSchema,
     ) -> Result:
@@ -1208,12 +1208,12 @@ class PrivateRPC:
         """
 
         method = "private/cancel_all"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, Result)
 
         return result
 
-    def cancel_by_label(
+    async def cancel_by_label(
         self,
         params: PrivateCancelByLabelParamsSchema,
     ) -> PrivateCancelByLabelResultSchema:
@@ -1225,12 +1225,12 @@ class PrivateRPC:
         """
 
         method = "private/cancel_by_label"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateCancelByLabelResultSchema)
 
         return result
 
-    def cancel_by_nonce(
+    async def cancel_by_nonce(
         self,
         params: PrivateCancelByNonceParamsSchema,
     ) -> PrivateCancelByNonceResultSchema:
@@ -1242,12 +1242,12 @@ class PrivateRPC:
         """
 
         method = "private/cancel_by_nonce"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateCancelByNonceResultSchema)
 
         return result
 
-    def cancel_by_instrument(
+    async def cancel_by_instrument(
         self,
         params: PrivateCancelByInstrumentParamsSchema,
     ) -> PrivateCancelByInstrumentResultSchema:
@@ -1258,12 +1258,12 @@ class PrivateRPC:
         """
 
         method = "private/cancel_by_instrument"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateCancelByInstrumentResultSchema)
 
         return result
 
-    def cancel_trigger_order(
+    async def cancel_trigger_order(
         self,
         params: PrivateCancelTriggerOrderParamsSchema,
     ) -> PrivateCancelTriggerOrderResultSchema:
@@ -1274,12 +1274,12 @@ class PrivateRPC:
         """
 
         method = "private/cancel_trigger_order"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateCancelTriggerOrderResultSchema)
 
         return result
 
-    def cancel_all_trigger_orders(
+    async def cancel_all_trigger_orders(
         self,
         params: PrivateCancelAllTriggerOrdersParamsSchema,
     ) -> Result:
@@ -1292,12 +1292,12 @@ class PrivateRPC:
         """
 
         method = "private/cancel_all_trigger_orders"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, Result)
 
         return result
 
-    def get_order_history(
+    async def get_order_history(
         self,
         params: PrivateGetOrderHistoryParamsSchema,
     ) -> PrivateGetOrderHistoryResultSchema:
@@ -1308,12 +1308,12 @@ class PrivateRPC:
         """
 
         method = "private/get_order_history"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateGetOrderHistoryResultSchema)
 
         return result
 
-    def get_trade_history(
+    async def get_trade_history(
         self,
         params: PrivateGetTradeHistoryParamsSchema,
     ) -> PrivateGetTradeHistoryResultSchema:
@@ -1324,12 +1324,12 @@ class PrivateRPC:
         """
 
         method = "private/get_trade_history"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateGetTradeHistoryResultSchema)
 
         return result
 
-    def get_deposit_history(
+    async def get_deposit_history(
         self,
         params: PrivateGetDepositHistoryParamsSchema,
     ) -> PrivateGetDepositHistoryResultSchema:
@@ -1340,12 +1340,12 @@ class PrivateRPC:
         """
 
         method = "private/get_deposit_history"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateGetDepositHistoryResultSchema)
 
         return result
 
-    def get_withdrawal_history(
+    async def get_withdrawal_history(
         self,
         params: PrivateGetWithdrawalHistoryParamsSchema,
     ) -> PrivateGetWithdrawalHistoryResultSchema:
@@ -1356,7 +1356,7 @@ class PrivateRPC:
         """
 
         method = "private/get_withdrawal_history"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateGetWithdrawalHistoryResultSchema)
 
         return result
@@ -1377,7 +1377,7 @@ class PrivateRPC:
 
         return result
 
-    def cancel_rfq(
+    async def cancel_rfq(
         self,
         params: PrivateCancelRfqParamsSchema,
     ) -> Result:
@@ -1388,12 +1388,12 @@ class PrivateRPC:
         """
 
         method = "private/cancel_rfq"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, Result)
 
         return result
 
-    def cancel_batch_rfqs(
+    async def cancel_batch_rfqs(
         self,
         params: PrivateCancelBatchRfqsParamsSchema,
     ) -> PrivateCancelBatchRfqsResultSchema:
@@ -1409,12 +1409,12 @@ class PrivateRPC:
         """
 
         method = "private/cancel_batch_rfqs"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateCancelBatchRfqsResultSchema)
 
         return result
 
-    def get_rfqs(
+    async def get_rfqs(
         self,
         params: PrivateGetRfqsParamsSchema,
     ) -> PrivateGetRfqsResultSchema:
@@ -1426,7 +1426,7 @@ class PrivateRPC:
         """
 
         method = "private/get_rfqs"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateGetRfqsResultSchema)
 
         return result
@@ -1466,7 +1466,7 @@ class PrivateRPC:
 
         return result
 
-    def replace_quote(
+    async def replace_quote(
         self,
         params: PrivateReplaceQuoteParamsSchema,
     ) -> PrivateReplaceQuoteResultSchema:
@@ -1483,12 +1483,12 @@ class PrivateRPC:
         """
 
         method = "private/replace_quote"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateReplaceQuoteResultSchema)
 
         return result
 
-    def cancel_quote(
+    async def cancel_quote(
         self,
         params: PrivateCancelQuoteParamsSchema,
     ) -> PrivateCancelQuoteResultSchema:
@@ -1499,12 +1499,12 @@ class PrivateRPC:
         """
 
         method = "private/cancel_quote"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateCancelQuoteResultSchema)
 
         return result
 
-    def cancel_batch_quotes(
+    async def cancel_batch_quotes(
         self,
         params: PrivateCancelBatchQuotesParamsSchema,
     ) -> PrivateCancelBatchQuotesResultSchema:
@@ -1519,12 +1519,12 @@ class PrivateRPC:
         """
 
         method = "private/cancel_batch_quotes"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateCancelBatchQuotesResultSchema)
 
         return result
 
-    def get_quotes(
+    async def get_quotes(
         self,
         params: PrivateGetQuotesParamsSchema,
     ) -> PrivateGetQuotesResultSchema:
@@ -1537,12 +1537,12 @@ class PrivateRPC:
         """
 
         method = "private/get_quotes"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateGetQuotesResultSchema)
 
         return result
 
-    def poll_quotes(
+    async def poll_quotes(
         self,
         params: PrivatePollQuotesParamsSchema,
     ) -> PrivatePollQuotesResultSchema:
@@ -1556,12 +1556,12 @@ class PrivateRPC:
         """
 
         method = "private/poll_quotes"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivatePollQuotesResultSchema)
 
         return result
 
-    def execute_quote(
+    async def execute_quote(
         self,
         params: PrivateExecuteQuoteParamsSchema,
     ) -> PrivateExecuteQuoteResultSchema:
@@ -1572,12 +1572,12 @@ class PrivateRPC:
         """
 
         method = "private/execute_quote"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateExecuteQuoteResultSchema)
 
         return result
 
-    def rfq_get_best_quote(
+    async def rfq_get_best_quote(
         self,
         params: PrivateRfqGetBestQuoteParamsSchema,
     ) -> PrivateRfqGetBestQuoteResultSchema:
@@ -1594,12 +1594,12 @@ class PrivateRPC:
         """
 
         method = "private/rfq_get_best_quote"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateRfqGetBestQuoteResultSchema)
 
         return result
 
-    def get_margin(
+    async def get_margin(
         self,
         params: PrivateGetMarginParamsSchema,
     ) -> PrivateGetMarginResultSchema:
@@ -1613,12 +1613,12 @@ class PrivateRPC:
         """
 
         method = "private/get_margin"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateGetMarginResultSchema)
 
         return result
 
-    def get_collaterals(
+    async def get_collaterals(
         self,
         params: PrivateGetCollateralsParamsSchema,
     ) -> PrivateGetCollateralsResultSchema:
@@ -1629,12 +1629,12 @@ class PrivateRPC:
         """
 
         method = "private/get_collaterals"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateGetCollateralsResultSchema)
 
         return result
 
-    def get_positions(
+    async def get_positions(
         self,
         params: PrivateGetPositionsParamsSchema,
     ) -> PrivateGetPositionsResultSchema:
@@ -1645,12 +1645,12 @@ class PrivateRPC:
         """
 
         method = "private/get_positions"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateGetPositionsResultSchema)
 
         return result
 
-    def get_option_settlement_history(
+    async def get_option_settlement_history(
         self,
         params: PrivateGetOptionSettlementHistoryParamsSchema,
     ) -> PrivateGetOptionSettlementHistoryResultSchema:
@@ -1661,12 +1661,12 @@ class PrivateRPC:
         """
 
         method = "private/get_option_settlement_history"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateGetOptionSettlementHistoryResultSchema)
 
         return result
 
-    def get_subaccount_value_history(
+    async def get_subaccount_value_history(
         self,
         params: PrivateGetSubaccountValueHistoryParamsSchema,
     ) -> PrivateGetSubaccountValueHistoryResultSchema:
@@ -1677,12 +1677,12 @@ class PrivateRPC:
         """
 
         method = "private/get_subaccount_value_history"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateGetSubaccountValueHistoryResultSchema)
 
         return result
 
-    def expired_and_cancelled_history(
+    async def expired_and_cancelled_history(
         self,
         params: PrivateExpiredAndCancelledHistoryParamsSchema,
     ) -> PrivateExpiredAndCancelledHistoryResultSchema:
@@ -1693,12 +1693,12 @@ class PrivateRPC:
         """
 
         method = "private/expired_and_cancelled_history"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateExpiredAndCancelledHistoryResultSchema)
 
         return result
 
-    def get_funding_history(
+    async def get_funding_history(
         self,
         params: PrivateGetFundingHistoryParamsSchema,
     ) -> PrivateGetFundingHistoryResultSchema:
@@ -1711,12 +1711,12 @@ class PrivateRPC:
         """
 
         method = "private/get_funding_history"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateGetFundingHistoryResultSchema)
 
         return result
 
-    def get_interest_history(
+    async def get_interest_history(
         self,
         params: PrivateGetInterestHistoryParamsSchema,
     ) -> PrivateGetInterestHistoryResultSchema:
@@ -1727,12 +1727,12 @@ class PrivateRPC:
         """
 
         method = "private/get_interest_history"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateGetInterestHistoryResultSchema)
 
         return result
 
-    def get_erc20_transfer_history(
+    async def get_erc20_transfer_history(
         self,
         params: PrivateGetErc20TransferHistoryParamsSchema,
     ) -> PrivateGetErc20TransferHistoryResultSchema:
@@ -1746,12 +1746,12 @@ class PrivateRPC:
         """
 
         method = "private/get_erc20_transfer_history"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateGetErc20TransferHistoryResultSchema)
 
         return result
 
-    def get_liquidation_history(
+    async def get_liquidation_history(
         self,
         params: PrivateGetLiquidationHistoryParamsSchema,
     ) -> List[AuctionHistoryResultSchema]:
@@ -1760,12 +1760,12 @@ class PrivateRPC:
         """
 
         method = "private/get_liquidation_history"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, list[AuctionHistoryResultSchema])
 
         return result
 
-    def liquidate(
+    async def liquidate(
         self,
         params: PrivateLiquidateParamsSchema,
     ) -> PrivateLiquidateResultSchema:
@@ -1785,12 +1785,12 @@ class PrivateRPC:
         """
 
         method = "private/liquidate"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateLiquidateResultSchema)
 
         return result
 
-    def get_liquidator_history(
+    async def get_liquidator_history(
         self,
         params: PrivateGetLiquidatorHistoryParamsSchema,
     ) -> PrivateGetLiquidatorHistoryResultSchema:
@@ -1802,7 +1802,7 @@ class PrivateRPC:
         """
 
         method = "private/get_liquidator_history"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateGetLiquidatorHistoryResultSchema)
 
         return result
@@ -1821,7 +1821,7 @@ class PrivateRPC:
 
         return result
 
-    def edit_session_key(
+    async def edit_session_key(
         self,
         params: PrivateEditSessionKeyParamsSchema,
     ) -> PrivateEditSessionKeyResultSchema:
@@ -1836,12 +1836,12 @@ class PrivateRPC:
         """
 
         method = "private/edit_session_key"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateEditSessionKeyResultSchema)
 
         return result
 
-    def register_scoped_session_key(
+    async def register_scoped_session_key(
         self,
         params: PrivateRegisterScopedSessionKeyParamsSchema,
     ) -> PrivateRegisterScopedSessionKeyResultSchema:
@@ -1854,12 +1854,12 @@ class PrivateRPC:
         """
 
         method = "private/register_scoped_session_key"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateRegisterScopedSessionKeyResultSchema)
 
         return result
 
-    def get_mmp_config(
+    async def get_mmp_config(
         self,
         params: PrivateGetMmpConfigParamsSchema,
     ) -> List[MMPConfigResultSchema]:
@@ -1870,12 +1870,12 @@ class PrivateRPC:
         """
 
         method = "private/get_mmp_config"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, list[MMPConfigResultSchema])
 
         return result
 
-    def set_mmp_config(
+    async def set_mmp_config(
         self,
         params: PrivateSetMmpConfigParamsSchema,
     ) -> PrivateSetMmpConfigResultSchema:
@@ -1886,12 +1886,12 @@ class PrivateRPC:
         """
 
         method = "private/set_mmp_config"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, PrivateSetMmpConfigResultSchema)
 
         return result
 
-    def reset_mmp(
+    async def reset_mmp(
         self,
         params: PrivateResetMmpParamsSchema,
     ) -> Result:
@@ -1903,12 +1903,12 @@ class PrivateRPC:
         """
 
         method = "private/reset_mmp"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, Result)
 
         return result
 
-    def set_cancel_on_disconnect(
+    async def set_cancel_on_disconnect(
         self,
         params: PrivateSetCancelOnDisconnectParamsSchema,
     ) -> Result:
@@ -1919,7 +1919,7 @@ class PrivateRPC:
         """
 
         method = "private/set_cancel_on_disconnect"
-        envelope = self._session._send_request(method, params=params)
+        envelope = await self._session._send_request(method, params=params)
         result = decode_result(envelope, Result)
 
         return result
@@ -1936,7 +1936,7 @@ class PublicChannels:
     def __init__(self, session: WebSocketSession):
         self._session = session
 
-    def auctions_watch(
+    async def auctions_watch(
         self,
         callback: Callable[[List[AuctionResultSchema]], None],
     ) -> SubscriptionResult:
@@ -1951,12 +1951,12 @@ class PublicChannels:
         """
 
         channel = "auctions.watch".format()
-        envelope = self._session.subscribe(channel, callback, List[AuctionResultSchema])
+        envelope = await self._session.subscribe(channel, callback, List[AuctionResultSchema])
         result = decode_result(envelope, SubscriptionResult)
 
         return result
 
-    def margin_watch(
+    async def margin_watch(
         self,
         callback: Callable[[List[MarginWatchResultSchema]], None],
     ) -> SubscriptionResult:
@@ -1971,12 +1971,12 @@ class PublicChannels:
         """
 
         channel = "margin.watch".format()
-        envelope = self._session.subscribe(channel, callback, List[MarginWatchResultSchema])
+        envelope = await self._session.subscribe(channel, callback, List[MarginWatchResultSchema])
         result = decode_result(envelope, SubscriptionResult)
 
         return result
 
-    def orderbook_group_depth_by_instrument_name(
+    async def orderbook_group_depth_by_instrument_name(
         self,
         instrument_name: str,
         group: Group,
@@ -2004,12 +2004,14 @@ class PublicChannels:
             group=group.value if isinstance(group, Enum) else group,
             depth=depth.value if isinstance(depth, Enum) else depth,
         )
-        envelope = self._session.subscribe(channel, callback, OrderbookInstrumentNameGroupDepthPublisherDataSchema)
+        envelope = await self._session.subscribe(
+            channel, callback, OrderbookInstrumentNameGroupDepthPublisherDataSchema
+        )
         result = decode_result(envelope, SubscriptionResult)
 
         return result
 
-    def spot_feed_by_currency(
+    async def spot_feed_by_currency(
         self,
         currency: str,
         callback: Callable[[SpotFeedCurrencyPublisherDataSchema], None],
@@ -2028,7 +2030,7 @@ class PublicChannels:
         channel = "spot_feed.{currency}".format(
             currency=currency.value if isinstance(currency, Enum) else currency,
         )
-        envelope = self._session.subscribe(channel, callback, SpotFeedCurrencyPublisherDataSchema)
+        envelope = await self._session.subscribe(channel, callback, SpotFeedCurrencyPublisherDataSchema)
         result = decode_result(envelope, SubscriptionResult)
 
         return result
@@ -2066,7 +2068,7 @@ class PublicChannels:
 
         return result
 
-    def trades_by_instrument_name(
+    async def trades_by_instrument_name(
         self,
         instrument_name: str,
         callback: Callable[[List[TradePublicResponseSchema]], None],
@@ -2085,12 +2087,12 @@ class PublicChannels:
         channel = "trades.{instrument_name}".format(
             instrument_name=instrument_name.value if isinstance(instrument_name, Enum) else instrument_name,
         )
-        envelope = self._session.subscribe(channel, callback, List[TradePublicResponseSchema])
+        envelope = await self._session.subscribe(channel, callback, List[TradePublicResponseSchema])
         result = decode_result(envelope, SubscriptionResult)
 
         return result
 
-    def trades_by_instrument_type(
+    async def trades_by_instrument_type(
         self,
         instrument_type: AssetType,
         currency: str,
@@ -2112,12 +2114,12 @@ class PublicChannels:
             instrument_type=instrument_type.value if isinstance(instrument_type, Enum) else instrument_type,
             currency=currency.value if isinstance(currency, Enum) else currency,
         )
-        envelope = self._session.subscribe(channel, callback, List[TradePublicResponseSchema])
+        envelope = await self._session.subscribe(channel, callback, List[TradePublicResponseSchema])
         result = decode_result(envelope, SubscriptionResult)
 
         return result
 
-    def trades_tx_status_by_instrument_type(
+    async def trades_tx_status_by_instrument_type(
         self,
         instrument_type: AssetType,
         currency: str,
@@ -2143,7 +2145,7 @@ class PublicChannels:
             currency=currency.value if isinstance(currency, Enum) else currency,
             tx_status=tx_status.value if isinstance(tx_status, Enum) else tx_status,
         )
-        envelope = self._session.subscribe(channel, callback, List[TradeSettledPublicResponseSchema])
+        envelope = await self._session.subscribe(channel, callback, List[TradeSettledPublicResponseSchema])
         result = decode_result(envelope, SubscriptionResult)
 
         return result
@@ -2155,7 +2157,7 @@ class PrivateChannels:
     def __init__(self, session: WebSocketSession):
         self._session = session
 
-    def balances_by_subaccount_id(
+    async def balances_by_subaccount_id(
         self,
         subaccount_id: str,
         callback: Callable[[List[BalanceUpdateSchema]], None],
@@ -2187,7 +2189,7 @@ class PrivateChannels:
         channel = "{subaccount_id}.balances".format(
             subaccount_id=subaccount_id.value if isinstance(subaccount_id, Enum) else subaccount_id,
         )
-        envelope = self._session.subscribe(channel, callback, List[BalanceUpdateSchema])
+        envelope = await self._session.subscribe(channel, callback, List[BalanceUpdateSchema])
         result = decode_result(envelope, SubscriptionResult)
 
         return result
@@ -2219,7 +2221,7 @@ class PrivateChannels:
 
         return result
 
-    def orders_by_subaccount_id(
+    async def orders_by_subaccount_id(
         self,
         subaccount_id: str,
         callback: Callable[[List[OrderResponseSchema]], None],
@@ -2238,12 +2240,12 @@ class PrivateChannels:
         channel = "{subaccount_id}.orders".format(
             subaccount_id=subaccount_id.value if isinstance(subaccount_id, Enum) else subaccount_id,
         )
-        envelope = self._session.subscribe(channel, callback, List[OrderResponseSchema])
+        envelope = await self._session.subscribe(channel, callback, List[OrderResponseSchema])
         result = decode_result(envelope, SubscriptionResult)
 
         return result
 
-    def quotes_by_subaccount_id(
+    async def quotes_by_subaccount_id(
         self,
         subaccount_id: str,
         callback: Callable[[List[QuoteResultSchema]], None],
@@ -2264,12 +2266,12 @@ class PrivateChannels:
         channel = "{subaccount_id}.quotes".format(
             subaccount_id=subaccount_id.value if isinstance(subaccount_id, Enum) else subaccount_id,
         )
-        envelope = self._session.subscribe(channel, callback, List[QuoteResultSchema])
+        envelope = await self._session.subscribe(channel, callback, List[QuoteResultSchema])
         result = decode_result(envelope, SubscriptionResult)
 
         return result
 
-    def trades_by_subaccount_id(
+    async def trades_by_subaccount_id(
         self,
         subaccount_id: str,
         callback: Callable[[List[TradeResponseSchema]], None],
@@ -2288,12 +2290,12 @@ class PrivateChannels:
         channel = "{subaccount_id}.trades".format(
             subaccount_id=subaccount_id.value if isinstance(subaccount_id, Enum) else subaccount_id,
         )
-        envelope = self._session.subscribe(channel, callback, List[TradeResponseSchema])
+        envelope = await self._session.subscribe(channel, callback, List[TradeResponseSchema])
         result = decode_result(envelope, SubscriptionResult)
 
         return result
 
-    def trades_tx_status_by_subaccount_id(
+    async def trades_tx_status_by_subaccount_id(
         self,
         subaccount_id: int,
         tx_status: TxStatus4,
@@ -2315,12 +2317,12 @@ class PrivateChannels:
             subaccount_id=subaccount_id.value if isinstance(subaccount_id, Enum) else subaccount_id,
             tx_status=tx_status.value if isinstance(tx_status, Enum) else tx_status,
         )
-        envelope = self._session.subscribe(channel, callback, List[TradeResponseSchema])
+        envelope = await self._session.subscribe(channel, callback, List[TradeResponseSchema])
         result = decode_result(envelope, SubscriptionResult)
 
         return result
 
-    def rfqs_by_wallet(
+    async def rfqs_by_wallet(
         self,
         wallet: str,
         callback: Callable[[List[RFQResultPublicSchema]], None],
@@ -2339,7 +2341,7 @@ class PrivateChannels:
         channel = "{wallet}.rfqs".format(
             wallet=wallet.value if isinstance(wallet, Enum) else wallet,
         )
-        envelope = self._session.subscribe(channel, callback, List[RFQResultPublicSchema])
+        envelope = await self._session.subscribe(channel, callback, List[RFQResultPublicSchema])
         result = decode_result(envelope, SubscriptionResult)
 
         return result

@@ -74,7 +74,7 @@ class {{ api_prefix }}PublicRPC:
         envelope = decode_envelope(message)
 {%- else %}
         method = "public/{{ method.name }}"
-        envelope = self._session._send_request(method, params=params)
+        envelope = {% if is_async %}await {% endif %}self._session._send_request(method, params=params)
 {%- endif %}
         result = decode_result(envelope, {{ method.result_type | replace('List[', 'list[') }})
 
@@ -111,7 +111,7 @@ class {{ api_prefix }}PrivateRPC:
         envelope = decode_envelope(message)
 {%- else %}
         method = "private/{{ method.name }}"
-        envelope = self._session._send_request(method, params=params)
+        envelope = {% if is_async %}await {% endif %}self._session._send_request(method, params=params)
 {%- endif %}
         result = decode_result(envelope, {{ method.result_type | replace('List[', 'list[') }})
 
@@ -131,7 +131,7 @@ class {{ api_prefix }}PublicChannels:
         self._session = session
 
 {% for channel in public_channels %}
-    def {{ channel.name }}(
+    {% if is_async %}async {% endif %}def {{ channel.name }}(
         self,
         {% for param in channel.params -%}
         {{ param.name }}: {{ param.type_annotation }},
@@ -157,7 +157,7 @@ class {{ api_prefix }}PublicChannels:
             {{ param.name }}={{ param.name }}.value if isinstance({{ param.name }}, Enum) else {{ param.name }},
             {% endfor -%}
         )
-        envelope = self._session.subscribe(channel, callback, {{ channel.notification_data_type }})
+        envelope = {% if is_async %}await {% endif %}self._session.subscribe(channel, callback, {{ channel.notification_data_type }})
         result = decode_result(envelope, SubscriptionResult)
 
         return result
@@ -171,7 +171,7 @@ class {{ api_prefix }}PrivateChannels:
         self._session = session
 
 {% for channel in private_channels %}
-    def {{ channel.name }}(
+    {% if is_async %}async {% endif %}def {{ channel.name }}(
         self,
         {% for param in channel.params -%}
         {{ param.name }}: {{ param.type_annotation }},
@@ -197,7 +197,7 @@ class {{ api_prefix }}PrivateChannels:
             {{ param.name }}={{ param.name }}.value if isinstance({{ param.name }}, Enum) else {{ param.name }},
             {% endfor -%}
         )
-        envelope = self._session.subscribe(channel, callback, {{ channel.notification_data_type }})
+        envelope = {% if is_async %}await {% endif %}self._session.subscribe(channel, callback, {{ channel.notification_data_type }})
         result = decode_result(envelope, SubscriptionResult)
 
         return result
