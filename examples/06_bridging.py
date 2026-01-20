@@ -26,6 +26,7 @@ For sophisticated error handling and automation, use this programmatic API.
 from pathlib import Path
 
 import rich_click as click
+from rich import print
 
 from derive_client import HTTPClient
 from derive_client.cli._bridge import EnumChoice
