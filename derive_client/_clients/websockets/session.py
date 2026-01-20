@@ -1,15 +1,15 @@
 """
-Synchronous WebSocket session with automatic reconnection and auth hook.
+Asynchronous WebSocket session with automatic reconnection and auth hook.
 """
 
 from __future__ import annotations
 
 import asyncio
-import time
+import contextlib
 import uuid
 import weakref
 from logging import Logger
-from typing import Any, Callable, Optional, Type, TypeVar
+from typing import Any, Awaitable, Callable, Optional, Type, TypeVar
 
 import msgspec
 from msgspec import ValidationError
@@ -17,12 +17,12 @@ from websockets import Data
 from websockets.asyncio.client import ClientConnection, connect
 from websockets.exceptions import ConnectionClosed
 
-
 from derive_client._clients.utils import JSONRPCEnvelope, decode_envelope
 from derive_client.utils.logger import get_logger
 
 MessageT = TypeVar('MessageT')
-Handler = Callable[[MessageT], None]
+# Support both sync and async handlers
+Handler = Callable[[MessageT], None] | Callable[[MessageT], Awaitable[None]]
 
 
 class Subscribe(msgspec.Struct):
@@ -60,7 +60,7 @@ class ConnectionState:
 
 
 class WebSocketSession:
-    """Synchronous WebSocket session with automatic reconnection."""
+    """Asynchronous WebSocket session with automatic reconnection."""
 
     def __init__(
         self,
@@ -73,6 +73,7 @@ class WebSocketSession:
         on_disconnect: Callable[[], None] | None = None,
         on_reconnect: Callable[[], None] | None = None,
         on_before_resubscribe: Callable[[], None] | None = None,
+        max_handler_tasks: int = 100,  # Limit concurrent handler tasks
     ):
         """
         Args:
@@ -85,6 +86,7 @@ class WebSocketSession:
             on_disconnect: Callback when disconnection is detected
             on_reconnect: Callback after successful reconnection (before resubscribe)
             on_before_resubscribe: Callback before resubscribing channels (for re-auth)
+            max_handler_tasks: Maximum number of concurrent handler tasks
         """
         self._url = url
         self._request_timeout = request_timeout
@@ -107,23 +109,28 @@ class WebSocketSession:
         self._state = ConnectionState()
 
         # Message routing - ONE handler per channel
-        self._handlers: dict[str, Callable[[Any], None]] = {}
+        self._handlers: dict[str, Handler] = {}
         self._handlers_lock = asyncio.Lock()
 
         # RPC tracking
         self._pending_requests: dict[str | int, asyncio.Queue] = {}
         self._requests_lock = asyncio.Lock()
 
-        # Background threads
-        self._receiver_thread: asyncio.Task | None = None
-        self._reconnect_thread: asyncio.Task | None = None
+        # Background tasks
+        self._receiver_task: asyncio.Task | None = None
+        self._reconnect_task: asyncio.Task | None = None
         self._stop_event = asyncio.Event()
+
+        # Handler task management
+        self._handler_tasks: set[asyncio.Task] = set()
+        self._max_handler_tasks = max_handler_tasks
+        self._handler_semaphore = asyncio.Semaphore(max_handler_tasks)
 
         # Cleanup
         self._finalizer = weakref.finalize(self, self._finalize, logger=self._logger)
 
     async def open(self) -> None:
-        """Establish WebSocket connection and start receiver thread."""
+        """Establish WebSocket connection and start receiver task."""
         if await self._state.is_connected():
             self._logger.warning("WebSocket already connected")
             return
@@ -131,8 +138,8 @@ class WebSocketSession:
         await self._connect()
 
     async def close(self) -> None:
-        """Close connection and stop all threads. Idempotent."""
-        if self._ws is None and not self._state.is_reconnecting():
+        """Close connection and stop all tasks. Idempotent."""
+        if self._ws is None and not await self._state.is_reconnecting():
             return
 
         self._logger.info("Closing WebSocket session")
@@ -141,15 +148,27 @@ class WebSocketSession:
         # Close WebSocket
         await self._close_connection()
 
-        # Join threads
-        for task in [self._receiver_thread, self._reconnect_thread]:
-            if task and task.done() is False:
+        # Cancel background tasks
+        for task in [self._receiver_task, self._reconnect_task]:
+            if task and not task.done():
                 task.cancel()
-                if task.done() is False:
-                    self._logger.warning(f"Task {task} did not stop cleanly")
+                with contextlib.suppress(asyncio.CancelledError):
+                    await task
 
-        self._receiver_thread = None
-        self._reconnect_thread = None
+        self._receiver_task = None
+        self._reconnect_task = None
+
+        # Wait for handler tasks to complete (with timeout)
+        if self._handler_tasks:
+            self._logger.info(f"Waiting for {len(self._handler_tasks)} handler tasks to complete")
+            try:
+                await asyncio.wait_for(asyncio.gather(*self._handler_tasks, return_exceptions=True), timeout=5.0)
+            except asyncio.TimeoutError:
+                self._logger.warning("Handler tasks did not complete in time, cancelling")
+                for task in self._handler_tasks:
+                    task.cancel()
+
+        self._handler_tasks.clear()
 
         # Clear state
         await self._state.set_disconnected()
@@ -179,7 +198,7 @@ class WebSocketSession:
 
         Args:
             channel: Channel name (e.g., "BTC-PERP.trades")
-            handler: Callback function(data) to handle messages
+            handler: Callback function(data) or async function to handle messages
             notification_type: Type to decode notifications into
 
         Returns:
@@ -205,7 +224,7 @@ class WebSocketSession:
         self._logger.info(f"Subscribing to channel: {channel}")
         try:
             envelope = await self._send_request("subscribe", params=params)
-            self._logger.info(f"Subscribe RPC response for {channel}: {envelope}")
+            self._logger.debug(f"Subscribe RPC response for {channel}: {envelope}")
             return envelope
         except Exception:
             # Rollback handler registration on failure
@@ -241,7 +260,7 @@ class WebSocketSession:
             raise
 
     async def _connect(self) -> None:
-        """Establish WebSocket connection and start receiver thread."""
+        """Establish WebSocket connection and start receiver task."""
         self._logger.info(f"Connecting to {self._url}")
 
         try:
@@ -257,13 +276,11 @@ class WebSocketSession:
 
         await self._state.set_connected()
 
-        # Start receiver thread
+        # Start receiver task
         self._stop_event.clear()
-        self._receiver_thread = asyncio.create_task(
-            self._receive_loop(),
-        )
+        self._receiver_task = asyncio.create_task(self._receive_loop(), name="ws-receiver")
 
-        self._logger.info("WebSocket connected, receiver thread started")
+        self._logger.info("WebSocket connected, receiver task started")
 
     async def _close_connection(self) -> None:
         """Close the WebSocket connection."""
@@ -293,9 +310,9 @@ class WebSocketSession:
                 self._logger.error(f"Error in on_disconnect callback: {e}")
 
         # Start reconnection if enabled
-        if self._reconnect_enabled and not self._state.is_reconnecting():
+        if self._reconnect_enabled and not await self._state.is_reconnecting():
             await self._state.set_reconnecting()
-            self._reconnect_thread = asyncio.create_task(
+            self._reconnect_task = asyncio.create_task(
                 self._reconnect_loop(),
                 name="ws-reconnect",
             )
@@ -305,7 +322,7 @@ class WebSocketSession:
         delay = self._reconnect_delay
         attempt = 1
 
-        while not self._stop_event.is_set() and not self._state.is_connected():
+        while not self._stop_event.is_set() and not await self._state.is_connected():
             self._logger.info(f"Reconnection attempt {attempt} in {delay:.1f}s")
             await asyncio.sleep(delay)
 
@@ -401,7 +418,7 @@ class WebSocketSession:
             try:
                 envelope = await asyncio.wait_for(response_queue.get(), timeout=self._request_timeout)
                 return envelope
-            except asyncio.QueueEmpty:
+            except asyncio.TimeoutError:
                 self._logger.error(f"RPC timeout for {method} after {self._request_timeout}s")
                 raise TimeoutError(f"RPC timeout after {self._request_timeout}s")
 
@@ -410,14 +427,15 @@ class WebSocketSession:
                 self._pending_requests.pop(request_id, None)
 
     async def _receive_loop(self) -> None:
-        """Background thread: continuously receive and dispatch messages."""
-        self._logger.info("Receiver thread started")
+        """Background task: continuously receive and dispatch messages."""
+        self._logger.info("Receiver task started")
 
         try:
             while not self._stop_event.is_set() and self._ws:
                 try:
                     message = await self._ws.recv()
-                    await self._dispatch_message(message)
+                    # Dispatch as a task so we don't block receiving
+                    asyncio.create_task(self._dispatch_message(message))
 
                 except TimeoutError:
                     continue
@@ -434,11 +452,15 @@ class WebSocketSession:
                     break
 
         finally:
-            self._logger.info("Receiver thread stopped")
+            self._logger.info("Receiver task stopped")
 
     async def _dispatch_message(self, data: Data) -> None:
         """Dispatch message to appropriate handler."""
-        envelope = decode_envelope(data)
+        try:
+            envelope = decode_envelope(data)
+        except Exception as e:
+            self._logger.error(f"Failed to decode envelope: {e}")
+            return
 
         # RPC response
         if envelope.id is not msgspec.UNSET:
@@ -469,14 +491,15 @@ class WebSocketSession:
 
             async with self._handlers_lock:
                 handler = self._handlers.get(channel)
-                async with self._channel_types_lock:
-                    notification_type = self._channel_types.get(channel)
+
+            async with self._channel_types_lock:
+                notification_type = self._channel_types.get(channel)
 
             if not handler:
                 self._logger.debug(f"No handler for channel: {channel}")
                 return
 
-            # Decode and invoke handler
+            # Decode notification
             data_raw = params_dict.get("data")
             try:
                 notification = msgspec.convert(data_raw, type=notification_type)
@@ -484,15 +507,31 @@ class WebSocketSession:
                 self._logger.error(f"Notification decode error for {channel}: {e} data: {data_raw}", exc_info=True)
                 return
 
-            try:
-                print(f"Dispatching notification for channel: {channel}")
-                handler(notification)
-            except Exception as e:
-                self._logger.error(f"Handler error for {channel}: {e}", exc_info=True)
+            # Invoke handler as task
+            await self._invoke_handler(channel, handler, notification)
             return
 
         # Other notification
         self._logger.debug(f"Unhandled notification: {envelope.method}")
+
+    async def _invoke_handler(self, channel: str, handler: Handler, notification: Any) -> None:
+        """Invoke handler as a background task with concurrency control."""
+        async with self._handler_semaphore:
+            task = asyncio.create_task(self._run_handler(channel, handler, notification), name=f"handler-{channel}")
+            self._handler_tasks.add(task)
+            task.add_done_callback(self._handler_tasks.discard)
+
+    async def _run_handler(self, channel: str, handler: Handler, notification: Any) -> None:
+        """Run handler (sync or async) and catch exceptions."""
+        try:
+            if asyncio.iscoroutinefunction(handler):
+                await handler(notification)
+            else:
+                # Run sync handler in executor to avoid blocking
+                loop = asyncio.get_event_loop()
+                await loop.run_in_executor(None, handler, notification)
+        except Exception as e:
+            self._logger.error(f"Handler error for {channel}: {e}", exc_info=True)
 
     @staticmethod
     def _finalize(logger: Logger) -> None:

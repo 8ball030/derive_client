@@ -3,21 +3,19 @@ Create an rfq using the REST API.
 """
 
 import asyncio
-from datetime import UTC, datetime
-from time import sleep
 from typing import List
 
 import rich_click as click
 from config import OWNER_TEST_WALLET, SESSION_KEY_PRIVATE_KEY, TAKER_SUBACCOUNT_ID
+from rich import print
 
 from derive_client import WebSocketClient
 from derive_client.data_types import Environment
-from derive_client.data_types.channel_models import BestQuoteChannelResultSchema, Interval
+from derive_client.data_types.channel_models import BestQuoteChannelResultSchema
 from derive_client.data_types.generated_models import AssetType, Direction, LegUnpricedSchema
 from derive_client.data_types.utils import D
 
 SLEEP_TIME = 1
-
 
 
 async def main(
@@ -66,29 +64,18 @@ async def main(
         """
         Handle a new quote received for the RFQ.
         """
-        print(f"Received {len(quotes)} quotes")
         for quote in quotes:
             if quote.result and quote.result.best_quote:
                 print(f"New best quote received: {quote.result.best_quote}")
 
-    def on_ticker_update(ticker):
-        """
-        Handle ticker updates.
-        """
-        print(f"Ticker update: {ticker}")
-
-    await client.public_channels.ticker_slim_interval_by_instrument_name(
-        interval=Interval.field_100,
-        instrument_name=instrument, callback=on_ticker_update
+    await client.private_channels.best_quotes_by_subaccount_id(
+        subaccount_id=str(TAKER_SUBACCOUNT_ID),
+        callback=on_new_quote,
     )
 
-
-    start_time = datetime.now(UTC).timestamp()
-    end_time = start_time + 30  # run for 30 seconds
-
-    while datetime.now(UTC).timestamp() < end_time:
-        sleep(1)
+    await asyncio.sleep(30)
     print("Final quotes:")
+
 
 @click.group()
 def rfq():
