@@ -173,7 +173,7 @@ class WebSocketClient:
         """Get the LightAccount instance."""
 
         if self._light_account is None:
-            self._light_account = self._instantiate_account()
+            raise RuntimeError("Account not initialized. Call connect() first.")
         return self._light_account
 
     @property
@@ -181,20 +181,23 @@ class WebSocketClient:
         """Get the currently active subaccount."""
 
         if (subaccount := self._subaccounts.get(self._subaccount_id)) is None:
-            subaccount = self.fetch_subaccount(subaccount_id=self._subaccount_id)
+            raise RuntimeError("Specified subaccount not initialized. Call connect() first.")
         return subaccount
 
-    def fetch_subaccount(self, subaccount_id: int) -> Subaccount:
+    async def fetch_subaccount(self, subaccount_id: int) -> Subaccount:
         """Fetch a subaccount from API and cache it."""
 
-        self._subaccounts[subaccount_id] = self._instantiate_subaccount(subaccount_id)
+        self._subaccounts[subaccount_id] = await self._instantiate_subaccount(subaccount_id)
         return self._subaccounts[subaccount_id]
 
-    def fetch_subaccounts(self) -> list[Subaccount]:
+    async def fetch_subaccounts(self) -> list[Subaccount]:
         """Fetch subaccounts from API and cache them."""
 
-        account_subaccounts = self.account.get_subaccounts()
-        return sorted(self.fetch_subaccount(sid) for sid in account_subaccounts.subaccount_ids)
+        account_subaccounts = await self.account.get_subaccounts()
+        subaccounts = []
+        for sid in account_subaccounts.subaccount_ids:
+            subaccounts.append(await self.fetch_subaccount(sid))
+        return sorted(subaccounts)
 
     @property
     def cached_subaccounts(self) -> list[Subaccount]:
@@ -227,7 +230,7 @@ class WebSocketClient:
         return self.active_subaccount.orders
 
     @property
-    def positions(self) -> PositionOperations:
+    async def positions(self) -> PositionOperations:
         """View and manage positions."""
 
         return self.active_subaccount.positions

@@ -116,7 +116,8 @@ sync-ws-tests:
 		--exclude='__init__.py' \
 		--exclude='conftest.py' \
 		--exclude='test_api.py' \
-		tests/test_clients/test_rest/test_http/ \
+		--exclude='__pycache__/' \
+		tests/test_clients/test_rest/test_async_http/ \
 		tests/test_clients/test_websocket/
 	@echo "Done."
 

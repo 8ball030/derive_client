@@ -6,10 +6,11 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import inspect
 import uuid
 import weakref
 from logging import Logger
-from typing import Any, Awaitable, Callable, Optional, Type, TypeVar
+from typing import Any, Awaitable, Callable, Optional, Type, TypeVar, cast
 
 import msgspec
 from msgspec import ValidationError
@@ -24,6 +25,7 @@ MessageT = TypeVar('MessageT')
 # Support both sync and async handlers
 Handler = Callable[[MessageT], None] | Callable[[MessageT], Awaitable[None]]
 
+LifecycleCallback = Callable[[], None] | Callable[[], Awaitable[None]]
 
 class Subscribe(msgspec.Struct):
     channels: list[str]
@@ -61,6 +63,9 @@ class ConnectionState:
 
 class WebSocketSession:
     """Asynchronous WebSocket session with automatic reconnection."""
+    _on_disconnect: LifecycleCallback | None
+    _on_reconnect: LifecycleCallback | None
+    _on_before_resubscribe: LifecycleCallback | None
 
     def __init__(
         self,
@@ -70,9 +75,9 @@ class WebSocketSession:
         reconnect_delay: float = 1.0,
         max_reconnect_delay: float = 60.0,
         logger: Logger | None = None,
-        on_disconnect: Callable[[], None] | None = None,
-        on_reconnect: Callable[[], None] | None = None,
-        on_before_resubscribe: Callable[[], None] | None = None,
+        on_disconnect: LifecycleCallback | None = None,
+        on_reconnect: LifecycleCallback | None = None,
+        on_before_resubscribe: LifecycleCallback | None = None,
         max_handler_tasks: int = 100,  # Limit concurrent handler tasks
     ):
         """
@@ -303,9 +308,11 @@ class WebSocketSession:
         self._logger.warning("WebSocket disconnected")
 
         # Notify user callback
-        if self._on_disconnect:
+        if self._on_disconnect is not None:
             try:
-                self._on_disconnect()
+                res = self._on_disconnect()
+                if inspect.isawaitable(res):
+                    await cast(Awaitable[None], res)
             except Exception as e:
                 self._logger.error(f"Error in on_disconnect callback: {e}")
 
@@ -337,17 +344,21 @@ class WebSocketSession:
                 await self._connect()
 
                 # Call reconnect callback (for re-auth, etc.)
-                if self._on_reconnect:
+                if self._on_reconnect is not None:
                     try:
-                        self._on_reconnect()
+                        res = self._on_reconnect()
+                        if inspect.isawaitable(res):
+                            await cast(Awaitable[None], res)
                     except Exception as e:
                         self._logger.error(f"Error in on_reconnect callback: {e}")
                         # Don't fail reconnection if callback fails
 
                 # Call before_resubscribe callback (for re-authentication)
-                if self._on_before_resubscribe:
+                if self._on_before_resubscribe is not None:
                     try:
-                        self._on_before_resubscribe()
+                        res = self._on_before_resubscribe()
+                        if inspect.isawaitable(res):
+                            await cast(Awaitable[None], res)
                     except Exception as e:
                         self._logger.error(f"Error in on_before_resubscribe callback: {e}")
                         raise  # Re-auth failure should trigger retry
