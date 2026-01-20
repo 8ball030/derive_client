@@ -3,7 +3,6 @@ E2E test for WebSocket reconnection logic.
 """
 
 import asyncio
-import time
 
 import pytest
 

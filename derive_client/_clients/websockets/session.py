@@ -27,6 +27,7 @@ Handler = Callable[[MessageT], None] | Callable[[MessageT], Awaitable[None]]
 
 LifecycleCallback = Callable[[], None] | Callable[[], Awaitable[None]]
 
+
 class Subscribe(msgspec.Struct):
     channels: list[str]
 
@@ -63,6 +64,7 @@ class ConnectionState:
 
 class WebSocketSession:
     """Asynchronous WebSocket session with automatic reconnection."""
+
     _on_disconnect: LifecycleCallback | None
     _on_reconnect: LifecycleCallback | None
     _on_before_resubscribe: LifecycleCallback | None

@@ -1,4 +1,3 @@
-import pytest
 import pytest_asyncio
 
 from derive_client._clients.websockets.client import WebSocketClient
