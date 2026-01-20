@@ -8,14 +8,12 @@ import msgspec
 from derive_client._clients.utils import decode_result
 from derive_client._clients.websockets.session import WebSocketSession
 from derive_client.data_types.channel_models import (
-    AuctionResultSchema as AuctionResultSchemaChannel,
-)
-from derive_client.data_types.channel_models import (
+    AssetType,
+    AuctionResultSchema,
     BalanceUpdateSchema,
     BestQuoteChannelResultSchema,
     Depth,
     Group,
-    InstrumentType,
     Interval,
     MarginWatchResultSchema,
     OrderbookInstrumentNameGroupDepthPublisherDataSchema,
@@ -27,12 +25,10 @@ from derive_client.data_types.channel_models import (
     TradePublicResponseSchema,
     TradeResponseSchema,
     TradeSettledPublicResponseSchema,
-    TxStatus2,
+    TxStatus4,
 )
 from derive_client.data_types.generated_models import (
-    AuctionResultSchema as AuctionResultSchemaRPC,
-)
-from derive_client.data_types.generated_models import (
+    AuctionHistoryResultSchema,
     CurrencyDetailedResponseSchema,
     InstrumentPublicResponseSchema,
     MMPConfigResultSchema,
@@ -1758,14 +1754,14 @@ class PrivateRPC:
     def get_liquidation_history(
         self,
         params: PrivateGetLiquidationHistoryParamsSchema,
-    ) -> List[AuctionResultSchemaRPC]:
+    ) -> List[AuctionHistoryResultSchema]:
         """
         Required minimum session key permission level is `read_only`
         """
 
         method = "private/get_liquidation_history"
         envelope = self._session._send_request(method, params=params)
-        result = decode_result(envelope, list[AuctionResultSchemaRPC])
+        result = decode_result(envelope, list[AuctionHistoryResultSchema])
 
         return result
 
@@ -1942,7 +1938,7 @@ class PublicChannels:
 
     def auctions_watch(
         self,
-        callback: Callable[[List[AuctionResultSchemaChannel]], None],
+        callback: Callable[[List[AuctionResultSchema]], None],
     ) -> SubscriptionResult:
         """
         Subscribe to state of ongoing auctions.
@@ -1955,7 +1951,7 @@ class PublicChannels:
         """
 
         channel = "auctions.watch".format()
-        envelope = self._session.subscribe(channel, callback, List[AuctionResultSchemaChannel])
+        envelope = self._session.subscribe(channel, callback, List[AuctionResultSchema])
         result = decode_result(envelope, SubscriptionResult)
 
         return result
@@ -2096,7 +2092,7 @@ class PublicChannels:
 
     def trades_by_instrument_type(
         self,
-        instrument_type: InstrumentType,
+        instrument_type: AssetType,
         currency: str,
         callback: Callable[[List[TradePublicResponseSchema]], None],
     ) -> SubscriptionResult:
@@ -2123,9 +2119,9 @@ class PublicChannels:
 
     def trades_tx_status_by_instrument_type(
         self,
-        instrument_type: InstrumentType,
+        instrument_type: AssetType,
         currency: str,
-        tx_status: TxStatus2,
+        tx_status: TxStatus4,
         callback: Callable[[List[TradeSettledPublicResponseSchema]], None],
     ) -> SubscriptionResult:
         """
@@ -2300,7 +2296,7 @@ class PrivateChannels:
     def trades_tx_status_by_subaccount_id(
         self,
         subaccount_id: int,
-        tx_status: TxStatus2,
+        tx_status: TxStatus4,
         callback: Callable[[List[TradeResponseSchema]], None],
     ) -> SubscriptionResult:
         """

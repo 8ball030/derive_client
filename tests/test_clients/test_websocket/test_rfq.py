@@ -5,8 +5,8 @@ from decimal import Decimal
 
 from derive_client.config import INT64_MAX
 from derive_client.data_types.generated_models import (
+    AssetType,
     Direction,
-    InstrumentType,
     LegPricedSchema,
     LegUnpricedSchema,
     LiquidityRole,
@@ -39,7 +39,7 @@ def _create_unpriced_legs(client):
     direction = Direction.buy
     instruments = client.markets.get_instruments(
         currency=currency,
-        instrument_type=InstrumentType.option,
+        instrument_type=AssetType.option,
         expired=False,
     )
     active_instruments = [instrument for instrument in instruments if instrument.is_active]

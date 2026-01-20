@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 import rich_click as click
 
-from derive_client.data_types import InstrumentType
+from derive_client.data_types import AssetType
 
 from ._columns import CURRENCY_COLUMNS, INSTRUMENT_COLUMNS
 from ._utils import struct_to_series, structs_to_dataframe
@@ -73,7 +73,7 @@ def currency(ctx, currency, all):
 @click.option(
     "--type",
     "-t",
-    type=click.Choice([x.name for x in InstrumentType]),
+    type=click.Choice([x.name for x in AssetType]),
     help="Instrument type for bulk query",
 )
 @click.option(
@@ -126,7 +126,7 @@ def instrument(ctx, instrument_name, currency, type, expired):
             print(struct_to_series(series.option_details).to_string(index=True))
 
     else:
-        instrument_type = InstrumentType[type]
+        instrument_type = AssetType[type]
         instruments = client.markets.get_instruments(
             currency=currency,
             expired=expired,
@@ -148,7 +148,7 @@ def instrument(ctx, instrument_name, currency, type, expired):
 @click.option(
     "--type",
     "-t",
-    type=click.Choice([x.name for x in InstrumentType]),
+    type=click.Choice([x.name for x in AssetType]),
     help="Instrument type (required)",
 )
 @click.option(
@@ -220,17 +220,17 @@ def ticker(ctx, instrument_name, currency, type, expiry_date, expired):
             click.echo("Run 'drv market ticker --help' for examples")
             ctx.exit(1)
 
-        instrument_type = InstrumentType[type]
+        instrument_type = AssetType[type]
 
         # Validate parameters based on instrument type
-        if instrument_type == InstrumentType.option:
+        if instrument_type == AssetType.option:
             if not currency:
                 click.echo("Error: --currency is required for options")
                 ctx.exit(1)
             if not expiry_date:
                 click.echo("Error: --expiry-date is required for options")
                 ctx.exit(1)
-        elif instrument_type in [InstrumentType.perp, InstrumentType.erc20]:
+        elif instrument_type in [AssetType.perp, AssetType.erc20]:
             if expiry_date:
                 click.echo(f"Error: --expiry-date is not allowed for {type}")
                 ctx.exit(1)

@@ -15,7 +15,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from derive_client import HTTPClient
-from derive_client.data_types import InstrumentType
+from derive_client.data_types import AssetType
 
 # Setup
 env_file = Path(__file__).parent.parent / ".env.template"
@@ -37,7 +37,7 @@ print("  ...")
 eth_perps = client.markets.get_instruments(
     currency="ETH",
     expired=False,
-    instrument_type=InstrumentType.perp,
+    instrument_type=AssetType.perp,
 )
 print(f"\nETH perpetuals: {len(eth_perps)}")
 for perp in eth_perps:
@@ -46,7 +46,7 @@ for perp in eth_perps:
 eth_options = client.markets.get_instruments(
     currency="ETH",
     expired=False,
-    instrument_type=InstrumentType.option,
+    instrument_type=AssetType.option,
 )
 print(f"\nETH options: {len(eth_options)} active")
 
@@ -62,8 +62,8 @@ print("\nBid-Ask Spreads (lower = better liquidity):")
 
 # Fetch all perp tickers efficiently
 # Note: We need to fetch tickers per currency since get_tickers requires currency for perps
-eth_tickers = client.markets.get_tickers(instrument_type=InstrumentType.perp, currency="ETH")
-btc_tickers = client.markets.get_tickers(instrument_type=InstrumentType.perp, currency="BTC")
+eth_tickers = client.markets.get_tickers(instrument_type=AssetType.perp, currency="ETH")
+btc_tickers = client.markets.get_tickers(instrument_type=AssetType.perp, currency="BTC")
 all_tickers = {**eth_tickers, **btc_tickers}
 
 for instrument in perp_names:

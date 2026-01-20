@@ -18,7 +18,7 @@ Prerequisites:
 from pathlib import Path
 
 from derive_client import HTTPClient
-from derive_client.data_types import D, Direction, InstrumentType, OrderType
+from derive_client.data_types import AssetType, D, Direction, OrderType
 
 # Initialize client
 env_file = Path(__file__).parent.parent / ".env.template"
@@ -65,7 +65,7 @@ print("=" * 60)
 
 # View ETH perpetual market
 # Using get_tickers instead of deprecated get_ticker
-tickers = client.markets.get_tickers(instrument_type=InstrumentType.perp, currency="ETH")
+tickers = client.markets.get_tickers(instrument_type=AssetType.perp, currency="ETH")
 ticker = tickers["ETH-PERP"]
 
 print("\nETH-PERP")
