@@ -1,4 +1,5 @@
 import asyncio
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import List
 
@@ -6,6 +7,7 @@ from dotenv import load_dotenv
 from utils import get_default_position
 
 from derive_client import WebSocketClient
+from derive_client._clients.utils import DeriveJSONRPCError
 from derive_client.data_types.channel_models import (
     Depth,
     Group,
@@ -68,6 +70,7 @@ class WebsocketQuoterStrategy:
         Direction.buy: asyncio.Lock(),
         Direction.sell: asyncio.Lock(),
     }
+    throttled_until: None | float = None
 
     def __init__(self, ws_client: WebSocketClient):
         self.ws_client = ws_client
@@ -134,12 +137,36 @@ class WebsocketQuoterStrategy:
             return
         if self.current_position is None:
             return
+        if self.throttled_until is not None:
+            if ob.timestamp < self.throttled_until:
+                return
+            else:
+                self.throttled_until = None
 
         bid = ob.bids[0][0]
         ask = ob.asks[0][0]
 
-        await self.maybe_place_or_requote(Direction.buy, bid, ask)
-        await self.maybe_place_or_requote(Direction.sell, bid, ask)
+        try:
+            await self.maybe_place_or_requote(Direction.buy, bid, ask)
+            await self.maybe_place_or_requote(Direction.sell, bid, ask)
+        except DeriveJSONRPCError as e:
+            if "Rate limit exceeded" in str(e):
+                self.logger.warning("Rate limit exceeded, throttling order updates.")
+                if e.rpc_error.data:
+                    ms_to_wait = e.rpc_error.data.split(" ")[2]
+                    self.throttled_until = datetime.now(UTC).timestamp() + int(ms_to_wait)
+            elif "Does not exist" in str(e):
+                self.logger.error(f"Error placing/replacing order due to filled order: {e}")
+                if not e.rpc_error.data:
+                    self.logger.error("No order ID found in error data.")
+                    return
+                order_id = e.rpc_error.data.split()[-4]
+                for side in [Direction.buy, Direction.sell]:
+                    existing = self.order[side]
+                    if existing is not None and existing.order_id == order_id:
+                        self.order[side] = None
+            else:
+                self.logger.error(f"Error placing/replacing order: {e}")
 
     async def maybe_place_or_requote(self, side: Direction, bid: Decimal, ask: Decimal):
         async with self.lock[side]:
@@ -225,11 +252,11 @@ class WebsocketQuoterStrategy:
         # If you only care about take-profit orders on your ENTRY_LABEL fills,
         # you can skip refreshing positions here and do it in on_order(filled).
         for t in trades:
+            if t.label != ENTRY_LABEL:
+                continue
             self.logger.info(
                 f"Trade executed: {t.trade_id} {t.direction} {t.trade_price} {t.trade_amount} on order {t.order_id}"
             )
-            if t.label != ENTRY_LABEL:
-                continue
 
             tp_side = Direction.sell if t.direction == Direction.buy else Direction.buy
             tp_price = (
@@ -238,14 +265,28 @@ class WebsocketQuoterStrategy:
                 else t.trade_price * (D(1) - BUY_OFFSET)
             )
 
-            await self.ws_client.orders.create(
-                instrument_name=MARKET_1,
-                direction=tp_side,
-                limit_price=tp_price,
-                amount=t.trade_amount,
-                order_type=OrderType.limit,
-                label=TP_LABEL,
-            )
+            try:
+                result = await self.ws_client.orders.create(
+                    instrument_name=MARKET_1,
+                    direction=tp_side,
+                    limit_price=tp_price,
+                    amount=t.trade_amount,
+                    order_type=OrderType.limit,
+                    label=TP_LABEL,
+                )
+                self.logger.info(
+                    f"Take-profit order placed: {result.nonce} {tp_side.value} at {tp_price} for {t.trade_amount}"
+                )
+            except DeriveJSONRPCError as e:
+                self.logger.error(f"Error placing take-profit order: {e}")
+                # we now check for rate limits as well
+                if "Rate limit exceeded" in str(e):
+                    self.logger.warning("Rate limit exceeded while placing take-profit order.")
+                    if e.rpc_error.data:
+                        ms_to_wait = e.rpc_error.data.split(" ")[2]
+                        self.throttled_until = datetime.now(UTC).timestamp() + int(ms_to_wait)
+                        await asyncio.sleep(int(ms_to_wait) / 1000)
+                        await self.on_trade([t])  # retry once after wait
 
 
 async def main():
