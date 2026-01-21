@@ -1175,6 +1175,7 @@
             "string",
             "null"
           ],
+          "nullable": true,
           "default": null,
           "enum": [
             "Account is currently under maintenance margin requirements, trading is frozen.",
