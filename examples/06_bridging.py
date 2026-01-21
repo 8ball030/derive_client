@@ -23,15 +23,24 @@ For simpler workflows, consider using the derive_client CLI tool.
 For sophisticated error handling and automation, use this programmatic API.
 """
 
+from enum import StrEnum
 from pathlib import Path
 
 import rich_click as click
+from rich import print
 
 from derive_client import HTTPClient
 from derive_client.cli._bridge import EnumChoice
 from derive_client.cli._utils import rich_prepared_tx
 from derive_client.data_types import ChainID, Currency, D
 from derive_client.exceptions import PartialBridgeResult
+
+
+class BridgeOperation(StrEnum):
+    GAS_FUNDING = "gas_funding"
+    DEPOSIT = "deposit"
+    WITHDRAWAL = "withdrawal"
+
 
 # ⚠️  Bridging only available in PROD!
 default = Path(__file__).parent.parent / ".env"
@@ -52,30 +61,34 @@ print("  2. submit_tx   → Execute transaction (returns immediately)")
 print("  3. poll_tx     → Wait for finality on both chains (can take minutes)")
 print("\nLet's begin...\n")
 
+
 print("=" * 60)
-print("1. GAS FUNDING: ETH FROM MAINNET TO DERIVE EOA")
+print("SELECT BRIDGE OPERATION")
 print("=" * 60)
 
-# Your EOA on Derive needs ETH for gas when withdrawing assets back to external chains
-# This is a one-time setup (or occasional top-up)
-print("\nWhy this matters:")
-print("  • Trading on Derive is gasless (paymaster covers fees)")
-print("  • But withdrawing to external chains requires ETH in your EOA for gas")
-print("  • This operation bridges native ETH specifically for gas funding")
-
+operation = click.prompt(
+    "Which operation do you want to perform?",
+    type=EnumChoice(BridgeOperation),
+)
 
 # Withdrawal costs to bridge from Derive to an external chain are typically low.
 # In order to get an estimate of how many such transactions this amount of ETH can support,
 # we recommend to inspect such the cost of recent transactions, to the external chain of interest, on-chain.
-amount_eth = click.prompt(
-    "Enter amount of native ETH to bridge from Mainnet for gas funding (0 to skip, recommended: 0.001)",
-    type=D,
-    default=D("0"),
-    show_default=True,
-)
+if operation is BridgeOperation.GAS_FUNDING:
+    print("\n" + "=" * 60)
+    print("GAS FUNDING: ETH FROM MAINNET TO DERIVE EOA")
+    print("=" * 60)
 
-if amount_eth > 0:
-    # Step 1: Prepare and inspect
+    print("\nWhy this matters:")
+    print("  • Trading on Derive is gasless (paymaster covers fees)")
+    print("  • But withdrawing to external chains requires ETH in your EOA for gas")
+    print("  • This operation bridges native ETH specifically for gas funding")
+
+    amount_eth = click.prompt(
+        "Enter amount of native ETH to bridge from Mainnet for gas funding (recommended: 0.001)",
+        type=D,
+    )
+
     print(f"\n📋 Step 1: Preparing to bridge {amount_eth} ETH for gas...")
     prepared_tx = client.bridge.prepare_gas_deposit_tx(amount=amount_eth)
 
@@ -89,7 +102,6 @@ if amount_eth > 0:
         tx_result = client.bridge.submit_tx(prepared_tx=prepared_tx)
         print(f"✅ Submitted! Source tx hash: {tx_result.source_tx.tx_hash}")
 
-        # Step 3: Poll for finality
         print("\n⏳ Step 3: Polling for finality (this may take several minutes)...")
         print("  • Waiting for source chain finality...")
         print("  • Detecting event on target chain...")
@@ -121,31 +133,29 @@ if amount_eth > 0:
             # You can continue with the partial result or retry
             tx_result = e.tx_result
 
+elif operation is BridgeOperation.DEPOSIT:
+    print("\n" + "=" * 60)
+    print("DEPOSIT: ASSET FROM EXTERNAL CHAIN TO DERIVE LIGHTACCOUNT WALLET")
+    print("=" * 60)
 
-print("\n" + "=" * 60)
-print("2. DEPOSIT: ASSET FROM EXTERNAL CHAIN TO DERIVE LIGHTACCOUNT WALLET")
-print("=" * 60)
+    print("External chain to bridge FROM:")
+    chain_id = click.prompt(
+        "Select chain ID",
+        type=EnumChoice(ChainID),
+    )
 
-print("External chain to bridge FROM:")
-chain_id = click.prompt(
-    "Select chain ID",
-    type=EnumChoice(ChainID),
-)
+    print("\nCurrency to bridge:")
+    currency = click.prompt(
+        "Select currency",
+        type=EnumChoice(Currency),
+    )
 
-print("\nCurrency to bridge:")
-currency = click.prompt(
-    "Select currency",
-    type=EnumChoice(Currency),
-)
+    print("\nAmount to bridge:")
+    amount = click.prompt(
+        "Enter amount of currency to bridge to Derive LightAccount wallet",
+        type=D,
+    )
 
-print("\nAmount to bridge:")
-amount = click.prompt(
-    "Enter amount of currency to bridge to Derive LightAccount wallet (0 to skip)",
-    type=D,
-    default=D("0"),
-    show_default=True,
-)
-if amount > 0:
     print(f"\nDepositing {amount} {currency.name} to your LightAccount wallet on Derive...")
 
     print(f"\n📋 Step 1: Preparing to deposit {amount} {currency.name} from {chain_id.name}...")
@@ -170,42 +180,34 @@ if amount > 0:
             tx_result = client.bridge.poll_tx_progress(tx_result=tx_result)
             print("✅ Deposit complete!")
 
-            # Now funds are in your LightAccount wallet
-            # To transfer assets to your subaccount: see 03_collateral_management.py
-
         except PartialBridgeResult as e:
             print(f"⚠️  Partial result: {e}")
             print("You can retry polling with the partial tx_result")
             tx_result = e.tx_result
 
+elif operation is BridgeOperation.WITHDRAWAL:
+    print("\n" + "=" * 60)
+    print("WITHDRAWAL: ASSET FROM DERIVE LIGHTACCOUNT WALLET TO EXTERNAL CHAIN")
+    print("=" * 60)
 
-# Withdraw assets from your Derive LightAccount back to external chain
-# Note: Funds must be in LightAccount wallet (not subaccount)
-# Use client.collateral.withdraw_from_subaccount() first if needed
-print("\n" + "=" * 60)
-print("3. WITHDRAWAL: ASSET FROM DERIVE LIGHTACCOUNT WALLET TO EXTERNAL CHAIN")
-print("=" * 60)
+    print("External chain to bridge TO:")
+    chain_id = click.prompt(
+        "Select chain ID",
+        type=EnumChoice(ChainID),
+    )
 
-print("External chain to bridge TO:")
-chain_id = click.prompt(
-    "Select chain ID",
-    type=EnumChoice(ChainID),
-)
+    print("\nCurrency to bridge:")
+    currency = click.prompt(
+        "Select currency",
+        type=EnumChoice(Currency),
+    )
 
-print("\nCurrency to bridge:")
-currency = click.prompt(
-    "Select currency",
-    type=EnumChoice(Currency),
-)
-print("\nAmount to bridge:")
-amount = click.prompt(
-    "Enter amount of currency to bridge from Derive LightAccount wallet (0 to skip)",
-    type=D,
-    default=D("0"),
-    show_default=True,
-)
+    print("\nAmount to bridge:")
+    amount = click.prompt(
+        "Enter amount of currency to bridge from Derive LightAccount wallet",
+        type=D,
+    )
 
-if amount > 0:
     print("\nWithdrawing from LightAccount wallet back to external chain...")
     print("⚠️  Note: Assets are sent to your EOA address on the target chain")
 
@@ -230,7 +232,7 @@ if amount > 0:
         try:
             tx_result = client.bridge.poll_tx_progress(tx_result=tx_result)
             print("✅ Withdrawal complete!")
-            print(f"Check your Base wallet for the {amount} {currency}")
+            print(f"Check your {chain_id.name} wallet for the {amount} {currency.name}")
 
         except PartialBridgeResult as e:
             print(f"⚠️  Partial result: {e}")
@@ -261,7 +263,7 @@ print("=" * 60)
 
 client.disconnect()
 
-print("\n✅ Bridge operations demonstrated!")
+print("\n✅ Bridge operation demonstrated!")
 print("\nKey points:")
 print("  • Always test with small amounts first")
 print("  • Inspect prepared transactions before submitting")
@@ -269,4 +271,5 @@ print("  • Polling can take minutes - be patient")
 print("  • PartialBridgeResult contains latest state for retry")
 print("  • See CLI tool for simpler workflows: `drv bridge --help`")
 print("  • For automation, consider AsyncBridgeClient with IOResult")
+print("  • Run this script again to perform a different operation")
 print("\n⚠️  Reminder: Bridging involves inherent risks - use at your own discretion")

@@ -29,7 +29,7 @@ def fmt_sig_up_to(x: float, sig: int = 4) -> str:
     return formatted.rstrip("0").rstrip(".")
 
 
-def rich_prepared_tx(prepared_tx: PreparedBridgeTx):
+def rich_prepared_tx(prepared_tx: PreparedBridgeTx) -> Table:
     """Return a rich Table summarizing a prepared bridge transaction for CLI display."""
 
     table = Table(title="Prepared Bridge Transaction", show_header=False, box=None)
