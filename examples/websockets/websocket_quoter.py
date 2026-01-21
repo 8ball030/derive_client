@@ -7,6 +7,7 @@ from decimal import Decimal
 from typing import List
 
 from dotenv import load_dotenv
+from utils import get_default_position
 
 from derive_client import WebSocketClient
 from derive_client.data_types.channel_models import (
@@ -17,7 +18,6 @@ from derive_client.data_types.channel_models import (
     TradeResponseSchema,
 )
 from derive_client.data_types.generated_models import (
-    AssetType,
     Direction,
     OrderStatus,
     OrderType,
@@ -25,45 +25,16 @@ from derive_client.data_types.generated_models import (
 )
 from derive_client.data_types.utils import D
 
-MARKET_1 = "ETH-PERP"
-MAX_POSTION_SIZE = D(0.5)
-QUOTE_SIZE = D(0.1)
-BUY_OFFSET = D(0.99)
-SELL_OFFSET = D(1.01)
-MAX_ORDER_OFFSET = D(0.0125)
-MIN_ORDER_OFFSET = D(0.0075)
+MARKET_1 = "HYPE-PERP"
+MAX_POSTION_SIZE = D(10)
+QUOTE_SIZE = D(1)
+BUY_OFFSET = D(0.0003)
+SELL_OFFSET = D(0.0003)
+# for adjusting orders
+MAX_ORDER_OFFSET = D(0.01)
+MIN_ORDER_OFFSET = D(0.000005)
 
-
-def get_default_position(instrument_name: str) -> PositionResponseSchema:
-    return PositionResponseSchema(
-        instrument_name=instrument_name,
-        amount=Decimal(0),
-        average_price=Decimal(0),
-        unrealized_pnl=Decimal(0),
-        realized_pnl=Decimal(0),
-        leverage=Decimal(0),
-        maintenance_margin=Decimal(0),
-        initial_margin=Decimal(0),
-        liquidation_price=None,
-        amount_step=Decimal(0),
-        average_price_excl_fees=Decimal(0),
-        creation_timestamp=0,
-        cumulative_funding=Decimal(0),
-        delta=Decimal(0),
-        gamma=Decimal(0),
-        vega=Decimal(0),
-        theta=Decimal(0),
-        unrealized_pnl_excl_fees=Decimal(0),
-        index_price=Decimal(0),
-        mark_price=Decimal(0),
-        instrument_type=AssetType.perp,
-        mark_value=Decimal(0),
-        total_fees=Decimal(0),
-        net_settlements=Decimal(0),
-        open_orders_margin=Decimal(0),
-        pending_funding=Decimal(0),
-        realized_pnl_excl_fees=Decimal(0),
-    )
+ENTRY_LABEL = "simple_quoter"
 
 
 class WebsocketQuoterStrategy:
@@ -87,8 +58,8 @@ class WebsocketQuoterStrategy:
         if not self.current_position:
             return
 
-        bid_price = orderbook.bids[0][0] * BUY_OFFSET
-        ask_price = orderbook.asks[0][0] * SELL_OFFSET
+        bid_price = orderbook.bids[0][0]
+        ask_price = orderbook.asks[0][0]
 
         if all(
             [
@@ -97,8 +68,8 @@ class WebsocketQuoterStrategy:
                 not self.pending_orders[Direction.buy],
             ]
         ):
-            price = bid_price * BUY_OFFSET
-            await self.create_order(Direction.buy, price, QUOTE_SIZE)
+            order_price = bid_price * (D(1) - BUY_OFFSET)
+            await self.create_order(Direction.buy, order_price, QUOTE_SIZE)
             return
         if all(
             [
@@ -107,20 +78,32 @@ class WebsocketQuoterStrategy:
                 not self.pending_orders[Direction.sell],
             ]
         ):
-            price = ask_price * SELL_OFFSET
-            await self.create_order(Direction.sell, price, QUOTE_SIZE)
+            order_price = ask_price * (D(1) + SELL_OFFSET)
+            await self.create_order(Direction.sell, order_price, QUOTE_SIZE)
             return
-        # check if any existing orders need to be cancelled
+        # check if any existing orders need to be adjusted based on the price.
         for order in list(self.orders[Direction.buy].values()):
-            price_diff = abs((order.limit_price - bid_price) / bid_price)
-            if price_diff > MAX_ORDER_OFFSET or price_diff < MIN_ORDER_OFFSET:
+            if self.pending_orders[Direction.buy]:
+                continue
+            # we check the price bounds here
+            lower_bound = bid_price * (D(1) - MAX_ORDER_OFFSET)
+            upper_bound = bid_price * (D(1) - MIN_ORDER_OFFSET)
+            if not (lower_bound <= order.limit_price <= upper_bound):
+                self.pending_orders[Direction.buy] = True
+                await self.ws_client.orders.cancel(order_id=order.order_id, instrument_name=MARKET_1)
                 del self.orders[Direction.buy][order.nonce]
-                await self.ws_client.orders.cancel(order_id=order.order_id, instrument_name=MARKET_1)
+                self.pending_orders[Direction.buy] = False
         for order in list(self.orders[Direction.sell].values()):
-            price_diff = abs((order.limit_price - ask_price) / ask_price)
-            if price_diff > MAX_ORDER_OFFSET or price_diff < MIN_ORDER_OFFSET:
-                del self.orders[Direction.sell][order.nonce]
+            if self.pending_orders[Direction.sell]:
+                continue
+            # we check the price bounds here
+            lower_bound = ask_price * (D(1) + MIN_ORDER_OFFSET)
+            upper_bound = ask_price * (D(1) + MAX_ORDER_OFFSET)
+            if not (lower_bound <= order.limit_price <= upper_bound):
+                self.pending_orders[Direction.sell] = True
                 await self.ws_client.orders.cancel(order_id=order.order_id, instrument_name=MARKET_1)
+                del self.orders[Direction.sell][order.nonce]
+                self.pending_orders[Direction.sell] = False
 
     async def create_order(self, side: Direction, price: Decimal, amount: Decimal) -> OrderResponseSchema:
         self.pending_orders[side] = True
@@ -130,6 +113,7 @@ class WebsocketQuoterStrategy:
             limit_price=price,
             amount=amount,
             order_type=OrderType.limit,
+            label=ENTRY_LABEL,
         )
         self.pending_orders[side] = False
         self.logger.info(f"{side.value} order placed: {order.nonce} at {price} for {amount}")
@@ -138,23 +122,46 @@ class WebsocketQuoterStrategy:
 
     async def on_order(self, orders: List[OrderResponseSchema]):
         for order in orders:
+            if order.instrument_name != MARKET_1 or order.label != ENTRY_LABEL:
+                continue
             self.logger.info(
                 f"Order update: {order.order_id} {order.order_status} "
                 + f"{order.direction} {order.limit_price} {order.amount}"
             )
             match order.order_status:
-                case OrderStatus.filled | OrderStatus.cancelled | OrderStatus.expired:
+                case OrderStatus.filled | OrderStatus.cancelled:
                     if order.filled_amount > 0:
                         self.logger.info(f"Order filled: {order.nonce} {order.filled_amount} @ {order.average_price}")
+                        await self.refresh_positions()
                     if order.nonce in self.orders[order.direction]:
                         del self.orders[order.direction][order.nonce]
                 case OrderStatus.open:
                     self.orders[order.direction][order.nonce] = order
-        await self.refresh_positions()
+                case OrderStatus.expired:
+                    if order.nonce in self.orders[order.direction]:
+                        del self.orders[order.direction][order.nonce]
 
     async def on_trade(self, trades: List[TradeResponseSchema]):
-        print(f"Trades update: {trades} trades")
         await self.refresh_positions()
+        for trade in trades:
+            self.logger.info(
+                f"Trade executed: {trade.trade_id} {trade.direction} "
+                + f"{trade.trade_price} {trade.trade_amount} "
+                + f"on order {trade.order_id}"
+            )
+            if trade.label != ENTRY_LABEL or trade.instrument_name != MARKET_1:
+                continue
+            # we make a take profit or stop loss adjustment here if needed
+            tp_direction = Direction.sell if trade.direction == Direction.buy else Direction.buy
+            tp_price = trade.trade_price * (D(1) + SELL_OFFSET if tp_direction == Direction.sell else D(1) - BUY_OFFSET)
+            await self.ws_client.orders.create(
+                instrument_name=MARKET_1,
+                direction=tp_direction,
+                limit_price=tp_price,
+                amount=trade.trade_amount,
+                order_type=OrderType.limit,
+                label="take_profit",
+            )
 
     async def run_loop(self):
         """
@@ -175,12 +182,18 @@ class WebsocketQuoterStrategy:
             Direction.buy: {
                 o.nonce: o
                 for o in current_orders
-                if o.direction == Direction.buy and o.order_status == OrderStatus.open
+                if o.direction == Direction.buy
+                and o.order_status == OrderStatus.open
+                and o.instrument_name == MARKET_1
+                and o.label == ENTRY_LABEL
             },
             Direction.sell: {
                 o.nonce: o
                 for o in current_orders
-                if o.direction == Direction.sell and o.order_status == OrderStatus.open
+                if o.direction == Direction.sell
+                and o.order_status == OrderStatus.open
+                and o.instrument_name == MARKET_1
+                and o.label == ENTRY_LABEL
             },
         }
 
@@ -208,14 +221,20 @@ class WebsocketQuoterStrategy:
 
 async def main():
     load_dotenv()
+    assert (
+        BUY_OFFSET < MAX_ORDER_OFFSET
+        and SELL_OFFSET < MAX_ORDER_OFFSET
+        and BUY_OFFSET > MIN_ORDER_OFFSET
+        and SELL_OFFSET > MIN_ORDER_OFFSET
+    ), "Offsets are not correctly set."
     ws_client = WebSocketClient.from_env()
     quoter = WebsocketQuoterStrategy(ws_client)
     try:
         await quoter.run_loop()
     except KeyboardInterrupt:
-        print("On keyboard interupt...")
+        quoter.logger.info("Shutting down quoter strategy...")
     finally:
-        await ws_client.orders.cancel_all()
+        await ws_client.orders.cancel_by_label(instrument_name=MARKET_1, label=ENTRY_LABEL)
         await ws_client.disconnect()
 
 
