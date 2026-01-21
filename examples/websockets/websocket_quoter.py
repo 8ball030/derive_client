@@ -4,11 +4,12 @@ from decimal import Decimal
 from typing import List
 
 from dotenv import load_dotenv
-from utils import get_default_position
+from utils import get_default_balance
 
 from derive_client import WebSocketClient
 from derive_client._clients.utils import DeriveJSONRPCError
 from derive_client.data_types.channel_models import (
+    BalanceUpdateSchema,
     Depth,
     Group,
     OrderbookInstrumentNameGroupDepthPublisherDataSchema,
@@ -19,7 +20,6 @@ from derive_client.data_types.generated_models import (
     Direction,
     OrderStatus,
     OrderType,
-    PositionResponseSchema,
 )
 from derive_client.data_types.utils import D
 
@@ -61,7 +61,7 @@ def sell_bounds(ask: Decimal) -> tuple[Decimal, Decimal]:
 
 
 class WebsocketQuoterStrategy:
-    current_position: PositionResponseSchema
+    current_position: BalanceUpdateSchema | None = None
     order: dict[Direction, OrderResponseSchema | None] = {
         Direction.buy: None,
         Direction.sell: None,
@@ -82,14 +82,12 @@ class WebsocketQuoterStrategy:
 
     async def setup_session(self):
         await self.ws_client.connect()
-        await self.refresh_positions()
         await self.refresh_orders()
+        await self.populate_initial_position()
 
-        await self.ws_client.public_channels.orderbook_group_depth_by_instrument_name(
-            instrument_name=MARKET_1,
-            group=Group.field_1,
-            depth=Depth.field_1,
-            callback=self.on_orderbook_update,
+        await self.ws_client.private_channels.balances_by_subaccount_id(
+            subaccount_id=str(self.ws_client.active_subaccount.id),
+            callback=self.on_positions,
         )
         await self.ws_client.private_channels.orders_by_subaccount_id(
             subaccount_id=str(self.ws_client.active_subaccount.id),
@@ -99,11 +97,16 @@ class WebsocketQuoterStrategy:
             subaccount_id=str(self.ws_client.active_subaccount.id),
             callback=self.on_trade,
         )
+        await self.ws_client.public_channels.orderbook_group_depth_by_instrument_name(
+            instrument_name=MARKET_1,
+            group=Group.field_1,
+            depth=Depth.field_1,
+            callback=self.on_orderbook_update,
+        )
 
-    async def refresh_positions(self):
-        positions = await self.ws_client.positions.list()
-        p = next((p for p in positions if p.instrument_name == MARKET_1), None)
-        self.current_position = p if p else get_default_position(MARKET_1)
+    async def on_positions(self, positions: List[BalanceUpdateSchema]):
+        p = next((p for p in positions if p.name == MARKET_1), None)
+        self.current_position = p if p else self.current_position
 
     async def refresh_orders(self):
         open_orders = await self.ws_client.orders.list_open()
@@ -131,6 +134,13 @@ class WebsocketQuoterStrategy:
         )
         self.order[Direction.buy] = buy
         self.order[Direction.sell] = sell
+
+    async def populate_initial_position(self):
+        positions = await self.ws_client.positions.list(is_open=True)
+        p = next((b for b in positions if b.instrument_name == MARKET_1), None)
+        if p:
+            self.logger.info(f"Initial position found: {p.amount} in {MARKET_1}")
+            self.current_position = get_default_balance(MARKET_1, p.amount)
 
     async def on_orderbook_update(self, ob: OrderbookInstrumentNameGroupDepthPublisherDataSchema):
         if not ob.bids or not ob.asks:
@@ -173,7 +183,9 @@ class WebsocketQuoterStrategy:
             existing = self.order[side]
 
             # position gating
-            pos = self.current_position.amount
+            if not self.current_position:
+                return
+            pos = self.current_position.new_balance
             if side == Direction.buy:
                 if pos > (MAX_POSITION_SIZE - QUOTE_SIZE):
                     return
@@ -242,15 +254,13 @@ class WebsocketQuoterStrategy:
 
                 if o.order_status == OrderStatus.filled and o.filled_amount > 0:
                     self.logger.debug(f"Order filled: {o.nonce} {o.filled_amount} @ {o.average_price}")
-                    await self.refresh_positions()
 
             elif o.order_status == OrderStatus.open:
                 # update tracked order (covers nonce/order_id changes in updates)
                 self.order[o.direction] = o
 
     async def on_trade(self, trades: List[TradeResponseSchema]):
-        # If you only care about take-profit orders on your ENTRY_LABEL fills,
-        # you can skip refreshing positions here and do it in on_order(filled).
+        """Place take-profit orders on entry fills."""
         for t in trades:
             if t.label != ENTRY_LABEL:
                 continue

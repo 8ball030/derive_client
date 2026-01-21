@@ -4,6 +4,7 @@ Utility functions for WebSocket examples.
 
 from decimal import Decimal
 
+from derive_client.data_types.channel_models import BalanceUpdateSchema, UpdateType
 from derive_client.data_types.generated_models import AssetType, PositionResponseSchema
 
 
@@ -36,4 +37,10 @@ def get_default_position(instrument_name: str) -> PositionResponseSchema:
         open_orders_margin=Decimal(0),
         pending_funding=Decimal(0),
         realized_pnl_excl_fees=Decimal(0),
+    )
+
+
+def get_default_balance(asset: str, new_balance: Decimal) -> BalanceUpdateSchema:
+    return BalanceUpdateSchema(
+        name=asset, new_balance=new_balance, previous_balance=Decimal(0), update_type=UpdateType.trade
     )
