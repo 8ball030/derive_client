@@ -7,6 +7,7 @@ from __future__ import annotations
 import contextlib
 from logging import Logger
 from pathlib import Path
+from textwrap import dedent
 from typing import Generator
 
 from pydantic import ConfigDict, validate_call
@@ -80,6 +81,14 @@ class WebSocketClient:
 
         self._light_account: LightAccount | None = None
         self._subaccounts: dict[int, Subaccount] = {}
+        self._logger.info(
+            dedent(f"""
+                        Initialized WebSocketClient for:
+                            wallet:     {auth.wallet}
+                            subaccount: {subaccount_id}
+                            signer:     {auth.account.address}
+                            environment {env.value} """)
+        )
 
     @classmethod
     def from_env(
@@ -230,7 +239,7 @@ class WebSocketClient:
         return self.active_subaccount.orders
 
     @property
-    async def positions(self) -> PositionOperations:
+    def positions(self) -> PositionOperations:
         """View and manage positions."""
 
         return self.active_subaccount.positions

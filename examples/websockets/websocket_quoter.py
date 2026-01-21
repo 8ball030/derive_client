@@ -2,46 +2,85 @@
 Simple trading class for the websocket client.
 """
 
-import os
+import asyncio
+from decimal import Decimal
+from typing import List
 
-from derive_client.clients.ws_client import (
-    Orderbook,
-    OrderResponseSchema,
-    Position,
-    Positions,
-    PrivateGetOrdersResultSchema,
-    TradeResponseSchema,
-    WsClient,
-)
-from derive_client.data.generated.models import Direction, OrderStatus
 from dotenv import load_dotenv
-from websockets import ConnectionClosedError
 
-from derive_client.data_types import Environment
-from derive_client.data_types.enums import OrderSide, OrderType
+from derive_client import WebSocketClient
+from derive_client.data_types.channel_models import (
+    Depth,
+    Group,
+    OrderbookInstrumentNameGroupDepthPublisherDataSchema,
+    OrderResponseSchema,
+    TradeResponseSchema,
+)
+from derive_client.data_types.generated_models import (
+    AssetType,
+    Direction,
+    OrderStatus,
+    OrderType,
+    PositionResponseSchema,
+)
+from derive_client.data_types.utils import D
 
 MARKET_1 = "ETH-PERP"
-MAX_POSTION_SIZE = 0.5
-QUOTE_SIZE = 0.1
-BUY_OFFSET = 0.99
-SELL_OFFSET = 1.01
+MAX_POSTION_SIZE = D(0.5)
+QUOTE_SIZE = D(0.1)
+BUY_OFFSET = D(0.99)
+SELL_OFFSET = D(1.01)
+MAX_ORDER_OFFSET = D(0.0125)
+MIN_ORDER_OFFSET = D(0.0075)
+
+
+def get_default_position(instrument_name: str) -> PositionResponseSchema:
+    return PositionResponseSchema(
+        instrument_name=instrument_name,
+        amount=Decimal(0),
+        average_price=Decimal(0),
+        unrealized_pnl=Decimal(0),
+        realized_pnl=Decimal(0),
+        leverage=Decimal(0),
+        maintenance_margin=Decimal(0),
+        initial_margin=Decimal(0),
+        liquidation_price=None,
+        amount_step=Decimal(0),
+        average_price_excl_fees=Decimal(0),
+        creation_timestamp=0,
+        cumulative_funding=Decimal(0),
+        delta=Decimal(0),
+        gamma=Decimal(0),
+        vega=Decimal(0),
+        theta=Decimal(0),
+        unrealized_pnl_excl_fees=Decimal(0),
+        index_price=Decimal(0),
+        mark_price=Decimal(0),
+        instrument_type=AssetType.perp,
+        mark_value=Decimal(0),
+        total_fees=Decimal(0),
+        net_settlements=Decimal(0),
+        open_orders_margin=Decimal(0),
+        pending_funding=Decimal(0),
+        realized_pnl_excl_fees=Decimal(0),
+    )
 
 
 class WebsocketQuoterStrategy:
-    def __init__(self, ws_client: WsClient):
+    def __init__(self, ws_client: WebSocketClient):
         self.ws_client = ws_client
-        self.current_positions: Positions | None = None
-        self.current_position: Position | None = None
+        self.current_position: PositionResponseSchema | None = None
         self.orders = {
             Direction.buy: {},
             Direction.sell: {},
         }
         self.pending_orders = {
-            Direction.buy: {},
-            Direction.sell: {},
+            Direction.buy: False,
+            Direction.sell: False,
         }
+        self.logger = ws_client._logger
 
-    def on_orderbook_update(self, orderbook: Orderbook):
+    async def on_orderbook_update(self, orderbook: OrderbookInstrumentNameGroupDepthPublisherDataSchema):
         if not orderbook.bids or not orderbook.asks:
             return
 
@@ -55,133 +94,130 @@ class WebsocketQuoterStrategy:
             [
                 self.current_position.amount <= (MAX_POSTION_SIZE - QUOTE_SIZE),
                 not self.orders[Direction.buy],
-                self.pending_orders[Direction.buy] == {},
+                not self.pending_orders[Direction.buy],
             ]
         ):
-            self.create_order(Direction.buy, bid_price, QUOTE_SIZE)
+            price = bid_price * BUY_OFFSET
+            await self.create_order(Direction.buy, price, QUOTE_SIZE)
+            return
         if all(
             [
                 self.current_position.amount >= -(MAX_POSTION_SIZE + QUOTE_SIZE),
                 not self.orders[Direction.sell],
-                self.pending_orders[Direction.sell] == {},
+                not self.pending_orders[Direction.sell],
             ]
         ):
-            self.create_order(Direction.sell, ask_price, QUOTE_SIZE)
+            price = ask_price * SELL_OFFSET
+            await self.create_order(Direction.sell, price, QUOTE_SIZE)
+            return
+        # check if any existing orders need to be cancelled
+        for order in list(self.orders[Direction.buy].values()):
+            price_diff = abs((order.limit_price - bid_price) / bid_price)
+            if price_diff > MAX_ORDER_OFFSET or price_diff < MIN_ORDER_OFFSET:
+                del self.orders[Direction.buy][order.nonce]
+                await self.ws_client.orders.cancel(order_id=order.order_id, instrument_name=MARKET_1)
+        for order in list(self.orders[Direction.sell].values()):
+            price_diff = abs((order.limit_price - ask_price) / ask_price)
+            if price_diff > MAX_ORDER_OFFSET or price_diff < MIN_ORDER_OFFSET:
+                del self.orders[Direction.sell][order.nonce]
+                await self.ws_client.orders.cancel(order_id=order.order_id, instrument_name=MARKET_1)
 
-    def create_order(self, side: OrderSide, price: float, amount: float) -> OrderResponseSchema:
-        order = self.ws_client.create_order(
+    async def create_order(self, side: Direction, price: Decimal, amount: Decimal) -> OrderResponseSchema:
+        self.pending_orders[side] = True
+        order = await self.ws_client.orders.create(
             instrument_name=MARKET_1,
-            side=side,
-            price=price,
+            direction=side,
+            limit_price=price,
             amount=amount,
-            order_type=OrderType.LIMIT,
+            order_type=OrderType.limit,
         )
-        self.pending_orders[side][order.nonce] = order
-        print(f"{side.value} order placed: {order.nonce} at {price} for {amount}")
+        self.pending_orders[side] = False
+        self.logger.info(f"{side.value} order placed: {order.nonce} at {price} for {amount}")
+        self.orders[side][order.nonce] = order
         return order
 
-    def on_position_update(self, positions: Positions):
-        self.current_positions = positions
-        if not positions.positions:
-            self.current_position = Position(instrument_name=MARKET_1, amount=0)
-        else:
-            _matches = [p for p in positions.positions if p.instrument_name == MARKET_1]
-            self.current_position = _matches[0] if _matches else Position(instrument_name=MARKET_1, amount=0)
+    async def on_order(self, orders: List[OrderResponseSchema]):
+        for order in orders:
+            self.logger.info(
+                f"Order update: {order.order_id} {order.order_status} "
+                + f"{order.direction} {order.limit_price} {order.amount}"
+            )
+            match order.order_status:
+                case OrderStatus.filled | OrderStatus.cancelled | OrderStatus.expired:
+                    if order.filled_amount > 0:
+                        self.logger.info(f"Order filled: {order.nonce} {order.filled_amount} @ {order.average_price}")
+                    if order.nonce in self.orders[order.direction]:
+                        del self.orders[order.direction][order.nonce]
+                case OrderStatus.open:
+                    self.orders[order.direction][order.nonce] = order
+        await self.refresh_positions()
 
-        pos = self.current_position
-        print(f"Current position: {pos.instrument_name} {pos.amount} @ {pos.average_price}")
+    async def on_trade(self, trades: List[TradeResponseSchema]):
+        print(f"Trades update: {trades} trades")
+        await self.refresh_positions()
 
-    def on_order(self, order: OrderResponseSchema):
-        print(f"Order update: {order.nonce} {order.order_status} {order.direction} {order.limit_price} {order.amount}")
-        self.ws_client.get_positions()
-        if order.order_status is OrderStatus.open:
-            if order.nonce in self.pending_orders[order.direction]:
-                print(f"Moving order {order.nonce} from pending to active")
-                del self.pending_orders[order.direction][order.nonce]
-            self.orders[order.direction][order.nonce] = order
-
-    def on_orders_update(self, orders: PrivateGetOrdersResultSchema):
-        print(f"Orders update: {len(orders.orders)} orders")
-
-        for side in [Direction.buy, Direction.sell]:
-            side_orders = [o for o in orders.orders if o.direction == side]
-            self.orders[side].update({o.nonce: o for o in side_orders})
-            current_orders = self.orders[side]
-            for ix, (nonce, order) in enumerate(current_orders.copy().items()):
-                if order.order_status != OrderStatus.open or ix > 0:
-                    print(f"Removing order {nonce} from tracking")
-                    del self.orders[side][nonce]
-                    self.ws_client.cancel(order.order_id, MARKET_1)
-
-    def on_trade(self, trades: TradeResponseSchema):
-        print(f"Trades update: {len(trades.trades)} trades")
-        self.ws_client.get_positions()
-        if self.current_position and abs(self.current_position.amount) >= MAX_POSTION_SIZE:
-            self.ws_client.cancel_all()
-
-    def run_loop(self):
+    async def run_loop(self):
         """
         Run the message loop.
         """
-        self.setup_session()
+        await self.setup_session()
+        await asyncio.Event().wait()
 
-        while True:
-            try:
-                raw_message = self.ws_client.ws.recv()
-            except ConnectionClosedError:
-                print("Connection closed, exiting...")
-                self.setup_session()
-            parsed_message = self.ws_client.parse_message(raw_message)
-            if isinstance(parsed_message, TradeResponseSchema):
-                self.on_trade(parsed_message)
-            elif isinstance(parsed_message, Positions):
-                self.on_position_update(parsed_message)
-            elif isinstance(parsed_message, PrivateGetOrdersResultSchema):
-                self.on_orders_update(parsed_message)
-            elif isinstance(parsed_message, OrderResponseSchema):
-                self.on_order(parsed_message)
-            elif isinstance(parsed_message, Orderbook):
-                self.on_orderbook_update(parsed_message)
-            else:
-                print(f"Received unhandled message: {parsed_message}")
+    async def refresh_positions(self):
+        self.current_position = None
+        current_positions = await self.ws_client.positions.list()
+        filtered_positions = [p for p in current_positions if p.instrument_name == MARKET_1]
+        self.current_position = filtered_positions[0] if filtered_positions else get_default_position(MARKET_1)
 
-    def setup_session(self):
-        self.ws_client.connect_ws()
-        self.ws_client.login_client()
-        # get state data
-        self.ws_client.get_orders()
-        self.ws_client.get_positions()
-        # subscribe to updates
-        self.ws_client.subscribe_orderbook(MARKET_1)
-        self.ws_client.subscribe_trades()
-        self.ws_client.subscribe_orders()
+    async def refresh_orders(self):
+        current_orders = await self.ws_client.orders.list_open()
+        self.orders = {
+            Direction.buy: {
+                o.nonce: o
+                for o in current_orders
+                if o.direction == Direction.buy and o.order_status == OrderStatus.open
+            },
+            Direction.sell: {
+                o.nonce: o
+                for o in current_orders
+                if o.direction == Direction.sell and o.order_status == OrderStatus.open
+            },
+        }
+
+    async def setup_session(self):
+        await self.ws_client.connect()
+        await self.refresh_positions()
+        await self.refresh_orders()
+
+        await self.ws_client.public_channels.orderbook_group_depth_by_instrument_name(
+            instrument_name=MARKET_1,
+            group=Group.field_1,
+            depth=Depth.field_1,
+            callback=self.on_orderbook_update,
+        )
+        await self.ws_client.private_channels.orders_by_subaccount_id(
+            subaccount_id=str(self.ws_client.active_subaccount.id),
+            callback=self.on_order,
+        )
+
+        await self.ws_client.private_channels.trades_by_subaccount_id(
+            subaccount_id=str(self.ws_client.active_subaccount.id),
+            callback=self.on_trade,
+        )
 
 
-def create_client_from_env() -> WsClient:
-    """
-    Load in the client from environment variables.
-    """
+async def main():
     load_dotenv()
-    private_key = os.environ["ETH_PRIVATE_KEY"]
-    wallet = os.environ["DERIVE_WALLET"]
-    env = os.environ["DERIVE_ENV"]
-    subaccount_id = os.environ.get(
-        "SUBACCOUNT_ID",
-    )
-    return WsClient(
-        private_key=private_key,
-        wallet=wallet,
-        env=Environment(env),
-        subaccount_id=subaccount_id,
-    )
-
-
-if __name__ == "__main__":
-    ws_client = create_client_from_env()
+    ws_client = WebSocketClient.from_env()
     quoter = WebsocketQuoterStrategy(ws_client)
     try:
-        quoter.run_loop()
+        await quoter.run_loop()
     except KeyboardInterrupt:
         print("On keyboard interupt...")
     finally:
-        ws_client.ws.close()
+        await ws_client.orders.cancel_all()
+        await ws_client.disconnect()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

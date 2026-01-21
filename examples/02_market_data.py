@@ -92,6 +92,8 @@ print("=" * 60)
 # Compare 24h performance
 print("\n24h Performance:")
 for curr in currencies[:5]:
+    if not curr.spot_price_24h:
+        continue
     change = curr.spot_price - curr.spot_price_24h
     change_pct = (change / curr.spot_price_24h) * 100 if curr.spot_price_24h else Decimal("0")
     arrow = "📈" if change_pct > 0 else "📉"
@@ -115,18 +117,18 @@ print(f"  Max trade size: {eth_perp.maximum_amount}")
 print("\n  Current state:")
 print(f"    Mark price: ${ticker.M:.2f}")  # mark_price
 print(f"    Index price: ${ticker.I}")  # index_price
-print(f"    Funding rate: {ticker.f * 100:.4f}%")  # funding_rate (perps only)
 print(f"    24h volume: ${ticker.stats.v:,.0f}")  # volume
 print(f"    Open interest: {ticker.stats.oi:.4f}")  # open_interest
-
-# Check if funding is favorable
-funding_rate = ticker.f
-if funding_rate > 0:
-    print(f"\n  💡 Funding: Longs pay shorts ({funding_rate * 100:.4f}%)")
-    print("     → Consider shorting for positive carry")
-elif funding_rate < 0:
-    print(f"\n  💡 Funding: Shorts pay longs ({abs(funding_rate) * 100:.4f}%)")
-    print("     → Consider longing for positive carry")
+if ticker.f is not None:
+    print(f"    Funding rate: {ticker.f * 100:.4f}%")  # funding_rate (perps only)
+    # Check if funding is favorable
+    funding_rate = ticker.f
+    if funding_rate > 0:
+        print(f"\n  💡 Funding: Longs pay shorts ({funding_rate * 100:.4f}%)")
+        print("     → Consider shorting for positive carry")
+    elif funding_rate < 0:
+        print(f"\n  💡 Funding: Shorts pay longs ({abs(funding_rate) * 100:.4f}%)")
+        print("     → Consider longing for positive carry")
 
 print("\n" + "=" * 60)
 print("5. OPTIONS MARKET OVERVIEW")
@@ -139,6 +141,8 @@ if eth_options:
     # Group by expiry
     expiries = {}
     for opt in eth_options:
+        if not opt.option_details:
+            continue
         expiry = opt.option_details.expiry
         if expiry not in expiries:
             expiries[expiry] = []
@@ -153,10 +157,11 @@ if eth_options:
 
     # Show sample option
     sample = eth_options[0]
-    print(f"\nSample option: {sample.instrument_name}")
-    print(f"  Strike: ${sample.option_details.strike}")
-    print(f"  Type: {'Call' if 'C' in sample.instrument_name else 'Put'}")
-    print(f"  Expiry: {sample.option_details.expiry}")
+    if sample.option_details:
+        print(f"\nSample option: {sample.instrument_name}")
+        print(f"  Strike: ${sample.option_details.strike}")
+        print(f"  Type: {'Call' if 'C' in sample.instrument_name else 'Put'}")
+        print(f"  Expiry: {sample.option_details.expiry}")
 
 print("\n" + "=" * 60)
 print("6. CACHING FOR PERFORMANCE")
