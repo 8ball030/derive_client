@@ -13,6 +13,7 @@ Prerequisites:
 - Run 01_quickstart.py first
 """
 
+from decimal import Decimal
 from pathlib import Path
 
 from derive_client import HTTPClient
@@ -122,7 +123,8 @@ replaced = client.orders.replace(
 print("\nOrder replaced:")
 print(f"  Old price: ${buy_price:.2f}")
 print(f"  New price: ${new_buy_price:.2f}")
-print(f"  New order ID: {replaced.order.order_id}")
+if replaced.order:
+    print(f"  New order ID: {replaced.order.order_id}")
 
 print("\n" + "=" * 60)
 print("4. ORDER STATUS & FILLS")
@@ -180,7 +182,7 @@ print("=" * 60)
 
 
 # Check liquidity before attempting market orders
-def has_sufficient_liquidity(ticker_slim: TickerSlimSchema, direction: Direction, amount: D) -> tuple[bool, str]:
+def has_sufficient_liquidity(ticker_slim: TickerSlimSchema, direction: Direction, amount: Decimal) -> tuple[bool, str]:
     """Check if there's sufficient liquidity for a market order."""
     ticker_data = get_ticker_data(ticker_slim)
 

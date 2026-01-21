@@ -10,14 +10,12 @@ from msgspec import Struct
 from derive_client.data_types.generated_models import (
     AssetType,
     CancelReason,
-    CancelReason1,
     Direction,
     LegPricedSchema,
     LegUnpricedSchema,
     LiquidityRole,
     MarginType,
-    OrderStatus,
-    OrderType,
+    OrderResponseSchema,
     PrivateGetAllPortfoliosParamsSchema,
     PrivateGetCollateralsParamsSchema,
     PrivateRfqGetBestQuoteResultSchema,
@@ -28,9 +26,7 @@ from derive_client.data_types.generated_models import (
     RPCErrorFormatSchema,
     Status,
     TickerSlimSchema,
-    TimeInForce,
-    TriggerPriceType,
-    TriggerType,
+    TradeResponseSchema,
     TxStatus,
     TxStatus4,
 )
@@ -139,38 +135,6 @@ class SubaccountIdOrdersChannelSchema(SubaccountIdBalancesChannelSchema):
     pass
 
 
-class OrderResponseSchema(Struct):
-    amount: Decimal
-    average_price: Decimal
-    cancel_reason: CancelReason1
-    creation_timestamp: int
-    direction: Direction
-    filled_amount: Decimal
-    instrument_name: str
-    is_transfer: bool
-    label: str
-    last_update_timestamp: int
-    limit_price: Decimal
-    max_fee: Decimal
-    mmp: bool
-    nonce: int
-    order_fee: Decimal
-    order_id: str
-    order_status: OrderStatus
-    order_type: OrderType
-    signature: str
-    signature_expiry_sec: int
-    signer: str
-    subaccount_id: int
-    time_in_force: TimeInForce
-    quote_id: Optional[str] = None
-    replaced_order_id: Optional[str] = None
-    trigger_price: Optional[Decimal] = None
-    trigger_price_type: Optional[TriggerPriceType] = None
-    trigger_reject_message: Optional[str] = None
-    trigger_type: Optional[TriggerType] = None
-
-
 class SubaccountIdQuotesChannelSchema(SubaccountIdBalancesChannelSchema):
     pass
 
@@ -205,38 +169,9 @@ class SubaccountIdTradesChannelSchema(SubaccountIdBalancesChannelSchema):
     pass
 
 
-class TradeResponseSchema(Struct):
-    direction: Direction
-    expected_rebate: Decimal
-    index_price: Decimal
-    instrument_name: str
-    is_transfer: bool
-    label: str
-    liquidity_role: LiquidityRole
-    mark_price: Decimal
-    order_id: str
-    realized_pnl: Decimal
-    realized_pnl_excl_fees: Decimal
-    subaccount_id: int
-    timestamp: int
-    trade_amount: Decimal
-    trade_fee: Decimal
-    trade_id: str
-    trade_price: Decimal
-    transaction_id: str
-    tx_status: TxStatus
-    quote_id: Optional[str] = None
-    tx_hash: Optional[str] = None
-
-
 class SubaccountIdTradesTxStatusChannelSchema(Struct):
     subaccount_id: int
     tx_status: TxStatus4
-
-
-class SubaccountIdTradesTxStatusNotificationParamsSchema(Struct):
-    channel: str
-    data: List[TradeResponseSchema]
 
 
 class Interval(Enum):
@@ -350,28 +285,14 @@ class QuoteResultPublicSchema(Struct):
     tx_hash: Optional[str] = None
 
 
-class SubaccountIdOrdersNotificationParamsSchema(Struct):
-    channel: str
-    data: List[OrderResponseSchema]
-
-
 class SubaccountIdQuotesNotificationParamsSchema(Struct):
     channel: str
     data: List[QuoteResultSchema]
 
 
-class SubaccountIdTradesNotificationParamsSchema(SubaccountIdTradesTxStatusNotificationParamsSchema):
-    pass
-
-
-class SubaccountIdTradesTxStatusNotificationSchema(Struct):
-    method: str
-    params: SubaccountIdTradesTxStatusNotificationParamsSchema
-
-
-class SubaccountIdTradesTxStatusPubSubSchema(Struct):
-    channel_params: SubaccountIdTradesTxStatusChannelSchema
-    notification: SubaccountIdTradesTxStatusNotificationSchema
+class SubaccountIdTradesTxStatusNotificationParamsSchema(Struct):
+    channel: str
+    data: List[TradeResponseSchema]
 
 
 class TradesInstrumentNameNotificationParamsSchema(TradesInstrumentTypeCurrencyNotificationParamsSchema):
@@ -450,14 +371,9 @@ class RFQGetBestQuoteResultSchema(PrivateRfqGetBestQuoteResultSchema):
     pass
 
 
-class SubaccountIdOrdersNotificationSchema(Struct):
-    method: str
-    params: SubaccountIdOrdersNotificationParamsSchema
-
-
-class SubaccountIdOrdersPubSubSchema(Struct):
-    channel_params: SubaccountIdOrdersChannelSchema
-    notification: SubaccountIdOrdersNotificationSchema
+class SubaccountIdOrdersNotificationParamsSchema(Struct):
+    channel: str
+    data: List[OrderResponseSchema]
 
 
 class SubaccountIdQuotesNotificationSchema(Struct):
@@ -470,14 +386,18 @@ class SubaccountIdQuotesPubSubSchema(Struct):
     notification: SubaccountIdQuotesNotificationSchema
 
 
-class SubaccountIdTradesNotificationSchema(Struct):
+class SubaccountIdTradesNotificationParamsSchema(SubaccountIdTradesTxStatusNotificationParamsSchema):
+    pass
+
+
+class SubaccountIdTradesTxStatusNotificationSchema(Struct):
     method: str
-    params: SubaccountIdTradesNotificationParamsSchema
+    params: SubaccountIdTradesTxStatusNotificationParamsSchema
 
 
-class SubaccountIdTradesPubSubSchema(Struct):
-    channel_params: SubaccountIdTradesChannelSchema
-    notification: SubaccountIdTradesNotificationSchema
+class SubaccountIdTradesTxStatusPubSubSchema(Struct):
+    channel_params: SubaccountIdTradesTxStatusChannelSchema
+    notification: SubaccountIdTradesTxStatusNotificationSchema
 
 
 class TickerSlimInstrumentNameIntervalPublisherDataSchema(Struct):
@@ -544,6 +464,26 @@ class BestQuoteChannelResultSchema(Struct):
     rfq_id: str
     error: Optional[RPCErrorFormatSchema] = None
     result: Optional[RFQGetBestQuoteResultSchema] = None
+
+
+class SubaccountIdOrdersNotificationSchema(Struct):
+    method: str
+    params: SubaccountIdOrdersNotificationParamsSchema
+
+
+class SubaccountIdOrdersPubSubSchema(Struct):
+    channel_params: SubaccountIdOrdersChannelSchema
+    notification: SubaccountIdOrdersNotificationSchema
+
+
+class SubaccountIdTradesNotificationSchema(Struct):
+    method: str
+    params: SubaccountIdTradesNotificationParamsSchema
+
+
+class SubaccountIdTradesPubSubSchema(Struct):
+    channel_params: SubaccountIdTradesChannelSchema
+    notification: SubaccountIdTradesNotificationSchema
 
 
 class TickerSlimInstrumentNameIntervalNotificationParamsSchema(Struct):

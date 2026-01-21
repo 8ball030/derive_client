@@ -54,7 +54,7 @@ def get_default_signature_expiry_sec() -> int:
       - brief processing/queue delays on client or server
     """
     utc_time_now_s = int(time.time())
-    return utc_time_now_s + 330
+    return utc_time_now_s + (60 * 60 * 24 * 365)  # 1 year
 
 
 @dataclass

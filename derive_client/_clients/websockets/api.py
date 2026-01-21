@@ -1,7 +1,7 @@
 """Auto-generated API classes for WebSocket"""
 
 from enum import Enum
-from typing import Callable, List
+from typing import Awaitable, Callable, List
 
 import msgspec
 
@@ -1938,7 +1938,7 @@ class PublicChannels:
 
     async def auctions_watch(
         self,
-        callback: Callable[[List[AuctionResultSchema]], None],
+        callback: Callable[[List[AuctionResultSchema]], None | Awaitable[None]],
     ) -> SubscriptionResult:
         """
         Subscribe to state of ongoing auctions.
@@ -1958,7 +1958,7 @@ class PublicChannels:
 
     async def margin_watch(
         self,
-        callback: Callable[[List[MarginWatchResultSchema]], None],
+        callback: Callable[[List[MarginWatchResultSchema]], None | Awaitable[None]],
     ) -> SubscriptionResult:
         """
         Subscribe to state of margin and MtM of all users.
@@ -1981,7 +1981,7 @@ class PublicChannels:
         instrument_name: str,
         group: Group,
         depth: Depth,
-        callback: Callable[[OrderbookInstrumentNameGroupDepthPublisherDataSchema], None],
+        callback: Callable[[OrderbookInstrumentNameGroupDepthPublisherDataSchema], None | Awaitable[None]],
     ) -> SubscriptionResult:
         """
         Periodically publishes bids and asks for an instrument.
@@ -2014,7 +2014,7 @@ class PublicChannels:
     async def spot_feed_by_currency(
         self,
         currency: str,
-        callback: Callable[[SpotFeedCurrencyPublisherDataSchema], None],
+        callback: Callable[[SpotFeedCurrencyPublisherDataSchema], None | Awaitable[None]],
     ) -> SubscriptionResult:
         """
         Periodically publishes spot index price by currency.
@@ -2039,7 +2039,7 @@ class PublicChannels:
         self,
         instrument_name: str,
         interval: Interval,
-        callback: Callable[[TickerSlimInstrumentNameIntervalPublisherDataSchema], None],
+        callback: Callable[[TickerSlimInstrumentNameIntervalPublisherDataSchema], None | Awaitable[None]],
     ) -> SubscriptionResult:
         """
         Periodically publishes ticker info (best bid / ask, instrument contraints, fees,
@@ -2071,7 +2071,7 @@ class PublicChannels:
     async def trades_by_instrument_name(
         self,
         instrument_name: str,
-        callback: Callable[[List[TradePublicResponseSchema]], None],
+        callback: Callable[[List[TradePublicResponseSchema]], None | Awaitable[None]],
     ) -> SubscriptionResult:
         """
         Subscribe to trades (order executions) for a given instrument name.
@@ -2096,7 +2096,7 @@ class PublicChannels:
         self,
         instrument_type: AssetType,
         currency: str,
-        callback: Callable[[List[TradePublicResponseSchema]], None],
+        callback: Callable[[List[TradePublicResponseSchema]], None | Awaitable[None]],
     ) -> SubscriptionResult:
         """
         Subscribe to trades (order executions) for a given instrument type and currency.
@@ -2124,7 +2124,7 @@ class PublicChannels:
         instrument_type: AssetType,
         currency: str,
         tx_status: TxStatus4,
-        callback: Callable[[List[TradeSettledPublicResponseSchema]], None],
+        callback: Callable[[List[TradeSettledPublicResponseSchema]], None | Awaitable[None]],
     ) -> SubscriptionResult:
         """
         Subscribe to the status on on-chain trade settlement events for a given
@@ -2160,7 +2160,7 @@ class PrivateChannels:
     async def balances_by_subaccount_id(
         self,
         subaccount_id: str,
-        callback: Callable[[List[BalanceUpdateSchema]], None],
+        callback: Callable[[List[BalanceUpdateSchema]], None | Awaitable[None]],
     ) -> SubscriptionResult:
         """
         Subscribe to changes in user's positions for a given subaccount ID.
@@ -2197,7 +2197,7 @@ class PrivateChannels:
     async def best_quotes_by_subaccount_id(
         self,
         subaccount_id: str,
-        callback: Callable[[List[BestQuoteChannelResultSchema]], None],
+        callback: Callable[[List[BestQuoteChannelResultSchema]], None | Awaitable[None]],
     ) -> SubscriptionResult:
         """
         Subscribe to best quote state for a given subaccount ID.
@@ -2224,7 +2224,7 @@ class PrivateChannels:
     async def orders_by_subaccount_id(
         self,
         subaccount_id: str,
-        callback: Callable[[List[OrderResponseSchema]], None],
+        callback: Callable[[List[OrderResponseSchema]], None | Awaitable[None]],
     ) -> SubscriptionResult:
         """
         Subscribe to changes in user's orders for a given subaccount ID.
@@ -2248,7 +2248,7 @@ class PrivateChannels:
     async def quotes_by_subaccount_id(
         self,
         subaccount_id: str,
-        callback: Callable[[List[QuoteResultSchema]], None],
+        callback: Callable[[List[QuoteResultSchema]], None | Awaitable[None]],
     ) -> SubscriptionResult:
         """
         Subscribe to quote state for a given subaccount ID.
@@ -2274,7 +2274,7 @@ class PrivateChannels:
     async def trades_by_subaccount_id(
         self,
         subaccount_id: str,
-        callback: Callable[[List[TradeResponseSchema]], None],
+        callback: Callable[[List[TradeResponseSchema]], None | Awaitable[None]],
     ) -> SubscriptionResult:
         """
         Subscribe to user's trades (order executions) for a given subaccount ID.
@@ -2299,7 +2299,7 @@ class PrivateChannels:
         self,
         subaccount_id: int,
         tx_status: TxStatus4,
-        callback: Callable[[List[TradeResponseSchema]], None],
+        callback: Callable[[List[TradeResponseSchema]], None | Awaitable[None]],
     ) -> SubscriptionResult:
         """
         Subscribe to user's trade settlement for a given subaccount ID.
@@ -2325,7 +2325,7 @@ class PrivateChannels:
     async def rfqs_by_wallet(
         self,
         wallet: str,
-        callback: Callable[[List[RFQResultPublicSchema]], None],
+        callback: Callable[[List[RFQResultPublicSchema]], None | Awaitable[None]],
     ) -> SubscriptionResult:
         """
         Subscribe to RFQs directed to a given wallet.

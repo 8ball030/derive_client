@@ -100,14 +100,16 @@ source_positions = source_sub.positions.list(is_open=True)
 if not source_positions:
     print("\n⚠️  Source subaccount has no positions")
     print("Creating a small position first...")
+    ticker = client.markets.get_ticker(instrument_name="ETH-PERP")
 
     order = source_sub.orders.create(
         instrument_name="ETH-PERP",
         amount=D("0.01"),
         direction=Direction.buy,
         order_type=OrderType.market,
+        limit_price=ticker.best_ask_price,
     )
-    print(f"✅ Position created: {order.order.order_id}")
+    print(f"✅ Position created: {order.order_id}")
     source_positions = source_sub.positions.list(is_open=True)
 
 position_to_transfer = source_positions[0]
