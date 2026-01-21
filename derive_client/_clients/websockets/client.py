@@ -12,16 +12,16 @@ from typing import Generator
 from pydantic import ConfigDict, validate_call
 from web3 import Web3
 
-from derive_client._clients.rest.http.account import LightAccount
-from derive_client._clients.rest.http.collateral import CollateralOperations
-from derive_client._clients.rest.http.markets import MarketOperations
-from derive_client._clients.rest.http.mmp import MMPOperations
-from derive_client._clients.rest.http.orders import OrderOperations
-from derive_client._clients.rest.http.positions import PositionOperations
-from derive_client._clients.rest.http.rfq import RFQOperations
-from derive_client._clients.rest.http.subaccount import Subaccount
-from derive_client._clients.rest.http.trades import TradeOperations
-from derive_client._clients.rest.http.transactions import TransactionOperations
+from derive_client._clients.rest.async_http.account import LightAccount
+from derive_client._clients.rest.async_http.collateral import CollateralOperations
+from derive_client._clients.rest.async_http.markets import MarketOperations
+from derive_client._clients.rest.async_http.mmp import MMPOperations
+from derive_client._clients.rest.async_http.orders import OrderOperations
+from derive_client._clients.rest.async_http.positions import PositionOperations
+from derive_client._clients.rest.async_http.rfq import RFQOperations
+from derive_client._clients.rest.async_http.subaccount import Subaccount
+from derive_client._clients.rest.async_http.trades import TradeOperations
+from derive_client._clients.rest.async_http.transactions import TransactionOperations
 from derive_client._clients.utils import AuthContext, load_client_config
 from derive_client._clients.websockets.api import PrivateAPI, PublicAPI
 from derive_client._clients.websockets.session import WebSocketSession
@@ -92,17 +92,17 @@ class WebSocketClient:
         config = load_client_config(session_key_path=session_key_path, env_file=env_file)
         return cls(**config.model_dump())
 
-    def connect(self) -> None:
+    async def connect(self) -> None:
         """Connect to Derive via WebSocket and validate credentials."""
-        self._session.open()
-        self._authenticate()
-        self._initialize_account_and_markets()
+        await self._session.open()
+        await self._authenticate()
+        await self._initialize_account_and_markets()
 
-    def _authenticate(self) -> None:
+    async def _authenticate(self) -> None:
         """Perform WebSocket authentication."""
 
         params = PublicLoginParamsSchema(**self._auth.sign_ws_login())
-        subaccount_ids = self._public_api.rpc.login(params=params)
+        subaccount_ids = await self._public_api.rpc.login(params=params)
         self._logger.debug(f"WebSocket login returned subaccount ids: {subaccount_ids}")
 
         # Validate subaccount
@@ -112,13 +112,13 @@ class WebSocketClient:
                 f"Available subaccounts: {subaccount_ids}"
             )
 
-    def _initialize_account_and_markets(self) -> None:
+    async def _initialize_account_and_markets(self) -> None:
         """Initialize account and fetch market data."""
-        self._light_account = self._instantiate_account()
-        self._markets.fetch_all_instruments(expired=False)
+        self._light_account = await self._instantiate_account()
+        await self._markets.fetch_all_instruments(expired=False)
 
         if self._subaccount_id in self._light_account.state.subaccount_ids:
-            subaccount = self._instantiate_subaccount(self._subaccount_id)
+            subaccount = await self._instantiate_subaccount(self._subaccount_id)
             self._subaccounts[subaccount.id] = subaccount
 
     def _handle_disconnect(self) -> None:
@@ -129,25 +129,25 @@ class WebSocketClient:
         """Called after WebSocket reconnects (before resubscribe)."""
         self._logger.info("WebSocket client reconnected")
 
-    def _handle_before_resubscribe(self) -> None:
+    async def _handle_before_resubscribe(self) -> None:
         """Called before resubscribing - perform re-authentication here."""
         self._logger.info("Re-authenticating after reconnection")
-        self._authenticate()
+        await self._authenticate()
         self._logger.info("Re-authentication successful")
 
-    def disconnect(self) -> None:
+    async def disconnect(self) -> None:
         """Close WebSocket connection and clear cached state. Idempotent."""
 
-        self._session.close()
+        await self._session.close()
         self._light_account = None
         self._subaccounts.clear()
         self._markets._erc20_instruments_cache.clear()
         self._markets._perp_instruments_cache.clear()
         self._markets._option_instruments_cache.clear()
 
-    def _instantiate_account(self) -> LightAccount:
+    async def _instantiate_account(self) -> LightAccount:
         """Instantiate account using WebSocket API."""
-        return LightAccount.from_api(
+        return await LightAccount.from_api(
             auth=self._auth,
             config=self._config,
             logger=self._logger,
@@ -155,9 +155,9 @@ class WebSocketClient:
             private_api=self._private_api,  # type: ignore
         )
 
-    def _instantiate_subaccount(self, subaccount_id: int) -> Subaccount:
+    async def _instantiate_subaccount(self, subaccount_id: int) -> Subaccount:
         """Instantiate subaccount using WebSocket API."""
-        return Subaccount.from_api(
+        return await Subaccount.from_api(
             subaccount_id=subaccount_id,
             auth=self._auth,
             config=self._config,
@@ -173,7 +173,7 @@ class WebSocketClient:
         """Get the LightAccount instance."""
 
         if self._light_account is None:
-            self._light_account = self._instantiate_account()
+            raise RuntimeError("Account not initialized. Call connect() first.")
         return self._light_account
 
     @property
@@ -181,20 +181,23 @@ class WebSocketClient:
         """Get the currently active subaccount."""
 
         if (subaccount := self._subaccounts.get(self._subaccount_id)) is None:
-            subaccount = self.fetch_subaccount(subaccount_id=self._subaccount_id)
+            raise RuntimeError("Specified subaccount not initialized. Call connect() first.")
         return subaccount
 
-    def fetch_subaccount(self, subaccount_id: int) -> Subaccount:
+    async def fetch_subaccount(self, subaccount_id: int) -> Subaccount:
         """Fetch a subaccount from API and cache it."""
 
-        self._subaccounts[subaccount_id] = self._instantiate_subaccount(subaccount_id)
+        self._subaccounts[subaccount_id] = await self._instantiate_subaccount(subaccount_id)
         return self._subaccounts[subaccount_id]
 
-    def fetch_subaccounts(self) -> list[Subaccount]:
+    async def fetch_subaccounts(self) -> list[Subaccount]:
         """Fetch subaccounts from API and cache them."""
 
-        account_subaccounts = self.account.get_subaccounts()
-        return sorted(self.fetch_subaccount(sid) for sid in account_subaccounts.subaccount_ids)
+        account_subaccounts = await self.account.get_subaccounts()
+        subaccounts = []
+        for sid in account_subaccounts.subaccount_ids:
+            subaccounts.append(await self.fetch_subaccount(sid))
+        return sorted(subaccounts)
 
     @property
     def cached_subaccounts(self) -> list[Subaccount]:
@@ -227,7 +230,7 @@ class WebSocketClient:
         return self.active_subaccount.orders
 
     @property
-    def positions(self) -> PositionOperations:
+    async def positions(self) -> PositionOperations:
         """View and manage positions."""
 
         return self.active_subaccount.positions
@@ -271,9 +274,9 @@ class WebSocketClient:
         finally:
             self._session._request_timeout = prev
 
-    def __enter__(self):
-        self.connect()
+    async def __enter__(self):
+        await self.connect()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.disconnect()
+    async def __exit__(self, exc_type, exc_val, exc_tb):
+        await self.disconnect()

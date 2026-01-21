@@ -1,28 +1,31 @@
 """
-Synchronous WebSocket session with automatic reconnection and auth hook.
+Asynchronous WebSocket session with automatic reconnection and auth hook.
 """
 
 from __future__ import annotations
 
-import threading
-import time
+import asyncio
+import contextlib
+import inspect
 import uuid
 import weakref
 from logging import Logger
-from queue import Empty, Full, Queue
-from typing import Any, Callable, Optional, Type, TypeVar
+from typing import Any, Awaitable, Callable, Optional, Type, TypeVar, cast
 
 import msgspec
 from msgspec import ValidationError
 from websockets import Data
+from websockets.asyncio.client import ClientConnection, connect
 from websockets.exceptions import ConnectionClosed
-from websockets.sync.client import ClientConnection, connect
 
 from derive_client._clients.utils import JSONRPCEnvelope, decode_envelope
 from derive_client.utils.logger import get_logger
 
 MessageT = TypeVar('MessageT')
-Handler = Callable[[MessageT], None]
+# Support both sync and async handlers
+Handler = Callable[[MessageT], None] | Callable[[MessageT], Awaitable[None]]
+
+LifecycleCallback = Callable[[], None] | Callable[[], Awaitable[None]]
 
 
 class Subscribe(msgspec.Struct):
@@ -30,37 +33,41 @@ class Subscribe(msgspec.Struct):
 
 
 class ConnectionState:
-    """Thread-safe connection state tracking."""
+    """Task-safe connection state tracking."""
 
     def __init__(self):
-        self._lock = threading.Lock()
+        self._lock = asyncio.Lock()
         self._connected = False
         self._reconnecting = False
 
-    def set_connected(self):
-        with self._lock:
+    async def set_connected(self):
+        async with self._lock:
             self._connected = True
             self._reconnecting = False
 
-    def set_disconnected(self):
-        with self._lock:
+    async def set_disconnected(self):
+        async with self._lock:
             self._connected = False
 
-    def set_reconnecting(self):
-        with self._lock:
+    async def set_reconnecting(self):
+        async with self._lock:
             self._reconnecting = True
 
-    def is_connected(self) -> bool:
-        with self._lock:
+    async def is_connected(self) -> bool:
+        async with self._lock:
             return self._connected
 
-    def is_reconnecting(self) -> bool:
-        with self._lock:
+    async def is_reconnecting(self) -> bool:
+        async with self._lock:
             return self._reconnecting
 
 
 class WebSocketSession:
-    """Synchronous WebSocket session with automatic reconnection."""
+    """Asynchronous WebSocket session with automatic reconnection."""
+
+    _on_disconnect: LifecycleCallback | None
+    _on_reconnect: LifecycleCallback | None
+    _on_before_resubscribe: LifecycleCallback | None
 
     def __init__(
         self,
@@ -70,9 +77,10 @@ class WebSocketSession:
         reconnect_delay: float = 1.0,
         max_reconnect_delay: float = 60.0,
         logger: Logger | None = None,
-        on_disconnect: Callable[[], None] | None = None,
-        on_reconnect: Callable[[], None] | None = None,
-        on_before_resubscribe: Callable[[], None] | None = None,
+        on_disconnect: LifecycleCallback | None = None,
+        on_reconnect: LifecycleCallback | None = None,
+        on_before_resubscribe: LifecycleCallback | None = None,
+        max_handler_tasks: int = 100,  # Limit concurrent handler tasks
     ):
         """
         Args:
@@ -85,6 +93,7 @@ class WebSocketSession:
             on_disconnect: Callback when disconnection is detected
             on_reconnect: Callback after successful reconnection (before resubscribe)
             on_before_resubscribe: Callback before resubscribing channels (for re-auth)
+            max_handler_tasks: Maximum number of concurrent handler tasks
         """
         self._url = url
         self._request_timeout = request_timeout
@@ -100,72 +109,89 @@ class WebSocketSession:
 
         # Channel type registry
         self._channel_types: dict[str, Type] = {}
-        self._channel_types_lock = threading.Lock()
+        self._channel_types_lock = asyncio.Lock()
 
         # Connection state
         self._ws: ClientConnection | None = None
         self._state = ConnectionState()
 
         # Message routing - ONE handler per channel
-        self._handlers: dict[str, Callable[[Any], None]] = {}
-        self._handlers_lock = threading.RLock()
+        self._handlers: dict[str, Handler] = {}
+        self._handlers_lock = asyncio.Lock()
 
         # RPC tracking
-        self._pending_requests: dict[str | int, Queue] = {}
-        self._requests_lock = threading.Lock()
+        self._pending_requests: dict[str | int, asyncio.Queue] = {}
+        self._requests_lock = asyncio.Lock()
 
-        # Background threads
-        self._receiver_thread: threading.Thread | None = None
-        self._reconnect_thread: threading.Thread | None = None
-        self._stop_event = threading.Event()
+        # Background tasks
+        self._receiver_task: asyncio.Task | None = None
+        self._reconnect_task: asyncio.Task | None = None
+        self._stop_event = asyncio.Event()
+
+        # Handler task management
+        self._handler_tasks: set[asyncio.Task] = set()
+        self._max_handler_tasks = max_handler_tasks
+        self._handler_semaphore = asyncio.Semaphore(max_handler_tasks)
 
         # Cleanup
         self._finalizer = weakref.finalize(self, self._finalize, logger=self._logger)
 
-    def open(self) -> None:
-        """Establish WebSocket connection and start receiver thread."""
-        if self._state.is_connected():
+    async def open(self) -> None:
+        """Establish WebSocket connection and start receiver task."""
+        if await self._state.is_connected():
             self._logger.warning("WebSocket already connected")
             return
 
-        self._connect()
+        await self._connect()
 
-    def close(self) -> None:
-        """Close connection and stop all threads. Idempotent."""
-        if self._ws is None and not self._state.is_reconnecting():
+    async def close(self) -> None:
+        """Close connection and stop all tasks. Idempotent."""
+        if self._ws is None and not await self._state.is_reconnecting():
             return
 
         self._logger.info("Closing WebSocket session")
         self._stop_event.set()
 
         # Close WebSocket
-        self._close_connection()
+        await self._close_connection()
 
-        # Join threads
-        for thread in [self._receiver_thread, self._reconnect_thread]:
-            if thread and thread.is_alive():
-                thread.join(timeout=5.0)
-                if thread.is_alive():
-                    self._logger.warning(f"Thread {thread.name} did not stop cleanly")
+        # Cancel background tasks
+        for task in [self._receiver_task, self._reconnect_task]:
+            if task and not task.done():
+                task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await task
 
-        self._receiver_thread = None
-        self._reconnect_thread = None
+        self._receiver_task = None
+        self._reconnect_task = None
+
+        # Wait for handler tasks to complete (with timeout)
+        if self._handler_tasks:
+            self._logger.info(f"Waiting for {len(self._handler_tasks)} handler tasks to complete")
+            try:
+                await asyncio.wait_for(asyncio.gather(*self._handler_tasks, return_exceptions=True), timeout=5.0)
+            except asyncio.TimeoutError:
+                self._logger.warning("Handler tasks did not complete in time, cancelling")
+                for task in self._handler_tasks:
+                    task.cancel()
+
+        self._handler_tasks.clear()
 
         # Clear state
-        self._state.set_disconnected()
+        await self._state.set_disconnected()
 
         # Cancel pending requests
-        with self._requests_lock:
+        async with self._requests_lock:
             for rid, queue in self._pending_requests.items():
                 try:
                     queue.put_nowait({"error": "Connection closed"})
-                except Full:
+                except asyncio.QueueFull:
                     self._logger.warning("Failed to queue Connection closed")
             self._pending_requests.clear()
 
         self._logger.info("WebSocket session closed")
 
-    def subscribe(
+    async def subscribe(
         self,
         channel: str,
         handler: Handler,
@@ -179,16 +205,16 @@ class WebSocketSession:
 
         Args:
             channel: Channel name (e.g., "BTC-PERP.trades")
-            handler: Callback function(data) to handle messages
+            handler: Callback function(data) or async function to handle messages
             notification_type: Type to decode notifications into
 
         Returns:
             JSONRPCEnvelope with subscription confirmation
         """
-        if not self._state.is_connected():
+        if not await self._state.is_connected():
             raise RuntimeError("WebSocket not connected. Call open() first.")
 
-        with self._handlers_lock:
+        async with self._handlers_lock:
             if channel in self._handlers:
                 self._logger.warning(
                     f"Channel {channel} already has a handler - replacing it. "
@@ -197,24 +223,24 @@ class WebSocketSession:
 
             self._handlers[channel] = handler
             if notification_type:
-                with self._channel_types_lock:
+                async with self._channel_types_lock:
                     self._channel_types[channel] = notification_type
 
         params = Subscribe(channels=[channel])
 
         self._logger.info(f"Subscribing to channel: {channel}")
         try:
-            envelope = self._send_request("subscribe", params=params)
+            envelope = await self._send_request("subscribe", params=params)
             self._logger.debug(f"Subscribe RPC response for {channel}: {envelope}")
             return envelope
         except Exception:
             # Rollback handler registration on failure
-            with self._handlers_lock:
+            async with self._handlers_lock:
                 self._handlers.pop(channel, None)
             self._logger.exception(f"Subscribe RPC failed for {channel}")
             raise
 
-    def unsubscribe(self, channel: str) -> JSONRPCEnvelope | None:
+    async def unsubscribe(self, channel: str) -> JSONRPCEnvelope | None:
         """
         Unsubscribe from a channel and remove its handler.
 
@@ -224,7 +250,7 @@ class WebSocketSession:
         Returns:
             JSONRPCEnvelope with unsubscribe confirmation
         """
-        with self._handlers_lock:
+        async with self._handlers_lock:
             if channel not in self._handlers:
                 self._logger.warning(f"Not subscribed to channel: {channel}")
                 return None
@@ -233,19 +259,19 @@ class WebSocketSession:
 
         self._logger.info(f"Unsubscribing from channel: {channel}")
         try:
-            envelope = self._send_request("unsubscribe", {"channels": [channel]})
+            envelope = await self._send_request("unsubscribe", {"channels": [channel]})
             self._logger.debug(f"Unsubscribe RPC response for {channel}: {envelope}")
             return envelope
         except Exception:
             self._logger.exception(f"Unsubscribe RPC failed for {channel}")
             raise
 
-    def _connect(self) -> None:
-        """Establish WebSocket connection and start receiver thread."""
+    async def _connect(self) -> None:
+        """Establish WebSocket connection and start receiver task."""
         self._logger.info(f"Connecting to {self._url}")
 
         try:
-            self._ws = connect(
+            self._ws = await connect(
                 self._url,
                 max_size=16 * 1024 * 1024,  # 16MB max message
                 open_timeout=10.0,
@@ -255,93 +281,92 @@ class WebSocketSession:
             self._logger.error(f"Connection failed: {e}")
             raise
 
-        self._state.set_connected()
+        await self._state.set_connected()
 
-        # Start receiver thread
+        # Start receiver task
         self._stop_event.clear()
-        self._receiver_thread = threading.Thread(
-            target=self._receive_loop,
-            daemon=True,
-            name="ws-receiver",
-        )
-        self._receiver_thread.start()
+        self._receiver_task = asyncio.create_task(self._receive_loop(), name="ws-receiver")
 
-        self._logger.info("WebSocket connected, receiver thread started")
+        self._logger.info("WebSocket connected, receiver task started")
 
-    def _close_connection(self) -> None:
+    async def _close_connection(self) -> None:
         """Close the WebSocket connection."""
         if self._ws:
             try:
-                self._ws.close()
+                await self._ws.close()
             except Exception as e:
                 self._logger.debug(f"Error closing WebSocket: {e}")
             finally:
                 self._ws = None
 
-        self._state.set_disconnected()
+        await self._state.set_disconnected()
 
-    def _handle_disconnect(self) -> None:
+    async def _handle_disconnect(self) -> None:
         """Handle disconnection and trigger reconnection if enabled."""
         if self._stop_event.is_set():
             return
 
-        self._state.set_disconnected()
+        await self._state.set_disconnected()
         self._logger.warning("WebSocket disconnected")
 
         # Notify user callback
-        if self._on_disconnect:
+        if self._on_disconnect is not None:
             try:
-                self._on_disconnect()
+                res = self._on_disconnect()
+                if inspect.isawaitable(res):
+                    await cast(Awaitable[None], res)
             except Exception as e:
                 self._logger.error(f"Error in on_disconnect callback: {e}")
 
         # Start reconnection if enabled
-        if self._reconnect_enabled and not self._state.is_reconnecting():
-            self._state.set_reconnecting()
-            self._reconnect_thread = threading.Thread(
-                target=self._reconnect_loop,
-                daemon=True,
+        if self._reconnect_enabled and not await self._state.is_reconnecting():
+            await self._state.set_reconnecting()
+            self._reconnect_task = asyncio.create_task(
+                self._reconnect_loop(),
                 name="ws-reconnect",
             )
-            self._reconnect_thread.start()
 
-    def _reconnect_loop(self) -> None:
+    async def _reconnect_loop(self) -> None:
         """Reconnection loop with exponential backoff."""
         delay = self._reconnect_delay
         attempt = 1
 
-        while not self._stop_event.is_set() and not self._state.is_connected():
+        while not self._stop_event.is_set() and not await self._state.is_connected():
             self._logger.info(f"Reconnection attempt {attempt} in {delay:.1f}s")
-            time.sleep(delay)
+            await asyncio.sleep(delay)
 
             if self._stop_event.is_set():
                 break
 
             try:
                 # Close old connection if exists
-                self._close_connection()
+                await self._close_connection()
 
                 # Establish new connection
-                self._connect()
+                await self._connect()
 
                 # Call reconnect callback (for re-auth, etc.)
-                if self._on_reconnect:
+                if self._on_reconnect is not None:
                     try:
-                        self._on_reconnect()
+                        res = self._on_reconnect()
+                        if inspect.isawaitable(res):
+                            await cast(Awaitable[None], res)
                     except Exception as e:
                         self._logger.error(f"Error in on_reconnect callback: {e}")
                         # Don't fail reconnection if callback fails
 
                 # Call before_resubscribe callback (for re-authentication)
-                if self._on_before_resubscribe:
+                if self._on_before_resubscribe is not None:
                     try:
-                        self._on_before_resubscribe()
+                        res = self._on_before_resubscribe()
+                        if inspect.isawaitable(res):
+                            await cast(Awaitable[None], res)
                     except Exception as e:
                         self._logger.error(f"Error in on_before_resubscribe callback: {e}")
                         raise  # Re-auth failure should trigger retry
 
                 # Resubscribe to all channels
-                self._resubscribe_all()
+                await self._resubscribe_all()
 
                 self._logger.info(f"Reconnected successfully after {attempt} attempts")
                 return
@@ -351,12 +376,12 @@ class WebSocketSession:
                 attempt += 1
                 delay = min(delay * 2, self._max_reconnect_delay)
 
-        self._state.set_disconnected()
+        await self._state.set_disconnected()
         self._logger.info("Reconnection stopped")
 
-    def _resubscribe_all(self) -> None:
+    async def _resubscribe_all(self) -> None:
         """Resubscribe to all channels after reconnection."""
-        with self._handlers_lock:
+        async with self._handlers_lock:
             channels = list(self._handlers.keys())
 
         if not channels:
@@ -368,13 +393,13 @@ class WebSocketSession:
         for channel in channels:
             try:
                 params = Subscribe(channels=[channel])
-                envelope = self._send_request("subscribe", params=params)
+                envelope = await self._send_request("subscribe", params=params)
                 self._logger.debug(f"Resubscribed to {channel}: {envelope}")
             except Exception as e:
                 self._logger.error(f"Failed to resubscribe to {channel}: {e}")
                 # Continue trying other channels
 
-    def _send_request(self, method: str, params: msgspec.Struct | dict) -> JSONRPCEnvelope:
+    async def _send_request(self, method: str, params: msgspec.Struct | dict) -> JSONRPCEnvelope:
         """Send RPC request and return decoded envelope."""
         if not self._ws:
             raise RuntimeError("WebSocket not connected")
@@ -395,65 +420,70 @@ class WebSocketSession:
         }
         data = msgspec.json.encode(request).decode("utf-8")
 
-        response_queue: Queue = Queue(maxsize=1)
+        response_queue: asyncio.Queue = asyncio.Queue(maxsize=1)
 
-        with self._requests_lock:
+        async with self._requests_lock:
             self._pending_requests[request_id] = response_queue
 
         try:
-            self._ws.send(data)
+            await self._ws.send(data)
 
             try:
-                envelope = response_queue.get(timeout=self._request_timeout)
+                envelope = await asyncio.wait_for(response_queue.get(), timeout=self._request_timeout)
                 return envelope
-            except Empty:
+            except asyncio.TimeoutError:
                 self._logger.error(f"RPC timeout for {method} after {self._request_timeout}s")
                 raise TimeoutError(f"RPC timeout after {self._request_timeout}s")
 
         finally:
-            with self._requests_lock:
+            async with self._requests_lock:
                 self._pending_requests.pop(request_id, None)
 
-    def _receive_loop(self) -> None:
-        """Background thread: continuously receive and dispatch messages."""
-        self._logger.info("Receiver thread started")
+    async def _receive_loop(self) -> None:
+        """Background task: continuously receive and dispatch messages."""
+        self._logger.info("Receiver task started")
 
         try:
             while not self._stop_event.is_set() and self._ws:
                 try:
-                    message = self._ws.recv(timeout=1.0)
-                    self._dispatch_message(message)
+                    message = await self._ws.recv()
+                    # Dispatch as a task so we don't block receiving
+                    asyncio.create_task(self._dispatch_message(message))
 
                 except TimeoutError:
                     continue
 
                 except ConnectionClosed as e:
                     self._logger.warning(f"Connection closed: {e}")
-                    self._handle_disconnect()
+                    await self._handle_disconnect()
                     break
 
                 except Exception as e:
                     if not self._stop_event.is_set():
                         self._logger.error(f"Receive error: {e}", exc_info=True)
-                        self._handle_disconnect()
+                        await self._handle_disconnect()
                     break
 
         finally:
-            self._logger.info("Receiver thread stopped")
+            self._logger.info("Receiver task stopped")
 
-    def _dispatch_message(self, data: Data) -> None:
+    async def _dispatch_message(self, data: Data) -> None:
         """Dispatch message to appropriate handler."""
-        envelope = decode_envelope(data)
+        try:
+            envelope = decode_envelope(data)
+        except Exception as e:
+            self._logger.error(f"Failed to decode envelope: {e}")
+            return
 
         # RPC response
         if envelope.id is not msgspec.UNSET:
-            with self._requests_lock:
+            async with self._requests_lock:
                 queue = self._pending_requests.get(envelope.id)
 
             if queue:
                 try:
                     queue.put_nowait(envelope)
-                except Full:
+                except asyncio.QueueFull:
                     self._logger.warning(f"Failed to queue RPC response: {envelope.id}")
             else:
                 self._logger.debug(f"No pending request for id: {envelope.id}")
@@ -472,16 +502,17 @@ class WebSocketSession:
                 self._logger.warning("Subscription params missing channel")
                 return
 
-            with self._handlers_lock:
+            async with self._handlers_lock:
                 handler = self._handlers.get(channel)
-                with self._channel_types_lock:
-                    notification_type = self._channel_types.get(channel)
+
+            async with self._channel_types_lock:
+                notification_type = self._channel_types.get(channel)
 
             if not handler:
                 self._logger.debug(f"No handler for channel: {channel}")
                 return
 
-            # Decode and invoke handler
+            # Decode notification
             data_raw = params_dict.get("data")
             try:
                 notification = msgspec.convert(data_raw, type=notification_type)
@@ -489,23 +520,40 @@ class WebSocketSession:
                 self._logger.error(f"Notification decode error for {channel}: {e} data: {data_raw}", exc_info=True)
                 return
 
-            try:
-                handler(notification)
-            except Exception as e:
-                self._logger.error(f"Handler error for {channel}: {e}", exc_info=True)
+            # Invoke handler as task
+            await self._invoke_handler(channel, handler, notification)
             return
 
         # Other notification
         self._logger.debug(f"Unhandled notification: {envelope.method}")
+
+    async def _invoke_handler(self, channel: str, handler: Handler, notification: Any) -> None:
+        """Invoke handler as a background task with concurrency control."""
+        async with self._handler_semaphore:
+            task = asyncio.create_task(self._run_handler(channel, handler, notification), name=f"handler-{channel}")
+            self._handler_tasks.add(task)
+            task.add_done_callback(self._handler_tasks.discard)
+
+    async def _run_handler(self, channel: str, handler: Handler, notification: Any) -> None:
+        """Run handler (sync or async) and catch exceptions."""
+        try:
+            if asyncio.iscoroutinefunction(handler):
+                await handler(notification)
+            else:
+                # Run sync handler in executor to avoid blocking
+                loop = asyncio.get_event_loop()
+                await loop.run_in_executor(None, handler, notification)
+        except Exception as e:
+            self._logger.error(f"Handler error for {channel}: {e}", exc_info=True)
 
     @staticmethod
     def _finalize(logger: Logger) -> None:
         """Finalizer for cleanup."""
         logger.debug("WebSocketSession garbage collected without explicit close()")
 
-    def __enter__(self):
-        self.open()
+    async def __aenter__(self):
+        await self.open()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.close()

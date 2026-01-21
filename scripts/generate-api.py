@@ -769,7 +769,7 @@ def generate_all_files():
             public_methods=public_methods,
             private_methods=private_methods,
             rpc_schema_imports=rpc_schema_imports,
-            is_async=False,
+            is_async=True,
             api_prefix="",
             client_type="websocket",
             public_channels=public_channels,
