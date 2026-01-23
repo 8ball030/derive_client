@@ -41,12 +41,12 @@ class SimpleRfqQuoter:
         self.client = client
         self.logger = client._logger
 
-    async def create_priced_legs(self, client: WebSocketClient, rfq):
+    async def price_rfq(self, rfq):
         # Price legs using current market prices NOTE! This is just an example and not a trading strategy!!!
         self.logger.info(f"  - Pricing legs for RFQ {rfq.rfq_id}...")
         priced_legs = []
         for unpriced_leg in rfq.legs:
-            ticker = await client.markets.get_ticker(instrument_name=unpriced_leg.instrument_name)
+            ticker = await self.client.markets.get_ticker(instrument_name=unpriced_leg.instrument_name)
 
             base_price = ticker.mark_price
 
