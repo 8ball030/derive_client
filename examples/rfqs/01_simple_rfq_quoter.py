@@ -84,7 +84,7 @@ class SimpleRfqQuoter:
             if isinstance(result, PrivateSendQuoteResultSchema):
                 self.quotes[rfq.rfq_id] = result
             else:
-                self.logger.info(f"   ❌ Failed to send quote for RFQ {rfq.rfq_id}: {result}[/red]")
+                self.logger.info(f"  ❌ Failed to send quote for RFQ {rfq.rfq_id}: {result}")
 
     async def on_quote(self, quotes_list: List[QuoteResultSchema]):
         for quote in quotes_list:
