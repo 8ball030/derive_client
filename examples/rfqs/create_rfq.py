@@ -83,7 +83,10 @@ async def create_and_execute_rfq(
         rfq_id=best_quote.rfq_id,
         quote_id=best_quote.quote_id,
     )
-    logger.info(f"✓ Quote executed at: {best_quote.quote_id}")
+    logger.info(
+        f"✓ Quote {best_quote.quote_id} executed at total price: "
+        + f"{sum(leg.price * leg.amount for leg in best_quote.legs)}"
+    )
 
 
 if __name__ == "__main__":
