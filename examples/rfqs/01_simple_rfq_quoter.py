@@ -48,9 +48,9 @@ class SimpleRfqQuoter:
         for unpriced_leg in rfq.legs:
             ticker = await client.markets.get_ticker(instrument_name=unpriced_leg.instrument_name)
 
-            base_price = ticker.index_price
+            base_price = ticker.mark_price
 
-            price = base_price * D("1.001") if unpriced_leg.direction == Direction.buy else base_price * D("0.999")
+            price = base_price * D("0.999") if unpriced_leg.direction == Direction.buy else base_price * D("1.001")
 
             price = price.quantize(ticker.tick_size)
             priced_leg = LegPricedSchema(

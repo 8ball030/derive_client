@@ -10,15 +10,13 @@ from config import OWNER_TEST_WALLET, SESSION_KEY_PRIVATE_KEY, TAKER_SUBACCOUNT_
 from derive_client import WebSocketClient
 from derive_client.data_types import Environment
 from derive_client.data_types.channel_models import BestQuoteChannelResultSchema
-from derive_client.data_types.generated_models import Direction, LegUnpricedSchema
+from derive_client.data_types.generated_models import Direction, LegUnpricedSchema, QuoteResultPublicSchema
 from derive_client.data_types.utils import D
 from derive_client.utils.logger import get_logger
 
 
 async def create_and_execute_rfq(
-    instrument: str,
-    side: str,
-    amount: float,
+    legs: List[LegUnpricedSchema],
 ):
     """
     Create an RFQ, wait for quotes, and execute the best one.
@@ -39,20 +37,11 @@ async def create_and_execute_rfq(
     logger = get_logger()
 
     # Send RFQ
-    direction = Direction.buy if side.lower() == "buy" else Direction.sell
-    rfq_result = await client.rfq.send_rfq(
-        legs=[
-            LegUnpricedSchema(
-                amount=D(amount),
-                instrument_name=instrument,
-                direction=direction,
-            )
-        ],
-    )
+    rfq_result = await client.rfq.send_rfq(legs=legs)
     logger.info(f"✓ RFQ created: {rfq_result.rfq_id}")
 
     # Track best quote
-    best_quote = None
+    best_quote: QuoteResultPublicSchema | None = None
 
     def handle_quote(quotes: List[BestQuoteChannelResultSchema]):
         nonlocal best_quote
@@ -91,10 +80,20 @@ async def create_and_execute_rfq(
 
 if __name__ == "__main__":
     # Example usage
+    legs = [
+        LegUnpricedSchema(
+            instrument_name="ETH-20260125-3050-C",
+            amount=D("1.0"),
+            direction=Direction.buy,
+        ),
+        LegUnpricedSchema(
+            instrument_name="ETH-20260125-3050-P",
+            amount=D("1.0"),
+            direction=Direction.sell,
+        ),
+    ]
     asyncio.run(
         create_and_execute_rfq(
-            instrument="ETH-PERP",
-            side="sell",
-            amount=1.0,
+            legs=legs,
         )
     )
