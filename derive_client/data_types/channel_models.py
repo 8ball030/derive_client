@@ -12,7 +12,6 @@ from derive_client.data_types.generated_models import (
     CancelReason,
     Direction,
     LegPricedSchema,
-    LegUnpricedSchema,
     LiquidityRole,
     MarginType,
     OrderResponseSchema,
@@ -23,6 +22,7 @@ from derive_client.data_types.generated_models import (
     PublicGetInstrumentParamsSchema,
     PublicGetOptionSettlementPricesParamsSchema,
     PublicMarginWatchResultSchema,
+    RFQResultPublicSchema,
     RPCErrorFormatSchema,
     Status,
     TickerSlimSchema,
@@ -312,24 +312,6 @@ class TradesInstrumentTypeCurrencyPubSubSchema(Struct):
 class TradesInstrumentTypeCurrencyTxStatusNotificationParamsSchema(Struct):
     channel: str
     data: List[TradeSettledPublicResponseSchema]
-
-
-class RFQResultPublicSchema(Struct):
-    cancel_reason: CancelReason
-    creation_timestamp: int
-    filled_direction: Direction
-    filled_pct: Decimal
-    last_update_timestamp: int
-    legs: List[LegUnpricedSchema]
-    partial_fill_step: Decimal
-    rfq_id: str
-    status: Status
-    subaccount_id: int
-    valid_until: int
-    wallet: str
-    fill_rate: Optional[Decimal] = None
-    recent_fill_rate: Optional[Decimal] = None
-    total_cost: Optional[Decimal] = None
 
 
 class AuctionsWatchNotificationParamsSchema(Struct):
