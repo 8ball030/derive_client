@@ -23,6 +23,7 @@ from derive_client.data_types.generated_models import (
     PublicGetInstrumentParamsSchema,
     PublicGetOptionSettlementPricesParamsSchema,
     PublicMarginWatchResultSchema,
+    RFQResultPublicSchema,
     RPCErrorFormatSchema,
     Status,
     TickerSlimSchema,
@@ -139,30 +140,8 @@ class SubaccountIdQuotesChannelSchema(SubaccountIdBalancesChannelSchema):
     pass
 
 
-class QuoteResultSchema(Struct):
-    cancel_reason: CancelReason
-    creation_timestamp: int
-    direction: Direction
-    fee: Decimal
-    fill_pct: Decimal
-    is_transfer: bool
-    label: str
-    last_update_timestamp: int
-    legs: List[LegPricedSchema]
-    legs_hash: str
-    liquidity_role: LiquidityRole
-    max_fee: Decimal
-    mmp: bool
-    nonce: int
-    quote_id: str
-    rfq_id: str
-    signature: str
-    signature_expiry_sec: int
-    signer: str
-    status: Status
-    subaccount_id: int
-    tx_status: TxStatus
-    tx_hash: Optional[str] = None
+class LegPricedSchemaModel(LegPricedSchema):
+    pass
 
 
 class SubaccountIdTradesChannelSchema(SubaccountIdBalancesChannelSchema):
@@ -241,6 +220,10 @@ class WalletRfqsChannelSchema(PrivateGetAllPortfoliosParamsSchema):
     pass
 
 
+class LegUnpricedSchema1(LegUnpricedSchema):
+    pass
+
+
 class AuctionResultSchema(Struct):
     state: State
     subaccount_id: int
@@ -285,9 +268,30 @@ class QuoteResultPublicSchema(Struct):
     tx_hash: Optional[str] = None
 
 
-class SubaccountIdQuotesNotificationParamsSchema(Struct):
-    channel: str
-    data: List[QuoteResultSchema]
+class QuoteResultSchema(Struct):
+    cancel_reason: CancelReason
+    creation_timestamp: int
+    direction: Direction
+    fee: Decimal
+    fill_pct: Decimal
+    is_transfer: bool
+    label: str
+    last_update_timestamp: int
+    legs: List[LegPricedSchemaModel]
+    legs_hash: str
+    liquidity_role: LiquidityRole
+    max_fee: Decimal
+    mmp: bool
+    nonce: int
+    quote_id: str
+    rfq_id: str
+    signature: str
+    signature_expiry_sec: int
+    signer: str
+    status: Status
+    subaccount_id: int
+    tx_hash: Optional[str] = None
+    tx_status: Optional[TxStatus] = None
 
 
 class SubaccountIdTradesTxStatusNotificationParamsSchema(Struct):
@@ -312,24 +316,6 @@ class TradesInstrumentTypeCurrencyPubSubSchema(Struct):
 class TradesInstrumentTypeCurrencyTxStatusNotificationParamsSchema(Struct):
     channel: str
     data: List[TradeSettledPublicResponseSchema]
-
-
-class RFQResultPublicSchema(Struct):
-    cancel_reason: CancelReason
-    creation_timestamp: int
-    filled_direction: Direction
-    filled_pct: Decimal
-    last_update_timestamp: int
-    legs: List[LegUnpricedSchema]
-    partial_fill_step: Decimal
-    rfq_id: str
-    status: Status
-    subaccount_id: int
-    valid_until: int
-    wallet: str
-    fill_rate: Optional[Decimal] = None
-    recent_fill_rate: Optional[Decimal] = None
-    total_cost: Optional[Decimal] = None
 
 
 class AuctionsWatchNotificationParamsSchema(Struct):
@@ -376,16 +362,6 @@ class SubaccountIdOrdersNotificationParamsSchema(Struct):
     data: List[OrderResponseSchema]
 
 
-class SubaccountIdQuotesNotificationSchema(Struct):
-    method: str
-    params: SubaccountIdQuotesNotificationParamsSchema
-
-
-class SubaccountIdQuotesPubSubSchema(Struct):
-    channel_params: SubaccountIdQuotesChannelSchema
-    notification: SubaccountIdQuotesNotificationSchema
-
-
 class SubaccountIdTradesNotificationParamsSchema(SubaccountIdTradesTxStatusNotificationParamsSchema):
     pass
 
@@ -423,11 +399,6 @@ class TradesInstrumentTypeCurrencyTxStatusNotificationSchema(Struct):
 class TradesInstrumentTypeCurrencyTxStatusPubSubSchema(Struct):
     channel_params: TradesInstrumentTypeCurrencyTxStatusChannelSchema
     notification: TradesInstrumentTypeCurrencyTxStatusNotificationSchema
-
-
-class WalletRfqsNotificationParamsSchema(Struct):
-    channel: str
-    data: List[RFQResultPublicSchema]
 
 
 class AuctionsWatchNotificationSchema(Struct):
@@ -476,6 +447,11 @@ class SubaccountIdOrdersPubSubSchema(Struct):
     notification: SubaccountIdOrdersNotificationSchema
 
 
+class SubaccountIdQuotesNotificationParamsSchema(Struct):
+    channel: str
+    data: List[QuoteResultSchema]
+
+
 class SubaccountIdTradesNotificationSchema(Struct):
     method: str
     params: SubaccountIdTradesNotificationParamsSchema
@@ -491,19 +467,24 @@ class TickerSlimInstrumentNameIntervalNotificationParamsSchema(Struct):
     data: TickerSlimInstrumentNameIntervalPublisherDataSchema
 
 
-class WalletRfqsNotificationSchema(Struct):
-    method: str
-    params: WalletRfqsNotificationParamsSchema
-
-
-class WalletRfqsPubSubSchema(Struct):
-    channel_params: WalletRfqsChannelSchema
-    notification: WalletRfqsNotificationSchema
+class WalletRfqsNotificationParamsSchema(Struct):
+    channel: str
+    data: List[RFQResultPublicSchema]
 
 
 class SubaccountIdBestQuotesNotificationParamsSchema(Struct):
     channel: str
     data: List[BestQuoteChannelResultSchema]
+
+
+class SubaccountIdQuotesNotificationSchema(Struct):
+    method: str
+    params: SubaccountIdQuotesNotificationParamsSchema
+
+
+class SubaccountIdQuotesPubSubSchema(Struct):
+    channel_params: SubaccountIdQuotesChannelSchema
+    notification: SubaccountIdQuotesNotificationSchema
 
 
 class TickerSlimInstrumentNameIntervalNotificationSchema(Struct):
@@ -514,6 +495,16 @@ class TickerSlimInstrumentNameIntervalNotificationSchema(Struct):
 class TickerSlimInstrumentNameIntervalPubSubSchema(Struct):
     channel_params: TickerSlimInstrumentNameIntervalChannelSchema
     notification: TickerSlimInstrumentNameIntervalNotificationSchema
+
+
+class WalletRfqsNotificationSchema(Struct):
+    method: str
+    params: WalletRfqsNotificationParamsSchema
+
+
+class WalletRfqsPubSubSchema(Struct):
+    channel_params: WalletRfqsChannelSchema
+    notification: WalletRfqsNotificationSchema
 
 
 class SubaccountIdBestQuotesNotificationSchema(Struct):

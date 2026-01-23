@@ -1,139 +1,97 @@
 """
-Create an rfq using the REST API.
+Simple demonstration of creating and executing an RFQ.
 """
 
 import asyncio
 from typing import List
 
-import rich_click as click
 from config import OWNER_TEST_WALLET, SESSION_KEY_PRIVATE_KEY, TAKER_SUBACCOUNT_ID
-from rich import print
 
 from derive_client import WebSocketClient
 from derive_client.data_types import Environment
 from derive_client.data_types.channel_models import BestQuoteChannelResultSchema
-from derive_client.data_types.generated_models import AssetType, Direction, LegUnpricedSchema
+from derive_client.data_types.generated_models import Direction, LegUnpricedSchema
 from derive_client.data_types.utils import D
+from derive_client.utils.logger import get_logger
 
-SLEEP_TIME = 1
 
-
-async def main(
+async def create_and_execute_rfq(
+    instrument: str,
     side: str,
     amount: float,
-    instrument: str,
-    instrument_type: AssetType = AssetType.option,
 ):
     """
-    Sample of polling for RFQs and printing their status.
+    Create an RFQ, wait for quotes, and execute the best one.
+
+    Args:
+        instrument: Instrument name (e.g. "ETH-30JUN23-1500-C")
+        side: "buy" or "sell"
+        amount: Contract amount
     """
-    client: WebSocketClient = WebSocketClient(
+    # Initialize client
+    client = WebSocketClient(
         session_key=SESSION_KEY_PRIVATE_KEY,
         wallet=OWNER_TEST_WALLET,
         env=Environment.TEST,
         subaccount_id=TAKER_SUBACCOUNT_ID,
     )
     await client.connect()
+    logger = get_logger()
 
-    # we get an option market
-    markets = await client.markets.fetch_instruments(
-        instrument_type=instrument_type,
-        expired=False,
-    )
-
-    if instrument:
-        markets = [m for m in markets if m == instrument]
-        if not markets:
-            click.echo(f"No market found for instrument {instrument}. Please check the instrument name and try again.")
-            return
-
-    request_direction: Direction = Direction.buy if side.lower() == 'buy' else Direction.sell
-
-    result = await client.rfq.send_rfq(
+    # Send RFQ
+    direction = Direction.buy if side.lower() == "buy" else Direction.sell
+    rfq_result = await client.rfq.send_rfq(
         legs=[
             LegUnpricedSchema(
                 amount=D(amount),
                 instrument_name=instrument,
-                direction=request_direction,
+                direction=direction,
             )
         ],
     )
-    print("RFQ created with id:", result.rfq_id)
+    logger.info(f"✓ RFQ created: {rfq_result.rfq_id}")
 
-    def on_new_quote(quotes: List[BestQuoteChannelResultSchema]):
-        """
-        Handle a new quote received for the RFQ.
-        """
+    # Track best quote
+    best_quote = None
+
+    def handle_quote(quotes: List[BestQuoteChannelResultSchema]):
+        nonlocal best_quote
         for quote in quotes:
             if quote.result and quote.result.best_quote:
-                print(f"New best quote received: {quote.result.best_quote}")
+                best_quote = quote.result.best_quote
+                total_price = sum(leg.price * leg.amount for leg in best_quote.legs)
+                logger.info(f"✓ Best quote received: {total_price}")
 
+    # Subscribe to quotes
     await client.private_channels.best_quotes_by_subaccount_id(
         subaccount_id=str(TAKER_SUBACCOUNT_ID),
-        callback=on_new_quote,
+        callback=handle_quote,
     )
 
-    await asyncio.sleep(30)
-    print("Final quotes:")
+    # Wait for quotes
+    await asyncio.sleep(10)
 
+    if not best_quote:
+        logger.error("✗ No quotes received")
+        return
 
-@click.group()
-def rfq():
-    """RFQ related commands."""
-    pass
-
-
-@rfq.command(help="Create an RFQ and poll for quotes")
-@click.option(
-    '-s',
-    '--side',
-    type=click.Choice(['buy', 'sell'], case_sensitive=False),
-    required=True,
-    help="Side of the RFQ (buy or sell)",
-)
-@click.option(
-    '-a',
-    '--amount',
-    type=click.FLOAT,
-    required=False,
-    default=1.0,
-    help="Amount of the Leg of the RFQ",
-)
-@click.option(
-    '-i',
-    '--instrument',
-    type=click.STRING,
-    required=False,
-    default=None,
-    help="Instrument name to use for the RFQ (e.g. ETH-30JUN23-1500-C)",
-)
-@click.option(
-    '-it',
-    '--instrument-type',
-    type=AssetType,
-    required=False,
-    default=AssetType.option,
-    help="Instrument name to use for the RFQ (e.g. ETH-30JUN23-1500-C)",
-)
-def create(side: str, amount: float, instrument: str, instrument_type: AssetType = AssetType.option):
-    """
-    Sample of polling for RFQs and printing their status.
-    """
-    click.echo(
-        f"Creating RFQ: side={side}, amount={amount}, instrument={instrument}, instrument_type={instrument_type}"
+    # Execute quote
+    execute_direction = Direction.sell if best_quote.direction == Direction.buy else Direction.buy
+    await client.rfq.execute_quote(
+        direction=execute_direction,
+        legs=best_quote.legs,
+        rfq_id=best_quote.rfq_id,
+        quote_id=best_quote.quote_id,
     )
-
-    asyncio.run(
-        main(
-            side=side,
-            amount=amount,
-            instrument=instrument,
-            instrument_type=instrument_type,
-        )
-    )
-
-    click.echo("RFQ process completed.")
+    logger.info(f"✓ Quote executed at: {best_quote.quote_id}")
 
 
 if __name__ == "__main__":
-    rfq()
+    # Example usage
+    asyncio.run(
+        create_and_execute_rfq(
+            instrument="ETH-PERP",
+            side="sell",
+            amount=1.0,
+        )
+    )
