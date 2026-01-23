@@ -1,5 +1,9 @@
 """
-Example of how to poll RFQ (Request for Quote) status and handle transfers between subaccount and funding account.
+Example of how to act as a simple RFQ quoter that prices incoming RFQs and sends quotes.
+This example connects to the WebSocket API, listens for incoming RFQs on a specified wallet,
+prices the legs using current market prices, and sends quotes back to the RFQs.
+It also listens for quote updates to track the status of the quotes sent.
+IT SHOULD NOT BE USED AS A TRADING STRATEGY!!!
 """
 
 import asyncio
@@ -46,7 +50,7 @@ class SimpleRfqQuoter:
 
             base_price = ticker.index_price
 
-            price = base_price * D("1.0") if unpriced_leg.direction == Direction.buy else base_price * D("1.0")
+            price = base_price * D("1.001") if unpriced_leg.direction == Direction.buy else base_price * D("0.999")
 
             price = price.quantize(ticker.tick_size)
             priced_leg = LegPricedSchema(
