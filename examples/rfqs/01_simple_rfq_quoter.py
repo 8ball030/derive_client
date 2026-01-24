@@ -73,7 +73,7 @@ class SimpleRfqQuoter:
         if not open_rfqs:
             return
 
-        priced = await asyncio.gather(*(self.create_priced_legs(self.client, r) for r in open_rfqs))
+        priced = await asyncio.gather(*(self.price_rfq(r) for r in open_rfqs))
         quotable = [(r, legs) for r, legs in zip(open_rfqs, priced) if legs]
 
         if not quotable:
