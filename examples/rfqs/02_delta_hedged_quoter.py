@@ -12,6 +12,7 @@ IT SHOULD NOT BE USED AS A TRADING STRATEGY!!!
 
 import asyncio
 import warnings
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from logging import Logger
 from typing import List
@@ -26,6 +27,7 @@ from derive_client.data_types.generated_models import (
     AssetType,
     Direction,
     LegPricedSchema,
+    OrderResponseSchema,
     OrderType,
     PositionResponseSchema,
     PrivateSendQuoteResultSchema,
@@ -33,26 +35,29 @@ from derive_client.data_types.generated_models import (
     RFQResultPublicSchema,
     Status,
     TradeResponseSchema,
-    TxStatus,
+    TxStatus4,
 )
 from derive_client.data_types.utils import D
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-SLEEP_TIME = 1
 SUBACCOUNT_ID = 31049
 
+# Quoting parameters
 UNDERLYING_TO_QUOTE = "ETH"
+QUOTE_SPREAD_BPS = D("0")
+FALLBACK_TO_MARK_PRICE_PREMIUM_BPS = D("1000")  # 10% premium if no book price available
 
 # Hedging parameters
 MAX_DELTA_TO_QUOTE = D("100.0")
 MIN_DELTA_EXPOSURE = D("-0.1")
 MAX_DELTA_EXPOSURE = D("0.1")
 HEDGE_INTERVAL = 30  # seconds
+HEDGE_ORDER_LABEL = "delta_hedge"
+HEDGE_ORDER_TIMEOUT_S = 60
 
 
 class DeltaQuoterStrategy:
-    quote_tickers: dict[str, PublicGetTickerResultSchema] = {}
     client: WebSocketClient
     logger: Logger
 
@@ -91,12 +96,7 @@ class DeltaQuoterStrategy:
         total_delta = D("0.0")
         is_error = False
         for leg in quote.legs:
-            if leg.instrument_name not in self.quote_tickers:
-                # fetch and cache ticker
-                ticker = await self.client.markets.get_ticker(instrument_name=leg.instrument_name)
-                self.quote_tickers[leg.instrument_name] = ticker
-            else:
-                ticker = self.quote_tickers[leg.instrument_name]
+            ticker = await self.client.markets.get_ticker(instrument_name=leg.instrument_name)
             if not ticker.option_pricing:
                 self.logger.info(
                     f"    - Cannot calculate delta for leg {leg.instrument_name} due to missing option pricing data."
@@ -104,7 +104,9 @@ class DeltaQuoterStrategy:
                 is_error = True
                 break
             leg_delta = ticker.option_pricing.delta * leg.amount
-            if leg.direction == Direction.buy:
+            # we are the SELLER of the quote so we are in efffect taking the opposite side of the leg direction
+            # we therefore subtract the delta for buy legs and add for sell legs
+            if leg.direction == Direction.sell:
                 total_delta += leg_delta
             else:
                 total_delta -= leg_delta
@@ -113,17 +115,31 @@ class DeltaQuoterStrategy:
     async def price_legs(self, rfq: RFQResultPublicSchema) -> List[LegPricedSchema]:
         # Implement logic to price the legs of the RFQ
         priced_legs = []
-        expected_delta = D("0.0")  # delta that selling the RFQ would add to the portfolio
-        shouldnt_price = False
         expected_delta, is_error = await self.calculate_delta_from_quote(rfq)
-        if is_error:
+        if is_error or abs(expected_delta) > MAX_DELTA_TO_QUOTE:
             return []
         for unpriced_leg in rfq.legs:
-            ticker = self.quote_tickers[unpriced_leg.instrument_name]
-            expected_delta += unpriced_leg.amount * ticker.option_pricing.delta  # type: ignore
-            base_price = ticker.mark_price
-            price = base_price * D("0.999") if unpriced_leg.direction == Direction.buy else base_price * D("1.001")
-            price = price.quantize(ticker.tick_size)
+            ticker: PublicGetTickerResultSchema = await self.client.markets.get_ticker(
+                instrument_name=unpriced_leg.instrument_name
+            )
+            # we base on the book price here
+            if unpriced_leg.direction == Direction.buy:
+                if ticker.best_ask_price is None or ticker.best_ask_price == D("0"):
+                    self.logger.info(
+                        f"    - fallback pricing used as no mark price for: {unpriced_leg.instrument_name}."
+                    )
+                    base_price = ticker.mark_price * (D("1") + FALLBACK_TO_MARK_PRICE_PREMIUM_BPS / D("10000"))
+                else:
+                    base_price = ticker.best_ask_price
+            else:
+                if ticker.best_bid_price is None or ticker.best_bid_price == D("0"):
+                    self.logger.info(
+                        f"    - fallback pricing used as no mark price for: {unpriced_leg.instrument_name}."
+                    )
+                    base_price = ticker.mark_price * (D("1") - FALLBACK_TO_MARK_PRICE_PREMIUM_BPS / D("10000"))
+                else:
+                    base_price = ticker.best_bid_price
+            price = base_price.quantize(ticker.tick_size)
             priced_leg = LegPricedSchema(
                 price=price,
                 amount=unpriced_leg.amount,
@@ -131,7 +147,16 @@ class DeltaQuoterStrategy:
                 instrument_name=unpriced_leg.instrument_name,
             )
             priced_legs.append(priced_leg)
-        return priced_legs if not shouldnt_price else []
+        return priced_legs
+
+
+class PortfolioDeltaCalculator:
+    client: WebSocketClient
+    logger: Logger
+
+    def __init__(self, client: WebSocketClient, logger: Logger):
+        self.client = client
+        self.logger = logger
 
     async def calculate_portfolio_delta(self) -> Decimal:
         # Implement logic to calculate the current portfolio delta
@@ -170,20 +195,27 @@ class DeltaQuoterStrategy:
 class DeltaHedgerRfqQuoter:
     logger: Logger
     client: WebSocketClient
-    quotes: dict[str, PrivateSendQuoteResultSchema] = {}
-    is_hedging: bool = False
 
     def __init__(self, client: WebSocketClient):
         self.client = client
         self.logger = client._logger
+        self.portfolio_delta_calculator = PortfolioDeltaCalculator(client, self.logger)
+        self.delta_quoter_strategy = DeltaQuoterStrategy(client, self.logger)
+        self.quotes: dict[str, PrivateSendQuoteResultSchema] = {}
+        # hedging state
+        self.hedging_queue = asyncio.Queue()
+        self.hedger_task: asyncio.Task[None]
+        self.hedge_order: OrderResponseSchema | None = None
+        self.hedge_lock = asyncio.Lock()
+        # state locks
+        self.quoting_lock = asyncio.Lock()
 
     async def create_quote(self, rfq):
         # Price legs using current market prices NOTE! This is just an example and not a trading strategy!!!
-        delta_quoter_strategy = DeltaQuoterStrategy(self.client, self.logger)
-        if not await delta_quoter_strategy.should_quote(rfq):
+        if not await self.delta_quoter_strategy.should_quote(rfq):
             self.logger.info(f"  - Skipping quoting for RFQ {rfq.rfq_id} based on strategy decision.")
             return []
-        priced_legs = await delta_quoter_strategy.price_legs(rfq)
+        priced_legs = await self.delta_quoter_strategy.price_legs(rfq)
         self.logger.info(
             f"  ✓ Priced legs for RFQ {rfq.rfq_id} at total price {sum(leg.price * leg.amount for leg in priced_legs)}"
         )
@@ -191,8 +223,9 @@ class DeltaHedgerRfqQuoter:
 
     async def on_rfq(self, rfqs: List[RFQResultPublicSchema]):
         for rfq in rfqs:
-            if rfq.status in {Status.expired, Status.cancelled} and rfq.rfq_id in self.quotes:
-                del self.quotes[rfq.rfq_id]
+            async with self.quoting_lock:
+                if rfq.status in {Status.expired, Status.cancelled} and rfq.rfq_id in self.quotes:
+                    del self.quotes[rfq.rfq_id]
         open_rfqs = [r for r in rfqs if r.status == Status.open]
         if not open_rfqs:
             return
@@ -203,6 +236,7 @@ class DeltaHedgerRfqQuoter:
         if not quotable:
             return
 
+        # as we are the quoter, we always sell the quotes
         results = await asyncio.gather(
             *(self.client.rfq.send_quote(rfq_id=r.rfq_id, legs=legs, direction=Direction.sell) for r, legs in quotable),
             return_exceptions=True,
@@ -210,81 +244,82 @@ class DeltaHedgerRfqQuoter:
         for r, result in zip(quotable, results):
             rfq, _ = r
             if isinstance(result, PrivateSendQuoteResultSchema):
-                self.quotes[rfq.rfq_id] = result
+                async with self.quoting_lock:
+                    self.quotes[rfq.rfq_id] = result
             else:
                 self.logger.info(f"  ❌ Failed to send quote for RFQ {rfq.rfq_id}: {result}")
 
     async def on_quote(self, quotes_list: List[QuoteResultSchema]):
         for quote in quotes_list:
             self.logger.info(f"  - Quote {quote.quote_id} {quote.rfq_id}: {quote.status}")
-            if quote.status == Status.expired and quote.rfq_id in self.quotes:
-                del self.quotes[quote.rfq_id]
-                self.logger.info(f"  ✗ Our quote {quote.quote_id} expired Better luck next time!")
-            elif quote.status == Status.filled and quote.rfq_id in self.quotes:
-                del self.quotes[quote.rfq_id]
-                self.logger.info(f"  ✓ Our quote {quote.quote_id} was accepted!")
+            async with self.quoting_lock:
+                if quote.status == Status.expired and quote.rfq_id in self.quotes:
+                    del self.quotes[quote.rfq_id]
+                    self.logger.info(f"  ✗ Our quote {quote.quote_id} expired Better luck next time!")
+                elif quote.status == Status.filled and quote.rfq_id in self.quotes:
+                    del self.quotes[quote.rfq_id]
+                    self.logger.info(f"  ✓ Our quote {quote.quote_id} was accepted!")
 
     async def execute_hedge(self, delta_to_hedge: Decimal):
-        self.is_hedging = True
         instrument_name = f"{UNDERLYING_TO_QUOTE}-PERP"
+        if self.hedge_order is not None:
+            self.logger.info(
+                f"    - Existing hedge {self.hedge_order.order_id} in progress, skipping new hedge {delta_to_hedge}."
+            )
+            return
         ticker = await self.client.markets.get_ticker(instrument_name=instrument_name)
-        trade_direction = Direction.buy if delta_to_hedge < 0 else Direction.sell
-        price = (
-            ticker.mark_price * D("1.01") if trade_direction == Direction.buy else ticker.mark_price * D("0.99")
-        )  # to make sure we fill
+        # if we need to hedge negative delta, we need to buy the underlying perp
+        # if we need to hedge positive delta, we need to sell the underlying perp
+        trade_direction = Direction.sell if delta_to_hedge < 0 else Direction.buy
+        price = ticker.best_bid_price if trade_direction == Direction.sell else ticker.best_ask_price
+        if price is None or price == D("0"):
+            price = ticker.mark_price
         trade_amount = abs(delta_to_hedge)
-        if trade_amount < ticker.tick_size:
-            self.logger.info(f"    - Hedge amount {trade_amount} is below min order size {ticker.tick_size}, skipping.")
-            self.is_hedging = False
+        if trade_amount < ticker.minimum_amount:
+            self.logger.info(
+                f"    - Hedge amount {trade_amount} is below min order size {ticker.minimum_amount}, skipping."
+            )
             return
         self.logger.info(f"    - Executing hedge for delta amount: {delta_to_hedge} in direction {trade_direction}")
-        await self.client.orders.create(
+        self.hedge_order = await self.client.orders.create(
             amount=trade_amount,
             instrument_name=instrument_name,
             limit_price=price.quantize(ticker.tick_size),
             direction=trade_direction,
             order_type=OrderType.limit,
             reduce_only=False,
+            label=HEDGE_ORDER_LABEL,
+            reject_timestamp=int((datetime.now(UTC) + timedelta(seconds=HEDGE_ORDER_TIMEOUT_S)).timestamp() * 1000),
         )
-        self.is_hedging = False
 
-    async def on_trade(self, trades: List[TradeResponseSchema], timeout_s=30):
+    async def on_trade_settlement(self, trades: List[TradeResponseSchema]):
         """Handle trade updates if needed for more advanced hedging logic."""
 
-        trades_to_check = []
-        settled_trades = []
+        rfq_trades = []
         for trade in trades:
             self.logger.info(
-                f"  - {trade.direction} executed: market {trade.instrument_name} at price {trade.trade_price} "
-                + f"amount {trade.trade_amount} status: {trade.tx_status}"
+                f"  - {trade.instrument_name}-{trade.direction} {trade.trade_amount} at {trade.trade_price}"
             )
-            # Wait for pending trades a little while
-            if trade.tx_status in {TxStatus.pending, TxStatus.requested}:
-                trades_to_check.append(trade)
-            elif trade.tx_status == TxStatus.settled:
-                settled_trades.append(trade)
-            else:
-                self.logger.info(f"    - Trade {trade.trade_id} has unexpected status {trade.tx_status}, skipping.")
+            if trade.quote_id:
+                rfq_trades.append(trade)
+        if rfq_trades:
+            self.logger.info(f"  ✓ Detected {len(rfq_trades)} RFQ trades settled, re-evaluating portfolio delta.")
+            await self.hedging_queue.put(await self.portfolio_delta_calculator.calculate_portfolio_delta())
 
-        for trade in trades_to_check:
-            waited_s = 0
-            all_settled = False
-            while not all_settled and waited_s < timeout_s:
-                await asyncio.sleep(1)
-                waited_s += 1
-                trade_trades = await self.client.trades.list_private(order_id=trade.order_id)
-                settled = []
-                for trade_part in trade_trades:
-                    if trade_part.tx_status == TxStatus.settled:
-                        settled.append(trade)
-                if len(settled) == len(trade_trades):
-                    all_settled = True
-                    settled_trades.append(trade)
-                    break
-        if settled_trades:
-            delta_quoter_strategy = DeltaQuoterStrategy(self.client, self.logger)
-            delta_to_hedge = await delta_quoter_strategy.calculate_portfolio_delta()
-            await self.execute_hedge(delta_to_hedge)
+    async def on_order(self, orders: List[OrderResponseSchema]):
+        """Handle order updates if needed for more advanced hedging logic."""
+        for order in orders:
+            self.logger.info(f"  - Order {order.order_id} status update: {order.order_status}")
+            if order.label == HEDGE_ORDER_LABEL and order.order_status in {
+                Status.filled,
+                Status.cancelled,
+                Status.expired,
+            }:
+                self.logger.info(
+                    f"  ✓ Hedge order {order.order_id} status {order.order_status}, re-evaluating total delta."
+                )
+                self.hedge_order = None
+                await self.hedging_queue.put(await self.portfolio_delta_calculator.calculate_portfolio_delta())
 
     async def run(self):
         await self.client.connect()
@@ -293,24 +328,49 @@ class DeltaHedgerRfqQuoter:
             subaccount_id=str(SUBACCOUNT_ID),
             callback=self.on_quote,
         )
-        await self.client.private_channels.trades_by_subaccount_id(
-            subaccount_id=str(SUBACCOUNT_ID),
-            callback=self.on_trade,
+        await self.client.private_channels.trades_tx_status_by_subaccount_id(
+            subaccount_id=SUBACCOUNT_ID,
+            callback=self.on_trade_settlement,
+            tx_status=TxStatus4.settled,
         )
-        await self.run_portfolio_hedging()
-        while True:
-            await asyncio.sleep(HEDGE_INTERVAL)
-            if not self.is_hedging:
-                await self.run_portfolio_hedging()
+        await self.client.private_channels.orders_by_subaccount_id(
+            subaccount_id=str(SUBACCOUNT_ID),
+            callback=self.on_order,
+        )
+        self.hedger_task = asyncio.create_task(self.portfolio_hedging_task())
+        # we send a request to evaluate the current delta on startup
+        await self.hedging_queue.put(await self.portfolio_delta_calculator.calculate_portfolio_delta())
+        await asyncio.Event().wait()
 
-    async def run_portfolio_hedging(self):
+    async def portfolio_hedging_task(self):
         # Implement periodic portfolio delta checking and hedging if necessary
-        delta_hedger_strategy = DeltaQuoterStrategy(self.client, self.logger)
-        current_delta = await delta_hedger_strategy.calculate_portfolio_delta()
-        self.logger.info(f"  - Current portfolio delta: {current_delta}")
-        if current_delta < MIN_DELTA_EXPOSURE or current_delta > MAX_DELTA_EXPOSURE:
-            self.logger.info("  - Portfolio delta out of bounds, executing hedge.")
-            await self.execute_hedge(current_delta)
+
+        last_check_time = datetime.now(UTC)
+
+        while True:
+            portfolio_delta: Decimal | None = None
+            while True:
+                try:
+                    portfolio_delta = self.hedging_queue.get_nowait()
+                except asyncio.QueueEmpty:
+                    break
+
+            if portfolio_delta is None:
+                now = datetime.now(UTC)
+                if (now - last_check_time).total_seconds() >= HEDGE_INTERVAL:
+                    portfolio_delta = await self.portfolio_delta_calculator.calculate_portfolio_delta()
+                    last_check_time = now
+                else:
+                    await asyncio.sleep(1)
+                    continue
+
+            async with self.hedge_lock:
+                if portfolio_delta < MIN_DELTA_EXPOSURE or portfolio_delta > MAX_DELTA_EXPOSURE:
+                    delta_to_hedge = -portfolio_delta
+                    self.logger.info(
+                        f"  - Portfolio delta {portfolio_delta} outside exposure limits, hedging {delta_to_hedge}."
+                    )
+                    await self.execute_hedge(delta_to_hedge)
 
 
 async def main():
