@@ -80,7 +80,7 @@ class SimpleRfqQuoter:
 
             # Price all open RFQs concurrently
             pricing_tasks = [self.price_rfq(rfq) for rfq in open_rfqs]
-            priced_legs_list = await asyncio.gather(*pricing_tasks)
+            priced_legs_list = await asyncio.gather(*pricing_tasks, return_exceptions=True)
 
             # Pair RFQs with their priced legs, filter out empty results
             quotable_rfqs = [(rfq, legs) for rfq, legs in zip(open_rfqs, priced_legs_list) if legs]
@@ -130,9 +130,7 @@ class SimpleRfqQuoter:
 
 
 async def main():
-    """
-    Sample of polling for RFQs and printing their status.
-    """
+    """Run the RFQ quoter. Handling is event-driven (push/callback)"""
 
     client = WebSocketClient(
         session_key=SESSION_KEY_PRIVATE_KEY,
