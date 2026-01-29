@@ -72,7 +72,7 @@ async def create_and_execute_rfq(
                 logger.info(f"📝 Quote received for different RFQ: {quote.rfq_id}")
 
     except asyncio.TimeoutError:
-        logger.error(f"✗ No quotes received for RFQ {rfq_result.rfq_id}, cancelling...")
+        logger.info(f"✗ No quotes received for RFQ {rfq_result.rfq_id}, cancelling...")
         await client.rfq.cancel_rfq(rfq_id=rfq_result.rfq_id)
         return
 
@@ -91,33 +91,14 @@ async def create_and_execute_rfq(
 
 
 if __name__ == "__main__":
-    # Example usage
+    # Simple example usage for single legged RFQ
+
     legs = [
         LegUnpricedSchema(
             instrument_name="ETH-20260327-4800-P",
-            amount=D("1"),
+            amount=D("1.0"),
             direction=Direction.sell,
         ),
-        # LegUnpricedSchema(
-        #     instrument_name="ETH-20260125-3050-P",
-        #     amount=D("1.0"),
-        #     direction=Direction.sell,
-        # ),
-        # LegUnpricedSchema(
-        #     instrument_name="ETH-20260125-2900-P",
-        #     amount=D("1.0"),
-        #     direction=Direction.sell,
-        # ),
-        # LegUnpricedSchema(
-        #     instrument_name="ETH-20260125-3000-P",
-        #     amount=D("1.0"),
-        #     direction=Direction.buy,
-        # ),
-        # LegUnpricedSchema(
-        #     instrument_name="ETH-20260126-2900-P",
-        #     amount=D("1.0"),
-        #     direction=Direction.buy,
-        # ),
     ]
     asyncio.run(
         create_and_execute_rfq(
