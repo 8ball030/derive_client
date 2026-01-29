@@ -1,7 +1,7 @@
 """Auto-generated API classes{% if client_type == 'websocket' %} for WebSocket{% endif %}"""
 
 from enum import Enum
-from typing import Callable, Any, List, Awaitable
+from typing import Any, Awaitable, Callable, List, TypeVar
 
 import msgspec
 
@@ -34,13 +34,14 @@ from derive_client.data_types.channel_models import (
     {% endif -%}
 {% endfor %}
 )
-{% endif %}
 
+MessageT = TypeVar('MessageT')
+Handler = Callable[[MessageT], None] | Callable[[MessageT], Awaitable[None]]
 
 class SubscriptionResult(msgspec.Struct):
     status: dict[str, str]
     current_subscriptions: list[str]
-
+{% endif %}
 
 # ============================================================================
 # RPC API Classes
@@ -136,7 +137,7 @@ class {{ api_prefix }}PublicChannels:
         {% for param in channel.params -%}
         {{ param.name }}: {{ param.type_annotation }},
         {% endfor -%}
-        callback: Callable[[{{ channel.notification_data_type }}], None | Awaitable[None]],
+        callback: Handler[{{ channel.notification_data_type }}],
     ) -> SubscriptionResult:
         {% if channel.description %}
         """
@@ -176,7 +177,7 @@ class {{ api_prefix }}PrivateChannels:
         {% for param in channel.params -%}
         {{ param.name }}: {{ param.type_annotation }},
         {% endfor -%}
-        callback: Callable[[{{ channel.notification_data_type }}], None | Awaitable[None]],
+        callback: Handler[{{ channel.notification_data_type }}],
     ) -> SubscriptionResult:
         {% if channel.description %}
         """
