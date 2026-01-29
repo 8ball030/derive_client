@@ -29,30 +29,29 @@ from derive_client.data_types.utils import D
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 SLEEP_TIME = 1
-SUBACCOUNT_ID = 31049
+SUBACCOUNT_ID = 31049  # another subaccount of this LightAccount (test wallet)
 
 
 class SimpleRfqQuoter:
-    logger: Logger
-    client: WebSocketClient
-    quotes: dict[str, PrivateSendQuoteResultSchema] = {}
 
     def __init__(self, client: WebSocketClient):
         self.client = client
         self.logger = client._logger
+        self.quotes: dict[str, PrivateSendQuoteResultSchema] = {}
 
-    async def price_rfq(self, rfq):
-        # Price legs using current market prices NOTE! This is just an example and not a trading strategy!!!
+    async def price_rfq(self, rfq: RFQResultPublicSchema) -> list[LegPricedSchema]:
+        """Price RFQ legs using mark price with naive 0.1% spread (example only, not a trading strategy)."""
+
         self.logger.info(f"  - Pricing legs for RFQ {rfq.rfq_id}...")
         priced_legs = []
         for unpriced_leg in rfq.legs:
             ticker = await self.client.markets.get_ticker(instrument_name=unpriced_leg.instrument_name)
 
-            base_price = ticker.mark_price
+            # Naive pricing, and round to tick size (required by Derive API)
+            spread_multiplier = D("0.999") if unpriced_leg.direction == Direction.buy else D("1.001")
+            naive_price = ticker.mark_price * spread_multiplier
+            price = naive_price.quantize(ticker.tick_size)
 
-            price = base_price * D("0.999") if unpriced_leg.direction == Direction.buy else base_price * D("1.001")
-
-            price = price.quantize(ticker.tick_size)
             priced_leg = LegPricedSchema(
                 price=price,
                 amount=unpriced_leg.amount,
@@ -60,9 +59,10 @@ class SimpleRfqQuoter:
                 instrument_name=unpriced_leg.instrument_name,
             )
             priced_legs.append(priced_leg)
-        self.logger.info(
-            f"  ✓ Priced legs for RFQ {rfq.rfq_id} at total price {sum(leg.price * leg.amount for leg in priced_legs)}"
-        )
+
+        total_price = sum(leg.price * leg.amount for leg in priced_legs)
+        self.logger.info(f"  ✓ Priced legs for RFQ {rfq.rfq_id} at total price {total_price}")
+
         return priced_legs
 
     async def on_rfq(self, rfqs: List[RFQResultPublicSchema]):
