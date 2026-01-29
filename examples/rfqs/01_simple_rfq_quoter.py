@@ -7,7 +7,7 @@ IT SHOULD NOT BE USED AS A TRADING STRATEGY!!!
 """
 
 import asyncio
-import warnings
+from datetime import datetime, timezone
 from typing import List
 
 from config import ADMIN_TEST_WALLET as TEST_WALLET
@@ -17,43 +17,84 @@ from derive_client import WebSocketClient
 from derive_client.data_types import Environment
 from derive_client.data_types.channel_models import QuoteResultSchema
 from derive_client.data_types.generated_models import (
+    AssetType,
     Direction,
+    InstrumentPublicResponseSchema,
     LegPricedSchema,
     PrivateSendQuoteResultSchema,
     RFQResultPublicSchema,
     Status,
+    TickerSlimSchema,
 )
 from derive_client.data_types.utils import D
-
-warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 SLEEP_TIME = 1
 SUBACCOUNT_ID = 31049  # another subaccount of this LightAccount (test wallet)
 
 
 class SimpleRfqQuoter:
-    def __init__(self, client: WebSocketClient):
+    def __init__(self, client: WebSocketClient, currency: str, instrument_type: AssetType):
         self.client = client
+        self.currency = currency
+        self.instrument_type = instrument_type
+
         self.logger = client._logger
         self.quotes: dict[str, PrivateSendQuoteResultSchema] = {}
+
+    async def _get_non_expired_instruments(self) -> list[InstrumentPublicResponseSchema]:
+        """Get non-expired instruments."""
+
+        expired = False
+        return await self.client.markets.get_instruments(
+            instrument_type=self.instrument_type,
+            expired=expired,
+            currency=self.currency,
+        )
+
+    async def _get_instrument_tickers(self) -> dict[str, TickerSlimSchema]:
+        """Get instrument tickers."""
+
+        instruments = await self._get_non_expired_instruments()
+
+        all_tickers = {}
+        for expiry in {instrument.option_details.expiry for instrument in instruments}:
+            expiry_date = datetime.fromtimestamp(expiry, tz=timezone.utc).strftime("%Y%m%d")
+            tickers = await self.client.markets.get_tickers(
+                instrument_type=self.instrument_type,
+                currency=self.currency,
+                expiry_date=expiry_date,
+            )
+            all_tickers.update(tickers)
+
+        self.logger.info(f"Fetched fresh tickers data for {self.currency} {self.instrument_type.name}")
+        return all_tickers
 
     async def price_rfq(self, rfq: RFQResultPublicSchema) -> list[LegPricedSchema]:
         """Price RFQ legs using mark price with naive 0.1% spread (example only, not a trading strategy)."""
 
-        self.logger.info(f"  - Pricing legs for RFQ {rfq.rfq_id}...")
+        self.logger.info(f"  - Pricing legs for RFQ {rfq.legs}...")
+
+        # This is not optimal, but ensures we have fresh tickers to quote the RFQ, which suffices for this example.
+        tickers = await self._get_instrument_tickers()
+
         priced_legs = []
         for unpriced_leg in rfq.legs:
-            ticker = await self.client.markets.get_ticker(instrument_name=unpriced_leg.instrument_name)
+            # In case the instrument is anything other than a ETH option, we defer quoting
+            ticker_slim_schema = tickers.get(unpriced_leg.instrument_name)
+            if not ticker_slim_schema:
+                self.logger.info(f"No ticker for instrument: {unpriced_leg.instrument_name}")
+                return []
 
             # In this simply example, we do not price the RFQ is there is no ticker.mark_price
             # Otherwise the Derive JSON RPC will return code -32602 (Invalid params: Leg price must be positive)
-            if ticker.mark_price == D("0.0"):
+            ticker_mark_price = ticker_slim_schema.M
+            if ticker_mark_price == D("0.0"):
+                self.logger.info(f"No mark price for instrument: {unpriced_leg.instrument_name}")
                 return []
 
             # Naive pricing, and round to tick size (required by Derive API)
             spread_multiplier = D("0.999") if unpriced_leg.direction == Direction.buy else D("1.001")
-            naive_price = ticker.mark_price * spread_multiplier
-            price = naive_price.quantize(ticker.tick_size)
+            price = ticker_mark_price * spread_multiplier
 
             priced_leg = LegPricedSchema(
                 price=price,
@@ -125,6 +166,8 @@ class SimpleRfqQuoter:
                 self.logger.info(f"  ✗ Our quote {quote.quote_id} expired. Better luck next time!")
 
     async def run(self):
+        """Run a RFQ quoter for ETH options."""
+
         await self.client.connect()
         await self.client.private_channels.rfqs_by_wallet(wallet=TEST_WALLET, callback=self.on_rfq)
         await self.client.private_channels.quotes_by_subaccount_id(
@@ -143,7 +186,16 @@ async def main():
         env=Environment.TEST,
         subaccount_id=SUBACCOUNT_ID,
     )
-    rfq_quoter = SimpleRfqQuoter(client)
+
+    # We setup an RFQ quoter for ETH options
+    currency = "ETH"
+    instrument_type = AssetType.option
+    rfq_quoter = SimpleRfqQuoter(
+        client=client,
+        currency=currency,
+        instrument_type=instrument_type,
+    )
+
     while True:
         try:
             await rfq_quoter.run()
