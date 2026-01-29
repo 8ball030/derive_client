@@ -2,8 +2,6 @@
 
 from typing import List
 
-import msgspec
-
 from derive_client._clients.rest.endpoints import PrivateEndpoints, PublicEndpoints
 from derive_client._clients.rest.http.session import HTTPSession
 from derive_client._clients.utils import AuthContext, decode_envelope, decode_result, encode_json_exclude_none
@@ -202,12 +200,6 @@ from derive_client.data_types.generated_models import (
     VaultBalanceResponseSchema,
     VaultStatisticsResponseSchema,
 )
-
-
-class SubscriptionResult(msgspec.Struct):
-    status: dict[str, str]
-    current_subscriptions: list[str]
-
 
 # ============================================================================
 # RPC API Classes

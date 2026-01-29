@@ -10,7 +10,7 @@ import inspect
 import uuid
 import weakref
 from logging import Logger
-from typing import Any, Awaitable, Callable, Optional, Type, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Optional, Type, cast
 
 import msgspec
 from msgspec import ValidationError
@@ -21,9 +21,8 @@ from websockets.exceptions import ConnectionClosed
 from derive_client._clients.utils import JSONRPCEnvelope, decode_envelope
 from derive_client.utils.logger import get_logger
 
-MessageT = TypeVar('MessageT')
-# Support both sync and async handlers
-Handler = Callable[[MessageT], None] | Callable[[MessageT], Awaitable[None]]
+if TYPE_CHECKING:
+    from derive_client._clients.websockets.api import Handler, MessageT
 
 LifecycleCallback = Callable[[], None] | Callable[[], Awaitable[None]]
 
@@ -194,8 +193,8 @@ class WebSocketSession:
     async def subscribe(
         self,
         channel: str,
-        handler: Handler,
-        notification_type: Optional[Type] = None,
+        handler: Handler[MessageT],
+        notification_type: Optional[Type[MessageT]] = None,
     ) -> JSONRPCEnvelope:
         """
         Subscribe to a channel with a handler.
