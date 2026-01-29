@@ -45,6 +45,11 @@ class SimpleRfqQuoter:
         for unpriced_leg in rfq.legs:
             ticker = await self.client.markets.get_ticker(instrument_name=unpriced_leg.instrument_name)
 
+            # In this simply example, we do not price the RFQ is there is no ticker.mark_price
+            # Otherwise the Derive JSON RPC will return code -32602 (Invalid params: Leg price must be positive)
+            if ticker.mark_price == D("0.0"):
+                return []
+
             # Naive pricing, and round to tick size (required by Derive API)
             spread_multiplier = D("0.999") if unpriced_leg.direction == Direction.buy else D("1.001")
             naive_price = ticker.mark_price * spread_multiplier
