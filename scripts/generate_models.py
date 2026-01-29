@@ -107,9 +107,6 @@ def _ensure_referral_default(node: ast.ClassDef) -> bool:
             stmt.value = ast.parse(referral_code).body[0].value
             ast.fix_missing_locations(node)
             return
-    ann_node = ast.parse(f"referral_code: str = {referral_code}").body[0]
-    node.body.insert(0, ann_node)
-    ast.fix_missing_locations(node)
 
 
 def _ensure_client_default(node: ast.ClassDef) -> bool:
@@ -119,9 +116,6 @@ def _ensure_client_default(node: ast.ClassDef) -> bool:
             stmt.value = ast.parse(client).body[0].value
             ast.fix_missing_locations(node)
             return
-    ann_node = ast.parse(f"client: str = {client}").body[0]
-    node.body.insert(0, ann_node)
-    ast.fix_missing_locations(node)
 
 
 def update_get_tx_result_schema(node: ast.ClassDef) -> None:
@@ -140,9 +134,8 @@ class OptionalRewriter(ast.NodeTransformer):
     def visit_ClassDef(self, node: ast.ClassDef) -> ast.AST:
         self.generic_visit(node)
 
-        if node.name in {"PrivateOrderParamsSchema", "PrivateReplaceParamsSchema"}:
-            _ensure_referral_default(node)
-            _ensure_client_default(node)
+        _ensure_referral_default(node)
+        _ensure_client_default(node)
 
         if node.name == "PublicGetTransactionResultSchema":
             update_get_tx_result_schema(node)
