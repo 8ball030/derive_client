@@ -40,28 +40,40 @@ async def create_and_execute_rfq(
     rfq_result = await client.rfq.send_rfq(legs=legs)
     logger.info(f"✓ RFQ created: {rfq_result.rfq_id}")
 
-    # Track best quote
-    best_quote: QuoteResultPublicSchema | None = None
+    # Create queue to collect quotes
+    quote_queue: asyncio.Queue[BestQuoteChannelResultSchema] = asyncio.Queue()
 
-    def handle_quote(quotes: List[BestQuoteChannelResultSchema]):
-        nonlocal best_quote
+    def handle_best_quotes(quotes: List[BestQuoteChannelResultSchema]):
+        """Handler pushes all quotes to queue for processing"""
+
         for quote in quotes:
-            if quote.result and quote.result.best_quote:
-                best_quote = quote.result.best_quote
-                total_price = sum(leg.price * leg.amount for leg in best_quote.legs)
-                logger.info(f"✓ Best quote received: {total_price}")
+            quote_queue.put_nowait(quote)
 
     # Subscribe to quotes
     await client.private_channels.best_quotes_by_subaccount_id(
         subaccount_id=str(TAKER_SUBACCOUNT_ID),
-        callback=handle_quote,
+        callback=handle_best_quotes,
     )
 
-    # Wait for quotes
-    await asyncio.sleep(10)
+    # Await the best quote for the RFQ
+    best_quote: QuoteResultPublicSchema | None = None
+    try:
+        while True:
+            quote = await asyncio.wait_for(quote_queue.get(), timeout=10.0)
 
-    if not best_quote:
-        logger.error("✗ No quotes received")
+            if quote.rfq_id == rfq_result.rfq_id:
+                if quote.result and quote.result.best_quote:
+                    best_quote = quote.result.best_quote
+                    total_price = sum(leg.price * leg.amount for leg in best_quote.legs)
+                    logger.info(f"✓ Best quote received for {rfq_result.rfq_id}: {total_price}")
+                    break
+            else:
+                # In production, you'd handle other RFQs as well
+                logger.info(f"📝 Quote received for different RFQ: {quote.rfq_id}")
+
+    except asyncio.TimeoutError:
+        logger.error(f"✗ No quotes received for RFQ {rfq_result.rfq_id}, cancelling...")
+        await client.rfq.cancel_rfq(rfq_id=rfq_result.rfq_id)
         return
 
     # Execute quote
