@@ -105,15 +105,19 @@ class SimpleRfqQuoter:
                     self.logger.info(f"  ❌ Failed to send quote for RFQ {rfq.rfq_id}: {result}")
 
     async def on_quote(self, quotes_list: List[QuoteResultSchema]):
+        """Handle incoming quotes."""
+
         for quote in quotes_list:
             self.logger.info(f"  - Quote {quote.quote_id} {quote.rfq_id}: {quote.status}")
-            if quote.status == Status.filled and quote.rfq_id in self.quotes:
-                del self.quotes[quote.rfq_id]
+
+            if quote.status == Status.filled:
+                self.quotes.pop(quote.rfq_id, None)
                 self.logger.info(f"  ✓ Our quote {quote.quote_id} was accepted!")
                 # Here we could proceed to perform some type of hedging or other action based on the filled quote.
-            if quote.status == Status.expired and quote.rfq_id in self.quotes:
-                del self.quotes[quote.rfq_id]
-                self.logger.info(f"  ✗ Our quote {quote.quote_id} expired Better luck next time!")
+
+            elif quote.status == Status.expired:
+                self.quotes.pop(quote.rfq_id, None)
+                self.logger.info(f"  ✗ Our quote {quote.quote_id} expired. Better luck next time!")
 
     async def run(self):
         await self.client.connect()
