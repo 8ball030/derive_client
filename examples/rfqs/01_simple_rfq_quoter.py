@@ -8,7 +8,6 @@ IT SHOULD NOT BE USED AS A TRADING STRATEGY!!!
 
 import asyncio
 import warnings
-from logging import Logger
 from typing import List
 
 from config import ADMIN_TEST_WALLET as TEST_WALLET
@@ -33,7 +32,6 @@ SUBACCOUNT_ID = 31049  # another subaccount of this LightAccount (test wallet)
 
 
 class SimpleRfqQuoter:
-
     def __init__(self, client: WebSocketClient):
         self.client = client
         self.logger = client._logger
@@ -65,30 +63,46 @@ class SimpleRfqQuoter:
 
         return priced_legs
 
-    async def on_rfq(self, rfqs: List[RFQResultPublicSchema]):
-        for rfq in rfqs:
-            if rfq.status in {Status.expired, Status.cancelled} and rfq.rfq_id in self.quotes:
-                del self.quotes[rfq.rfq_id]
-        open_rfqs = [r for r in rfqs if r.status == Status.open]
-        if not open_rfqs:
-            return
+        async def on_rfq(self, rfqs: List[RFQResultPublicSchema]):
+            """Handle incoming RFQ updates."""
 
-        priced = await asyncio.gather(*(self.price_rfq(r) for r in open_rfqs))
-        quotable = [(r, legs) for r, legs in zip(open_rfqs, priced) if legs]
+            # Clean up expired/cancelled RFQs from tracking
+            for rfq in rfqs:
+                if rfq.status in {Status.expired, Status.cancelled} and self.quotes.pop(rfq.rfq_id, None):
+                    self.logger.info(f"  🗑️  Removed {rfq.status} RFQ {rfq.rfq_id} from tracking")
 
-        if not quotable:
-            return
+            # Filter to only open RFQs
+            open_rfqs = [rfq for rfq in rfqs if rfq.status == Status.open]
+            if not open_rfqs:
+                return
 
-        results = await asyncio.gather(
-            *(self.client.rfq.send_quote(rfq_id=r.rfq_id, legs=legs, direction=Direction.sell) for r, legs in quotable),
-            return_exceptions=True,
-        )
-        for r, result in zip(quotable, results):
-            rfq, _ = r
-            if isinstance(result, PrivateSendQuoteResultSchema):
-                self.quotes[rfq.rfq_id] = result
-            else:
-                self.logger.info(f"  ❌ Failed to send quote for RFQ {rfq.rfq_id}: {result}")
+            self.logger.info(f"  📝 Processing {len(open_rfqs)} open RFQ(s)")
+
+            # Price all open RFQs concurrently
+            pricing_tasks = [self.price_rfq(rfq) for rfq in open_rfqs]
+            priced_legs_list = await asyncio.gather(*pricing_tasks)
+
+            # Pair RFQs with their priced legs, filter out empty results
+            quotable_rfqs = [(rfq, legs) for rfq, legs in zip(open_rfqs, priced_legs_list) if legs]
+
+            if not quotable_rfqs:
+                self.logger.info("  ⚠️  No quotable RFQs after pricing")
+                return
+
+            # Send all quotes concurrently
+            quote_tasks = [
+                self.client.rfq.send_quote(rfq_id=rfq.rfq_id, legs=legs, direction=Direction.sell)
+                for rfq, legs in quotable_rfqs
+            ]
+            results = await asyncio.gather(*quote_tasks, return_exceptions=True)
+
+            # Process results
+            for (rfq, _), result in zip(quotable_rfqs, results):
+                if isinstance(result, PrivateSendQuoteResultSchema):
+                    self.quotes[rfq.rfq_id] = result
+                    self.logger.info(f"  ✅ Sent quote for RFQ {rfq.rfq_id}")
+                else:
+                    self.logger.info(f"  ❌ Failed to send quote for RFQ {rfq.rfq_id}: {result}")
 
     async def on_quote(self, quotes_list: List[QuoteResultSchema]):
         for quote in quotes_list:
