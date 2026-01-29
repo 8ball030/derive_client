@@ -507,14 +507,14 @@ class PrivateOrderDebugParamsSchema(Struct):
     signature_expiry_sec: int
     signer: str
     subaccount_id: int
-    client: Optional[str] = ''
+    client: Optional[str] = '8baller-python-sdk'
     extra_fee: Decimal = Decimal('0')
     is_atomic_signing: Optional[bool] = False
     label: str = ''
     mmp: bool = False
     order_type: OrderType = OrderType('limit')
     reduce_only: bool = False
-    referral_code: str = ''
+    referral_code: str = '0x9135BA0f495244dc0A5F029b25CDE95157Db89AD'
     reject_post_only: bool = True
     reject_timestamp: int = 9223372036854776000
     time_in_force: TimeInForce = TimeInForce('gtc')
@@ -671,7 +671,7 @@ class PrivateReplaceQuoteParamsSchema(Struct):
     signature_expiry_sec: int
     signer: str
     subaccount_id: int
-    client: str = ''
+    client: str = '8baller-python-sdk'
     label: str = ''
     mmp: bool = False
     nonce_to_cancel: Optional[int] = None
@@ -737,8 +737,6 @@ class PrivateSetMmpConfigResultSchema(PrivateSetMmpConfigParamsSchema):
 
 
 class PrivateOrderParamsSchema(PrivateOrderDebugParamsSchema):
-    client: str = '8baller-python-sdk'
-    referral_code: str = '0x9135BA0f495244dc0A5F029b25CDE95157Db89AD'
     pass
 
 
@@ -1168,7 +1166,7 @@ class PrivateCancelByInstrumentResultSchema(PrivateCancelByNonceResultSchema):
 class PrivateRfqGetBestQuoteParamsSchema(Struct):
     legs: List[LegUnpricedSchema]
     subaccount_id: int
-    client: str = ''
+    client: str = '8baller-python-sdk'
     counterparties: Optional[List[str]] = None
     direction: Direction = Direction('buy')
     label: str = ''
@@ -1301,7 +1299,7 @@ class PublicSendQuoteDebugParamsSchema(Struct):
     signature_expiry_sec: int
     signer: str
     subaccount_id: int
-    client: str = ''
+    client: str = '8baller-python-sdk'
     label: str = ''
     mmp: bool = False
 
@@ -1392,7 +1390,7 @@ class PublicExecuteQuoteDebugParamsSchema(Struct):
     signature_expiry_sec: int
     signer: str
     subaccount_id: int
-    client: str = ''
+    client: str = '8baller-python-sdk'
     enable_taker_protection: bool = False
     label: str = ''
 
@@ -1720,7 +1718,7 @@ class VaultBalanceResponseSchema(Struct):
 class PublicGetReferralPerformanceParamsSchema(Struct):
     end_ms: int
     start_ms: int
-    referral_code: Optional[str] = None
+    referral_code: Optional[str] = '0x9135BA0f495244dc0A5F029b25CDE95157Db89AD'
     wallet: Optional[str] = None
 
 
@@ -2051,7 +2049,7 @@ class SignedTradeOrderSchema(Struct):
 class PrivateSendRfqParamsSchema(Struct):
     legs: List[LegUnpricedSchema]
     subaccount_id: int
-    client: str = ''
+    client: str = '8baller-python-sdk'
     counterparties: Optional[List[str]] = None
     label: str = ''
     max_total_cost: Optional[Decimal] = None
@@ -2112,7 +2110,7 @@ class PrivateGetAccountResultSchema(Struct):
     websocket_option_tps: int
     websocket_perp_tps: int
     creation_timestamp_sec: Optional[int] = None
-    referral_code: Optional[str] = None
+    referral_code: Optional[str] = '0x9135BA0f495244dc0A5F029b25CDE95157Db89AD'
 
 
 class PrivateReplaceQuoteResultSchema(Struct):
@@ -2435,13 +2433,13 @@ class PublicGetVaultBalancesResponseSchema(Struct):
 
 class PublicGetReferralPerformanceResultSchema(Struct):
     fee_share_percentage: Decimal
-    referral_code: str
     rewards: Dict[str, Dict[str, Dict[str, ReferralPerformanceByInstrumentTypeSchema]]]
     stdrv_balance: Decimal
     total_builder_fee_collected: Decimal
     total_fee_rewards: Decimal
     total_notional_volume: Decimal
     total_referred_fees: Decimal
+    referral_code: str = '0x9135BA0f495244dc0A5F029b25CDE95157Db89AD'
 
 
 class PrivateCancelBatchRfqsResponseSchema(Struct):
