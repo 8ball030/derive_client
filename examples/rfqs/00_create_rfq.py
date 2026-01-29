@@ -3,12 +3,12 @@ Simple demonstration of creating and executing an RFQ.
 """
 
 import asyncio
+from pathlib import Path
 from typing import List
 
-from config import OWNER_TEST_WALLET, SESSION_KEY_PRIVATE_KEY, TAKER_SUBACCOUNT_ID
+from config import TAKER_SUBACCOUNT_ID
 
 from derive_client import WebSocketClient
-from derive_client.data_types import Environment
 from derive_client.data_types.channel_models import BestQuoteChannelResultSchema
 from derive_client.data_types.generated_models import Direction, LegUnpricedSchema, QuoteResultPublicSchema
 from derive_client.data_types.utils import D
@@ -26,13 +26,13 @@ async def create_and_execute_rfq(
         side: "buy" or "sell"
         amount: Contract amount
     """
+
     # Initialize client
-    client = WebSocketClient(
-        session_key=SESSION_KEY_PRIVATE_KEY,
-        wallet=OWNER_TEST_WALLET,
-        env=Environment.TEST,
-        subaccount_id=TAKER_SUBACCOUNT_ID,
-    )
+    repo_root = Path(__file__).parent.parent.parent
+    env_file = repo_root / ".env.template"
+    client = WebSocketClient.from_env(env_file=env_file)
+
+    # Connect client
     await client.connect()
     logger = get_logger()
 
