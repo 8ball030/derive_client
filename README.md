@@ -208,3 +208,14 @@ The release workflow will automatically create a GitHub release and publish to P
 	<tbody>
 </table>
 <!-- readme: contributors -end -->
+
+
+## Supporting This Project
+
+This client library is developed and maintained as an independent open-source project.
+When you use this library to trade on Derive, we may receive a small referral bonus
+(configured via the `referral_code` field in API requests). This helps sustain ongoing
+development and maintenance.
+We also set a default `client` identifier to help Derive track usage statistics across
+different client implementations.
+All code is open source and can be audited in this repository.

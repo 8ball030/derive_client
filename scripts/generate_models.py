@@ -100,28 +100,21 @@ def reorder_fields(body: list[ast.stmt]) -> list[ast.stmt]:
     return reordered_fields + others
 
 
-def _ensure_referral_default(node: ast.ClassDef) -> bool:
-    referral_code = "'0x9135BA0f495244dc0A5F029b25CDE95157Db89AD'"
-    for stmt in node.body:
-        if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name) and stmt.target.id == "referral_code":
-            stmt.value = ast.parse(referral_code).body[0].value
-            ast.fix_missing_locations(node)
-            return
-    ann_node = ast.parse(f"referral_code: str = {referral_code}").body[0]
-    node.body.insert(0, ann_node)
-    ast.fix_missing_locations(node)
+def _ensure_default_values(node: ast.ClassDef) -> None:
+    """Set default values for referral_code and client fields if they exist."""
+    field_defaults = {
+        "referral_code": "'0x9135BA0f495244dc0A5F029b25CDE95157Db89AD'",
+        "client": "'8baller-python-sdk'",
+    }
 
-
-def _ensure_client_default(node: ast.ClassDef) -> bool:
-    client = "'8baller-python-sdk'"
+    modified = False
     for stmt in node.body:
-        if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name) and stmt.target.id == "client":
-            stmt.value = ast.parse(client).body[0].value
-            ast.fix_missing_locations(node)
-            return
-    ann_node = ast.parse(f"client: str = {client}").body[0]
-    node.body.insert(0, ann_node)
-    ast.fix_missing_locations(node)
+        if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name) and stmt.target.id in field_defaults:
+            stmt.value = ast.parse(field_defaults[stmt.target.id]).body[0].value
+            modified = True
+
+    if modified:
+        ast.fix_missing_locations(node)
 
 
 def update_get_tx_result_schema(node: ast.ClassDef) -> None:
@@ -140,9 +133,7 @@ class OptionalRewriter(ast.NodeTransformer):
     def visit_ClassDef(self, node: ast.ClassDef) -> ast.AST:
         self.generic_visit(node)
 
-        if node.name in {"PrivateOrderParamsSchema", "PrivateReplaceParamsSchema"}:
-            _ensure_referral_default(node)
-            _ensure_client_default(node)
+        _ensure_default_values(node)
 
         if node.name == "PublicGetTransactionResultSchema":
             update_get_tx_result_schema(node)
