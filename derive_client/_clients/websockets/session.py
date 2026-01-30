@@ -9,7 +9,6 @@ import contextlib
 import inspect
 import uuid
 import weakref
-from logging import Logger
 from typing import TYPE_CHECKING, Any, Awaitable, Callable, Optional, Type, cast
 
 import msgspec
@@ -19,6 +18,7 @@ from websockets.asyncio.client import ClientConnection, connect
 from websockets.exceptions import ConnectionClosed
 
 from derive_client._clients.utils import JSONRPCEnvelope, decode_envelope
+from derive_client.data_types import LoggerType
 from derive_client.utils.logger import get_logger
 
 if TYPE_CHECKING:
@@ -75,7 +75,7 @@ class WebSocketSession:
         reconnect: bool = True,
         reconnect_delay: float = 1.0,
         max_reconnect_delay: float = 60.0,
-        logger: Logger | None = None,
+        logger: LoggerType | None = None,
         on_disconnect: LifecycleCallback | None = None,
         on_reconnect: LifecycleCallback | None = None,
         on_before_resubscribe: LifecycleCallback | None = None,
@@ -546,7 +546,7 @@ class WebSocketSession:
             self._logger.error(f"Handler error for {channel}: {e}", exc_info=True)
 
     @staticmethod
-    def _finalize(logger: Logger) -> None:
+    def _finalize(logger: LoggerType) -> None:
         """Finalizer for cleanup."""
         logger.debug("WebSocketSession garbage collected without explicit close()")
 

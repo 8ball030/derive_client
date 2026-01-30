@@ -1,11 +1,10 @@
 """
-Synchronous WebSocket client for Derive.
+Asynchronous WebSocket client for Derive.
 """
 
 from __future__ import annotations
 
 import contextlib
-from logging import Logger
 from pathlib import Path
 from textwrap import dedent
 from typing import Generator
@@ -27,13 +26,13 @@ from derive_client._clients.utils import AuthContext, load_client_config
 from derive_client._clients.websockets.api import PrivateAPI, PublicAPI
 from derive_client._clients.websockets.session import WebSocketSession
 from derive_client.config import CONFIGS
-from derive_client.data_types import ChecksumAddress, Environment
+from derive_client.data_types import ChecksumAddress, Environment, LoggerType
 from derive_client.data_types.generated_models import PublicLoginParamsSchema
 from derive_client.utils.logger import get_logger
 
 
 class WebSocketClient:
-    """Synchronous WebSocket client for real-time data and operations."""
+    """Asynchronous WebSocket client for real-time data and operations."""
 
     @validate_call(config=ConfigDict(arbitrary_types_allowed=True))
     def __init__(
@@ -43,7 +42,7 @@ class WebSocketClient:
         session_key: str,
         subaccount_id: int,
         env: Environment,
-        logger: Logger | None = None,
+        logger: LoggerType | None = None,
         request_timeout: float = 10.0,
     ):
         config = CONFIGS[env]
@@ -176,6 +175,10 @@ class WebSocketClient:
             public_api=self._public_api,  # type: ignore
             private_api=self._private_api,  # type: ignore
         )
+
+    @property
+    def logger(self) -> LoggerType:
+        return self._logger
 
     @property
     def account(self) -> LightAccount:
