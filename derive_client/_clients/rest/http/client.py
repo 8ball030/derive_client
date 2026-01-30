@@ -151,6 +151,10 @@ class HTTPClient:
             raise NotConnectedError("Bridge unavailable: requires signer to be the LightAccount owner.")
 
     @property
+    def logger(self) -> LoggerType:
+        return self._logger
+
+    @property
     def account(self) -> LightAccount:
         """Get the LightAccount instance (this is not a web3 contract instance)."""
 
