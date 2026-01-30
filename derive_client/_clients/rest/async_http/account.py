@@ -27,9 +27,11 @@ from derive_client.data_types.generated_models import (
     PrivateRegisterScopedSessionKeyResultSchema,
     PrivateSessionKeysParamsSchema,
     PrivateSessionKeysResultSchema,
+    PrivateSetCancelOnDisconnectParamsSchema,
     PublicBuildRegisterSessionKeyTxResultSchema,
     PublicDeregisterSessionKeyResultSchema,
     PublicRegisterSessionKeyResultSchema,
+    Result,
     Scope,
 )
 
@@ -340,6 +342,16 @@ class LightAccount:
 
         params = PrivateGetAccountParamsSchema(wallet=self.address)
         result = await self._private_api.rpc.get_account(params)
+        return result
+
+    async def set_cancel_on_disconnect(self, enabled: bool = True) -> Result:
+        """Enables cancel on disconnect for the account."""
+
+        params = PrivateSetCancelOnDisconnectParamsSchema(
+            wallet=self.address,
+            enabled=enabled,
+        )
+        result = await self._private_api.rpc.set_cancel_on_disconnect(params)
         return result
 
     def __repr__(self) -> str:
