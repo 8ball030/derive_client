@@ -12,6 +12,7 @@ from derive_client.data_types.generated_models import (
     PrivateGetSubaccountsResultSchema,
     PrivateRegisterScopedSessionKeyResultSchema,
     PrivateSessionKeysResultSchema,
+    Result,
     Scope,
 )
 
@@ -68,3 +69,9 @@ async def test_account_get(client_admin_wallet):
 async def test_account_create_subaccount(client_admin_wallet):
     create_subaccount_result = await client_admin_wallet.account.create_subaccount()
     assert isinstance(create_subaccount_result, PrivateCreateSubaccountResultSchema)
+
+
+@pytest.mark.asyncio
+async def test_account_set_cancel_on_disconnect(client_admin_wallet):
+    result = await client_admin_wallet.account.set_cancel_on_disconnect()
+    assert isinstance(result, Result)
