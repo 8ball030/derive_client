@@ -1,5 +1,5 @@
 """
-Synchronous WebSocket client for Derive.
+Asynchronous WebSocket client for Derive.
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ from derive_client.utils.logger import get_logger
 
 
 class WebSocketClient:
-    """Synchronous WebSocket client for real-time data and operations."""
+    """Asynchronous WebSocket client for real-time data and operations."""
 
     @validate_call(config=ConfigDict(arbitrary_types_allowed=True))
     def __init__(
