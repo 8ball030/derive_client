@@ -24,7 +24,7 @@ async def create_and_execute_rfq(
     Args:
         legs: List of unpriced legs representing the instruments and amounts to trade.
               Each leg specifies the instrument name, amount, and direction (buy/sell).
-    
+
     Flow:
         1. Initialize WebSocket client and connect to the exchange
         2. Send RFQ (Request for Quote) with the specified legs

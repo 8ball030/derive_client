@@ -74,12 +74,13 @@ HEDGE_ORDER_TIMEOUT_S = 60  # How long to wait for hedge order to fill before ca
 class DeltaQuoterStrategy:
     """
     Strategy for deciding which RFQs to quote and how to price them.
-    
+
     This class handles:
     - Filtering RFQs based on criteria (underlying, instrument type, delta impact)
     - Calculating delta exposure from options positions
     - Pricing legs using market bid-ask prices
     """
+
     client: WebSocketClient
     logger: Logger
 
@@ -90,13 +91,13 @@ class DeltaQuoterStrategy:
     async def should_quote(self, rfq: RFQResultPublicSchema) -> bool:
         """
         Determine whether to quote on this RFQ based on risk limits and filters.
-        
+
         Checks:
         1. Is the RFQ for our target underlying (ETH)?
         2. Are all legs options (not perps or spot)?
         3. Would accepting this RFQ exceed our single-trade delta limit?
         4. Can we successfully calculate delta for all legs?
-        
+
         Returns:
             True if we should quote, False otherwise
         """
@@ -131,14 +132,14 @@ class DeltaQuoterStrategy:
     ) -> tuple[Decimal, bool]:
         """
         Calculate the net delta exposure from accepting a quote or RFQ.
-        
+
         Delta calculation logic:
         - Each option has a delta value (from 0 to 1 for calls, 0 to -1 for puts)
         - Multiply delta by amount to get total delta per leg
         - As the SELLER of the quote, we take the opposite side of the taker
         - If taker is buying (we sell), we subtract delta
         - If taker is selling (we buy), we add delta
-        
+
         Returns:
             tuple: (total_delta, is_error)
             - total_delta: Net delta exposure we would have after this trade
@@ -166,14 +167,14 @@ class DeltaQuoterStrategy:
     async def price_legs(self, rfq: RFQResultPublicSchema) -> List[LegPricedSchema]:
         """
         Price all legs of an RFQ using current market bid-ask prices.
-        
+
         Pricing strategy:
         - Use bid-ask prices from the order book (better than mark price for execution)
         - For legs we BUY: Use best ask price (we pay the ask)
         - For legs we SELL: Use best bid price (we receive the bid)
         - Fallback to mark price + premium if no bid-ask available
         - Verify delta impact is within our limits before pricing
-        
+
         Returns:
             List of priced legs, or empty list if we shouldn't quote
         """
@@ -183,7 +184,7 @@ class DeltaQuoterStrategy:
         expected_delta, is_error = await self.calculate_delta_from_quote(rfq)
         if is_error or abs(expected_delta) > MAX_DELTA_TO_QUOTE:
             return []
-        
+
         for unpriced_leg in rfq.legs:
             ticker: PublicGetTickerResultSchema = await self.client.markets.get_ticker(
                 instrument_name=unpriced_leg.instrument_name
@@ -225,17 +226,18 @@ class DeltaQuoterStrategy:
 class PortfolioDeltaCalculator:
     """
     Calculator for determining the total delta exposure across our entire portfolio.
-    
+
     This class:
     - Fetches all open positions (options, perpetuals, spot)
     - Calculates delta contribution from each position type
     - Returns the total portfolio delta
-    
+
     Portfolio delta is the sum of:
     - Options: delta * amount (from option pricing models)
     - Perpetuals: amount (perps have delta = 1)
     - Spot: amount (spot has delta = 1)
     """
+
     client: WebSocketClient
     logger: Logger
 
@@ -246,7 +248,7 @@ class PortfolioDeltaCalculator:
     async def calculate_portfolio_delta(self) -> Decimal:
         """
         Calculate total portfolio delta across all positions.
-        
+
         Returns:
             Decimal: Net delta exposure (positive = long, negative = short)
         """
@@ -289,19 +291,20 @@ class PortfolioDeltaCalculator:
 class DeltaHedgerRfqQuoter:
     """
     Complete RFQ quoter with automated delta hedging.
-    
+
     This is the main class that coordinates:
     1. Receiving and filtering RFQs
     2. Pricing and sending quotes
     3. Monitoring quote fills
     4. Calculating portfolio delta exposure
     5. Executing hedge trades when needed
-    
+
     The class maintains several concurrent tasks:
     - Main event loop: Handles incoming RFQs and quotes
     - Hedging task: Monitors delta and executes hedges
     - WebSocket callbacks: Process real-time updates
     """
+
     logger: Logger
     client: WebSocketClient
 
@@ -322,7 +325,7 @@ class DeltaHedgerRfqQuoter:
     async def create_quote(self, rfq):
         """
         Create a quote for an RFQ if it passes our strategy filters.
-        
+
         Returns:
             List of priced legs if we should quote, empty list otherwise
         """
@@ -339,7 +342,7 @@ class DeltaHedgerRfqQuoter:
     async def on_rfq(self, rfqs: List[RFQResultPublicSchema]):
         """
         Handle incoming RFQ updates from the exchange.
-        
+
         Similar to simple quoter but with delta-aware filtering.
         """
         # Clean up quotes for expired/cancelled RFQs
@@ -347,7 +350,7 @@ class DeltaHedgerRfqQuoter:
             async with self.quoting_lock:
                 if rfq.status in {Status.expired, Status.cancelled} and rfq.rfq_id in self.quotes:
                     del self.quotes[rfq.rfq_id]
-        
+
         # Filter for open RFQs
         open_rfqs = [r for r in rfqs if r.status == Status.open]
         if not open_rfqs:
@@ -377,7 +380,7 @@ class DeltaHedgerRfqQuoter:
     async def on_quote(self, quotes_list: List[QuoteResultSchema]):
         """
         Handle quote status updates.
-        
+
         When quotes expire or fill, we clean up tracking.
         No hedging is triggered here - that happens in on_trade_settlement.
         """
@@ -394,13 +397,13 @@ class DeltaHedgerRfqQuoter:
     async def execute_hedge(self, delta_to_hedge: Decimal):
         """
         Execute a hedge trade to neutralize delta exposure.
-        
+
         Hedging logic:
         - If portfolio delta is negative (short), buy perpetuals to neutralize
         - If portfolio delta is positive (long), sell perpetuals to neutralize
         - Use market bid-ask prices for immediate execution
         - Set order timeout to prevent hanging orders
-        
+
         Args:
             delta_to_hedge: Amount of delta to hedge (negative = need to buy, positive = need to sell)
         """
@@ -411,10 +414,10 @@ class DeltaHedgerRfqQuoter:
                 f"    - Existing hedge {self.hedge_order.order_id} in progress, skipping new hedge {delta_to_hedge}."
             )
             return
-        
+
         # Fetch current market prices for the perpetual
         ticker = await self.client.markets.get_ticker(instrument_name=instrument_name)
-        
+
         # Determine trade direction:
         # If delta_to_hedge is negative, we need to increase delta (buy)
         # If delta_to_hedge is positive, we need to decrease delta (sell)
@@ -423,7 +426,7 @@ class DeltaHedgerRfqQuoter:
         if price is None or price == D("0"):
             # Fallback to mark price if no bid-ask available
             price = ticker.mark_price
-        
+
         trade_amount = abs(delta_to_hedge)
         # Check if order meets minimum size requirements
         if trade_amount < ticker.minimum_amount:
@@ -431,7 +434,7 @@ class DeltaHedgerRfqQuoter:
                 f"    - Hedge amount {trade_amount} is below min order size {ticker.minimum_amount}, skipping."
             )
             return
-        
+
         self.logger.info(f"    - Executing hedge for delta amount: {delta_to_hedge} in direction {trade_direction}")
         # Place hedge order with timeout to prevent hanging orders
         self.hedge_order = await self.client.orders.create(
@@ -448,7 +451,7 @@ class DeltaHedgerRfqQuoter:
     async def on_trade_settlement(self, trades: List[TradeResponseSchema]):
         """
         Handle trade settlement notifications.
-        
+
         When RFQ trades settle, we need to recalculate our portfolio delta
         and potentially execute a hedge. This is the key trigger for hedging.
         """
@@ -461,7 +464,7 @@ class DeltaHedgerRfqQuoter:
             # Identify trades from RFQ fills (they have a quote_id)
             if trade.quote_id:
                 rfq_trades.append(trade)
-        
+
         if rfq_trades:
             self.logger.info(f"  ✓ Detected {len(rfq_trades)} RFQ trades settled, re-evaluating portfolio delta.")
             # Queue a delta recalculation which will trigger hedging if needed
@@ -470,7 +473,7 @@ class DeltaHedgerRfqQuoter:
     async def on_order(self, orders: List[OrderResponseSchema]):
         """
         Handle order status updates.
-        
+
         When our hedge orders complete (filled/cancelled/expired), we:
         1. Clear the hedge_order state to allow new hedges
         2. Recalculate portfolio delta to see if more hedging is needed
@@ -493,7 +496,7 @@ class DeltaHedgerRfqQuoter:
     async def run(self):
         """
         Start the quoter and all its background tasks.
-        
+
         Sets up:
         1. WebSocket subscriptions for RFQs, quotes, trades, and orders
         2. Background hedging task that monitors portfolio delta
@@ -524,12 +527,12 @@ class DeltaHedgerRfqQuoter:
     async def portfolio_hedging_task(self):
         """
         Background task that continuously monitors and hedges portfolio delta.
-        
+
         This task runs in parallel with the main event loop and:
         1. Processes delta calculations from the queue (triggered by trades/orders)
         2. Periodically recalculates delta (every HEDGE_INTERVAL seconds)
         3. Executes hedge trades when delta exceeds MIN/MAX_DELTA_EXPOSURE limits
-        
+
         The queue-based approach ensures we don't miss hedging opportunities
         even during rapid trading, while periodic checks catch any drift.
         """
@@ -571,13 +574,13 @@ class DeltaHedgerRfqQuoter:
 async def main():
     """
     Initialize and run the delta-hedged RFQ quoter.
-    
+
     This creates a sophisticated market maker that:
     - Quotes on incoming ETH options RFQs
     - Automatically hedges delta exposure by trading perpetuals
     - Maintains delta within configured risk limits
     - Runs continuously with automatic reconnection
-    
+
     To use this effectively, you should:
     1. Adjust risk parameters (MAX_DELTA_TO_QUOTE, MIN/MAX_DELTA_EXPOSURE)
     2. Monitor the logs to understand hedging behavior
