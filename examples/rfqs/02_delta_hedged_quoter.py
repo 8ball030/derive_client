@@ -104,7 +104,7 @@ class DeltaQuoterStrategy:
                 is_error = True
                 break
             leg_delta = ticker.option_pricing.delta * leg.amount
-            # we are the SELLER of the quote so we are in efffect taking the opposite side of the leg direction
+            # we are the SELLER of the quote so we are in effect taking the opposite side of the leg direction
             # we therefore subtract the delta for buy legs and add for sell legs
             if leg.direction == Direction.sell:
                 total_delta += leg_delta
@@ -255,7 +255,7 @@ class DeltaHedgerRfqQuoter:
             async with self.quoting_lock:
                 if quote.status == Status.expired and quote.rfq_id in self.quotes:
                     del self.quotes[quote.rfq_id]
-                    self.logger.info(f"  ✗ Our quote {quote.quote_id} expired Better luck next time!")
+                    self.logger.info(f"  ✗ Our quote {quote.quote_id} expired. Better luck next time!")
                 elif quote.status == Status.filled and quote.rfq_id in self.quotes:
                     del self.quotes[quote.rfq_id]
                     self.logger.info(f"  ✓ Our quote {quote.quote_id} was accepted!")

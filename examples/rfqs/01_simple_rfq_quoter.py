@@ -99,7 +99,7 @@ class SimpleRfqQuoter:
                 # Here we could proceed to perform some type of hedging or other action based on the filled quote.
             if quote.status == Status.expired and quote.rfq_id in self.quotes:
                 del self.quotes[quote.rfq_id]
-                self.logger.info(f"  ✗ Our quote {quote.quote_id} expired Better luck next time!")
+                self.logger.info(f"  ✗ Our quote {quote.quote_id} expired. Better luck next time!")
 
     async def run(self):
         await self.client.connect()
