@@ -45,13 +45,14 @@ SUBACCOUNT_ID = 31049
 class SimpleRfqQuoter:
     """
     A simple RFQ quoter that listens for incoming RFQs and responds with quotes.
-    
+
     This class demonstrates the basic flow of:
     1. Receiving RFQs from the exchange
     2. Pricing the requested instruments
     3. Sending quotes back to the taker
     4. Tracking quote status updates
     """
+
     logger: Logger
     client: WebSocketClient
     quotes: dict[str, PrivateSendQuoteResultSchema] = {}  # Track all active quotes by RFQ ID
@@ -63,18 +64,18 @@ class SimpleRfqQuoter:
     async def price_rfq(self, rfq):
         """
         Price all legs of an RFQ using a simple strategy based on mark prices.
-        
+
         Pricing strategy:
         - For legs where we would BUY from the taker: Quote 0.1% below mark price (we pay less)
         - For legs where we would SELL to the taker: Quote 0.1% above mark price (we receive more)
-        
+
         This ensures we make a small profit on each leg, but is NOT a proper trading strategy.
         A real market maker would consider:
         - Current bid-ask spread
         - Market volatility
         - Position exposure and risk limits
         - Greeks hedging costs
-        
+
         Returns:
             List of priced legs, or empty list if pricing fails
         """
@@ -109,11 +110,11 @@ class SimpleRfqQuoter:
     async def on_rfq(self, rfqs: List[RFQResultPublicSchema]):
         """
         Handle incoming RFQ updates.
-        
+
         This callback is triggered when:
         - New RFQs are created
         - Existing RFQs change status (expired, cancelled, etc.)
-        
+
         Flow:
         1. Clean up any quotes for expired/cancelled RFQs
         2. Filter for open RFQs that need quotes
@@ -124,7 +125,7 @@ class SimpleRfqQuoter:
         for rfq in rfqs:
             if rfq.status in {Status.expired, Status.cancelled} and rfq.rfq_id in self.quotes:
                 del self.quotes[rfq.rfq_id]
-        
+
         # Filter for RFQs that are still open and need quotes
         open_rfqs = [r for r in rfqs if r.status == Status.open]
         if not open_rfqs:
@@ -154,12 +155,12 @@ class SimpleRfqQuoter:
     async def on_quote(self, quotes_list: List[QuoteResultSchema]):
         """
         Handle quote status updates.
-        
+
         This callback is triggered when quotes we sent change status:
         - FILLED: The taker executed our quote (we have a trade!)
         - EXPIRED: The quote expired before being executed
         - CANCELLED: The quote was cancelled
-        
+
         When a quote is filled, this is where you would typically:
         - Update position tracking
         - Initiate hedging trades
@@ -179,7 +180,7 @@ class SimpleRfqQuoter:
     async def run(self):
         """
         Main execution loop for the RFQ quoter.
-        
+
         Sets up WebSocket connections and subscriptions:
         1. Subscribe to RFQs for our wallet - receive incoming RFQ requests
         2. Subscribe to quotes for our subaccount - receive status updates on our quotes
@@ -199,7 +200,7 @@ class SimpleRfqQuoter:
 async def main():
     """
     Initialize and run the simple RFQ quoter.
-    
+
     This will:
     1. Create a WebSocket client connected to the test environment
     2. Initialize the RFQ quoter
