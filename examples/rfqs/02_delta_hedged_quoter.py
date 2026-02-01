@@ -94,7 +94,7 @@ class DeltaQuoterStrategy:
             True if we should quote this RFQ, False otherwise
         """
         # Implement logic to decide whether to quote the RFQ based on current portfolio delta exposure
-        # we have a simple descrimintaor here that only quotes RFQs on a specific underlying
+        # we have a simple discriminator here that only quotes RFQs on a specific underlying
         is_for_target_underlying = all([UNDERLYING_TO_QUOTE in leg.instrument_name for leg in rfq.legs])
 
         def is_option(instrument_name: str) -> bool:
@@ -152,7 +152,7 @@ class DeltaQuoterStrategy:
                 break
             # Delta per contract * number of contracts
             leg_delta = ticker.option_pricing.delta * leg.amount
-            # we are the SELLER of the quote so we are in efffect taking the opposite side of the leg direction
+            # we are the SELLER of the quote so we are in effect taking the opposite side of the leg direction
             # we therefore subtract the delta for buy legs and add for sell legs
             if leg.direction == Direction.sell:
                 # Taker sells to us = we buy = positive delta
