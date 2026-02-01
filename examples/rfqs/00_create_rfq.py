@@ -86,26 +86,6 @@ if __name__ == "__main__":
             amount=D("1"),
             direction=Direction.sell,
         ),
-        # LegUnpricedSchema(
-        #     instrument_name="ETH-20260125-3050-P",
-        #     amount=D("1.0"),
-        #     direction=Direction.sell,
-        # ),
-        # LegUnpricedSchema(
-        #     instrument_name="ETH-20260125-2900-P",
-        #     amount=D("1.0"),
-        #     direction=Direction.sell,
-        # ),
-        # LegUnpricedSchema(
-        #     instrument_name="ETH-20260125-3000-P",
-        #     amount=D("1.0"),
-        #     direction=Direction.buy,
-        # ),
-        # LegUnpricedSchema(
-        #     instrument_name="ETH-20260126-2900-P",
-        #     amount=D("1.0"),
-        #     direction=Direction.buy,
-        # ),
     ]
     asyncio.run(
         create_and_execute_rfq(
