@@ -130,6 +130,12 @@ class BalanceUpdateSchema(Struct):
 
 
 class SubaccountIdBestQuotesChannelSchema(SubaccountIdBalancesChannelSchema):
+    """
+    WebSocket channel schema for subscribing to best quote updates for a subaccount.
+    
+    This channel allows takers to receive real-time updates on the best available
+    quotes for their RFQs. The "best" quote is determined by price competitiveness.
+    """
     pass
 
 
@@ -138,6 +144,12 @@ class SubaccountIdOrdersChannelSchema(SubaccountIdBalancesChannelSchema):
 
 
 class SubaccountIdQuotesChannelSchema(SubaccountIdBalancesChannelSchema):
+    """
+    WebSocket channel schema for subscribing to quote updates for a subaccount.
+    
+    This channel is used by market makers to receive updates on quotes they've submitted,
+    including status changes (filled, expired, cancelled) and fill percentages.
+    """
     pass
 
 
@@ -214,6 +226,12 @@ class TradeSettledPublicResponseSchema(Struct):
 
 
 class WalletRfqsChannelSchema(PrivateGetAllPortfoliosParamsSchema):
+    """
+    WebSocket channel schema for subscribing to RFQ updates for a specific wallet.
+    
+    Market makers use this channel to receive incoming RFQs directed to their wallet.
+    When a taker creates an RFQ, it's broadcast to wallets that can provide quotes.
+    """
     pass
 
 
@@ -307,6 +325,30 @@ class SubaccountIdBalancesPubSubSchema(Struct):
 
 
 class QuoteResultPublicSchema(Struct):
+    """
+    Public schema for RFQ quote results.
+    
+    This represents a quote that a market maker has submitted for an RFQ.
+    It contains the basic public information about the quote without sensitive
+    details like signatures or fee calculations.
+    
+    Attributes:
+        quote_id: Unique identifier for this quote
+        rfq_id: Reference to the RFQ this quote is responding to
+        direction: The direction of the quote (buy or sell from market maker's perspective)
+        legs: List of priced legs with specific prices for each instrument
+        status: Current status (open, filled, expired, cancelled)
+        creation_timestamp: When the quote was created (milliseconds since epoch)
+        last_update_timestamp: When the quote was last updated (milliseconds since epoch)
+        wallet: The market maker's wallet address
+        subaccount_id: The market maker's subaccount ID
+        fill_pct: Percentage of the quote that has been filled (0-100)
+        legs_hash: Hash of the legs for verification
+        liquidity_role: Role in the trade (maker or taker)
+        cancel_reason: Reason for cancellation if applicable
+        tx_status: Blockchain transaction status
+        tx_hash: Transaction hash if executed on-chain
+    """
     cancel_reason: CancelReason
     creation_timestamp: int
     direction: Direction
@@ -404,6 +446,12 @@ class SpotFeedCurrencyPubSubSchema(Struct):
 
 
 class RFQGetBestQuoteResultSchema(PrivateRfqGetBestQuoteResultSchema):
+    """
+    Result schema for getting the best quote for an RFQ.
+    
+    This wraps the API response that contains the most competitive quote
+    currently available for a given RFQ.
+    """
     pass
 
 
@@ -443,11 +491,28 @@ class TickerSlimInstrumentNameIntervalNotificationParamsSchema(Struct):
 
 
 class WalletRfqsNotificationParamsSchema(Struct):
+    """
+    Parameters for RFQ notifications sent to a wallet.
+    
+    Contains the list of RFQ updates that the subscribed wallet should be aware of.
+    """
     channel: str
     data: List[RFQResultPublicSchema]
 
 
 class BestQuoteChannelResultSchema(Struct):
+    """
+    Result schema for best quote channel updates.
+    
+    Each message on the best quotes channel contains either:
+    - A successful result with the best quote details
+    - An error if the best quote couldn't be determined
+    
+    Attributes:
+        rfq_id: The RFQ this best quote update relates to
+        result: The best quote result (if successful)
+        error: Error details (if failed)
+    """
     rfq_id: str
     error: Optional[RPCErrorFormatSchema] = None
     result: Optional[RFQGetBestQuoteResultSchema] = None
@@ -474,15 +539,28 @@ class WalletRfqsPubSubSchema(Struct):
 
 
 class SubaccountIdBestQuotesNotificationParamsSchema(Struct):
+    """
+    Parameters for best quote notifications for a subaccount.
+    
+    Contains updates on the best quotes available for RFQs created by this subaccount.
+    Takers subscribe to this to track which quotes are most competitive.
+    """
     channel: str
     data: List[BestQuoteChannelResultSchema]
 
 
 class SubaccountIdBestQuotesNotificationSchema(Struct):
+    """Notification wrapper for best quote updates."""
     method: str
     params: SubaccountIdBestQuotesNotificationParamsSchema
 
 
 class SubaccountIdBestQuotesPubSubSchema(Struct):
+    """
+    Complete pub/sub schema for best quotes channel.
+    
+    This is the top-level schema for the best quotes WebSocket channel,
+    combining channel subscription parameters with notification structure.
+    """
     channel_params: SubaccountIdBestQuotesChannelSchema
     notification: SubaccountIdBestQuotesNotificationSchema
