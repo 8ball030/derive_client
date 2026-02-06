@@ -121,6 +121,7 @@
             "buy",
             "sell"
           ],
+          "nullable": true,
           "description": "Direction at which the RFQ was filled (only if filled)"
         },
         "filled_pct": {
