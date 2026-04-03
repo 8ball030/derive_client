@@ -18,14 +18,13 @@ The pricing logic here does not account for:
 
 import asyncio
 import warnings
-from logging import Logger
 from typing import List
 
 from config import ADMIN_TEST_WALLET as TEST_WALLET
 from config import SESSION_KEY_PRIVATE_KEY
 
 from derive_client import WebSocketClient
-from derive_client.data_types import Environment
+from derive_client.data_types import Environment, LoggerType
 from derive_client.data_types.channel_models import QuoteResultSchema
 from derive_client.data_types.generated_models import (
     Direction,
@@ -53,7 +52,7 @@ class SimpleRfqQuoter:
     4. Tracking quote status updates
     """
 
-    logger: Logger
+    logger: LoggerType
     client: WebSocketClient
     quotes: dict[str, PrivateSendQuoteResultSchema] = {}  # Track all active quotes by RFQ ID
 

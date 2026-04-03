@@ -35,7 +35,7 @@ from config import ADMIN_TEST_WALLET as TEST_WALLET
 from config import SESSION_KEY_PRIVATE_KEY
 
 from derive_client import WebSocketClient
-from derive_client.data_types import Environment
+from derive_client.data_types import Environment, LoggerType
 from derive_client.data_types.channel_models import QuoteResultSchema
 from derive_client.data_types.generated_models import (
     AssetType,
@@ -82,9 +82,9 @@ class DeltaQuoterStrategy:
     """
 
     client: WebSocketClient
-    logger: Logger
+    logger: LoggerType
 
-    def __init__(self, client: WebSocketClient, logger: Logger):
+    def __init__(self, client: WebSocketClient, logger: LoggerType):
         self.client = client
         self.logger = logger
 
