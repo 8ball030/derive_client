@@ -25,7 +25,7 @@ env_file = Path(__file__).parent.parent / ".env.template"
 client = HTTPClient.from_env(env_file=env_file)
 client.connect()
 
-CURRENCY = "ETH"
+CURRENCY = "BTC"
 INSTRUMENT_TYPE = AssetType.perp
 INSTRUMENT = f"{CURRENCY}-PERP"
 MINIMUM_AMOUNT = D("0.10")
