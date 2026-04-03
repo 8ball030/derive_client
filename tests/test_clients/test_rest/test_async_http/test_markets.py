@@ -9,7 +9,6 @@ from derive_client.data_types.generated_models import (
     PublicGetAllInstrumentsResultSchema,
     PublicGetCurrencyResultSchema,
     PublicGetInstrumentResultSchema,
-    PublicGetTickerResultSchema,
     TickerSlimSchema,
 )
 
@@ -60,13 +59,6 @@ async def test_markets_get_all_instruments(client_admin_wallet):
         currency=currency,
     )
     assert isinstance(all_instruments, PublicGetAllInstrumentsResultSchema)
-
-
-@pytest.mark.asyncio
-async def test_markets_get_ticker(client_admin_wallet):
-    instrument_name = "ETH-PERP"
-    ticker = await client_admin_wallet.markets.get_ticker(instrument_name=instrument_name)
-    assert isinstance(ticker, PublicGetTickerResultSchema)
 
 
 @pytest.mark.asyncio

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pandas as pd
 import rich_click as click
 
 from derive_client.data_types import AssetType
@@ -146,10 +145,7 @@ def instrument(ctx, instrument_name, currency, type, expired):
     help="Currency (required for options, optional for perps/erc20s)",
 )
 @click.option(
-    "--type",
-    "-t",
-    type=click.Choice([x.name for x in AssetType]),
-    help="Instrument type (required)",
+    "--type", "-t", type=click.Choice([x.name for x in AssetType]), help="Instrument type (required)", required=True
 )
 @click.option(
     "--expiry-date",
@@ -181,34 +177,24 @@ def ticker(ctx, instrument_name, currency, type, expiry_date, expired):
 
     client = ctx.obj["client"]
 
-    complex_cols = ["open_interest", "stats", "erc20_details", "perp_details", "option_details"]
+    complex_cols = [
+        "stats",
+    ]
 
     # Single instrument query by name
     if instrument_name:
-        if currency or type or expiry_date:
-            click.echo("Error: Cannot specify --currency, --type, or --expiry-date with instrument name")
-            ctx.exit(1)
-
         # Use deprecated get_ticker for single instrument lookup
-        ticker = client.markets.get_ticker(instrument_name=instrument_name)
+        tickers = client.markets.get_tickers(instrument_type=type)
+
+        if instrument_name not in tickers:
+            click.echo(f"No ticker found for instrument {instrument_name}")
+            ctx.exit(1)
+        ticker = tickers[instrument_name]
+
         series = struct_to_series(ticker)
 
         print("\n=== Ticker Info ===")
         print(series.drop(complex_cols).to_string(index=True))
-
-        if series.erc20_details is not None:
-            print("\n=== ERC20 Details ===")
-            print(struct_to_series(series.erc20_details).to_string(index=True))
-        if series.perp_details is not None:
-            print("\n=== Perp Details ===")
-            print(struct_to_series(series.perp_details).to_string(index=True))
-        if series.option_details is not None:
-            print("\n=== Option Details ===")
-            print(struct_to_series(series.option_details).to_string(index=True))
-
-        print("\n=== Open Interest ===")
-        items = series["open_interest"].items()
-        print(pd.DataFrame({k: struct_to_series(v2) for k, v in items for v2 in v}))
 
         print("\n=== Stats ===")
         print(struct_to_series(series.stats).to_string(index=True))

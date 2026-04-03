@@ -63,13 +63,21 @@ async def _create_unpriced_legs(client):
 async def _create_priced_legs(client, rfq):
     # Price legs using current market prices
     priced_legs = []
+
+    currency = client.active_subaccount._state.currency
+    if currency == "all":  # SM
+        currency = "ETH"
     for unpriced_leg in rfq.legs:
-        ticker = await client.markets.get_ticker(instrument_name=unpriced_leg.instrument_name)
+        expiry = unpriced_leg.instrument_name.split("-")[1]
+        tickers = await client.markets.get_tickers(
+            instrument_type=AssetType.option, currency=currency, expiry_date=expiry
+        )
+        ticker = tickers[unpriced_leg.instrument_name]
 
         # Derive RPC 11107: Quote maker total cost too high  [data={'worst_cost': '6.33919554', 'total_cost': '80.596'}]
         # Use mark price (more realistic than index for options)
         # Add a small buffer to ensure quote is profitable
-        base_price = ticker.mark_price
+        base_price = ticker.I
         if base_price == Decimal("0.0"):
             base_price = ticker.index_price
 
@@ -80,7 +88,9 @@ async def _create_priced_legs(client, rfq):
             # Maker is buying - quote bid side (lower)
             price = base_price * Decimal("0.98")  # 2% below mark
 
-        price = price.quantize(ticker.tick_size)
+        instrument = await client.markets.get_instrument(instrument_name=unpriced_leg.instrument_name)
+
+        price = price.quantize(instrument.tick_size)
         # keep original direction here:
         # Derive RPC 11103: Quote leg does not match RFQ leg
         # [data={'RFQ leg direction': 'buy', 'Quote leg direction': 'sell'}]

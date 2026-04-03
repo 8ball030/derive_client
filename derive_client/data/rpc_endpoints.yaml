@@ -2,10 +2,10 @@ ETH:
   - https://eth.drpc.org
   - https://eth.blockrazor.xyz
   - https://rpc.mevblocker.io
-  - https://eth.llamarpc.com
+  # - https://eth.llamarpc.com
   - https://ethereum-rpc.publicnode.com
-  - https://rpc.flashbots.net/
-  - https://eth.merkle.io/
+  # - https://rpc.flashbots.net/
+  # - https://eth.merkle.io/
   - https://mainnet.gateway.tenderly.co
 
 OPTIMISM:

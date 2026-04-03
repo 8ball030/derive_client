@@ -37,7 +37,7 @@ def test_market_instrument(runner, args):
 @pytest.mark.parametrize(
     "args",
     [
-        ("BTC-PERP",),
+        ("BTC-PERP", "--type", "perp"),
     ],
 )
 def test_market_ticker(runner, args):
