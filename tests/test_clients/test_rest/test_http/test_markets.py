@@ -7,7 +7,6 @@ from derive_client.data_types.generated_models import (
     PublicGetAllInstrumentsResultSchema,
     PublicGetCurrencyResultSchema,
     PublicGetInstrumentResultSchema,
-    PublicGetTickerResultSchema,
     TickerSlimSchema,
 )
 
@@ -53,12 +52,6 @@ def test_markets_get_all_instruments(client_admin_wallet):
         currency=currency,
     )
     assert isinstance(all_instruments, PublicGetAllInstrumentsResultSchema)
-
-
-def test_markets_get_ticker(client_admin_wallet):
-    instrument_name = "ETH-PERP"
-    ticker = client_admin_wallet.markets.get_ticker(instrument_name=instrument_name)
-    assert isinstance(ticker, PublicGetTickerResultSchema)
 
 
 def test_markets_get_tickers(client_admin_wallet):

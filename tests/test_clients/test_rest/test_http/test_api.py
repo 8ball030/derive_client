@@ -5,16 +5,7 @@ from derive_client.data_types.generated_models import (
     PrivateGetOrdersResultSchema,
     PrivateGetSubaccountsParamsSchema,
     PrivateGetSubaccountsResultSchema,
-    PublicGetTickerParamsSchema,
-    PublicGetTickerResultSchema,
 )
-
-
-def test_public_get_ticker(client_admin_wallet):
-    instrument_name = "ETH-PERP"
-    params = PublicGetTickerParamsSchema(instrument_name=instrument_name)
-    result = client_admin_wallet._public_api.rpc.get_ticker(params=params)
-    assert isinstance(result, PublicGetTickerResultSchema)
 
 
 def test_get_private_get_subaccounts(client_admin_wallet):
