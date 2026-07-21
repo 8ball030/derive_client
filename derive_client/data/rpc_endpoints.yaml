@@ -15,7 +15,7 @@ OPTIMISM:
   # - https://0xrpc.io/op
   - https://op-pokt.nodies.app
   - https://optimism.gateway.tenderly.co
-  - https://optimism.api.onfinality.io/public
+  # - https://optimism.api.onfinality.io/public
 
 BASE:
   - https://base.drpc.org
@@ -27,13 +27,13 @@ BASE:
   # - https://base.api.onfinality.io/public
 
 ARBITRUM:
-  - https://arbitrum.drpc.org
+  # - https://arbitrum.drpc.org
   - https://arb1.arbitrum.io/rpc
   # - https://arbitrum-one.publicnode.com
   # - https://arbitrum.therpc.io
   - https://arb1.lava.build
-  - https://arbitrum.rpc.subquery.network/public
-  - https://arb-pokt.nodies.app
+  # - https://arbitrum.rpc.subquery.network/public
+  # - https://arb-pokt.nodies.app
   # - https://arbitrum.api.onfinality.io/public
 
 DERIVE:

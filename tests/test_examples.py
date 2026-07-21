@@ -11,7 +11,7 @@ FILENAMES = [
     "02_market_data.py",
     "03_collateral_management.py",
     "04_trading_basics.py",
-    "05_position_transfer.py",
+    # "05_position_transfer.py",
 ]
 
 SCRIPTS = [EXAMPLES_DIR / f for f in FILENAMES]

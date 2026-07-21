@@ -41,7 +41,9 @@ from derive_client.data_types.generated_models import (
     PrivateSendRfqParamsSchema,
     PrivateSendRfqResultSchema,
     Result,
-    Status,
+)
+from derive_client.data_types.generated_models import (
+    Status2 as Status,
 )
 
 if TYPE_CHECKING:

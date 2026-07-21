@@ -8,35 +8,39 @@ from typing import Any, Dict, List, Optional
 from msgspec import Struct
 
 from derive_client.data_types.generated_models import (
-    AssetType,
+    AlgoType,
     CancelReason,
+    CancelReason3,
     Direction,
+    InstrumentType,
     LegPricedSchema,
     LegUnpricedSchema,
     LiquidityRole,
     MarginType,
-    OrderResponseSchema,
-    PrivateGetAllPortfoliosParamsSchema,
-    PrivateGetCollateralsParamsSchema,
+    OrderStatus,
+    OrderType,
+    PrivateGetOpenOrdersParamsSchema,
     PrivateRfqGetBestQuoteResultSchema,
-    PublicGetAllCurrenciesParamsSchema,
-    PublicGetInstrumentParamsSchema,
-    PublicGetOptionSettlementPricesParamsSchema,
+    PrivateSessionKeysParamsSchema,
+    PublicGetCurrencyParamsSchema,
+    PublicGetTickerParamsSchema,
+    PublicGetVaultStatisticsParamsSchema,
     PublicMarginWatchResultSchema,
-    QuoteResultSchema,
-    RFQResultPublicSchema,
     RPCErrorFormatSchema,
-    Status,
+    Status2,
     TickerSlimSchema,
+    TimeInForce,
     TradeResponseSchema,
+    TriggerPriceType,
+    TriggerType,
     TxStatus,
-    TxStatus4,
+    TxStatus5,
 )
 
 DeriveWebsocketChannelSchemas = Any
 
 
-class AuctionsWatchChannelSchema(PublicGetAllCurrenciesParamsSchema):
+class AuctionsWatchChannelSchema(PublicGetVaultStatisticsParamsSchema):
     pass
 
 
@@ -60,6 +64,32 @@ class AuctionDetailsSchema(Struct):
 
 class MarginWatchChannelSchema(AuctionsWatchChannelSchema):
     pass
+
+
+class CollateralPublicResponseSchema(Struct):
+    amount: Decimal
+    asset_name: str
+    asset_type: InstrumentType
+    initial_margin: Decimal
+    maintenance_margin: Decimal
+    mark_price: Decimal
+    mark_value: Decimal
+
+
+class PositionPublicResponseSchema(Struct):
+    amount: Decimal
+    delta: Decimal
+    gamma: Decimal
+    index_price: Decimal
+    initial_margin: Decimal
+    instrument_name: str
+    instrument_type: InstrumentType
+    maintenance_margin: Decimal
+    mark_price: Decimal
+    mark_value: Decimal
+    theta: Decimal
+    vega: Decimal
+    liquidation_price: Optional[Decimal] = None
 
 
 class Depth(Enum):
@@ -89,7 +119,7 @@ class OrderbookInstrumentNameGroupDepthPublisherDataSchema(Struct):
     timestamp: int
 
 
-class SpotFeedCurrencyChannelSchema(PublicGetOptionSettlementPricesParamsSchema):
+class SpotFeedCurrencyChannelSchema(PublicGetCurrencyParamsSchema):
     pass
 
 
@@ -101,7 +131,7 @@ class SpotFeedSnapshotSchema(Struct):
     timestamp_prev_daily: int
 
 
-class SubaccountIdBalancesChannelSchema(PrivateGetCollateralsParamsSchema):
+class SubaccountIdBalancesChannelSchema(PrivateGetOpenOrdersParamsSchema):
     pass
 
 
@@ -137,8 +167,73 @@ class SubaccountIdOrdersChannelSchema(SubaccountIdBalancesChannelSchema):
     pass
 
 
+class OrderResponseSchema(Struct):
+    amount: Decimal
+    average_price: Decimal
+    cancel_reason: CancelReason
+    creation_timestamp: int
+    direction: Direction
+    filled_amount: Decimal
+    instrument_name: str
+    is_transfer: bool
+    label: str
+    last_update_timestamp: int
+    limit_price: Decimal
+    max_fee: Decimal
+    mmp: bool
+    nonce: int
+    order_fee: Decimal
+    order_id: str
+    order_status: OrderStatus
+    order_type: OrderType
+    signature: str
+    signature_expiry_sec: int
+    signer: str
+    subaccount_id: int
+    time_in_force: TimeInForce
+    quote_id: Optional[str] = None
+    algo_duration_sec: Optional[int] = None
+    algo_num_slices: Optional[int] = None
+    algo_slices_completed: Optional[int] = None
+    algo_type: Optional[AlgoType] = None
+    extra_fee: Optional[Decimal] = Decimal('0')
+    replaced_order_id: Optional[str] = None
+    signed_limit_price: Optional[Decimal] = None
+    trigger_price: Optional[Decimal] = None
+    trigger_price_type: Optional[TriggerPriceType] = None
+    trigger_reject_message: Optional[str] = None
+    trigger_type: Optional[TriggerType] = None
+
+
 class SubaccountIdQuotesChannelSchema(SubaccountIdBalancesChannelSchema):
     pass
+
+
+class QuoteResultSchema(Struct):
+    cancel_reason: CancelReason3
+    creation_timestamp: int
+    direction: Direction
+    extra_fee: Decimal
+    fee: Decimal
+    fill_pct: Decimal
+    is_transfer: bool
+    label: str
+    last_update_timestamp: int
+    legs: List[LegPricedSchema]
+    legs_hash: str
+    liquidity_role: LiquidityRole
+    max_fee: Decimal
+    mmp: bool
+    nonce: int
+    quote_id: str
+    rfq_id: str
+    signature: str
+    signature_expiry_sec: int
+    signer: str
+    status: Status2
+    subaccount_id: int
+    tx_hash: Optional[str] = None
+    tx_status: Optional[TxStatus] = None
 
 
 class SubaccountIdTradesChannelSchema(SubaccountIdBalancesChannelSchema):
@@ -147,7 +242,7 @@ class SubaccountIdTradesChannelSchema(SubaccountIdBalancesChannelSchema):
 
 class SubaccountIdTradesTxStatusChannelSchema(Struct):
     subaccount_id: int
-    tx_status: TxStatus4
+    tx_status: TxStatus5
 
 
 class Interval(Enum):
@@ -160,7 +255,7 @@ class TickerSlimInstrumentNameIntervalChannelSchema(Struct):
     interval: Interval
 
 
-class TradesInstrumentNameChannelSchema(PublicGetInstrumentParamsSchema):
+class TradesInstrumentNameChannelSchema(PublicGetTickerParamsSchema):
     pass
 
 
@@ -178,7 +273,7 @@ class TradePublicResponseSchema(Struct):
 
 class TradesInstrumentTypeCurrencyChannelSchema(Struct):
     currency: str
-    instrument_type: AssetType
+    instrument_type: InstrumentType
 
 
 class TradesInstrumentTypeCurrencyNotificationParamsSchema(Struct):
@@ -188,8 +283,8 @@ class TradesInstrumentTypeCurrencyNotificationParamsSchema(Struct):
 
 class TradesInstrumentTypeCurrencyTxStatusChannelSchema(Struct):
     currency: str
-    instrument_type: AssetType
-    tx_status: TxStatus4
+    instrument_type: InstrumentType
+    tx_status: TxStatus5
 
 
 class TradeSettledPublicResponseSchema(Struct):
@@ -208,12 +303,12 @@ class TradeSettledPublicResponseSchema(Struct):
     trade_id: str
     trade_price: Decimal
     tx_hash: str
-    tx_status: TxStatus4
+    tx_status: TxStatus5
     wallet: str
     quote_id: Optional[str] = None
 
 
-class WalletRfqsChannelSchema(PrivateGetAllPortfoliosParamsSchema):
+class WalletRfqsChannelSchema(PrivateSessionKeysParamsSchema):
     pass
 
 
@@ -271,6 +366,26 @@ class TradesInstrumentTypeCurrencyTxStatusNotificationParamsSchema(Struct):
     data: List[TradeSettledPublicResponseSchema]
 
 
+class RFQResultPublicSchema(Struct):
+    cancel_reason: CancelReason3
+    creation_timestamp: int
+    filled_pct: Decimal
+    last_update_timestamp: int
+    legs: List[LegUnpricedSchema]
+    partial_fill_step: Decimal
+    rfq_id: str
+    status: Status2
+    subaccount_id: int
+    valid_until: int
+    wallet: str
+    fill_rate: Optional[Decimal] = None
+    filled_direction: Optional[Direction] = None
+    preferred_direction: Optional[Direction] = None
+    recent_fill_rate: Optional[Decimal] = None
+    reducing_direction: Optional[Direction] = None
+    total_cost: Optional[Decimal] = None
+
+
 class AuctionsWatchNotificationParamsSchema(Struct):
     channel: str
     data: List[AuctionResultSchema]
@@ -307,7 +422,7 @@ class SubaccountIdBalancesPubSubSchema(Struct):
 
 
 class QuoteResultPublicSchema(Struct):
-    cancel_reason: CancelReason
+    cancel_reason: CancelReason3
     creation_timestamp: int
     direction: Direction
     fill_pct: Decimal
@@ -317,7 +432,7 @@ class QuoteResultPublicSchema(Struct):
     liquidity_role: LiquidityRole
     quote_id: str
     rfq_id: str
-    status: Status
+    status: Status2
     subaccount_id: int
     tx_status: TxStatus
     wallet: str

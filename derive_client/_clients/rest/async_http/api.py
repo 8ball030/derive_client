@@ -146,6 +146,7 @@ from derive_client.data_types.generated_models import (
     PublicGetCurrencyResultSchema,
     PublicGetFundingRateHistoryParamsSchema,
     PublicGetFundingRateHistoryResultSchema,
+    PublicGetIndexChartDataParamsSchema,
     PublicGetInstrumentParamsSchema,
     PublicGetInstrumentResultSchema,
     PublicGetInstrumentsParamsSchema,
@@ -179,6 +180,7 @@ from derive_client.data_types.generated_models import (
     PublicGetTimeParamsSchema,
     PublicGetTradeHistoryParamsSchema,
     PublicGetTradeHistoryResultSchema,
+    PublicGetTradingviewChartDataParamsSchema,
     PublicGetTransactionParamsSchema,
     PublicGetTransactionResultSchema,
     PublicGetVaultBalancesParamsSchema,
@@ -197,6 +199,8 @@ from derive_client.data_types.generated_models import (
     PublicWithdrawDebugParamsSchema,
     PublicWithdrawDebugResultSchema,
     Result,
+    SpotFeedHistoryCandlesResponseSchema,
+    TradingviewChartDataResponseSchema,
     VaultBalanceResponseSchema,
     VaultStatisticsResponseSchema,
 )
@@ -475,7 +479,8 @@ class AsyncPublicRPC:
         """
         Get spot feed history by currency
 
-        DB: read replica
+        DEPRECATION NOTICE: This RPC is deprecated in favor of get_index_chart_data and
+        get_tradingview_chart_data
         """
 
         url = self._endpoints.get_spot_feed_history
@@ -493,7 +498,8 @@ class AsyncPublicRPC:
         """
         Get spot feed history candles by currency
 
-        DB: read replica
+        DEPRECATION NOTICE: This RPC is deprecated in favor of get_index_chart_data and
+        get_tradingview_chart_data
         """
 
         url = self._endpoints.get_spot_feed_history_candles
@@ -501,6 +507,43 @@ class AsyncPublicRPC:
         message = await self._session._send_request(url, data, headers=self.headers)
         envelope = decode_envelope(message)
         result = decode_result(envelope, PublicGetSpotFeedHistoryCandlesResultSchema)
+
+        return result
+
+    async def get_index_chart_data(
+        self,
+        params: PublicGetIndexChartDataParamsSchema,
+    ) -> list[SpotFeedHistoryCandlesResponseSchema]:
+        """
+        Get index chart data (spot OHLC candles from ClickHouse) by currency
+
+        DB: clickhouse read replica
+        """
+
+        url = self._endpoints.get_index_chart_data
+        data = encode_json_exclude_none(params)
+        message = await self._session._send_request(url, data, headers=self.headers)
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, list[SpotFeedHistoryCandlesResponseSchema])
+
+        return result
+
+    async def get_tradingview_chart_data(
+        self,
+        params: PublicGetTradingviewChartDataParamsSchema,
+    ) -> list[TradingviewChartDataResponseSchema]:
+        """
+        Get tradingview chart data (trades OHLCV candles from ClickHouse) by instrument
+        name
+
+        DB: clickhouse read replica
+        """
+
+        url = self._endpoints.get_tradingview_chart_data
+        data = encode_json_exclude_none(params)
+        message = await self._session._send_request(url, data, headers=self.headers)
+        envelope = decode_envelope(message)
+        result = decode_result(envelope, list[TradingviewChartDataResponseSchema])
 
         return result
 
@@ -548,7 +591,8 @@ class AsyncPublicRPC:
         params: PublicGetOptionSettlementHistoryParamsSchema,
     ) -> PublicGetOptionSettlementHistoryResultSchema:
         """
-        Get expired option settlement history for a subaccount
+        Get expired option settlement history, optionally filtered by subaccount or
+        wallet.
         """
 
         url = self._endpoints.get_option_settlement_history
@@ -1417,7 +1461,7 @@ class AsyncPrivateRPC:
         params: PrivateGetOrderHistoryParamsSchema,
     ) -> PrivateGetOrderHistoryResultSchema:
         """
-        Get order history for a subaccount
+        Get order history for a subaccount or wallet.
 
         Required minimum session key permission level is `read_only`
         """
@@ -1810,7 +1854,10 @@ class AsyncPrivateRPC:
         params: PrivateGetOptionSettlementHistoryParamsSchema,
     ) -> PrivateGetOptionSettlementHistoryResultSchema:
         """
-        Get expired option settlement history for a subaccount
+        Get expired option settlement history for a subaccount or wallet.
+
+        If wallet is provided, returns settlements for all subaccounts belonging to that
+        wallet.
 
         Required minimum session key permission level is `read_only`
         """
@@ -1828,7 +1875,14 @@ class AsyncPrivateRPC:
         params: PrivateGetSubaccountValueHistoryParamsSchema,
     ) -> PrivateGetSubaccountValueHistoryResultSchema:
         """
-        Get the value history of a subaccount
+        Get the value history of a subaccount.
+
+        Supported periods: 900 (15m), 3600 (1h), 86400 (1d), 604800 (1w).
+
+        Returns up to 1000 entries per request. If the time range exceeds 1000 * period
+        seconds,
+
+        the start is clamped forward to return the most recent 1000 entries.
 
         Required minimum session key permission level is `read_only`
         """
@@ -1884,7 +1938,7 @@ class AsyncPrivateRPC:
         params: PrivateGetInterestHistoryParamsSchema,
     ) -> PrivateGetInterestHistoryResultSchema:
         """
-        Get subaccount interest payment history.
+        Get interest payment history for a subaccount or wallet.
 
         Required minimum session key permission level is `read_only`
         """
@@ -1902,7 +1956,7 @@ class AsyncPrivateRPC:
         params: PrivateGetErc20TransferHistoryParamsSchema,
     ) -> PrivateGetErc20TransferHistoryResultSchema:
         """
-        Get subaccount erc20 transfer history.
+        Get erc20 transfer history for a subaccount or wallet.
 
         Position transfers (e.g. options or perps) are treated as trades. Use
         `private/get_trade_history` for position transfer history.

@@ -1,13 +1,15 @@
 """Tests for Market module."""
 
 from derive_client.data_types.generated_models import (
-    AssetType,
     CurrencyDetailedResponseSchema,
     InstrumentPublicResponseSchema,
     PublicGetAllInstrumentsResultSchema,
     PublicGetCurrencyResultSchema,
     PublicGetInstrumentResultSchema,
     TickerSlimSchema,
+)
+from derive_client.data_types.generated_models import (
+    InstrumentType as AssetType,
 )
 
 

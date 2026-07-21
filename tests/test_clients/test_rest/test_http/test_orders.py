@@ -10,6 +10,7 @@ from derive_client.data_types.generated_models import (
     PrivateCancelByLabelResultSchema,
     PrivateCancelByNonceResultSchema,
     PrivateCancelResultSchema,
+    PrivateGetOrderResultSchema,
     PrivateReplaceResultSchema,
     Result,
 )
@@ -49,7 +50,7 @@ def test_orders_get(client_admin_wallet):
     order = _create_order(client_admin_wallet)
     order_id = order.order_id
     order = client_admin_wallet.orders.get(order_id=order_id)
-    assert isinstance(order, OrderResponseSchema)
+    assert isinstance(order, PrivateGetOrderResultSchema)
 
 
 def test_orders_list(client_admin_wallet):

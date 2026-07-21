@@ -5,7 +5,6 @@ from decimal import Decimal
 
 from derive_client.config import INT64_MAX
 from derive_client.data_types.generated_models import (
-    AssetType,
     Direction,
     LegPricedSchema,
     LegUnpricedSchema,
@@ -20,6 +19,9 @@ from derive_client.data_types.generated_models import (
     PrivateSendQuoteResultSchema,
     PrivateSendRfqResultSchema,
     Result,
+)
+from derive_client.data_types.generated_models import (
+    InstrumentType as AssetType,
 )
 from tests.conftest import assert_api_calls
 
