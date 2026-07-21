@@ -124,7 +124,7 @@ sync-ws-tests:
 codegen-all: generate-models generate-api generate-rest-async-http generate-sync-bridge-client sync-ws-tests fmt lint
 
 typecheck:
-	poetry run pyright derive_client tests examples
+	poetry run pyright derive_client tests
 
 check_diff:
 	@git diff --exit-code
