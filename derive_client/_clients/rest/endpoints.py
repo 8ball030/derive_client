@@ -49,6 +49,8 @@ class PublicEndpoints:
     get_option_settlement_prices = Endpoint("public", "get_option_settlement_prices")
     get_spot_feed_history = Endpoint("public", "get_spot_feed_history")
     get_spot_feed_history_candles = Endpoint("public", "get_spot_feed_history_candles")
+    get_index_chart_data = Endpoint("public", "get_index_chart_data")
+    get_tradingview_chart_data = Endpoint("public", "get_tradingview_chart_data")
     get_funding_rate_history = Endpoint("public", "get_funding_rate_history")
     get_trade_history = Endpoint("public", "get_trade_history")
     get_option_settlement_history = Endpoint("public", "get_option_settlement_history")

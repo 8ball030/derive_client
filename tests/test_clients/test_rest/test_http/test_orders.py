@@ -49,6 +49,7 @@ def test_orders_get(client_admin_wallet):
     order = _create_order(client_admin_wallet)
     order_id = order.order_id
     order = client_admin_wallet.orders.get(order_id=order_id)
+    breakpoint()
     assert isinstance(order, OrderResponseSchema)
 
 

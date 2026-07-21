@@ -9,7 +9,6 @@ from derive_client._clients.rest.http.api import PublicAPI
 from derive_client._clients.utils import fetch_all_pages_of_instrument_type, infer_instrument_type
 from derive_client.data_types import LoggerType
 from derive_client.data_types.generated_models import (
-    AssetType,
     CurrencyDetailedResponseSchema,
     InstrumentPublicResponseSchema,
     PublicGetAllCurrenciesParamsSchema,
@@ -24,6 +23,9 @@ from derive_client.data_types.generated_models import (
     PublicGetTickerResultSchema,
     PublicGetTickersParamsSchema,
     TickerSlimSchema,
+)
+from derive_client.data_types.generated_models import (
+    InstrumentType as AssetType,
 )
 
 

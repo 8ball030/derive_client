@@ -18,11 +18,13 @@ from web3 import AsyncWeb3, Web3
 
 from derive_client.data_types import ChecksumAddress, ClientConfig, EnvConfig, Environment, PositionTransfer
 from derive_client.data_types.generated_models import (
-    AssetType,
     InstrumentPublicResponseSchema,
     LegPricedSchema,
     LegUnpricedSchema,
     RPCErrorFormatSchema,
+)
+from derive_client.data_types.generated_models import (
+    InstrumentType as AssetType,
 )
 
 if TYPE_CHECKING:

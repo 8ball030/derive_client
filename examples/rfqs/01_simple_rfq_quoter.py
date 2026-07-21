@@ -31,7 +31,9 @@ from derive_client.data_types.generated_models import (
     LegPricedSchema,
     PrivateSendQuoteResultSchema,
     RFQResultPublicSchema,
-    Status,
+)
+from derive_client.data_types.generated_models import (
+    Status2 as Status,
 )
 from derive_client.data_types.utils import D
 

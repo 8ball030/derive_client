@@ -38,7 +38,6 @@ from derive_client import WebSocketClient
 from derive_client.data_types import Environment, LoggerType
 from derive_client.data_types.channel_models import QuoteResultSchema
 from derive_client.data_types.generated_models import (
-    AssetType,
     Direction,
     LegPricedSchema,
     OrderResponseSchema,
@@ -47,9 +46,16 @@ from derive_client.data_types.generated_models import (
     PrivateSendQuoteResultSchema,
     PublicGetTickerResultSchema,
     RFQResultPublicSchema,
-    Status,
     TradeResponseSchema,
-    TxStatus4,
+)
+from derive_client.data_types.generated_models import (
+    InstrumentType as AssetType,
+)
+from derive_client.data_types.generated_models import (
+    Status2 as Status,
+)
+from derive_client.data_types.generated_models import (
+    TxStatus5 as TxStatus4,
 )
 from derive_client.data_types.utils import D
 

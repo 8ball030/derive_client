@@ -53,6 +53,7 @@ async def test_orders_get(client_admin_wallet):
     order = await _create_order(client_admin_wallet)
     order_id = order.order_id
     order = await client_admin_wallet.orders.get(order_id=order_id)
+    breakpoint()
     assert isinstance(order, OrderResponseSchema)
 
 

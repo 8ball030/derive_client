@@ -4,13 +4,17 @@ import msgspec
 import pytest
 
 from derive_client.data_types.channel_models import (
-    AssetType,
     Depth,
     Group,
     Interval,
     OrderbookInstrumentNameGroupDepthPublisherDataSchema,
     TickerSlimInstrumentNameIntervalPublisherDataSchema,
-    TxStatus4,
+)
+from derive_client.data_types.channel_models import (
+    InstrumentType as AssetType,
+)
+from derive_client.data_types.channel_models import (
+    TxStatus5 as TxStatus4,
 )
 
 TIMEOUT = 5
