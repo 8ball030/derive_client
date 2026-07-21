@@ -5,7 +5,8 @@ Utility functions for WebSocket examples.
 from decimal import Decimal
 
 from derive_client.data_types.channel_models import BalanceUpdateSchema, UpdateType
-from derive_client.data_types.generated_models import AssetType, PositionResponseSchema
+from derive_client.data_types.generated_models import InstrumentType as AssetType
+from derive_client.data_types.generated_models import PositionResponseSchema
 
 
 def get_default_position(instrument_name: str) -> PositionResponseSchema:

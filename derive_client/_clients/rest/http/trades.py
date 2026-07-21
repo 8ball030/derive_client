@@ -6,12 +6,16 @@ from typing import TYPE_CHECKING
 
 from derive_client.config import INT64_MAX
 from derive_client.data_types.generated_models import (
-    AssetType,
+    InstrumentType as AssetType,
+)
+from derive_client.data_types.generated_models import (
     PrivateGetTradeHistoryParamsSchema,
     PublicGetTradeHistoryParamsSchema,
     TradeResponseSchema,
     TradeSettledPublicResponseSchema,
-    TxStatus4,
+)
+from derive_client.data_types.generated_models import (
+    TxStatus5 as TxStatus4,
 )
 
 if TYPE_CHECKING:
