@@ -236,6 +236,39 @@ def decode_result(envelope: JSONRPCEnvelope, result_schema: type[T]) -> T:
     return msgspec.json.decode(envelope.result, type=result_schema)
 
 
+class SubscribeAck(msgspec.Struct):
+    """Subscribe reply. `status` defaults because it only explains a refusal."""
+
+    current_subscriptions: list[str]
+    status: dict[str, str] = {}
+
+
+def confirm_subscriptions(channels: Iterable[str], envelope: JSONRPCEnvelope) -> tuple[list[str], dict[str, str]]:
+    """
+    Split channels into the confirmed ones, and the refused ones with their reason.
+
+    `current_subscriptions` holds what the connection is subscribed to after
+    the call, so it decides; `status` is free text on failure and only
+    explains. An unusable reply raises: that is a connection problem.
+    """
+
+    if envelope.error is not msgspec.UNSET:
+        raise ConnectionError(f"subscribe was refused: {msgspec.json.decode(envelope.error)}")
+
+    if envelope.result is msgspec.UNSET:
+        raise ConnectionError("subscribe reply carries neither result nor error")
+
+    ack = msgspec.json.decode(envelope.result, type=SubscribeAck)
+    live = set(ack.current_subscriptions)
+    confirmed = [channel for channel in channels if channel in live]
+    refused = {
+        channel: ack.status.get(channel) or "not listed in current_subscriptions"
+        for channel in channels
+        if channel not in live
+    }
+    return confirmed, refused
+
+
 def encode_json_exclude_none(obj: msgspec.Struct) -> bytes:
     """
     Encode msgspec Struct omitting None values.

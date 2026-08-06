@@ -5,7 +5,6 @@ Asynchronous WebSocket session with automatic reconnection and auth hook.
 from __future__ import annotations
 
 import asyncio
-import contextlib
 import inspect
 import uuid
 import weakref
@@ -17,7 +16,7 @@ from websockets import Data
 from websockets.asyncio.client import ClientConnection, connect
 from websockets.exceptions import ConnectionClosed
 
-from derive_client._clients.utils import JSONRPCEnvelope, decode_envelope
+from derive_client._clients.utils import JSONRPCEnvelope, confirm_subscriptions, decode_envelope
 from derive_client.data_types import LoggerType
 from derive_client.utils.logger import get_logger
 
@@ -42,15 +41,22 @@ class ConnectionState:
     async def set_connected(self):
         async with self._lock:
             self._connected = True
-            self._reconnecting = False
 
     async def set_disconnected(self):
         async with self._lock:
             self._connected = False
 
-    async def set_reconnecting(self):
+    async def begin_reconnect(self) -> bool:
+        """Claim the reconnect. False if another loop already holds it."""
         async with self._lock:
+            if self._reconnecting:
+                return False
             self._reconnecting = True
+            return True
+
+    async def end_reconnect(self):
+        async with self._lock:
+            self._reconnecting = False
 
     async def is_connected(self) -> bool:
         async with self._lock:
@@ -136,12 +142,22 @@ class WebSocketSession:
         self._finalizer = weakref.finalize(self, self._finalize, logger=self._logger)
 
     async def open(self) -> None:
-        """Establish WebSocket connection and start receiver task."""
+        """Establish WebSocket connection, start receiver task, restore handlers."""
         if await self._state.is_connected():
             self._logger.warning("WebSocket already connected")
             return
 
-        await self._connect()
+        if await self._state.is_reconnecting():
+            # Connecting under the reconnect would orphan its socket and receiver.
+            self._logger.warning("Reconnection in progress, not opening a second connection")
+            return
+
+        await self._connect(mark_connected=False)
+        # Handlers survive close(), so reopening has to restore them too.
+        if self._handlers:
+            await self._before_resubscribe()
+            await self._resubscribe_all()
+        await self._state.set_connected()
 
     async def close(self) -> None:
         """Close connection and stop all tasks. Idempotent."""
@@ -158,8 +174,7 @@ class WebSocketSession:
         for task in [self._receiver_task, self._reconnect_task]:
             if task and not task.done():
                 task.cancel()
-                with contextlib.suppress(asyncio.CancelledError):
-                    await task
+                await self._reap(task)
 
         self._receiver_task = None
         self._reconnect_task = None
@@ -265,7 +280,7 @@ class WebSocketSession:
             self._logger.exception(f"Unsubscribe RPC failed for {channel}")
             raise
 
-    async def _connect(self) -> None:
+    async def _connect(self, mark_connected: bool = True) -> None:
         """Establish WebSocket connection and start receiver task."""
         self._logger.info(f"Connecting to {self._url}")
 
@@ -280,7 +295,9 @@ class WebSocketSession:
             self._logger.error(f"Connection failed: {e}")
             raise
 
-        await self._state.set_connected()
+        # Reconnection marks the session connected only once resubscribed.
+        if mark_connected:
+            await self._state.set_connected()
 
         # Start receiver task
         self._stop_event.clear()
@@ -288,8 +305,25 @@ class WebSocketSession:
 
         self._logger.info("WebSocket connected, receiver task started")
 
+    async def _reap(self, task: asyncio.Task) -> None:
+        """Await a cancelled task without adopting how it died."""
+        # Callers are tearing a connection down; adopting the task's own
+        # exception would abandon that teardown half-finished.
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            self._logger.debug(f"Task {task.get_name()} ended with {e!r}")
+
     async def _close_connection(self) -> None:
-        """Close the WebSocket connection."""
+        """Close the WebSocket connection and stop its receiver task."""
+        task = self._receiver_task
+        self._receiver_task = None
+        if task is not None and task is not asyncio.current_task():
+            task.cancel()
+            await self._reap(task)
+
         if self._ws:
             try:
                 await self._ws.close()
@@ -318,19 +352,30 @@ class WebSocketSession:
                 self._logger.error(f"Error in on_disconnect callback: {e}")
 
         # Start reconnection if enabled
-        if self._reconnect_enabled and not await self._state.is_reconnecting():
-            await self._state.set_reconnecting()
-            self._reconnect_task = asyncio.create_task(
-                self._reconnect_loop(),
-                name="ws-reconnect",
-            )
+        if self._reconnect_enabled and await self._state.begin_reconnect():
+            try:
+                self._reconnect_task = asyncio.create_task(
+                    self._reconnect_loop(),
+                    name="ws-reconnect",
+                )
+            except Exception:
+                # Nothing will release the claim if the loop never starts.
+                await self._state.end_reconnect()
+                raise
 
     async def _reconnect_loop(self) -> None:
         """Reconnection loop with exponential backoff."""
+        try:
+            await self._reconnect_until_subscribed()
+        finally:
+            # Releasing here always: a stuck claim would strand the session.
+            await self._state.end_reconnect()
+
+    async def _reconnect_until_subscribed(self) -> None:
         delay = self._reconnect_delay
         attempt = 1
 
-        while not self._stop_event.is_set() and not await self._state.is_connected():
+        while not self._stop_event.is_set():
             self._logger.info(f"Reconnection attempt {attempt} in {delay:.1f}s")
             await asyncio.sleep(delay)
 
@@ -341,8 +386,9 @@ class WebSocketSession:
                 # Close old connection if exists
                 await self._close_connection()
 
-                # Establish new connection
-                await self._connect()
+                # Not connected until resubscribed - that is what makes it usable.
+                await self._connect(mark_connected=False)
+                connection = self._ws
 
                 # Call reconnect callback (for re-auth, etc.)
                 if self._on_reconnect is not None:
@@ -355,31 +401,44 @@ class WebSocketSession:
                         # Don't fail reconnection if callback fails
 
                 # Call before_resubscribe callback (for re-authentication)
-                if self._on_before_resubscribe is not None:
-                    try:
-                        res = self._on_before_resubscribe()
-                        if inspect.isawaitable(res):
-                            await cast(Awaitable[None], res)
-                    except Exception as e:
-                        self._logger.error(f"Error in on_before_resubscribe callback: {e}")
-                        raise  # Re-auth failure should trigger retry
+                await self._before_resubscribe()
 
                 # Resubscribe to all channels
                 await self._resubscribe_all()
 
+                # A drop in the window above leaves no receiver to report it.
+                if self._ws is not connection or connection is None or connection.close_code is not None:
+                    raise ConnectionError("connection dropped before resubscribing finished")
+
+                await self._state.set_connected()
                 self._logger.info(f"Reconnected successfully after {attempt} attempts")
                 return
 
             except Exception as e:
                 self._logger.error(f"Reconnection attempt {attempt} failed: {e}")
+                # A part-way connection looks healthy and delivers nothing.
+                await self._close_connection()
                 attempt += 1
                 delay = min(delay * 2, self._max_reconnect_delay)
 
         await self._state.set_disconnected()
         self._logger.info("Reconnection stopped")
 
+    async def _before_resubscribe(self) -> None:
+        """Run the re-auth callback. Its failure has to fail the attempt."""
+
+        if self._on_before_resubscribe is None:
+            return
+        try:
+            res = self._on_before_resubscribe()
+            if inspect.isawaitable(res):
+                await cast(Awaitable[None], res)
+        except Exception as e:
+            self._logger.error(f"Error in on_before_resubscribe callback: {e}")
+            raise  # Re-auth failure should trigger retry
+
     async def _resubscribe_all(self) -> None:
-        """Resubscribe to all channels after reconnection."""
+        """Resubscribe every channel, and raise unless some came back."""
         async with self._handlers_lock:
             channels = list(self._handlers.keys())
 
@@ -388,15 +447,44 @@ class WebSocketSession:
             return
 
         self._logger.info(f"Resubscribing to {len(channels)} channels")
+        confirmed, refused = await self._subscribe_batch(channels)
 
+        # Nothing subscribed is a connection failure - a rejected re-auth
+        # looks exactly like this - but a channel the venue will not serve
+        # must not fail the attempt, or one delisted instrument would end all
+        # market data. It stays registered and is tried again next reconnect.
+        if not confirmed:
+            raise ConnectionError(f"no channel came back: {refused}")
+
+        for channel, reason in refused.items():
+            self._logger.error(f"{channel} is not subscribed: the venue refuses it ({reason})")
+
+        self._logger.debug(f"Resubscribed to {len(confirmed)} channels")
+
+    async def _subscribe_batch(self, channels: list[str]) -> tuple[list[str], dict[str, str]]:
+        """Subscribe in one request, falling back to one at a time."""
+
+        # One request, not one per channel: a channel at a time spends the
+        # request budget and then fails the reconnect on the rejections it
+        # caused. A single bad channel is answered with `Invalid params` for
+        # the whole request, hence the fallback below.
+        envelope = await self._send_request("subscribe", params=Subscribe(channels=channels))
+        if envelope.error is msgspec.UNSET:
+            return confirm_subscriptions(channels, envelope)
+
+        self._logger.warning(f"Subscribe rejected for {len(channels)} channels at once, asking one at a time")
+        confirmed: list[str] = []
+        refused: dict[str, str] = {}
         for channel in channels:
             try:
-                params = Subscribe(channels=[channel])
-                envelope = await self._send_request("subscribe", params=params)
-                self._logger.debug(f"Resubscribed to {channel}: {envelope}")
-            except Exception as e:
-                self._logger.error(f"Failed to resubscribe to {channel}: {e}")
-                # Continue trying other channels
+                reply = await self._send_request("subscribe", params=Subscribe(channels=[channel]))
+                accepted, rejected = confirm_subscriptions([channel], reply)
+            except ConnectionError as e:
+                refused[channel] = str(e)
+                continue
+            confirmed.extend(accepted)
+            refused.update(rejected)
+        return confirmed, refused
 
     async def _send_request(self, method: str, params: msgspec.Struct | dict) -> JSONRPCEnvelope:
         """Send RPC request and return decoded envelope."""
