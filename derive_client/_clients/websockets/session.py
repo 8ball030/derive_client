@@ -54,9 +54,11 @@ class ConnectionState:
             self._reconnecting = True
             return True
 
-    async def end_reconnect(self):
+    async def end_reconnect(self) -> bool:
+        """Release the claim. True if the session still needs a reconnect."""
         async with self._lock:
             self._reconnecting = False
+            return not self._connected
 
     async def is_connected(self) -> bool:
         async with self._lock:
@@ -153,10 +155,16 @@ class WebSocketSession:
             return
 
         await self._connect(mark_connected=False)
-        # Handlers survive close(), so reopening has to restore them too.
-        if self._handlers:
-            await self._before_resubscribe()
-            await self._resubscribe_all()
+        try:
+            # Handlers survive close(), so reopening has to restore them too.
+            if self._handlers:
+                await self._before_resubscribe()
+                await self._resubscribe_all()
+        except Exception:
+            # A part-way open looks healthy to the venue and delivers nothing,
+            # and the next open() would dial on top of its receiver.
+            await self._close_connection()
+            raise
         await self._state.set_connected()
 
     async def close(self) -> None:
@@ -167,17 +175,14 @@ class WebSocketSession:
         self._logger.info("Closing WebSocket session")
         self._stop_event.set()
 
-        # Close WebSocket
-        await self._close_connection()
-
-        # Cancel background tasks
-        for task in [self._receiver_task, self._reconnect_task]:
-            if task and not task.done():
-                task.cancel()
-                await self._reap(task)
-
-        self._receiver_task = None
+        # Stop the reconnect loop first: one that is already past its stop
+        # check can finish dialling and leave a fresh socket behind us.
+        await self._cancel(self._reconnect_task)
         self._reconnect_task = None
+
+        # Close WebSocket, which also stops the receiver task
+        await self._close_connection()
+        self._receiver_task = None
 
         # Wait for handler tasks to complete (with timeout)
         if self._handler_tasks:
@@ -245,6 +250,11 @@ class WebSocketSession:
         self._logger.info(f"Subscribing to channel: {channel}")
         try:
             envelope = await self._send_request("subscribe", params=params)
+            # A handler kept for a channel that never subscribed is silent for
+            # the life of the session, and asked for again on every reconnect.
+            confirmed, refused = confirm_subscriptions([channel], envelope)
+            if not confirmed:
+                raise ConnectionError(f"{channel} is not subscribed: the venue refuses it ({refused[channel]})")
             self._logger.debug(f"Subscribe RPC response for {channel}: {envelope}")
             return envelope
         except Exception:
@@ -316,13 +326,18 @@ class WebSocketSession:
         except Exception as e:
             self._logger.debug(f"Task {task.get_name()} ended with {e!r}")
 
+    async def _cancel(self, task: asyncio.Task | None) -> None:
+        """Cancel a task and wait for it to finish."""
+        if task is None or task.done() or task is asyncio.current_task():
+            return
+        task.cancel()
+        await self._reap(task)
+
     async def _close_connection(self) -> None:
         """Close the WebSocket connection and stop its receiver task."""
         task = self._receiver_task
         self._receiver_task = None
-        if task is not None and task is not asyncio.current_task():
-            task.cancel()
-            await self._reap(task)
+        await self._cancel(task)
 
         if self._ws:
             try:
@@ -369,7 +384,14 @@ class WebSocketSession:
             await self._reconnect_until_subscribed()
         finally:
             # Releasing here always: a stuck claim would strand the session.
-            await self._state.end_reconnect()
+            # A drop that landed while this loop was finishing could not claim
+            # the reconnect, so it is handed a fresh loop instead.
+            if await self._state.end_reconnect() and self._reconnect_enabled and not self._stop_event.is_set():
+                self._logger.warning("Disconnected while finishing the reconnect, restarting")
+                self._reconnect_task = asyncio.create_task(
+                    self._reconnect_loop(),
+                    name="ws-reconnect",
+                )
 
     async def _reconnect_until_subscribed(self) -> None:
         delay = self._reconnect_delay
@@ -488,7 +510,10 @@ class WebSocketSession:
 
     async def _send_request(self, method: str, params: msgspec.Struct | dict) -> JSONRPCEnvelope:
         """Send RPC request and return decoded envelope."""
-        if not self._ws:
+        # Bind to one connection: a reconnect in flight must not divert this
+        # request onto a socket it was not written for, nor clear it mid-send.
+        ws = self._ws
+        if ws is None:
             raise RuntimeError("WebSocket not connected")
 
         request_id = str(uuid.uuid4())
@@ -513,7 +538,7 @@ class WebSocketSession:
             self._pending_requests[request_id] = response_queue
 
         try:
-            await self._ws.send(data)
+            await ws.send(data)
 
             try:
                 envelope = await asyncio.wait_for(response_queue.get(), timeout=self._request_timeout)
