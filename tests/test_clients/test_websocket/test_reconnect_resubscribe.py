@@ -358,3 +358,58 @@ async def test_overlapping_reconnects_do_not_storm_or_lose_the_channel():
         # One reconnect per drop, give or take; a storm is hundreds.
         assert venue.seen["connections"] < 15, f"reconnect storm: {venue.seen['connections']} connections for 10 drops"
         await _assert_delivers(venue, received, "survived the drops, but the channel is silent")
+
+
+def _live(venue: FakeVenue) -> int:
+    """Connections the venue still has open."""
+    return len(venue._subscriptions)
+
+
+async def _eventually(predicate, timeout: float = 2.0) -> bool:
+    """Poll for a condition: a socket closes on both ends, not just ours."""
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + timeout
+    while loop.time() < deadline:
+        if predicate():
+            return True
+        await asyncio.sleep(0.05)
+    return predicate()
+
+
+@pytest.mark.asyncio
+async def test_an_open_that_cannot_restore_leaves_nothing_behind():
+    """
+    Test that an open() which fails to restore its channels closes its socket.
+    """
+
+    received: list = []
+    async with _venue() as (venue, port), _settled(venue, port, received) as session:
+        await session.close()
+
+        venue.refuse[CHANNEL] = "not authenticated"
+        with pytest.raises(ConnectionError):
+            await session.open()
+
+        assert await _eventually(lambda: _live(venue) == 0), "the failed open() left a connection open"
+
+        venue.refuse.clear()
+        await session.open()
+        assert _live(venue) == 1, "reopening dialled on top of the failed open()"
+        await _assert_delivers(venue, received, "reopened, but the channel is silent")
+
+
+@pytest.mark.asyncio
+async def test_subscribing_to_a_channel_the_venue_refuses_fails():
+    """
+    Test that a refused subscribe is reported rather than quietly registered.
+    """
+
+    received: list = []
+    async with _venue() as (venue, port), _settled(venue, port, received) as session:
+        venue.refuse[OTHER] = "Channel does not exist"
+
+        with pytest.raises(ConnectionError):
+            await session.subscribe(OTHER, lambda _data: None, notification_type=dict)
+
+        assert await venue.publish(OTHER) == 0, "refused, yet reported as subscribed"
+        await _assert_delivers(venue, received, "a refused subscribe took the live channel down")
