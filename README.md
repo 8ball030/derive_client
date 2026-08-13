@@ -184,6 +184,13 @@ The release workflow will automatically create a GitHub release and publish to P
                 </a>
             </td>
             <td align="center">
+                <a href="https://github.com/0xBoringWozniak">
+                    <img src="https://avatars.githubusercontent.com/u/48191103?v=4" width="100;" alt="0xBoringWozniak"/>
+                    <br />
+                    <sub><b>xboringwozniak</b></sub>
+                </a>
+            </td>
+            <td align="center">
                 <a href="https://github.com/andreiaugustin">
                     <img src="https://avatars.githubusercontent.com/u/36695484?v=4" width="100;" alt="andreiaugustin"/>
                     <br />
@@ -197,6 +204,8 @@ The release workflow will automatically create a GitHub release and publish to P
                     <sub><b>DomRom</b></sub>
                 </a>
             </td>
+		</tr>
+		<tr>
             <td align="center">
                 <a href="https://github.com/DeBelg">
                     <img src="https://avatars.githubusercontent.com/u/38403795?v=4" width="100;" alt="DeBelg"/>
