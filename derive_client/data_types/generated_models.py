@@ -675,8 +675,34 @@ class LegUnpricedSchema(Struct):
     instrument_name: str
 
 
-class PrivateOrderParamsSchema(PrivateOrderDebugParamsSchema):
-    pass
+class PrivateOrderParamsSchema(Struct):
+    amount: Decimal
+    direction: Direction
+    instrument_name: str
+    limit_price: Decimal
+    max_fee: Decimal
+    nonce: int
+    signature: str
+    signature_expiry_sec: int
+    signer: str
+    subaccount_id: int
+    algo_duration_sec: Optional[int] = None
+    algo_num_slices: Optional[int] = None
+    algo_type: Optional[AlgoType] = None
+    client: Optional[str] = '8baller-python-sdk'
+    extra_fee: Optional[Decimal] = Decimal('0')
+    is_atomic_signing: Optional[bool] = False
+    label: str = ''
+    mmp: bool = False
+    order_type: OrderType = OrderType('limit')
+    reduce_only: bool = False
+    referral_code: str = '0x9135BA0f495244dc0A5F029b25CDE95157Db89AD'
+    reject_post_only: bool = True
+    reject_timestamp: int = 9223372036854776000
+    time_in_force: TimeInForce = TimeInForce('gtc')
+    trigger_price: Optional[Decimal] = None
+    trigger_price_type: Optional[TriggerPriceType] = None
+    trigger_type: Optional[TriggerType] = None
 
 
 class PrivateOrderResultSchema(Struct):

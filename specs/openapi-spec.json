@@ -8672,7 +8672,8 @@
             "type": "string",
             "format": "decimal",
             "default": "0",
-            "description": "Extra fee in USDC added to the total final fee paid by user and directly sent to client / builder (must be between 0.000001 and 1000 USDC). The `referral_code` field must also be filled out. See Builder Fee page in docs for more info."
+            "description": "Extra fee in USDC added to the total final fee paid by user and directly sent to client / builder (must be between 0.000001 and 1000 USDC). The `referral_code` field must also be filled out. See Builder Fee page in docs for more info.",
+            "nullable": true
           },
           "instrument_name": {
             "title": "instrument_name",

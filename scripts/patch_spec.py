@@ -48,6 +48,28 @@ def patch_node(node: Any) -> Tuple[Any, int]:
     return node, changed
 
 
+def make_fee_nullable(open_api_spec: dict) -> dict:
+    """
+    Patch the `extra_fee` attribute in `PrivateOrderParamsSchema` to be nullable.
+    """
+    components = open_api_spec.get("components", {})
+    schemas = components.get("schemas", {})
+    private_order_params_schema = schemas.get("PrivateOrderParamsSchema", {})
+
+    properties = private_order_params_schema.get("properties", {})
+    extra_fee_property = properties.get("extra_fee", {})
+
+    if extra_fee_property:
+        extra_fee_property["nullable"] = True
+        properties["extra_fee"] = extra_fee_property
+        private_order_params_schema["properties"] = properties
+        schemas["PrivateOrderParamsSchema"] = private_order_params_schema
+        components["schemas"] = schemas
+        open_api_spec["components"] = components
+
+    return open_api_spec
+
+
 def main():
     p = argparse.ArgumentParser(description="Patch erc20_details additionalProperties to anyOf[string|integer].")
     p.add_argument("json_path", type=Path, help="Path to openapi-spec.json")
@@ -65,6 +87,7 @@ def main():
         data = json.load(f)
 
     data, count = patch_node(data)
+    data = make_fee_nullable(data)
 
     with out.open("w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
