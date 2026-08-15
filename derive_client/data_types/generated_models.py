@@ -1692,7 +1692,7 @@ class PrivateReplaceParamsSchema(Struct):
     algo_type: Optional[AlgoType] = None
     client: Optional[str] = '8baller-python-sdk'
     expected_filled_amount: Optional[Decimal] = None
-    extra_fee: Decimal = Decimal('0')
+    extra_fee: Optional[Decimal] = Decimal('0')
     is_atomic_signing: Optional[bool] = False
     label: str = ''
     mmp: bool = False

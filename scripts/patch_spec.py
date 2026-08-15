@@ -90,6 +90,7 @@ def main():
 
     models_to_remove_fee = [
         "PrivateOrderParamsSchema",
+        "PrivateReplaceParamsSchema",
         "PrivateOrderDebugParamsSchema",
     ]
     for model in models_to_remove_fee:
